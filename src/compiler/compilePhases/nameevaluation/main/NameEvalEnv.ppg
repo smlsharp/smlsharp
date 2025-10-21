@@ -285,11 +285,11 @@ in
        TSTR_DTY of {tfun:tfun, varE:varE, formals:formals, conSpec:conSpec, defRange:Loc.loc}
 
   (*%
-     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
    *)
   (*% @prefix printTy_
      @params(sname,mode,name)
-     @formatter(SymbolEnv.map) SmlppgUtil.formatGenericSymbolMap
+     @formatter(SymbolWithLocEnv.map) SmlppgUtil.formatGenericSymbolWithLocMap
    *)
   (* type environment *)
   type tyE
@@ -307,7 +307,7 @@ in
         @format(tstr senv) 
            senv(tstr)(sname,\n,\n,)
        *)
-      tstr SymbolEnv.map
+      tstr SymbolWithLocEnv.map
 
 
   (*%
@@ -352,11 +352,11 @@ in
       FUNARG of structureId
 
   (*%
-     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
    *)
   (*% @prefix printTy_
      @params(sname,mode,name)
-     @formatter(SymbolEnv.map) SmlppgUtil.formatSymbolMapWithEnclosure
+     @formatter(SymbolWithLocEnv.map) SmlppgUtil.formatSymbolWithLocMapWithEnclosure
    *)
   (* structure environment *)
   datatype strE
@@ -374,7 +374,7 @@ in
          @format(strEntry senv)
            senv(strEntry()(sname,mode,name))(+":"+1, ~2[\n "and" +], \n "structure" +,)
        *)
-      STR of strEntry SymbolEnv.map
+      STR of strEntry SymbolWithLocEnv.map
 
   and env
     = 
@@ -415,7 +415,7 @@ in
           Env()(sname,mode,name)
        *)
       {env:env, strKind:strKind, loc:Loc.loc, 
-       definedSymbol:Symbol.longsymbol}
+       definedSymbol:SymbolWithLoc.longsymbol}
   and sigEntry 
     = 
       (*%
@@ -433,14 +433,14 @@ in
       sname # {env = env :: #env sname}
 
   (*%
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
      @formatter(I.icexp) I.format_icexp
      @formatter(TypID.Set.set) formatEnclosedTypidSet
      @formatter(ExnID.Set.set) formatEnclosedExnIdSet
    *)
   (*% @prefix printTy_
      @params(sname,mode,name)
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
      @formatter(I.icexp) I.print_icexp
      @formatter(TypID.Set.set) formatEnclosedTypidSet
      @formatter(ExnID.Set.set) formatEnclosedExnIdSet
@@ -510,7 +510,7 @@ in
         version: IDCalc.version,
         argSigEnv: env,
         argStrEntry: strEntry,
-        argStrName: Symbol.symbol,
+        argStrName: SymbolWithLoc.symbol,
         dummyIdfunArgTy: ty option,
         polyArgTys: ty list,
         typidSet: TypID.Set.set,
@@ -521,11 +521,11 @@ in
 
 
   (*%
-    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+    @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
    *)
   (*% @prefix printTy_
     @params(sname,mode,name)
-    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+    @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
    *)
   type funE
     = 
@@ -547,14 +547,14 @@ in
            1
           "}"
        *)
-      funEEntry SymbolEnv.map
+      funEEntry SymbolWithLocEnv.map
          
   (*%
-    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+    @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
    *)
   (*% @prefix printTy_
      @params(sname,mode,name)
-     @formatter(SymbolEnv.map) SmlppgUtil.formatSymbolMap
+     @formatter(SymbolWithLocEnv.map) SmlppgUtil.formatSymbolWithLocMap
    *)
   type sigE
     = 
@@ -567,14 +567,14 @@ in
             senv(env()(sname,mode,name))("signature" + ,+"="+,~2[+1 "and"+],)
           ]
        *)
-      sigEntry SymbolEnv.map
+      sigEntry SymbolWithLocEnv.map
 
   (*%
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
    *)
   (*% @prefix printTy_
      @params(sname,mode,name)
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
      @formatter(extendEnv) extendEnv
    *)
   type sigEList 
@@ -591,7 +591,7 @@ in
             env()(env:extendEnv()(sname),mode,name)
            ]
        *)
-    (Symbol.symbol * env) list
+    (SymbolWithLoc.symbol * env) list
 
   (*%
    *)
@@ -636,23 +636,23 @@ in
   fun funEToString funE = 
       Bug.prettyPrint (format_funE funE)
 
-  val emptyVarE = SymbolEnv.empty : varE
-  val emptyTyE = SymbolEnv.empty : tyE
+  val emptyVarE = SymbolWithLocEnv.empty : varE
+  val emptyTyE = SymbolWithLocEnv.empty : tyE
   val emptyEnv = 
-      ENV{varE=emptyVarE, tyE = emptyTyE, strE=STR SymbolEnv.empty}
+      ENV{varE=emptyVarE, tyE = emptyTyE, strE=STR SymbolWithLocEnv.empty}
   val emptyTopEnv = 
-      {Env=emptyEnv, FunE=SymbolEnv.empty, SigE=SymbolEnv.empty} : topEnv
+      {Env=emptyEnv, FunE=SymbolWithLocEnv.empty, SigE=SymbolWithLocEnv.empty} : topEnv
 
   fun replaceLocTyE loc tyE =
-      SymbolEnv.mapi2 
+      SymbolWithLocEnv.mapi2
       (fn (symbol, tstr) =>
-          (Symbol.replaceLocSymbol loc symbol, tstr))
+          (SymbolWithLoc.replaceLocSymbol loc symbol, tstr))
       tyE
 
   fun replaceLocVarE loc varE =
-      SymbolEnv.mapi2
+      SymbolWithLocEnv.mapi2
       (fn (symbol, idstatus) =>
-          (Symbol.replaceLocSymbol loc symbol, idstatus))
+          (SymbolWithLoc.replaceLocSymbol loc symbol, idstatus))
       varE
           
   fun replaceLocStrEntry newLoc {env, strKind, loc, definedSymbol} =
@@ -665,28 +665,28 @@ in
            strE = replaceLocStrE loc strE}
 
   and replaceLocStrE loc (STR strentryMap) =
-      STR (SymbolEnv.mapi2 
+      STR (SymbolWithLocEnv.mapi2
              (fn (symbol, strEntry) =>
-                 (Symbol.replaceLocSymbol loc symbol, 
+                 (SymbolWithLoc.replaceLocSymbol loc symbol,
                   replaceLocStrEntry loc strEntry))
              strentryMap)
 
   fun unionVarE code (varE1, varE2) =
-      SymbolEnv.unionWithi2
+      SymbolWithLocEnv.unionWithi2
         (fn ((symbol1, v1), (symbol2,v2)) =>
             (EU.enqueueError 
-               (Symbol.symbolToLoc symbol2, 
-                E.DuplicateVar(code ^ "v", symbol2));
+               (SymbolWithLoc.symbolToLoc symbol2,
+                E.DuplicateVar(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
         (varE1, varE2)
 
   fun unionTyE code (tyE1, tyE2) =
-      SymbolEnv.unionWithi2
+      SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1), (symbol2,v2)) =>
             (EU.enqueueError
-               (Symbol.symbolToLoc symbol2, 
-                E.DuplicateTypName(code ^ "v", symbol2)); 
+               (SymbolWithLoc.symbolToLoc symbol2,
+                E.DuplicateTypName(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
         (tyE1, tyE2)
@@ -694,32 +694,32 @@ in
   fun unionStrE code (STR map1, STR map2) =
       STR
         (
-         SymbolEnv.unionWithi2
+         SymbolWithLocEnv.unionWithi2
            (fn ((symbol1,v1), (symbol2,v2)) =>
                (EU.enqueueError
-                  (Symbol.symbolToLoc symbol2, 
-                   E.DuplicateStrName(code ^ "v", symbol2)); 
+                  (SymbolWithLoc.symbolToLoc symbol2,
+                   E.DuplicateStrName(code ^ "v", #symbol symbol2));
                 (symbol2, v2))
            )
            (map1, map2)
         )
             
   fun unionFunE code (funE1, funE2) =
-      SymbolEnv.unionWithi2
+      SymbolWithLocEnv.unionWithi2
         (fn ((symbol,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (Symbol.symbolToLoc symbol2, 
-                E.DuplicateFunctor(code ^ "f", symbol2));
+               (SymbolWithLoc.symbolToLoc symbol2,
+                E.DuplicateFunctor(code ^ "f", #symbol symbol2));
              (symbol2, v2))
         )
       (funE1, funE2)
 
   fun unionSigE code (sigE1, sigE2) =
-      SymbolEnv.unionWithi2
+      SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (Symbol.symbolToLoc symbol2, 
-                E.DuplicateSigname(code ^ "s", symbol2));
+               (SymbolWithLoc.symbolToLoc symbol2,
+                E.DuplicateSigname(code ^ "s", #symbol symbol2));
              (symbol2,v2))
         )
         (sigE1, sigE2)
@@ -768,8 +768,8 @@ in
         | (EXEXN {longsymbol=longsymbol1,...}, 
            EXEXN {longsymbol=longsymbol2,...})  =>
           let
-            val string1 = Symbol.longsymbolToString longsymbol1
-            val string2 = Symbol.longsymbolToString longsymbol2
+            val string1 = SymbolWithLoc.longsymbolToString longsymbol1
+            val string2 = SymbolWithLoc.longsymbolToString longsymbol2
           in
             String.compare(string1, string2)
           end
@@ -786,9 +786,9 @@ in
   fun findId (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
       case longsymbol of 
         nil => raise bug "nil to findId"
-      | symbol :: nil => SymbolEnv.findi(varE, symbol)
+      | symbol :: nil => SymbolWithLocEnv.findi(varE, symbol)
       | strsymbol :: path =>
-        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
+        (case SymbolWithLocEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
          | SOME (syn, {env,...}) => findId (env, path)
         )
@@ -798,12 +798,12 @@ in
       case longsymbol of 
         nil => raise bug "*** nil to findTstr *** "
       | symbol :: nil => 
-        (case SymbolEnv.findi(tyE, symbol) of
+        (case SymbolWithLocEnv.findi(tyE, symbol) of
            NONE => NONE
          | SOME (key, tstr) => SOME (key, tstr)
         )
       | strsymbol :: path =>
-        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
+        (case SymbolWithLocEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
          | SOME (symbolInEnv, {env,...}) => findTstr (env, path)
         )

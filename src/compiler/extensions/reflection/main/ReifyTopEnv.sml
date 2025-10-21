@@ -29,7 +29,7 @@ local
         SMLFormat.prettyPrint ppgenParameter expressions
       end
 
-  fun setVersion (sym, I.STEP n) = Symbol.setVersion (sym, n)
+  fun setVersion (sym, I.STEP n) = SymbolWithLoc.setVersion (sym, n)
     | setVersion (sym, I.OTHER _) = sym
     | setVersion (sym, I.SELF) = sym
 
@@ -54,8 +54,8 @@ in
       let
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
-        val Name = String loc (Symbol.symbolToString symbol)
-        val VarExp = Var {path = setVersion(longsymbol, version), ty = ty, id = id, opaque = false}
+        val Name = String loc (SymbolWithLoc.symbolToString symbol)
+        val VarExp = Var {path = setVersion (longsymbol, version), ty = ty, id = id, opaque = false}
         val InstVarExp = TCU.groundInst VarExp
         val ReifyFun = InstVar loc {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint loc, instTy = #ty InstVarExp}
         val ReifiedTerm = ApplyList loc ReifyFun [Int loc (!PrintControl.printMaxDepth), InstVarExp]
@@ -68,8 +68,8 @@ in
       end
     | I.IDEXVAR {exInfo={used, longsymbol, ty, version}, internalId = NONE, defRange,...} =>
       let
-        val accessLongsymbol = setVersion(longsymbol, version)
-        val Name = String loc (Symbol.symbolToString symbol)
+        val accessLongsymbol = map #symbol (setVersion(longsymbol, version))
+        val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val VarExp = MonoVar loc {path=accessLongsymbol, ty=ty}
@@ -88,7 +88,7 @@ in
       let
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
-        val Name = String loc (Symbol.symbolToString symbol)
+        val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val Term = Con loc (UP.REIFY_conInfo_BUILTIN loc) NONE
         val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXVarIdstatus defRange) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, Term, TyTerm]
@@ -114,7 +114,7 @@ in
                    (T.formatTyForUser
                       (sname envList)
                       (EvalIty.evalIty EvalIty.emptyContext argTy)))))
-        val Name = String loc (Symbol.symbolToString symbol)
+        val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXEXNIdstatus loc) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, ArgTyTerm]
             handle exn as TypeMismatch => raise exn
@@ -123,8 +123,8 @@ in
       end
     | I.IDEXEXNREP {used, longsymbol, ty, version,...} =>
       let
-        val Path = String loc (Symbol.longsymbolToString longsymbol)
-        val Name = String loc (Symbol.symbolToString symbol)
+        val Path = String loc (SymbolWithLoc.longsymbolToString longsymbol)
+        val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXEXNREPIdstatus loc) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, Path]
             handle exn as TypeMismatch => raise exn
@@ -138,7 +138,7 @@ in
 
   fun reifyTstr envList loc  (symbol, tstr) =
       let
-        val name = Symbol.symbolToString symbol
+        val name = SymbolWithLoc.symbolToString symbol
         val name = SmlppgUtil.makeToken name
         val tyVal = 
             case tstr of
@@ -153,10 +153,10 @@ in
       end
 
   fun filterSpecConVarE varE =
-      SymbolEnv.foldri
+      SymbolWithLocEnv.foldri
         (fn (name, I.IDSPECCON _, varE) => varE
-          | (name, idstatus, varE) => SymbolEnv.insert(varE, name, idstatus))
-      SymbolEnv.empty
+          | (name, idstatus, varE) => SymbolWithLocEnv.insert(varE, name, idstatus))
+      SymbolWithLocEnv.empty
       varE
 
   fun filterSpecConEnv (V.ENV {varE, tyE, strE}) =
@@ -203,8 +203,8 @@ in
         (* tyE *)
         val tyE = map (reifyTstr envList loc) 
                       (ListSorter.sort 
-                         (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-                         (SymbolEnv.listItemsi tyE))
+                         (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+                         (SymbolWithLocEnv.listItemsi tyE))
         val TyE = List loc (StringTy ** StringTy) tyE
 
         (* strE *)
@@ -212,23 +212,23 @@ in
             map (fn (name, {env, strKind, loc, definedSymbol}) => 
                     (Pair 
                        loc
-                       (String loc (Symbol.symbolToString name))
+                       (String loc (SymbolWithLoc.symbolToString name))
                        (reifyEnv (env::envList) loc env)))
                 (ListSorter.sort 
-                   (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-                   (SymbolEnv.listItemsi strE))
+                   (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+                   (SymbolWithLocEnv.listItemsi strE))
         val StrE = List loc (StringTy ** EnvTy loc) strE
 
         (* varE *)
         val varE = 
             (ListSorter.sort 
-               (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-               (SymbolEnv.listItemsi varE))
+               (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+               (SymbolWithLocEnv.listItemsi varE))
         val varE =
             foldr
             (fn ((symbol, idstatus), varE) =>
                 let
-                  val name = Symbol.symbolToString symbol
+                  val name = SymbolWithLoc.symbolToString symbol
                   val termIdstatusOpt = reifyIdstatus envList loc symbol idstatus
                 in
                   case termIdstatusOpt of
@@ -265,18 +265,18 @@ in
       | I.IDSPECCON _ => false
 
   fun filterVarE varE = 
-      SymbolEnv.foldri 
+      SymbolWithLocEnv.foldri
       (fn (name, idstatus, varE) => 
-          if printableIdstatus idstatus then SymbolEnv.insert(varE, name, idstatus)
+          if printableIdstatus idstatus then SymbolWithLocEnv.insert(varE, name, idstatus)
           else varE
       )
-      SymbolEnv.empty
+      SymbolWithLocEnv.empty
       varE
 
   fun filterEnv (V.ENV {varE, tyE, strE=V.STR strE}) =
       let
         val varE = filterVarE varE
-        val strE = SymbolEnv.map
+        val strE = SymbolWithLocEnv.map
                      (fn strEntry as {env,...} => 
                          strEntry # {env=filterEnv env})
                      strE
@@ -286,10 +286,10 @@ in
 
   fun reifySigE envList loc (sigE:V.sigE) =
       let
-        val sigE = SymbolEnv.map (fn {env,...} => filterEnv env) sigE
+        val sigE = SymbolWithLocEnv.map (fn {env,...} => filterEnv env) sigE
         val sigE = (ListSorter.sort 
-                      (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-                      (SymbolEnv.listItemsi sigE))
+                      (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+                      (SymbolWithLocEnv.listItemsi sigE))
         val sigE = prettyPrint sigWidth (V.printTy_sigEList (sname envList,nil,nil) sigE)
       in
         String loc sigE
@@ -299,7 +299,7 @@ in
       let
         (* 2012-8-7 ohori ad-hoc fix for bug 232_functorSigNewLines.sml *)
         val funEEntry = filterSpecCon funEEntry
-        val name = "functor " ^ (Symbol.symbolToString symbol)
+        val name = "functor " ^ (SymbolWithLoc.symbolToString symbol)
         val funE = name ^ (prettyPrint tstrWidth (V.printTy_funEEntry (sname envList,nil,nil) funEEntry))
       in
         String loc funE
@@ -309,8 +309,8 @@ in
       let
         val symbolFunEntryList = 
                 (ListSorter.sort 
-                   (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-                   (SymbolEnv.listItemsi funE))
+                   (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+                   (SymbolWithLocEnv.listItemsi funE))
         val termList = map (reifyFunEntry envList loc) symbolFunEntryList
       in
         List loc StringTy termList
@@ -326,9 +326,9 @@ in
   fun externalBind loc (string, Exp) Env version = 
       let
         val ty = #ty Exp
-        val symbol = Symbol.mkSymbol string loc
+        val symbol = SymbolWithLoc.mkSymbol string loc
         val longsymbol = [symbol]
-        val externalInfo = {path = setVersion(longsymbol, version), ty = ty}
+        val externalInfo = {path = map #symbol (setVersion(longsymbol, version)), ty = ty}
         val idstatus = 
             I.IDEXVAR {exInfo = {used = ref false, 
                                  longsymbol = longsymbol, ty = I.INFERREDTY ty, 

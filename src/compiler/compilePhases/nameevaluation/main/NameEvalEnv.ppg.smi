@@ -24,7 +24,7 @@ struct
                     varE:varE,
                     defRange:Loc.loc,
                     formals:IDCalc.formals, conSpec:IDCalc.conSpec}
-  type tyE = tstr SymbolEnv.map
+  type tyE = tstr SymbolWithLocEnv.map
   datatype strKind =
       SIGENV of SignatureID.id
     | STRENV of StructureID.id
@@ -38,11 +38,11 @@ struct
     | FUNARG of StructureID.id
   datatype strE
     = STR of {env:env, strKind:strKind, loc:Loc.loc, 
-              definedSymbol:Symbol.longsymbol} SymbolEnv.map
+              definedSymbol:SymbolWithLoc.longsymbol} SymbolWithLocEnv.map
   and env
     = ENV of {varE: varE, tyE: tyE, strE: strE}
   type strEntry = {env:env, strKind:strKind, loc:Loc.loc, 
-                   definedSymbol:Symbol.longsymbol}
+                   definedSymbol:SymbolWithLoc.longsymbol}
   type sigEntry = {env:env, sigId:SignatureID.id, loc:Loc.loc}
   type funEEntry = 
        {id: FunctorID.id,
@@ -50,17 +50,17 @@ struct
         version:IDCalc.version,
         argSigEnv: env,
         argStrEntry: strEntry,
-        argStrName: Symbol.symbol,
+        argStrName: SymbolWithLoc.symbol,
         dummyIdfunArgTy: IDCalc.ty option,
         polyArgTys: IDCalc.ty list,
         typidSet: TypID.Set.set,
         exnIdSet: ExnID.Set.set,
         bodyEnv: env,
         bodyVarExp: IDCalc.icexp}
-  type funE = funEEntry SymbolEnv.map
-  type sigE = sigEntry SymbolEnv.map
+  type funE = funEEntry SymbolWithLocEnv.map
+  type sigE = sigEntry SymbolWithLocEnv.map
   type topEnv = {Env:env, FunE:funE, SigE: sigE}
-  type sigEList = (Symbol.symbol * env) list
+  type sigEList = (SymbolWithLoc.symbol * env) list
   val format_tstr : tstr -> SMLFormat.FormatExpression.expression list
   val format_tyE : tyE -> SMLFormat.FormatExpression.expression list
   val format_strE : strE -> SMLFormat.FormatExpression.expression list
@@ -107,8 +107,8 @@ struct
   val emptyTyE : tyE
   val emptyEnv : env
   val emptyTopEnv : topEnv
-  val findTstr : env * Symbol.longsymbol -> (Symbol.symbol * tstr) option
-  val findId : env * Symbol.longsymbol -> (Symbol.symbol * IDCalc.idstatus) option
+  val findTstr : env * SymbolWithLoc.longsymbol -> (SymbolWithLoc.symbol * tstr) option
+  val findId : env * SymbolWithLoc.longsymbol -> (SymbolWithLoc.symbol * IDCalc.idstatus) option
 
 
   val replaceLocTyE : Loc.loc -> tyE -> tyE

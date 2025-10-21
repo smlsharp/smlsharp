@@ -17,10 +17,10 @@ struct
   type ty = AbsynTy.ty
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
-  type symbol = Symbol.symbol
+  type symbol = SymbolWithLoc.symbol
 
   (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (*% @formatter(AbsynTy.tvar) AbsynTyFormatter.format_tvar *)
   type tvar = AbsynTy.tvar

@@ -96,9 +96,9 @@ in
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
 
   fun tfvsTyE tfvKind path (tyE, set) =
-      SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
+      SymbolWithLocEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
-      SymbolEnv.foldri
+      SymbolWithLocEnv.foldri
         (fn (name, {env, strKind, loc, definedSymbol}, set) => 
             tfvsEnv tfvKind (path@[name]) (env, set))
         set
@@ -163,9 +163,9 @@ in
         IV.TSTR {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
   fun tfvsTyE tfvKind path (tyE, set) =
-      SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
+      SymbolWithLocEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
-      SymbolEnv.foldri
+      SymbolWithLocEnv.foldri
         (fn (name, {env, strKind, loc, definedSymbol}, set) => 
             tfvsEnv tfvKind (path@[name]) (env, set))
         set

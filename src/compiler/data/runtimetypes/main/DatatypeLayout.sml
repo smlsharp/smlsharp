@@ -124,16 +124,16 @@ struct
       RuntimeTypes.recordProp # {rep = R.DATA layout}
 
   fun classify conSet =
-      SymbolEnv.foldri
+      SymbolWithLocEnv.foldri
         (fn (name, SOME ty, {some, none}) =>
-            {some = (name, ty) :: some, none = none}
+            {some = (#symbol name, ty) :: some, none = none}
           | (name, NONE, {some, none}) =>
-            {some = some, none = name :: none})
+            {some = some, none = #symbol name :: none})
         {some = nil, none = nil}
         conSet
 
   fun makeTagMap conSet =
-      map Symbol.symbolToString (SymbolEnv.listKeys conSet)
+      map (Symbol.toString o #symbol) (SymbolWithLocEnv.listKeys conSet)
 
   fun propertyOf ty =
       case IDCalc.propertyOfIty ty of
@@ -146,7 +146,7 @@ struct
       | {some = nil, none = [_]} =>
         tagProp R.LAYOUT_SINGLE
       | {some = nil, none = [name1, name2]} =>
-        tagProp (R.LAYOUT_CHOICE {falseName = Symbol.symbolToString name1})
+        tagProp (R.LAYOUT_CHOICE {falseName = Symbol.toString name1})
       | {some = nil, none = _::_} =>
         tagProp (R.LAYOUT_TAGGED
                    (R.TAGGED_TAGONLY {tagMap = makeTagMap conSet}))
@@ -172,7 +172,7 @@ struct
         recordProp
           (R.LAYOUT_TAGGED
              (R.TAGGED_OR_NULL {tagMap = makeTagMap conSet,
-                                nullName = Symbol.symbolToString name}))
+                                nullName = Symbol.toString name}))
       | {some, none} =>
         recordProp (R.LAYOUT_TAGGED
                       (R.TAGGED_RECORD {tagMap = makeTagMap conSet}))

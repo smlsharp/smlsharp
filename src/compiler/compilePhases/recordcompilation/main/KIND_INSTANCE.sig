@@ -5,7 +5,6 @@
 include "../../../libs/ids/main/LocalID.smi"
 include "../../../data/types/main/Types.ppg.smi"
 include "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
-include "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 
 signature KIND_INSTANCE =
 sig

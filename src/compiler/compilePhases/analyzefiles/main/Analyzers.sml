@@ -6,8 +6,8 @@ structure Analyzers =
 struct
   val ignore2 = fn _ => ignore
 
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type idstatus = IDCalc.idstatus
 
   val startNameRefTracing = ref ignore

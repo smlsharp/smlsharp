@@ -12,7 +12,7 @@ struct
   structure P = PatternCalc
   structure PI = PatternCalcInterface
   structure E = ElaborateError
-  val eqSymbol = Symbol.eqSymbol
+  val eqSymbol = SymbolWithLoc.eqSymbol
 
   type tvset = (A.tvar * Loc.loc) list
   type btvEnv = {isEq:bool, kind:A.tvarKind} SymbolEnv.map
@@ -54,11 +54,11 @@ struct
 
   fun toBtvEnv (kindedTvars:A.kindedTvar list, loc) =
       foldl (fn ((tvar as {symbol, isEq}, kind), btvEnv) =>
-                (if SymbolEnv.inDomain (btvEnv, symbol)
+                (if SymbolEnv.inDomain (btvEnv, #symbol symbol)
                  then EU.enqueueError
                         (loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
-                 SymbolEnv.insert (btvEnv, symbol, {isEq=isEq, kind=kind})))
+                 SymbolEnv.insert (btvEnv, #symbol symbol, {isEq=isEq, kind=kind})))
             SymbolEnv.empty
             kindedTvars
             : btvEnv
@@ -71,7 +71,7 @@ struct
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
       foldl (fn (({symbol, isEq}, _), btvEnv) =>
-                SymbolEnv.insert (btvEnv, symbol, {isEq=isEq, kind=A.UNIV(nil,noloc)}))
+                SymbolEnv.insert (btvEnv, #symbol symbol, {isEq=isEq, kind=A.UNIV(nil,noloc)}))
             btvEnv
             tvset
 
@@ -85,7 +85,7 @@ struct
       foldl (fn (x, z) => union (z, f x)) empty l
 
   fun tyvarsTvar btvEnv (tv as {symbol,...}, loc) =
-      case SymbolEnv.find (btvEnv, symbol) of
+      case SymbolEnv.find (btvEnv, #symbol symbol) of
         NONE => singleton (tv, loc)
       | SOME {isEq, kind} => (checkEq (tv, isEq, loc); empty)
 
@@ -284,7 +284,7 @@ struct
   fun decideScope tyvarsFn btvEnv (explicitScope, x, loc) =
       let
         val _ = app (fn (tvar as {symbol,...}, _) =>
-                        if SymbolEnv.inDomain (btvEnv, symbol)
+                        if SymbolEnv.inDomain (btvEnv, #symbol symbol)
                         then EU.enqueueError
                                (loc, E.UserTvarScopedAtOuterDecl {tvar = tvar})
                         else ())

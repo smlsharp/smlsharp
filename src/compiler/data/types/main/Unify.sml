@@ -772,7 +772,7 @@ in
          {oprimId=id2,longsymbol=longsymbol2,match=m2})
       =
       OPrimID.eq(id1,id2) andalso
-      Symbol.eqLongsymbol(longsymbol1, longsymbol2) andalso
+      longsymbol1 = longsymbol2 andalso
       eqOverloadMatch btvEquiv (m1, m2)
   and eqOverloadMatch btvEquiv (match1, match2) =
       case (match1, match2) of
@@ -796,7 +796,7 @@ in
       | (T.OVERLOAD_CASE _, _) => false
       | (T.OVERLOAD_EXVAR {exVarInfo={path=path1,...}, instTyList=i1},
          T.OVERLOAD_EXVAR {exVarInfo={path=path2,...}, instTyList=i2}) =>
-        Symbol.eqLongsymbol (path1, path2) andalso eqTyListOpt btvEquiv (i1, i2)
+        path1 = path2 andalso eqTyListOpt btvEquiv (i1, i2)
       | (T.OVERLOAD_EXVAR _, _) => false
       | (T.OVERLOAD_PRIM {primInfo={primitive=p1,...}, instTyList=i1},
          T.OVERLOAD_PRIM {primInfo={primitive=p2,...}, instTyList=i2}) =>

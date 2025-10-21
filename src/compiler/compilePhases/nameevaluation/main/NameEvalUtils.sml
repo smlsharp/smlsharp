@@ -12,8 +12,8 @@ local
   structure V = NameEvalEnv
 in  
   val print = fn s => if !Bug.debugPrint then print s else ()
-  fun printSymbol symbol = print (Bug.prettyPrint (Symbol.format_symbol symbol))
-  fun printLongsymbol longsymbol = print (Bug.prettyPrint (Symbol.format_longsymbol longsymbol))
+  fun printSymbol symbol = print (Bug.prettyPrint (SymbolWithLoc.format_symbol symbol))
+  fun printLongsymbol longsymbol = print (Bug.prettyPrint (SymbolWithLoc.format_longsymbol longsymbol))
 (*
   fun printFixEnv fixEnv =
       if !Bug.debugPrint then 
@@ -491,19 +491,19 @@ in
 
   fun staticTyName (typId, envList) =
       let
-        exception FoundInEnv of Symbol.symbol list option
+        exception FoundInEnv of SymbolWithLoc.symbol list option
         fun sortBySymbol env =
             ListSorter.sort
               (fn ((x, _), (y, _)) =>
                   let
-                    val x = Symbol.symbolToString x
-                    val y = Symbol.symbolToString y
+                    val x = SymbolWithLoc.symbolToString x
+                    val y = SymbolWithLoc.symbolToString y
                   in
                     case Int.compare (size x, size y) of
                       EQUAL => String.compare (x, y)
                     | order => order
                   end)
-            (SymbolEnv.listItemsi env)
+            (SymbolWithLocEnv.listItemsi env)
         fun tstrId (V.TSTR {tfun,...}) = 
             (I.tfunId tfun 
              handle e => (print "staticTyName1\n"; raise e))
@@ -540,8 +540,8 @@ in
         val staticLongsymbolOpt = staticTyName (typId, envList)
       in
         case staticLongsymbolOpt of
-          SOME longsymbol => Symbol.longsymbolToString longsymbol
-        | NONE => "?." ^ Symbol.longsymbolToString (I.tfunLongsymbol tfun)
+          SOME longsymbol => SymbolWithLoc.longsymbolToString longsymbol
+        | NONE => "?." ^ SymbolWithLoc.longsymbolToString (I.tfunLongsymbol tfun)
           handle Bug.Bug _ => "?"
       end
           handle Bug.Bug _ => "??"
@@ -551,7 +551,7 @@ in
         val staticLongsymbolOpt = staticTyName (id, envList)
       in
         case staticLongsymbolOpt of
-          SOME longsymbol => Symbol.longsymbolToString longsymbol
+          SOME longsymbol => SymbolWithLoc.longsymbolToString longsymbol
         | NONE => "?." ^ Symbol.longsymbolToString longsymbol
           handle Bug.Bug _ => "?"
       end

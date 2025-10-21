@@ -12,57 +12,57 @@ _require "./NameEvalEnv.ppg.smi"
 structure NameEvalEnvPrims =
 struct
   datatype category  = datatype DBSchema.category
-  val findId : NameEvalEnv.env * Symbol.longsymbol 
-               -> (Symbol.symbol * IDCalc.idstatus) option
-  val checkProvideId : NameEvalEnv.env * Symbol.symbol 
+  val findId : NameEvalEnv.env * SymbolWithLoc.longsymbol
+               -> (SymbolWithLoc.symbol * IDCalc.idstatus) option
+  val checkProvideId : NameEvalEnv.env * SymbolWithLoc.symbol
                        -> IDCalc.idstatus option
   val checkProvideAliasId
-      : Symbol.symbol * NameEvalEnv.env * Symbol.longsymbol
+      : SymbolWithLoc.symbol * NameEvalEnv.env * SymbolWithLoc.longsymbol
         -> IDCalc.idstatus option
   val rebindId 
    : category -> 
-     NameEvalEnv.env * Symbol.symbol * IDCalc.idstatus -> NameEvalEnv.env
+     NameEvalEnv.env * SymbolWithLoc.symbol * IDCalc.idstatus -> NameEvalEnv.env
   val rebindIdLongsymbol
-    : category -> NameEvalEnv.env * Symbol.longsymbol * IDCalc.idstatus 
+    : category -> NameEvalEnv.env * SymbolWithLoc.longsymbol * IDCalc.idstatus
         -> NameEvalEnv.env
   val findCon 
-    : NameEvalEnv.env * Symbol.longsymbol -> (Symbol.symbol * IDCalc.idstatus) option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> (SymbolWithLoc.symbol * IDCalc.idstatus) option
 
   val findTstr
-    : NameEvalEnv.env * Symbol.longsymbol -> (Symbol.symbol * NameEvalEnv.tstr) option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> (SymbolWithLoc.symbol * NameEvalEnv.tstr) option
   val checkProvideTstr
-    : NameEvalEnv.env * Symbol.symbol -> NameEvalEnv.tstr option
+    : NameEvalEnv.env * SymbolWithLoc.symbol -> NameEvalEnv.tstr option
   val checkProvideAliasTstr
-    : NameEvalEnv.env * Symbol.longsymbol -> NameEvalEnv.tstr option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> NameEvalEnv.tstr option
   val rebindTstr
     : category 
-      -> NameEvalEnv.env * Symbol.symbol * NameEvalEnv.tstr
+      -> NameEvalEnv.env * SymbolWithLoc.symbol * NameEvalEnv.tstr
       -> NameEvalEnv.env
   val rebindTstrLongsymbol 
-    : category -> NameEvalEnv.env * Symbol.longsymbol * NameEvalEnv.tstr
+    : category -> NameEvalEnv.env * SymbolWithLoc.longsymbol * NameEvalEnv.tstr
       -> NameEvalEnv.env
 
   val checkSigId
-    : NameEvalEnv.env * Symbol.longsymbol -> IDCalc.idstatus option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> IDCalc.idstatus option
 
   val findStr
-    : NameEvalEnv.env * Symbol.longsymbol -> NameEvalEnv.strEntry option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> NameEvalEnv.strEntry option
   val rebindStr 
     : category
-      -> NameEvalEnv.env * Symbol.symbol * NameEvalEnv.strEntry
+      -> NameEvalEnv.env * SymbolWithLoc.symbol * NameEvalEnv.strEntry
       -> NameEvalEnv.env
   val checkProvideStr
-    : NameEvalEnv.env * Symbol.symbol -> NameEvalEnv.strEntry option
+    : NameEvalEnv.env * SymbolWithLoc.symbol -> NameEvalEnv.strEntry option
   val checkProvideAliasStr
-    : NameEvalEnv.env * Symbol.longsymbol -> NameEvalEnv.strEntry option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> NameEvalEnv.strEntry option
   val checkStr
-    : NameEvalEnv.env * Symbol.longsymbol -> NameEvalEnv.strEntry option
+    : NameEvalEnv.env * SymbolWithLoc.longsymbol -> NameEvalEnv.strEntry option
   val reinsertStr
-    : NameEvalEnv.env * Symbol.symbol * NameEvalEnv.strEntry
+    : NameEvalEnv.env * SymbolWithLoc.symbol * NameEvalEnv.strEntry
       -> NameEvalEnv.env
   val singletonStr
       : category
-        -> Symbol.symbol * NameEvalEnv.strEntry -> NameEvalEnv.env
+        -> SymbolWithLoc.symbol * NameEvalEnv.strEntry -> NameEvalEnv.env
 
   val varEWithVarE
       : NameEvalEnv.varE * NameEvalEnv.varE -> NameEvalEnv.varE
@@ -81,13 +81,13 @@ struct
   val bindEnvWithEnv : NameEvalEnv.env * NameEvalEnv.env -> NameEvalEnv.env
 
   val findFunETopEnv
-    : NameEvalEnv.topEnv * Symbol.symbol -> NameEvalEnv.funEEntry option
+    : NameEvalEnv.topEnv * SymbolWithLoc.symbol -> NameEvalEnv.funEEntry option
   val checkFunETopEnv
-    : NameEvalEnv.topEnv * Symbol.symbol -> NameEvalEnv.funEEntry option
+    : NameEvalEnv.topEnv * SymbolWithLoc.symbol -> NameEvalEnv.funEEntry option
   val checkProvideFunETopEnv
-    : NameEvalEnv.topEnv * Symbol.symbol -> NameEvalEnv.funEEntry option
+    : NameEvalEnv.topEnv * SymbolWithLoc.symbol -> NameEvalEnv.funEEntry option
   val rebindFunE
-    : category -> NameEvalEnv.funE * Symbol.symbol * NameEvalEnv.funEEntry
+    : category -> NameEvalEnv.funE * SymbolWithLoc.symbol * NameEvalEnv.funEEntry
       -> NameEvalEnv.funE
   val funEWithFunE : NameEvalEnv.funE * NameEvalEnv.funE -> NameEvalEnv.funE
   val bindFunEWithFunE
@@ -98,11 +98,11 @@ struct
     : NameEvalEnv.topEnv * NameEvalEnv.funE -> NameEvalEnv.topEnv
 
   val findSigETopEnv
-    : NameEvalEnv.topEnv * Symbol.symbol -> (Symbol.symbol * NameEvalEnv.sigEntry) option
+    : NameEvalEnv.topEnv * SymbolWithLoc.symbol -> (SymbolWithLoc.symbol * NameEvalEnv.sigEntry) option
   val checkSigETopEnv
-    : NameEvalEnv.topEnv * Symbol.symbol -> NameEvalEnv.sigEntry option
+    : NameEvalEnv.topEnv * SymbolWithLoc.symbol -> NameEvalEnv.sigEntry option
   val rebindSigE
-    : category -> NameEvalEnv.sigE * Symbol.symbol * NameEvalEnv.sigEntry
+    : category -> NameEvalEnv.sigE * SymbolWithLoc.symbol * NameEvalEnv.sigEntry
       -> NameEvalEnv.sigE
 (*
   val reinsertSigE

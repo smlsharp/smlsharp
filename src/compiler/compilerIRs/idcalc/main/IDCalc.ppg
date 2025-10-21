@@ -83,26 +83,26 @@ in
   val emptyProperties = Types.emptyProperties
 
   (*%
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
    *)
   (*% @prefix formatWithType_
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
    *)
   (*% @prefix print_
-     @formatter(Symbol.symbol) Symbol.format_symbol
+     @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
    *)
-  type symbol = Symbol.symbol
+  type symbol = SymbolWithLoc.symbol
 
   (*% 
-      @formatter(Symbol.longsymbol) Symbol.formatWithLoc_longsymbol
+      @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.formatWithLoc_longsymbol
    *)
   (*% @prefix formatWithType_
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+      @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.format_longsymbol
    *)
   (*% @prefix print_
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+      @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.format_longsymbol
    *)
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (* the ids (names) used in and after IDCalc *)
   (* type name *)
@@ -462,10 +462,11 @@ in
        SmlppgUtil.makeToken (tfunName (env, tfun))
 
    (*%
-     @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
+     @formatter(formatUserLongSymbol) SymbolWithLoc.formatUserLongSymbol
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
      @formatter(TypID.Map.map) formatEnclosedTypEnv
      @formatter(bool) SmlppgUtil.formatBinaryChoice
      @formatter(appList) TermFormat.formatAppList
@@ -484,6 +485,7 @@ in
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
      @formatter(TypID.Map.map) formatEnclosedTypEnv
      @formatter(bool) SmlppgUtil.formatBinaryChoice
      @formatter(appList) TermFormat.formatAppList
@@ -502,7 +504,8 @@ in
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
-     @formatter(formatSymbolMap) SmlppgUtil.formatSymbolMap
+     @formatter(SymbolWithLocEnv.map) TermFormat.formatEnclosedSymbolWithLocEnvPlain
+     @formatter(formatSymbolWithLocMap) SmlppgUtil.formatSymbolWithLocMap
      @formatter(TypID.Map.map) formatEnclosedTypEnv
      @formatter(bool) SmlppgUtil.formatBinaryChoice
      @formatter(appList) TermFormat.formatAppList
@@ -517,7 +520,7 @@ in
      @formatter(optionalList) TermFormat.formatOptionalList
      @formatter(recordTy) TermFormat.formatRecordTy
      @formatter(seqList) TermFormat.formatSeqList
-     @formatter(formatGenericSymbolMap) SmlppgUtil.formatGenericSymbolMap
+     @formatter(formatGenericSymbolWithLocMap) SmlppgUtil.formatGenericSymbolWithLocMap
      @formatter(ifOpaque) ifOpaque
      @formatter(tfunOriginalPath) format_tfun
      @formatter(staticTfunName) staticTfunName
@@ -2344,11 +2347,11 @@ in
        *)
       (*% @prefix print_
           @format(conEntry senv) 
-             senv:formatSymbolMap(conEntry)(,,~2[+1"|"+],)
+             senv:formatSymbolWithLocMap(conEntry)(,,~2[+1"|"+],)
           @format:conEntry(ty opt) 
             opt(ty()(sname,,))(+1 "of" +,)
        *)
-       (ty option) SymbolEnv.map
+       (ty option) SymbolWithLocEnv.map
 
   and varE
     = (*%
@@ -2371,9 +2374,9 @@ in
        *)
       (*% @prefix print_
          @format(idstatus senv)
-            senv:formatGenericSymbolMap(idstatus,sname)(\n,+1,)
+            senv:formatGenericSymbolWithLocMap(idstatus,sname)(\n,+1,)
        *)
-      idstatus SymbolEnv.map
+      idstatus SymbolWithLocEnv.map
 
   and overloadCase =
     (*%
@@ -2607,16 +2610,16 @@ in
       ICERROR => Loc.noloc
     | ICCONSTANT (_, loc) => loc
     | ICSIZEOF (_, loc) => loc
-    | ICVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXVAR_TOBETYPED  {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICVAR {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXVAR {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXVAR_TOBETYPED  {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
     | ICBUILTINVAR  {primitive, ty, loc} => loc
-    | ICCON {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXN_CONSTRUCTOR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXEXN_CONSTRUCTOR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-    | ICOPRIM {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICCON {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXN {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXN_CONSTRUCTOR {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXEXN_CONSTRUCTOR {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICEXEXN {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+    | ICOPRIM {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
     | ICTYPED (icexp, ty, loc) => loc
 (*
     | ICSIGTYPED {icexp, ty, loc, revealKey} => loc
@@ -2656,11 +2659,11 @@ in
       case pat of
         ICPATERROR => Loc.noloc
       | ICPATWILD loc => loc
-      | ICPATVAR_TRANS {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | ICPATVAR_OPAQUE {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | ICPATCON {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | ICPATEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | ICPATEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATVAR_TRANS {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+      | ICPATVAR_OPAQUE {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+      | ICPATCON {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+      | ICPATEXN {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
+      | ICPATEXEXN {longsymbol,...} => SymbolWithLoc.longsymbolToLoc longsymbol
       | ICPATCONSTANT (_, loc) => loc
       | ICPATCONSTRUCT {con, arg, loc} => loc
       | ICPATRECORD {flex, fields, loc} => loc
@@ -2699,13 +2702,13 @@ in
       | ICVALPOLYREC (_,loc) => loc
       | ICEXND (exdecls, loc) => loc
       | ICEXNTAGD (extagdecls, loc) => loc
-      | ICEXPORTVAR {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXPORTVAR {exInfo, id} => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
       | ICEXPORTTYPECHECKEDVAR {longsymbol, version, id} => Loc.noloc
-      | ICEXPORTFUNCTOR {exInfo, id,...} => Symbol.longsymbolToLoc (#longsymbol exInfo)
-      | ICEXPORTEXN {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
-      | ICEXTERNVAR exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
-      | ICEXTERNEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
-      | ICBUILTINEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXPORTFUNCTOR {exInfo, id,...} => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXPORTEXN {exInfo, id} => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXTERNVAR exInfo => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXTERNEXN exInfo => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
+      | ICBUILTINEXN exInfo => SymbolWithLoc.longsymbolToLoc (#longsymbol exInfo)
       | ICTYCASTDECL (tycastList, icdeclList, loc) => loc
       | ICOVERLOADDEF {boundtvars, id, longsymbol, overloadCase, loc} => loc
 

@@ -15,9 +15,9 @@ struct
   val getWarnings : unit -> UserError.errorInfo list
   val enqueueError : Loc.loc * exn -> unit
   val enqueueWarning : Loc.loc * exn -> unit
-  val checkSymbolDuplication' : ('a -> Symbol.symbol option)
+  val checkSymbolDuplication' : ('a -> SymbolWithLoc.symbol option)
                              -> 'a list -> (Symbol.symbol -> exn) -> unit
-  val checkSymbolDuplication : ('a -> Symbol.symbol)
+  val checkSymbolDuplication : ('a -> SymbolWithLoc.symbol)
                              -> 'a list -> (Symbol.symbol -> exn) -> unit
   val checkRecordLabelDuplication
       : ('a -> RecordLabel.label)

@@ -186,15 +186,15 @@ structure S = AbsynSQL
     | WORD of {radix:StringCvt.radix, digits:string}
 
 %nonterm
-      id of Symbol.symbol
-    | id_noEQ of Symbol.symbol
-    | id_noEQSTAR of Symbol.symbol
-    | id_noSQL of Symbol.symbol
-    | alphabetic_id of Symbol.symbol
+      id of A.symbol
+    | id_noEQ of A.symbol
+    | id_noEQSTAR of A.symbol
+    | id_noSQL of A.symbol
+    | alphabetic_id of A.symbol
 
-    | longid of Symbol.longsymbol
-    | longid_noSQL of Symbol.longsymbol
-    | tylongid of Symbol.longsymbol
+    | longid of A.longsymbol
+    | longid_noSQL of A.longsymbol
+    | tylongid of A.longsymbol
 
     | label of RecordLabel.label
 
@@ -213,9 +213,9 @@ structure S = AbsynSQL
     | longsymbolseq of Symbol.longsymbol list
     | longsymboleqrow of Symbol.longsymbol list
 *)
-    | idseq of Symbol.symbol list
-    | longidseq of Symbol.longsymbol list
-    | longideqrow of Symbol.longsymbol list
+    | idseq of A.symbol list
+    | longidseq of A.longsymbol list
+    | longideqrow of A.longsymbol list
 
     | appexp of A.exp
     | atexp of A.exp
@@ -227,31 +227,30 @@ structure S = AbsynSQL
     | constant of A.constant * A.loc
     | condec of
        {opFlag:bool,
-        conSymbol:Symbol.symbol,
+        conSymbol:A.symbol,
         tyOpt:A.ty option,
         loc:A.loc}
-    | exndec of bool * Symbol.symbol * A.ty option
+    | exndec of bool * A.symbol * A.ty option
     | combind of
        {opFlag:bool,
-        conSymbol:Symbol.symbol,
+        conSymbol:A.symbol,
         tyOpt:A.ty option,
         loc:A.loc} list
-    | condesc of (Symbol.symbol * A.ty option * A.loc) list
+    | condesc of (A.symbol * A.ty option * A.loc) list
     | dec of A.dec
     | decs of A.dec list
     | decseq_semicolon of A.dec list
     | datbind of A.datbind list
     | datdesc of
-      (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc) list
+      (A.tvar list * A.symbol * (A.symbol * A.ty option * A.loc) list * A.loc) list
     | exprow of (RecordLabel.label * A.exp) list
     | expseq_comma of A.exp list
     | expseq_semicolon of A.exp list
     | exp of A.exp
     | expOrSQL of A.exp
-    | export of Symbol.longsymbol
     | exbinds of A.exbind list
     | exbind of A.exbind
-    | exdesc of (Symbol.symbol * A.ty option * A.loc) list
+    | exdesc of (A.symbol * A.ty option * A.loc) list
     | fields of bool * (A.patrow list)
     | followpatrow of A.patrow list
     | fvalbind of
@@ -262,7 +261,7 @@ structure S = AbsynSQL
     | funbindand of A.funbind
     | funbindseq of A.funbind list
     | int of {radix:StringCvt.radix, digits:string}
-    | longtyconeqrow of Symbol.longsymbol list
+    | longtyconeqrow of A.longsymbol list
     | kindSeq of {properties : string list,
                   recordKind : (RecordLabel.label * A.ty) list option}
     | match of (A.pat * A.exp * A.loc) list
@@ -274,7 +273,7 @@ structure S = AbsynSQL
     | optty of A.ty option
     | patseq_comma of A.pat list
     | patlongid of A.longsymbol
-    | patlongsymbol of Symbol.longsymbol
+    | patlongsymbol of A.longsymbol
     | pat of A.pat
     | start of A.absyn
     | strexpbasic of A.strexp
@@ -286,12 +285,12 @@ structure S = AbsynSQL
     | strdecseq_semicolon of A.strdec list
     | strbind of A.strbind
     | strbindand of A.strbind
-    | sigbind of (Symbol.symbol * A.sigexp) list
+    | sigbind of (A.symbol * A.sigexp) list
     | spec of A.spec
-    | strdesc of (Symbol.symbol * A.sigexp) list
+    | strdesc of (A.symbol * A.sigexp) list
     | strbindseq of A.strbind list
-    | sigidseq of Symbol.symbol list
-    | sharespec of Symbol.longsymbol list
+    | sigidseq of A.symbol list
+    | sharespec of A.longsymbol list
     | sigexpbasic of A.sigexp
     | sigexpwhere of A.sigexp
     | sigexp of A.sigexp
@@ -299,7 +298,7 @@ structure S = AbsynSQL
     | ty of A.ty
     | ty0 of A.ty
     | ty1 of A.ty
-    | tycon of Symbol.symbol
+    | tycon of A.symbol
     | tyseq_comma of A.ty list
     | tyseq of A.ty list
     | tyrow_flex of bool * (RecordLabel.label * A.ty) list
@@ -355,22 +354,22 @@ structure S = AbsynSQL
     | typbind of
       {
         tyvars : A.tvar list,
-        tyConSymbol : Symbol.symbol,
+        tyConSymbol : A.symbol,
         ty : A.ty * A.loc,
         loc : A.loc
       } list
-    | typdesc of (A.tvar list * Symbol.symbol) list
+    | typdesc of (A.tvar list * A.symbol) list
     | useFile of A.top
     | tops of A.top list
     | topdecs of A.topdec list
     | topdec of A.topdec
     | interface of A.interface
     | unit of A.compile_unit
-    | valdesc of (Symbol.symbol * A.ty) list
+    | valdesc of (A.symbol * A.ty) list
     | valbind of (A.pat * A.exp * A.loc) list
 
 (* polymorphic recursion *)
-    | pvalbind of (Symbol.symbol * A.ty * A.exp * A.loc) list
+    | pvalbind of (A.symbol * A.ty * A.exp * A.loc) list
 
 (* sql *)
     | sqlserver of (string * A.exp) list
@@ -489,117 +488,117 @@ constant
 
 alphabetic_id
         : ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
         | ALL
-          (Symbol.mkSymbol "all" (ALLleft, ALLright))
+          (SymbolWithLoc.mkSymbol "all" (ALLleft, ALLright))
         | ASC
-          (Symbol.mkSymbol "asc" (ASCleft, ASCright))
+          (SymbolWithLoc.mkSymbol "asc" (ASCleft, ASCright))
         | BEGIN
-          (Symbol.mkSymbol "begin" (BEGINleft, BEGINright))
+          (SymbolWithLoc.mkSymbol "begin" (BEGINleft, BEGINright))
         | BY
-          (Symbol.mkSymbol "by" (BYleft, BYright))
+          (SymbolWithLoc.mkSymbol "by" (BYleft, BYright))
         | COMMIT
-          (Symbol.mkSymbol "commit" (COMMITleft, COMMITright))
+          (SymbolWithLoc.mkSymbol "commit" (COMMITleft, COMMITright))
         | CROSS
-          (Symbol.mkSymbol "cross" (CROSSleft, CROSSright))
+          (SymbolWithLoc.mkSymbol "cross" (CROSSleft, CROSSright))
         | DEFAULT
-          (Symbol.mkSymbol "default" (DEFAULTleft, DEFAULTright))
+          (SymbolWithLoc.mkSymbol "default" (DEFAULTleft, DEFAULTright))
         | DELETE
-          (Symbol.mkSymbol "delete" (DELETEleft, DELETEright))
+          (SymbolWithLoc.mkSymbol "delete" (DELETEleft, DELETEright))
         | DESC
-          (Symbol.mkSymbol "desc" (DESCleft, DESCright))
+          (SymbolWithLoc.mkSymbol "desc" (DESCleft, DESCright))
         | DISTINCT
-          (Symbol.mkSymbol "distinct" (DISTINCTleft, DISTINCTright))
+          (SymbolWithLoc.mkSymbol "distinct" (DISTINCTleft, DISTINCTright))
         | EXISTS
-          (Symbol.mkSymbol "exists" (EXISTSleft, EXISTSright))
+          (SymbolWithLoc.mkSymbol "exists" (EXISTSleft, EXISTSright))
         | FALSE
-          (Symbol.mkSymbol "false" (FALSEleft, FALSEright))
+          (SymbolWithLoc.mkSymbol "false" (FALSEleft, FALSEright))
         | FETCH
-          (Symbol.mkSymbol "fetch" (FETCHleft, FETCHright))
+          (SymbolWithLoc.mkSymbol "fetch" (FETCHleft, FETCHright))
         | FIRST
-          (Symbol.mkSymbol "first" (FIRSTleft, FIRSTright))
+          (SymbolWithLoc.mkSymbol "first" (FIRSTleft, FIRSTright))
         | FROM
-          (Symbol.mkSymbol "from" (FROMleft, FROMright))
+          (SymbolWithLoc.mkSymbol "from" (FROMleft, FROMright))
         | GROUP
-          (Symbol.mkSymbol "group" (GROUPleft, GROUPright))
+          (SymbolWithLoc.mkSymbol "group" (GROUPleft, GROUPright))
         | HAVING
-          (Symbol.mkSymbol "having" (HAVINGleft, HAVINGright))
+          (SymbolWithLoc.mkSymbol "having" (HAVINGleft, HAVINGright))
         | INNER
-          (Symbol.mkSymbol "inner" (INNERleft, INNERright))
+          (SymbolWithLoc.mkSymbol "inner" (INNERleft, INNERright))
         | INSERT
-          (Symbol.mkSymbol "insert" (INSERTleft, INSERTright))
+          (SymbolWithLoc.mkSymbol "insert" (INSERTleft, INSERTright))
         | INTO
-          (Symbol.mkSymbol "into" (INTOleft, INTOright))
+          (SymbolWithLoc.mkSymbol "into" (INTOleft, INTOright))
         | IS
-          (Symbol.mkSymbol "is" (ISleft, ISright))
+          (SymbolWithLoc.mkSymbol "is" (ISleft, ISright))
         | JOIN
-          (Symbol.mkSymbol "join" (JOINleft, JOINright))
+          (SymbolWithLoc.mkSymbol "join" (JOINleft, JOINright))
         | LIMIT
-          (Symbol.mkSymbol "limit" (LIMITleft, LIMITright))
+          (SymbolWithLoc.mkSymbol "limit" (LIMITleft, LIMITright))
         | NATURAL
-          (Symbol.mkSymbol "natural" (NATURALleft, NATURALright))
+          (SymbolWithLoc.mkSymbol "natural" (NATURALleft, NATURALright))
         | NEXT
-          (Symbol.mkSymbol "next" (NEXTleft, NEXTright))
+          (SymbolWithLoc.mkSymbol "next" (NEXTleft, NEXTright))
         | NOT
-          (Symbol.mkSymbol "not" (NOTleft, NOTright))
+          (SymbolWithLoc.mkSymbol "not" (NOTleft, NOTright))
         | NULL
-          (Symbol.mkSymbol "null" (NULLleft, NULLright))
+          (SymbolWithLoc.mkSymbol "null" (NULLleft, NULLright))
         | OFFSET
-          (Symbol.mkSymbol "offset" (OFFSETleft, OFFSETright))
+          (SymbolWithLoc.mkSymbol "offset" (OFFSETleft, OFFSETright))
         | ON
-          (Symbol.mkSymbol "on" (ONleft, ONright))
+          (SymbolWithLoc.mkSymbol "on" (ONleft, ONright))
         | ONLY
-          (Symbol.mkSymbol "only" (ONLYleft, ONLYright))
+          (SymbolWithLoc.mkSymbol "only" (ONLYleft, ONLYright))
         | OR
-          (Symbol.mkSymbol "or" (ORleft, ORright))
+          (SymbolWithLoc.mkSymbol "or" (ORleft, ORright))
         | ORDER
-          (Symbol.mkSymbol "order" (ORDERleft, ORDERright))
+          (SymbolWithLoc.mkSymbol "order" (ORDERleft, ORDERright))
         | ROLLBACK
-          (Symbol.mkSymbol "rollback" (ROLLBACKleft, ROLLBACKright))
+          (SymbolWithLoc.mkSymbol "rollback" (ROLLBACKleft, ROLLBACKright))
         | ROW
-          (Symbol.mkSymbol "row" (ROWleft, ROWright))
+          (SymbolWithLoc.mkSymbol "row" (ROWleft, ROWright))
         | ROWS
-          (Symbol.mkSymbol "rows" (ROWSleft, ROWSright))
+          (SymbolWithLoc.mkSymbol "rows" (ROWSleft, ROWSright))
         | SELECT
-          (Symbol.mkSymbol "select" (SELECTleft, SELECTright))
+          (SymbolWithLoc.mkSymbol "select" (SELECTleft, SELECTright))
         | SET
-          (Symbol.mkSymbol "set" (SETleft, SETright))
+          (SymbolWithLoc.mkSymbol "set" (SETleft, SETright))
         | TRUE
-          (Symbol.mkSymbol "true" (TRUEleft, TRUEright))
+          (SymbolWithLoc.mkSymbol "true" (TRUEleft, TRUEright))
         | UNKNOWN
-          (Symbol.mkSymbol "unknown" (UNKNOWNleft, UNKNOWNright))
+          (SymbolWithLoc.mkSymbol "unknown" (UNKNOWNleft, UNKNOWNright))
         | UPDATE
-          (Symbol.mkSymbol "update" (UPDATEleft, UPDATEright))
+          (SymbolWithLoc.mkSymbol "update" (UPDATEleft, UPDATEright))
         | VALUES
-          (Symbol.mkSymbol "values" (VALUESleft, VALUESright))
+          (SymbolWithLoc.mkSymbol "values" (VALUESleft, VALUESright))
 
 id_noEQSTAR
         : alphabetic_id
           (alphabetic_id)
         | SYMBOLICID
-          (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+          (SymbolWithLoc.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
 
 id_noEQ
         : id_noEQSTAR
           (id_noEQSTAR)
         | ASTERISK
-          (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
+          (SymbolWithLoc.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 id
         : id_noEQ
           (id_noEQ)
         | EQ
-          (Symbol.mkSymbol "=" (EQleft, EQright))
+          (SymbolWithLoc.mkSymbol "=" (EQleft, EQright))
 
 id_noSQL
         : ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
         | SYMBOLICID
-          (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+          (SymbolWithLoc.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
         | EQ
-          (Symbol.mkSymbol "=" (EQleft, EQright))
+          (SymbolWithLoc.mkSymbol "=" (EQleft, EQright))
         | ASTERISK
-          (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
+          (SymbolWithLoc.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 longid
         : id
@@ -635,8 +634,8 @@ patlongid
 
  expid : longid (longid)
 
- symbol_noEQSTAR     : id_noEQSTAR (Symbol.mkSymbol id_noEQSTAR (id_noEQSTARleft, id_noEQSTARright))
- symbol              : id (Symbol.mkSymbol id (idleft,idright))
+ symbol_noEQSTAR     : id_noEQSTAR (SymbolWithLoc.mkSymbol id_noEQSTAR (id_noEQSTARleft, id_noEQSTARright))
+ symbol              : id (SymbolWithLoc.mkSymbol id (idleft,idright))
  longsymbol          : longid (Symbol.mkLongsymbol longid (longidleft,longidright))
  longtycon           : longtyconid (Symbol.mkLongsymbol longtyconid (longtyconidleft,longtyconidright))
  explongsymbol       : expid (Symbol.mkLongsymbol expid (expidleft,expidright))
@@ -736,7 +735,7 @@ atexp
 
 label
         : id
-          (RecordLabel.fromString (Symbol.symbolToString id))
+          (RecordLabel.fromString (SymbolWithLoc.symbolToString id))
         | INTLAB
           (RecordLabel.fromString INTLAB)
         | STRING
@@ -1156,7 +1155,7 @@ sqltable
 
 sqltableid
         : HASH id PERIOD label
-          ({db = {string = Symbol.symbolToString id, loc = (HASHleft, idright)},
+          ({db = SymbolWithLoc.replaceLocSymbol (HASHleft, idright) id,
             label = label, loc = (HASHleft, labelright)})
 
 sqlInsertCommand
@@ -1584,20 +1583,20 @@ exndec
 
 tyvar
         : TYVAR
-          ({symbol = Symbol.mkSymbol TYVAR (TYVARleft, TYVARright),
+          ({symbol = SymbolWithLoc.mkSymbol TYVAR (TYVARleft, TYVARright),
             isEq = false})
         | EQTYVAR
-          ({symbol = Symbol.mkSymbol EQTYVAR (EQTYVARleft, EQTYVARright),
+          ({symbol = SymbolWithLoc.mkSymbol EQTYVAR (EQTYVARleft, EQTYVARright),
             isEq = true})
 
 free_tyvar
         : FREE_TYVAR
-          ({symbol = Symbol.mkSymbol
+          ({symbol = SymbolWithLoc.mkSymbol
                        FREE_TYVAR
                        (FREE_TYVARleft, FREE_TYVARright),
             isEq = false})
         | FREE_EQTYVAR
-          ({symbol = Symbol.mkSymbol
+          ({symbol = SymbolWithLoc.mkSymbol
                        FREE_EQTYVAR
                        (FREE_EQTYVARleft, FREE_EQTYVARright),
             isEq=true})
@@ -1747,7 +1746,7 @@ tycon
         : id_noEQSTAR
           (id_noEQSTAR)
         | EQ
-          (Symbol.mkSymbol "=" (EQleft, EQright))
+          (SymbolWithLoc.mkSymbol "=" (EQleft, EQright))
 
 tyrow
         : label COLON ty
@@ -1882,10 +1881,10 @@ kindSeq
         | HASH LBRACE tyrow RBRACE
           ({properties = nil, recordKind = SOME tyrow})
         | HASH alphabetic_id
-          ({properties = [Symbol.symbolToString alphabetic_id],
+          ({properties = [SymbolWithLoc.symbolToString alphabetic_id],
             recordKind = NONE})
         | HASH alphabetic_id kindSeq
-          ({properties = Symbol.symbolToString alphabetic_id
+          ({properties = SymbolWithLoc.symbolToString alphabetic_id
                          :: #properties kindSeq,
             recordKind = #recordKind kindSeq})
 

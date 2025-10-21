@@ -31,7 +31,7 @@ local
         (!counter before counter := !counter + 1,
          case longsymbol of
            nil => ""
-         | _ => NameMangle.mangle (Symbol.longsymbolToLongid longsymbol)) : id
+         | _ => NameMangle.mangle (map Symbol.toString longsymbol)) : id
 
     fun derive ((_, name):id) =
         (!counter before counter := !counter + 1, name) : id

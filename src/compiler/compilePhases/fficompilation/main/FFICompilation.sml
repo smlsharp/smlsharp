@@ -70,7 +70,7 @@ struct
       then (fn x => x, (exp, ty))
       else
         let
-          val var = newVar loc ty
+          val var = newVar ty
         in
           (fn body => D.TPLET {decls = [C.TPVAL ((var, exp), loc)],
                                body = body,
@@ -127,10 +127,10 @@ struct
     | composeArg loc [exp] = exp
     | composeArg loc exps = implodeRecord loc (RecordLabel.tupleList exps)
 
-  fun decomposeArg loc nil = (newVar loc BT.unitTy, nil)
-    | decomposeArg loc [ty] = let val v = newVar loc ty in (v, [D.TPVAR v]) end
+  fun decomposeArg loc nil = (newVar BT.unitTy, nil)
+    | decomposeArg loc [ty] = let val v = newVar ty in (v, [D.TPVAR v]) end
     | decomposeArg loc tys =
-      let val var = newVar loc (T.RECORDty (RecordLabel.tupleMap tys))
+      let val var = newVar (T.RECORDty (RecordLabel.tupleMap tys))
       in (var, explodeRecord loc (D.TPVAR var))
       end
 
@@ -199,7 +199,7 @@ struct
               getOpt (attributes, FFIAttributes.defaultFFIAttributes)
           val (argTys, importFns) =
               ListPair.unzip (map stubImport argTys)
-          val ffiArgVars = map (newVar loc) argTys
+          val ffiArgVars = map newVar argTys
           val argExps = zipApp importFns (map D.TPVAR ffiArgVars)
           val argExp = composeArg loc argExps
           val (retTys, exportFns) = ListPair.unzip (map stubExport retTys)

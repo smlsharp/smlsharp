@@ -24,8 +24,8 @@ structure IDCalc =
 struct
   type loc = Loc.loc
   datatype version = datatype InterfaceName.provider
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type typId = TypID.id
   type conId = ConID.id
   type varId = VarID.id
@@ -74,7 +74,7 @@ struct
                    admitsEq:bool,
                    longsymbol:longsymbol,
                    formals:formals,
-                   conSpec:(ty option) SymbolEnv.map,
+                   conSpec:(ty option) SymbolWithLocEnv.map,
                    conIDSet : ConID.Set.set,
                    liftedTys:liftedTys,
                    dtyKind:dtyKind
@@ -84,15 +84,15 @@ struct
                   longsymbol:longsymbol, 
                   admitsEq:bool,
                   formals:formals,
-                  conSpec:(ty option) SymbolEnv.map,
+                  conSpec:(ty option) SymbolWithLocEnv.map,
                   liftedTys:liftedTys}
     | REALIZED of {id:typId, tfun:tfun}
     | INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
     | FUN_DTY of {tfun:tfun,
                   longsymbol:longsymbol, 
-                  varE:idstatus SymbolEnv.map,
+                  varE:idstatus SymbolWithLocEnv.map,
                   formals:formals,
-                  conSpec:(ty option) SymbolEnv.map,
+                  conSpec:(ty option) SymbolWithLocEnv.map,
                   liftedTys:liftedTys}
 
   and dtyKind
@@ -259,8 +259,8 @@ struct
   type kindedTvar = tvar * tvarKind
   type conInfo = {longsymbol: longsymbol, ty:ty, id: conId}
   type exnInfo = {longsymbol: longsymbol, id: exnId, ty:ty}
-  type conSpec = (ty option) SymbolEnv.map
-  type varE = idstatus SymbolEnv.map
+  type conSpec = (ty option) SymbolWithLocEnv.map
+  type varE = idstatus SymbolWithLocEnv.map
   type tycast = {from:tfun, to:tfun}
   type scopedTvars = kindedTvar list
   type overloadCase 
@@ -412,7 +412,7 @@ struct
   val pruneTfun : tfun -> tfun
   val tfunArity : tfun -> int
   val tfunFormals : tfun -> formals
-  val tfunLongsymbol : tfun -> Symbol.longsymbol
+  val tfunLongsymbol : tfun -> SymbolWithLoc.longsymbol
   val tfunId : tfun -> typId
   val tfunAdmitsEq : tfun -> bool
   val tfunLiftedTys : tfun -> liftedTys

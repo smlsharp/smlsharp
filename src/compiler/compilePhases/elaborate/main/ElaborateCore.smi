@@ -16,8 +16,8 @@ _require local "./ElaborateForeach.smi"
 
 structure ElaborateCore =
   struct
-    val checkReservedNameForConstructorBind : Symbol.symbol -> unit
-    val checkReservedNameForValBind : Symbol.symbol -> unit
+    val checkReservedNameForConstructorBind : SymbolWithLoc.symbol -> unit
+    val checkReservedNameForValBind : SymbolWithLoc.symbol -> unit
     val elabFFITy : Absyn.ffiTy -> PatternCalc.ffiTy
     val elabExp : (Fixity.fixity * Loc.loc) SymbolEnv.map
                   -> Absyn.exp

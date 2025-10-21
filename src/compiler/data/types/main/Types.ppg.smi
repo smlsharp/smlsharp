@@ -23,7 +23,7 @@ struct
   val refTypId : TypID.id
 
   datatype provider = datatype InterfaceName.provider
-  type utvar = {symbol:Symbol.symbol, id:TvarID.id, isEq:bool, lifted:bool}
+  type utvar = {symbol:SymbolWithLoc.symbol, id:TvarID.id, isEq:bool, lifted:bool}
   type lambdaDepth = int
 
   datatype kindProperty = REIFY | BOXED | UNBOXED | EQ
@@ -218,7 +218,7 @@ struct
       }
 
   type btvEnv = kind BoundTypeVarID.Map.map
-  type varInfo = {path:Symbol.longsymbol, id:VarID.id, ty:ty, opaque:bool}
+  type varInfo = {path:SymbolWithLoc.longsymbol, id:VarID.id, ty:ty, opaque:bool}
   type exVarInfo = {path:Symbol.longsymbol, ty:ty}
   type primInfo = {primitive : BuiltinPrimitive.primitive, ty : ty}
   type oprimInfo = {ty : ty, path : Symbol.longsymbol, id : OPrimID.id}

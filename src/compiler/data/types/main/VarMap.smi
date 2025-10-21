@@ -6,7 +6,7 @@ _require "../../../libs/ids/main/LocalID.smi"
 
 structure VarOrd = 
 struct
-  type ord_key = {longsymbol:Symbol.longsymbol, id:VarID.id}
+  type ord_key = {longsymbol:SymbolWithLoc.longsymbol, id:VarID.id}
   val compare : ord_key * ord_key -> order
 end
 

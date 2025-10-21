@@ -12,7 +12,7 @@ local
   structure BT = BuiltinTypes
   fun bug s = Bug.Bug ("TypedCalcUtil: " ^ s)
 in
-  fun newTCVarInfo loc (ty:T.ty) =
+  fun newTCVarInfo (ty:T.ty) =
       let
         val newVarId = VarID.generate()
       in
@@ -22,9 +22,9 @@ in
       case exp of
         TC.TPERROR => Loc.noloc
       | TC.TPCONSTANT {const, ty, loc} => loc
-      | TC.TPVAR {path,...} => Symbol.longsymbolToLoc path
+      | TC.TPVAR {path,...} => SymbolWithLoc.longsymbolToLoc path
       | TC.TPEXVAR ({path,...}, loc) => loc
-      | TC.TPRECFUNVAR {var={path,...},...} => Symbol.longsymbolToLoc path
+      | TC.TPRECFUNVAR {var={path,...},...} => SymbolWithLoc.longsymbolToLoc path
       | TC.TPFNM  {loc,...} => loc
       | TC.TPAPPM {loc,...} => loc
       | TC.TPDATACONSTRUCT {loc,...} => loc
@@ -229,7 +229,7 @@ in
                 val (exp, mkNewExp) = 
                     if expansive exp then 
                       let
-                        val newVar = newTCVarInfo expLoc ty
+                        val newVar = newTCVarInfo ty
                       in
                         (TC.TPVAR newVar,
                          fn x => TC.TPMONOLET {binds = [(newVar, exp)],
@@ -238,8 +238,8 @@ in
                         )
                       end
                     else (exp, fn x => x)
-                val argVarList = map (newTCVarInfo expLoc) tyList
-                val argExpList = map (fn x => TC.TPVAR x) argVarList
+                val argVarList = map newTCVarInfo tyList
+                val argExpList = map TC.TPVAR argVarList
                 val (instBodyTy, instSubst, instConstraints, instBody) =
                     freshInst
                       (bodyTy,
@@ -277,7 +277,7 @@ in
                                         (bindsRev, RecordLabel.Map.insert(newFields, l, exp'))
                                       else
                                         let
-                                          val fieldVar = newTCVarInfo loc ty'
+                                          val fieldVar = newTCVarInfo ty'
                                           val fieldExp = TC.TPVAR fieldVar
                                           val newFields = RecordLabel.Map.insert(newFields, l, fieldExp)
                                           val bindsRev = (fieldVar, exp') :: bindsRev
@@ -321,7 +321,7 @@ in
                                                     expTy=ty,
                                                     resultTy=fieldTy,
                                                     loc=expLoc})
-                                 val fieldVar = newTCVarInfo expLoc fieldTy
+                                 val fieldVar = newTCVarInfo fieldTy
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
@@ -351,7 +351,7 @@ in
                    end
                  else
                    let 
-                     val var = newTCVarInfo expLoc ty
+                     val var = newTCVarInfo ty
                      val varExp = TC.TPVAR var
                      val (bindsRev,bindSubst,bindConstraints,flty,flexp) =
                          RecordLabel.Map.foldli
@@ -365,7 +365,7 @@ in
                                              expTy=ty,
                                              resultTy=fieldTy,
                                              loc=expLoc})
-                                 val fieldVar = newTCVarInfo expLoc fieldTy
+                                 val fieldVar = newTCVarInfo fieldTy
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,

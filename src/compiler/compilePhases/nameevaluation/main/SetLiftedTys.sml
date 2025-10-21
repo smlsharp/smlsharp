@@ -7,9 +7,9 @@ structure SetLiftedTys :
 sig
   val getId : IDCalc.tfunkind ref -> IDCalc.typId
   val setLiftedTysEnv : NameEvalEnv.env
-                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+                        -> (SymbolWithLoc.symbol list * IDCalc.tfunkind ref) list list
   val setLiftedTysSpecEnv : NameEvalEnv.env
-                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+                        -> (SymbolWithLoc.symbol list * IDCalc.tfunkind ref) list list
 end
 =
 struct
@@ -50,7 +50,7 @@ local
         | I.INFERREDTY _ => set
       end
   fun dtysConSpec tfvKind (conSpec, set) =
-      SymbolEnv.foldl
+      SymbolWithLocEnv.foldl
         (fn (tyOpt, set) => 
             case tyOpt of
               NONE => set
@@ -167,7 +167,7 @@ local
       | I.INFERREDTY _ => liftedTys
   and liftedTysTyList (tyList, liftedTys) = foldr liftedTysTy liftedTys tyList
   fun liftedTysConSpec (conSpec, liftedTys) =
-      SymbolEnv.foldl
+      SymbolWithLocEnv.foldl
         (fn (tyOpt, liftedTys) => 
             case tyOpt of
               NONE => liftedTys

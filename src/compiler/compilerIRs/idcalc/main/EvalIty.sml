@@ -97,7 +97,7 @@ in
   and evalTfun context tfun = 
       case tfun of
         I.TFUN_DEF {admitsEq, formals, realizerTy, longsymbol} =>
-        raise EVALTFUN {admitsEq=admitsEq, formals=formals, realizerTy=realizerTy, longsymbol=longsymbol}
+        raise EVALTFUN {admitsEq=admitsEq, formals=formals, realizerTy=realizerTy, longsymbol=map #symbol longsymbol}
       | I.TFUN_VAR tfunKindRef =>
         (case tfunKindRef of
            ref(I.TFUN_DTY{id,admitsEq,formals, longsymbol, conIDSet,
@@ -119,11 +119,16 @@ in
              (* 2012-7-15 ohori: bug 207_printer.sml. 
                path = path,
               *)
-               longsymbol = longsymbol,
+               longsymbol = map #symbol longsymbol,
                admitsEq = admitsEq,
                arity = List.length formals,
                conIDSet = conIDSet,
-               conSet = SymbolEnv.map (Option.map argTyFn) conSpec,
+               conSet =
+                 SymbolWithLocEnv.foldli
+                   (fn (k, v, env) =>
+                       SymbolEnv.insert (env, #symbol k, Option.map argTyFn v))
+                   SymbolEnv.empty
+                   conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
                dtyKind = evalDtyKind context dtyKind
               }

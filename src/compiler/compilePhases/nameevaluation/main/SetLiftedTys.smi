@@ -18,7 +18,7 @@ structure SetLiftedTys =
 struct
   val getId : IDCalc.tfunkind ref -> IDCalc.typId
   val setLiftedTysEnv : NameEvalEnv.env
-                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+                        -> (SymbolWithLoc.symbol list * IDCalc.tfunkind ref) list list
   val setLiftedTysSpecEnv : NameEvalEnv.env
-                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+                        -> (SymbolWithLoc.symbol list * IDCalc.tfunkind ref) list list
 end

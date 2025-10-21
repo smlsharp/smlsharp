@@ -8,11 +8,11 @@
 structure AbsynSQL =
 struct
 
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
-  type symbol = Symbol.symbol
+  (*% @formatter(Symbol.symbol) SymbolWithLoc.format_symbol *)
+  type symbol = SymbolWithLoc.symbol
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol *)
-  type longsymbol = Symbol.longsymbol
+  (*% @formatter(Symbol.longsymbol) SymbolWithLoc.format_longsymbol *)
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (*% @formatter(RecordLabel.label) RecordLabel.format_label *)
   type label = RecordLabel.label

@@ -32,7 +32,7 @@ struct
       end
   val fromInt = Int.toString
   fun fromString x = x : label
-  val fromSymbol = Symbol.symbolToString
+  val fromSymbol = Symbol.toString
   val fromLongsymbol = Symbol.longsymbolToString
 
   fun format_label s =

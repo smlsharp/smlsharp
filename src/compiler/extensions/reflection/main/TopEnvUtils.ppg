@@ -11,7 +11,7 @@ in
   structure V = NameEvalEnv
 
   (*%
-    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+    @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   datatype SstrE
     = (*% 
@@ -29,7 +29,7 @@ in
      SENV of SstrE
 
   (*%
-    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+    @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   type SfunE
     = (*% 
@@ -41,7 +41,7 @@ in
       Symbol.symbol list
 
   (*%
-    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+    @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   type SsigE 
     = (*% 
@@ -71,15 +71,15 @@ in
       )
 
   fun strEToSkelton (V.STR strEntrySymbolenvMap) =
-      SSTR (map (fn (s, {env,...}) => (s, envToSkelton env))
-                (SymbolEnv.listItemsi strEntrySymbolenvMap)
+      SSTR (map (fn (s, {env,...}) => (#symbol s, envToSkelton env))
+                (SymbolWithLocEnv.listItemsi strEntrySymbolenvMap)
            )
   and envToSkelton (V.ENV {varE, tyE, strE}) = SENV (strEToSkelton strE)
 
   fun funEToSkelton funEEntrySymbolMap =
-      SymbolEnv.listKeys funEEntrySymbolMap
+      map #symbol (SymbolWithLocEnv.listKeys funEEntrySymbolMap)
 
-  fun sigEToSkelton envSymbolMap = SymbolEnv.listKeys envSymbolMap
+  fun sigEToSkelton envSymbolMap = map #symbol (SymbolWithLocEnv.listKeys envSymbolMap)
 
   fun topEnvToSkelton {Env, FunE, SigE} =
       {Env = envToSkelton Env,

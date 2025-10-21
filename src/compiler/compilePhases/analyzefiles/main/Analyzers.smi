@@ -7,8 +7,8 @@ _require "./DBSchema.smi"
 
 structure Analyzers =
 struct
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type idstatus = IDCalc.idstatus
 
   val startNameRefTracing : (unit -> unit) ref

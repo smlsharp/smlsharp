@@ -22,7 +22,7 @@ struct
       SymbolEnv.unionWith #2 (env1, env2)
 
   fun fixEnvToLocEnv (env:fixEnv) =
-      SymbolEnv.mapi (fn (k, _) => Symbol.symbolToLoc k) env
+      SymbolEnv.mapi (fn (k, (_, loc)) => loc) env
 
   fun elaborate fixEnv ({interface, topdecsSource}:A.compile_unit) =
       let

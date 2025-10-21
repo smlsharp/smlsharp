@@ -323,7 +323,7 @@ struct
     and equalOprimSelector
           r ({oprimId=id1, longsymbol=s1, match=m1},
              {oprimId=id2, longsymbol=s2, match=m2}) =
-        if id1 = id2 andalso Symbol.eqLongsymbol (s1, s2)
+        if id1 = id2 andalso s1 = s2
         then equalOverloadMatch r (m1, m2)
         else raise NotEqual
 
@@ -342,7 +342,7 @@ struct
         | (T.OVERLOAD_CASE _, _) => raise NotEqual
         | (T.OVERLOAD_EXVAR {exVarInfo={path=path1,...}, instTyList=i1},
            T.OVERLOAD_EXVAR {exVarInfo={path=path2,...}, instTyList=i2}) =>
-          if Symbol.eqLongsymbol (path1, path2)
+          if path1 = path2
           then equalListOpt equalTy r (i1, i2)
           else raise NotEqual
         | (T.OVERLOAD_EXVAR _, _) => raise NotEqual

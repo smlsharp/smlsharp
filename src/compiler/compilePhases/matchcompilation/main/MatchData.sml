@@ -88,7 +88,7 @@ in
           (TC.EXN {id=id1,...}, TC.EXN{id=id2,...}) =>
           ExnID.compare(id1, id2)
         | (TC.EXEXN{path=path1,...},TC.EXEXN{path=path2,...}) =>
-          Symbol.longsymbolCompare (path1,path2)
+          LongsymbolOrd.compare (path1,path2)
         | (TC.EXEXN _, TC.EXN _) => LESS
         | (TC.EXN _, TC.EXEXN _) => GREATER
   end

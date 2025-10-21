@@ -15,7 +15,7 @@ _require "../../types/main/Types.ppg.smi"
 structure BuiltinTypes =
 struct
 
-  type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.varE, defRange:Loc.loc,
+  type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.idstatus SymbolWithLocEnv.map, defRange:Loc.loc,
                     formals:IDCalc.formals, conSpec:IDCalc.conSpec}
 
   val findTstrInfo : Symbol.symbol -> tstrInfo option

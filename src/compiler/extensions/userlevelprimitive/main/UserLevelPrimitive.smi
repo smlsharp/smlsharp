@@ -169,7 +169,7 @@ struct
 
   val REIFY_exInfo_RecordLabelFromString
       : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_SymbolMkLongSymbol
+  val REIFY_exInfo_SymbolFromStringList
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_TyRep
       : Loc.loc -> Types.exVarInfo
@@ -248,9 +248,9 @@ struct
 
   val initAnalyze
       : {analyzeIdRef :
-         Symbol.longsymbol * (Symbol.symbol * IDCalc.idstatus) -> unit,
+         SymbolWithLoc.longsymbol * (SymbolWithLoc.symbol * IDCalc.idstatus) -> unit,
          analyzeTstrRef :
-         Symbol.longsymbol * (Symbol.symbol * NameEvalEnv.tstr) -> unit}
+         SymbolWithLoc.longsymbol * (SymbolWithLoc.symbol * NameEvalEnv.tstr) -> unit}
         -> unit
 
   val init : {env : NameEvalEnv.topEnv} -> unit

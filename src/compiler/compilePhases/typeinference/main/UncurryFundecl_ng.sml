@@ -11,7 +11,7 @@ local
   structure TC = TypedCalc
   structure TCU = TypedCalcUtils
 
-  fun makeVar loc ty = TCU.newTCVarInfo loc ty
+  fun makeVar ty = TCU.newTCVarInfo ty
 
   fun grabTy (ty, arity) =
     let
@@ -54,7 +54,7 @@ local
     in
       if arity > existingArgNum then
         let
-          val newVars = map (makeVar loc) (List.drop (argTyList, existingArgNum))
+          val newVars = map makeVar (List.drop (argTyList, existingArgNum))
         in
           #2
           (foldr 
@@ -128,7 +128,7 @@ in
             foldr 
               (fn (ty, (newVars, newPats)) => 
                   let 
-                    val varInfo = makeVar loc ty
+                    val varInfo = makeVar ty
                   in
                     (
                      varInfo::newVars,
@@ -163,8 +163,8 @@ in
     case tpexp of
       TC.TPERROR => tpexp
     | TC.TPCONSTANT {const, ty, loc} => makeApply(tpexp, spine, loc)
-    | TC.TPVAR {path,...} => makeApply (tpexp, spine, Symbol.longsymbolToLoc path)
-    | TC.TPEXVAR ({path,...},loc) => makeApply (tpexp, spine, Symbol.longsymbolToLoc path)
+    | TC.TPVAR {path,...} => makeApply (tpexp, spine, SymbolWithLoc.longsymbolToLoc path)
+    | TC.TPEXVAR ({path,...},loc) => makeApply (tpexp, spine, loc)
     | 
       (*
        * grab the arity amount of argument from the spine stack and make 
@@ -188,7 +188,7 @@ in
                 type generalization
           *)
           let
-            val loc = Symbol.longsymbolToLoc path
+            val loc = SymbolWithLoc.longsymbolToLoc path
             val (subst, boundtvars) = 
                 TB.copyBoundEnv boundtvars
             val constraints =
@@ -241,7 +241,7 @@ in
        | _ => 
          (
           let
-            val loc = Symbol.longsymbolToLoc path
+            val loc = SymbolWithLoc.longsymbolToLoc path
             val (argTyList, bodyTy) = grabTy (ty, arity)
           in
             grabAndApply 

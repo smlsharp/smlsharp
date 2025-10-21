@@ -17,7 +17,7 @@ end =
 struct
 
   structure A = AbsynInterface
-  val symbolToString = Symbol.symbolToString
+  val symbolToString = SymbolWithLoc.symbolToString
 
   fun listNamesValbind prefix ({symbol, body, loc}:A.valbind) =
       [prefix ^ ".V" ^ symbolToString symbol]

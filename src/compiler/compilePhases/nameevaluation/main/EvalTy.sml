@@ -42,7 +42,7 @@ in
         val id = TvarID.generate()
         val tvar = {symbol=symbol, isEq=isEq, id=id, lifted=false}
       in
-        (SymbolEnv.insert(tvarEnv, symbol, tvar), tvar)
+        (SymbolEnv.insert(tvarEnv, #symbol symbol, tvar), tvar)
       end
 
   fun genTvarList (tvarEnv:tvarEnv) tvarList : tvarEnv * I.tvar list =
@@ -120,11 +120,11 @@ in
 
   (* type variable evaluators *)
   fun evalTvar (tvarEnv:tvarEnv) {symbol, isEq} : I.tvar =
-      case SymbolEnv.find(tvarEnv, symbol) of
+      case SymbolEnv.find(tvarEnv, #symbol symbol) of
         SOME tvar => tvar
       | NONE =>
         (EU.enqueueError
-           (Symbol.symbolToLoc symbol, E.TvarNotFound("Ty-010",{symbol = symbol}));
+           (SymbolWithLoc.symbolToLoc symbol, E.TvarNotFound("Ty-010",{symbol = #symbol symbol}));
          {symbol=symbol, isEq=isEq, id=TvarID.generate(), lifted=false})
 
   (* type evaluators, which return a type etc and liftedtys *)
@@ -133,7 +133,7 @@ in
       A.TYWILD loc => I.TYWILD
     | A.TYID (tvar, loc) => I.TYVAR (evalTvar tvarEnv tvar)
     | A.FREE_TYID {freeTvar = {symbol, isEq}, tvarKind, loc} => 
-      (case Symbol.symbolToString symbol of 
+      (case SymbolWithLoc.symbolToString symbol of
          "'_" =>
          let
            val id = TvarID.generate()
@@ -143,7 +143,7 @@ in
          end
        | _ => 
          let
-           val id = findFreeTvarId symbol
+           val id = findFreeTvarId (#symbol symbol)
            val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
          in
            I.TYFREE_TYVAR {symbol=symbol, isEq=isEq, id=id, tvarKind=tvarKind}
@@ -199,12 +199,12 @@ in
             SOME (sym, V.TSTR {tfun,...}) => makeTy tfun
           | SOME (sym, V.TSTR_DTY {tfun, ...}) => makeTy tfun
           | NONE => 
-            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = path}));
+            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = map #symbol path}));
              I.TYERROR
             )
         end
         handle Arity =>
-               (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol =  path}));
+               (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol = map #symbol path}));
                 I.TYERROR
                )
       end
@@ -312,7 +312,7 @@ in
             map (fn (tvar, kind) => (tvar, evalTvarKindAux allowFlex tvarEnv env kind))
                 tvarKindList
         val cyclicTvars = checkCyclicKind tvarKindList
-        fun tvarLoc {symbol, id, isEq, lifted} = Symbol.symbolToLoc symbol
+        fun tvarLoc {symbol, id, isEq, lifted} = SymbolWithLoc.symbolToLoc symbol
         val tvarKindList =
             case cyclicTvars of
               nil => tvarKindList
@@ -357,12 +357,12 @@ in
     | getProperty _ _ A.IMPL_FUNC _ = I.PROP R.recordProp
     | getProperty tvarEnv evalEnv (A.IMPL_TY runtimeTyLongsymbol) loc =
       let
-        val loc = Symbol.longsymbolToLoc runtimeTyLongsymbol
+        val loc = SymbolWithLoc.longsymbolToLoc runtimeTyLongsymbol
         val tstr =
             case VP.findTstr(evalEnv, runtimeTyLongsymbol) of
               NONE =>
               (EU.enqueueError
-                 (loc, E.TypNotFound("Ty-090", {longsymbol = runtimeTyLongsymbol}));
+                 (loc, E.TypNotFound("Ty-090", {longsymbol = map #symbol runtimeTyLongsymbol}));
                NONE)
             | x => x
         val prop =
@@ -376,7 +376,7 @@ in
         | NONE =>
           (EU.enqueueError
              (loc, E.IllegalBuiltinTy
-                     ("Ty-090", {symbol = runtimeTyLongsymbol}));
+                     ("Ty-090", {symbol = map #symbol runtimeTyLongsymbol}));
            I.PROP R.recordProp)  (*dummy*)
       end
 
@@ -469,11 +469,11 @@ in
           end
           handle LookupTstr => 
                  (EU.enqueueError
-                    (loc, E.TypNotFound("Ty-100",{longsymbol = typath}));
+                    (loc, E.TypNotFound("Ty-100",{longsymbol = map #symbol typath}));
                   I.FFIBASETY (I.TYERROR, loc))
                | UnqeualLengths =>
                  (EU.enqueueError
-                    (loc, E.TypArity("Ty-110",{longsymbol = typath}));
+                    (loc, E.TypArity("Ty-110",{longsymbol = map #symbol typath}));
                   I.FFIBASETY (I.TYERROR, loc))
       end
 
@@ -610,13 +610,13 @@ in
 *)
                         val idstatus = I.IDCON conInfo
                       in
-                        (SymbolEnv.insert(conVarE, symbol, idstatus),
-                         SymbolEnv.insert(conSpec, symbol, tyOption),
+                        (SymbolWithLocEnv.insert(conVarE, symbol, idstatus),
+                         SymbolWithLocEnv.insert(conSpec, symbol, tyOption),
                          conIDSet
                         )
                       end
                           )
-                          (SymbolEnv.empty,SymbolEnv.empty,ConID.Set.empty)
+                          (SymbolWithLocEnv.empty,SymbolWithLocEnv.empty,ConID.Set.empty)
                           conbind
                   in
                     {name=name,

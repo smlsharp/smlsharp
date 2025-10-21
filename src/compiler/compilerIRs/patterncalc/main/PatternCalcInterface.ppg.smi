@@ -19,9 +19,9 @@ struct
   type loc = Loc.loc
   type ty = AbsynTy.ty
 
-  type symbol = Symbol.symbol
+  type symbol = SymbolWithLoc.symbol
 
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = SymbolWithLoc.longsymbol
 
   type tvar = AbsynTy.tvar
 

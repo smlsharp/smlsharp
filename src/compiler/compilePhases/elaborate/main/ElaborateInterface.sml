@@ -21,8 +21,8 @@ struct
   structure T = AbsynTy
   structure P = PatternCalcInterface
   structure PC = PatternCalc
-  val symbolToLoc = Symbol.symbolToLoc
-  val mkSymbol = Symbol.mkSymbol
+  val symbolToLoc = SymbolWithLoc.symbolToLoc
+  val mkSymbol = SymbolWithLoc.mkSymbol
 
   type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
   val emptyFixEnv = SymbolEnv.empty : fixEnv
@@ -31,9 +31,9 @@ struct
       SymbolEnv.mergeWithi
         (fn (k, x, NONE) => x
           | (k, NONE, x) => x
-          | (k, x as (SOME _), y as (SOME _)) =>
+          | (k, x as (SOME (_, loc)), y as (SOME _)) =>
             (EU.enqueueError
-               (Symbol.symbolToLoc k, E.MultipleInfixInInterface k);
+               (loc, E.MultipleInfixInInterface k);
              y))
         (env1, env2)
 
@@ -47,15 +47,15 @@ struct
   fun maskTyvar ({tyvar, tycon}:subst) (tvars : T.tvar list) : subst =
       {tycon = tycon,
        tyvar = foldl (fn ({symbol, isEq}, z) =>
-                         if SymbolEnv.inDomain (z, symbol)
-                         then #1 (SymbolEnv.remove (z, symbol))
+                         if SymbolEnv.inDomain (z, #symbol symbol)
+                         then #1 (SymbolEnv.remove (z, #symbol symbol))
                          else z)
                      tyvar
                      tvars}
 
   fun tyconSubst typbinds : subst =
       {tyvar = SymbolEnv.empty,
-       tycon = foldl (fn (x, z) => SymbolEnv.insert (z, #symbol x, x))
+       tycon = foldl (fn (x, z) => SymbolEnv.insert (z, #symbol (#symbol x), x))
                      SymbolEnv.empty
                      typbinds}
 
@@ -69,24 +69,24 @@ struct
       case ty of
         T.TYWILD _ => ty
       | T.TYID (tvar as {symbol, isEq}, loc) =>
-        (case SymbolEnv.find (#tyvar subst, symbol) of
+        (case SymbolEnv.find (#tyvar subst, #symbol symbol) of
            NONE => T.TYID (tvar, loc)
          | SOME ty => ty)
       | T.FREE_TYID _ => raise Bug.Bug "FREE_TYID to substTy in ElaborateInterface"
       | T.TYRECORD {ifFlex, fields, loc} =>
         T.TYRECORD {ifFlex = ifFlex, fields = substRecordTy subst fields, loc=loc}
       | T.TYCONSTRUCT (tyList, tyCon as [symbol], loc) =>
-        (case SymbolEnv.find (#tycon subst, symbol) of
+        (case SymbolEnv.find (#tycon subst, #symbol symbol) of
            NONE =>
            T.TYCONSTRUCT (map (substTy subst) tyList, tyCon, loc)
          | SOME {tyvars, symbol, ty, loc} =>
            substTy 
              (tyvarSubst
-                (ListPair.zipEq (tyvars, tyList)
+                (ListPair.zipEq (map #symbol tyvars, tyList)
                  handle ListPair.UnequalLengths =>
                         (EU.enqueueError
                            (loc, E.ArityMismatchInTypeDeclaration
-                                   {tyCon = symbol,
+                                   {tyCon = #symbol symbol,
                                     wants = length tyvars,
                                     given = length tyList});
                          nil)))
@@ -137,7 +137,7 @@ struct
       | PC.PLSIGID symbol =>
         EU.enqueueError
           (symbolToLoc symbol, 
-           E.SigIDFoundInInterface symbol)
+           E.SigIDFoundInInterface (#symbol symbol))
       | PC.PLSIGWHERE (sigexp, typbinds, loc) => checkSigexp sigexp
 
   and checkSpec spec =
@@ -328,7 +328,7 @@ struct
             | I.INFIXR (SOME n) =>
               Fixity.INFIXR (ElaborateCore.elabInfixPrec (n, loc))
             | I.NONFIX => Fixity.NONFIX
-        val fixEnvs = map (fn k => SymbolEnv.singleton (k, (fixity,loc))) symbols
+        val fixEnvs = map (fn k => SymbolEnv.singleton (#symbol k, (fixity,loc))) symbols
         val fixEnv = foldl unionFixEnv emptyFixEnv fixEnvs
       in
         (fixEnv, nil)

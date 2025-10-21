@@ -31,19 +31,19 @@ struct
       fun collectDuplication names duplicates [] = SymbolEnv.listItems duplicates
         | collectDuplication names duplicates (element :: elements) =
           case getName element of
-            SOME name =>
+            SOME (symbol as {symbol = name, loc = loc}) =>
               let
                 val newDuplicates =
                   case SymbolEnv.find(names, name) of
-                    SOME _ => SymbolEnv.insert(duplicates, name, name)
+                    SOME _ => SymbolEnv.insert(duplicates, name, symbol)
                   | NONE => duplicates
-                val newNames = SymbolEnv.insert(names, name, name)
+                val newNames = SymbolEnv.insert(names, name, symbol)
               in collectDuplication newNames newDuplicates elements
               end
           | NONE => collectDuplication names duplicates elements
       val duplicateNames = collectDuplication SymbolEnv.empty SymbolEnv.empty elements
     in
-      app (fn name => enqueueError(Symbol.symbolToLoc name, makeExn name)) duplicateNames
+      app (fn {symbol, loc} => enqueueError(loc, makeExn symbol)) duplicateNames
     end
 
   fun checkSymbolDuplication getName elements makeExn =

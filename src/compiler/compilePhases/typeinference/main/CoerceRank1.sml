@@ -88,8 +88,8 @@ in
           case ty of
             T.FUNMty ([domTy], ranTy) =>
             let
-              val bodyVar = TCU.newTCVarInfo loc ranTy
-              val var = TCU.newTCVarInfo loc domTy
+              val bodyVar = TCU.newTCVarInfo ranTy
+              val var = TCU.newTCVarInfo domTy
               val body = TC.TPAPPM {funExp = exp,
                                     funTy = ty,
                                     argExpList = [TC.TPVAR var],
@@ -100,7 +100,7 @@ in
             end
           | T.RECORDty tyRecordLabelMapMap =>
             let
-              val var = TCU.newTCVarInfo loc ty
+              val var = TCU.newTCVarInfo ty
               val rank1TermField = 
                   RecordLabel.Map.mapi
                     (fn (l, filedTy) =>
@@ -129,8 +129,8 @@ in
                  let
                    val newExp = 
                        TC.TPTAPP {exp = exp, expTy = ty, instTyList = freeTyvars, loc = loc}
-                   val bodyVar = TCU.newTCVarInfo loc ranTy
-                   val var = TCU.newTCVarInfo loc domTy
+                   val bodyVar = TCU.newTCVarInfo ranTy
+                   val var = TCU.newTCVarInfo domTy
                    val body = TC.TPAPPM {funExp = newExp,
                                          funTy = newBodyTy,
                                          argExpList = [TC.TPVAR var],
@@ -143,7 +143,7 @@ in
                  let
                    val newExp = 
                        TC.TPTAPP {exp = exp, expTy = ty, instTyList = freeTyvars, loc = loc}
-                   val var = TCU.newTCVarInfo loc newBodyTy
+                   val var = TCU.newTCVarInfo newBodyTy
                    val rank1TermField = 
                        RecordLabel.Map.mapi
                        (fn (l, ty) =>

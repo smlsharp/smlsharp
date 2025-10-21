@@ -31,10 +31,10 @@ local
   type renameEnv = I.tfun TypID.Map.map
   val emptyRenameEnv =  TypID.Map.empty : renameEnv
 
-  val mkSymbol = Symbol.mkSymbol
-  val mkLongsymbol = Symbol.mkLongsymbol
-  val symbolToLoc = Symbol.symbolToLoc
-  val longsymbolToLoc = Symbol.longsymbolToLoc
+  val mkSymbol = SymbolWithLoc.mkSymbol
+  val mkLongsymbol = Symbol.fromStringList
+  val symbolToLoc = SymbolWithLoc.symbolToLoc
+  val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
 
   fun bug s = Bug.Bug ("NameEvalInterface: " ^ s)
   val nilPath = nil
@@ -43,10 +43,10 @@ local
   val FUNCORPREFIX = "_"
 
   fun addExSet (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
-      LongsymbolSet.add(externSet, longsymbol)
+      LongsymbolSet.add(externSet, map #symbol longsymbol)
 
   fun exSetMember (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
-      LongsymbolSet.member(externSet, longsymbol)
+      LongsymbolSet.member(externSet, map #symbol longsymbol)
 
   val emptyExSet = LongsymbolSet.empty
 
@@ -59,7 +59,7 @@ in
 
   (* change exception status to EXREP; copied from NameEval.sml *)
   fun exceptionRepVarE varE =
-      SymbolEnv.map
+      SymbolWithLocEnv.map
       (fn (I.IDEXN info) => I.IDEXNREP info
         (* 2012-9-25 ohori added to fix 241_functorExn bug *)
         | (I.IDEXEXN info) => I.IDEXEXNREP info
@@ -76,17 +76,17 @@ in
       end
   and exceptionRepStrE (V.STR envMap) =
       let
-        val envMap = SymbolEnv.map exceptionRepStrEntryWithSymbol envMap
+        val envMap = SymbolWithLocEnv.map exceptionRepStrEntryWithSymbol envMap
       in
         V.STR envMap
       end
 
   (* bug 245 *)
   fun exceptionExternVarE provider loc path varE =
-      SymbolEnv.mapi
+      SymbolWithLocEnv.mapi
       (fn (name, I.IDEXN {id, longsymbol, ty, defRange}) =>
           let
-            val longsymbol = Symbol.prefixPath(path,name)
+            val longsymbol = SymbolWithLoc.prefixPath(path,name)
           in
             I.IDEXEXN {longsymbol=longsymbol, ty=ty, version=provider, 
                        defRange = defRange,
@@ -94,7 +94,7 @@ in
           end
         | (name, I.IDEXNREP {id, longsymbol, ty, defRange}) => 
           let
-            val longsymbol = Symbol.prefixPath(path,name)
+            val longsymbol = SymbolWithLoc.prefixPath(path,name)
           in
             I.IDEXEXNREP {longsymbol=longsymbol, ty=ty, version=provider, defRange=defRange,                          
                           used = ref false}
@@ -113,12 +113,12 @@ in
   and exceptionExternStrE provider loc path (V.STR envMap) =
       let
         val envMap = 
-            SymbolEnv.mapi 
+            SymbolWithLocEnv.mapi
               (fn (name, strEntryWithSymbol) => 
                   exceptionExternStrEntryWithSymbol 
                     provider
                     loc
-                    (Symbol.prefixPath(path , name))
+                    (SymbolWithLoc.prefixPath(path , name))
                     strEntryWithSymbol
               )
               envMap
@@ -179,12 +179,12 @@ in
       | I.IDSPECEXN _ => raise bug "IDSPECEXN in genTypedExternVars"
       | I.IDSPECCON _ => raise bug "IDSPECCON in genTypedExternVars"
   fun genTypedExternVarsVarE path varE (externSet, icdecls) =
-      SymbolEnv.foldli
+      SymbolWithLocEnv.foldli
       (fn (name, idstatus, (externSet, icdecls)) =>
           let
             val (externSet, icdecls) = 
                 genTypedExternVarsIdstatus 
-                  (Symbol.prefixPath(path,name))
+                  (SymbolWithLoc.prefixPath(path,name))
                   idstatus
                   (externSet, icdecls)
           in
@@ -203,12 +203,12 @@ in
   and genTypedExternVarsStrE path (V.STR strEntryMap) (externSet, icdecls) =
       let
         val (externSet, icdecls) =
-            SymbolEnv.foldli
+            SymbolWithLocEnv.foldli
               (fn (name, {env, ...}, (externSet, icdecls)) =>
                   let
                     val (externSet, icdecls) =
                         genTypedExternVarsEnv 
-                          (Symbol.prefixPath(path,name)) 
+                          (SymbolWithLoc.prefixPath(path,name))
                           env 
                           (externSet, icdecls)
                   in
@@ -265,27 +265,27 @@ in
                    | SOME(sym, I.IDBUILTINVAR {primitive, ty, defRange}) =>
                      I.INST_PRIM ({primitive=primitive, ty=ty}, loc)
                    | SOME(sym, I.IDVAR id) =>
-                     error (E.InvalidOverloadInst("EI-010", {longsymbol = longsymbol}))
+                     error (E.InvalidOverloadInst("EI-010", {longsymbol = map #symbol longsymbol}))
                    | SOME(sym, I.IDVAR_TYPED _) =>
-                     error (E.InvalidOverloadInst("EI-010", {longsymbol = longsymbol}))
+                     error (E.InvalidOverloadInst("EI-010", {longsymbol = map #symbol longsymbol}))
                    | SOME(sym, I.IDOPRIM _) =>
-                     error (E.InvalidOverloadInst("EI-020", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-020", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDCON _) =>
-                     error (E.InvalidOverloadInst("EI-030", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-030", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDEXN _) =>
-                     error (E.InvalidOverloadInst("EI-040", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-040", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDEXNREP _) =>
-                     error (E.InvalidOverloadInst("EI-050", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-050", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDEXEXN _) =>
-                     error (E.InvalidOverloadInst("EI-060", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-060", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDEXEXNREP _) =>
-                     error (E.InvalidOverloadInst("EI-060", {longsymbol=longsymbol}))
+                     error (E.InvalidOverloadInst("EI-060", {longsymbol=map #symbol longsymbol}))
                    | SOME(sym, I.IDSPECVAR _) => raise bug "SPEC id status"
                    | SOME(sym, I.IDSPECEXN _) => raise bug "SPEC id status"
                    | SOME(sym, I.IDSPECCON _) => raise bug "SPEC id status"
-                   | NONE => error (E.VarNotFound("EI-070",{longsymbol=longsymbol}))
+                   | NONE => error (E.VarNotFound("EI-070",{longsymbol=map #symbol longsymbol}))
                 end
-          val longsymbol= Symbol.prefixPath(path, symbol)
+          val longsymbol= SymbolWithLoc.prefixPath(path, symbol)
         in
           case body of
             AI.VAL_EXTERN {ty} =>
@@ -334,11 +334,11 @@ in
                  (renameEnv, externSet, VP.rebindId VP.INTERFACE (V.emptyEnv, symbol, idstatus), nil)
                | SOME(sym, _) => 
                  (EU.enqueueError
-                    (loc, E.ProvideVarIDExpected("EI-080", {longsymbol = longsymbol}));
+                    (loc, E.ProvideVarIDExpected("EI-080", {longsymbol = map #symbol longsymbol}));
                   (renameEnv, externSet, V.emptyEnv, nil))
                | NONE => 
                  (EU.enqueueError
-                    (loc, E.ProvideUndefinedID("EI-080", {longsymbol = longsymbol}));
+                    (loc, E.ProvideUndefinedID("EI-080", {longsymbol = map #symbol longsymbol}));
                   (renameEnv, externSet, V.emptyEnv, nil))
             end
           | AI.VAL_BUILTIN {builtinSymbol, ty} =>
@@ -350,7 +350,7 @@ in
                     nil => ty
                   | _ => I.TYPOLY(kindedTvars,ty)
             in
-              case BuiltinPrimitive.findPrimitive (Symbol.symbolToString builtinSymbol) of
+              case BuiltinPrimitive.findPrimitive (SymbolWithLoc.symbolToString builtinSymbol) of
                 SOME primitive => 
                 let
                   val idstatus = I.IDBUILTINVAR {primitive=primitive, ty=ty, defRange = loc}
@@ -359,7 +359,7 @@ in
                 end
               | NONE => 
                 (EU.enqueueError
-                   (loc, E.PrimitiveNotFound("EI-080", {symbol = builtinSymbol}));
+                   (loc, E.PrimitiveNotFound("EI-080", {symbol = #symbol builtinSymbol}));
                  (renameEnv, externSet, V.emptyEnv, nil))
             end
           | AI.VAL_OVERLOAD overloadCase =>
@@ -380,7 +380,7 @@ in
         end
       | PI.PITYPE {tyvars, symbol, ty, loc} =>
         let
-          val longsymbol = Symbol.prefixPath(path , symbol)
+          val longsymbol = SymbolWithLoc.prefixPath(path , symbol)
           val _ = EU.checkSymbolDuplication
                     (fn {symbol, isEq} => symbol) tyvars
                     (fn s => E.DuplicateTypParms("EI-090",s))
@@ -421,7 +421,7 @@ in
            val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
            val id = TypID.generate()
            val property = Ty.getProperty tvarEnv env runtimeTy loc
-           val longsymbol = Symbol.prefixPath (path, tycon)
+           val longsymbol = SymbolWithLoc.prefixPath (path, tycon)
            val absTfun =
                case property of
                  I.PROP property =>
@@ -430,7 +430,7 @@ in
                       (I.TFUN_DTY {id=id,
                                    admitsEq=eq,
                                    formals=tvarList,
-                                   conSpec=SymbolEnv.empty,
+                                   conSpec=SymbolWithLocEnv.empty,
                                    conIDSet=ConID.Set.empty,
                                    longsymbol=longsymbol,
                                    (* bug foud in asai zemi *)
@@ -441,7 +441,7 @@ in
                    )
                | I.LIFTED tvar =>
                  (EU.enqueueError
-                    (loc, E.LIFTEDPropNotAllowedInOpaqueInterface("EI-201", {symbol = tycon}));
+                    (loc, E.LIFTEDPropNotAllowedInOpaqueInterface("EI-201", {symbol = #symbol tycon}));
                   let
                    val tfun = 
                        I.TFUN_DEF
@@ -455,7 +455,7 @@ in
                         (I.TFUN_DTY {id=id,
                                      admitsEq=eq,
                                      formals=tvarList,
-                                     conSpec=SymbolEnv.empty,
+                                     conSpec=SymbolWithLocEnv.empty,
                                      conIDSet=ConID.Set.empty,
                                      longsymbol=longsymbol,
                                      liftedTys=I.emptyLiftedTys,
@@ -480,10 +480,10 @@ in
         )
 
       | PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} =>
-        (case BuiltinTypes.findTstrInfo builtinSymbol of
+        (case BuiltinTypes.findTstrInfo (#symbol builtinSymbol) of
            NONE => 
            (EU.enqueueError
-              (loc, E.BuiltinTyNotFound("EI-100", {symbol = builtinSymbol}));
+              (loc, E.BuiltinTyNotFound("EI-100", {symbol = #symbol builtinSymbol}));
             (renameEnv, externSet, V.emptyEnv, nil)
            )
          | SOME (tstrInfo as {varE, ...}) => 
@@ -510,7 +510,7 @@ in
                   )
               datbind
 *)
-          val (env, icdecls) = Ty.evalDatatype path env (datbind, loc)
+          val (env, icdecls) = Ty.evalDatatype (map #symbol path) env (datbind, loc)
         in
           (renameEnv, externSet, env, icdecls)
         end
@@ -520,7 +520,7 @@ in
         (
          case VP.findTstr(env, refPath) of
            NONE => (EU.enqueueError
-                      (loc, E.DataTypeNameUndefined("EI-110", {longsymbol = refPath}));
+                      (loc, E.DataTypeNameUndefined("EI-110", {longsymbol = map #symbol refPath}));
                     (renameEnv, externSet, V.emptyEnv, nil))
          | SOME (sym, tstr) =>
            let
@@ -535,7 +535,7 @@ in
                          RL.replacePathTfun renameEnv path tfun
 *)
                          RL.replaceLongsymbolTfun 
-                           emptyRenameEnv (Symbol.prefixPath (path, tycon)) tfun
+                           emptyRenameEnv (SymbolWithLoc.prefixPath (path, tycon)) tfun
                      val varE = RL.renameLongsymbolVarE renameEnv varE
                    in
                      (V.TSTR_DTY {tfun= tfun,
@@ -547,10 +547,10 @@ in
                    end
                  | _ => 
                    (EU.enqueueError
-                      (loc, E.DataTypeNameExpected("EI-130", {longsymbol = refPath}));
-                    (tstr, SymbolEnv.empty))
+                      (loc, E.DataTypeNameExpected("EI-130", {longsymbol = map #symbol refPath}));
+                    (tstr, SymbolWithLocEnv.empty))
              val env = VP.rebindTstr VP.INTERFACE (V.emptyEnv, tycon, tstr)
-             val env = SymbolEnv.foldri
+             val env = SymbolWithLocEnv.foldri
                          (fn (name, idstatus, env) =>
                              VP.rebindId VP.INTERFACE (env, name, idstatus))
                          env
@@ -561,7 +561,7 @@ in
         )
       | PI.PIEXCEPTION {symbol, ty=tyOpt, loc} =>
         let
-          val longsymbol = Symbol.prefixPath(path,symbol)
+          val longsymbol = SymbolWithLoc.prefixPath(path,symbol)
           val ty =
               case tyOpt of
                 NONE => BT.exnITy
@@ -634,11 +634,11 @@ in
            end
          | SOME (sym, _) => 
            (EU.enqueueError
-              (loc, E.ExceptionExpected("EI-150", {longsymbol = longsymbol}));
+              (loc, E.ExceptionExpected("EI-150", {longsymbol = map #symbol longsymbol}));
             (renameEnv, externSet, V.emptyEnv, nil))
          | NONE => 
            (EU.enqueueError
-              (loc, E.ExceptionNameUndefined("EI-140", {longsymbol = longsymbol}));
+              (loc, E.ExceptionNameUndefined("EI-140", {longsymbol = map #symbol longsymbol}));
             (renameEnv, externSet, V.emptyEnv, nil))
         )
       | PI.PISTRUCTURE {symbol, strexp, loc} =>
@@ -647,7 +647,7 @@ in
               evalPistr 
                 provider
                 (renameEnv:renameEnv) 
-                (Symbol.prefixPath(path,symbol)) topEnv (externSet, strexp)
+                (SymbolWithLoc.prefixPath(path,symbol)) topEnv (externSet, strexp)
           val env = VP.rebindStr VP.INTERFACE (V.emptyEnv, symbol, strEntry)
         in
           (renameEnv, externSet, env, icdecls)
@@ -686,7 +686,7 @@ in
             NONE => 
             (
              EU.enqueueError
-               (loc, E.StructureNameUndefined("EI-140", {longsymbol = longsymbol}));
+               (loc, E.StructureNameUndefined("EI-140", {longsymbol = map #symbol longsymbol}));
              (renameEnv, 
               externSet, 
               {env=V.emptyEnv, 
@@ -699,7 +699,7 @@ in
           | SOME {env, strKind=V.FUNARG _, loc, definedSymbol} => 
             (
              EU.enqueueError
-               (loc, E.StructureRepOfFuncrorArgInInterface("EI-141", {longsymbol = path}));
+               (loc, E.StructureRepOfFuncrorArgInInterface("EI-141", {longsymbol = map #symbol path}));
              (renameEnv, 
               externSet, 
               {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate()), 
@@ -727,7 +727,7 @@ in
           case (VP.findFunETopEnv(topEnv, functorSymbol), VP.findStr(Env, argument)) of
             (NONE, _) => 
             (EU.enqueueError
-               (loc, E.FunctorNameUndefined("EI-140", {symbol = functorSymbol}));
+               (loc, E.FunctorNameUndefined("EI-140", {symbol = #symbol functorSymbol}));
              (renameEnv, externSet, 
               {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate()), 
                definedSymbol = path,
@@ -736,7 +736,7 @@ in
             )
           | (_, NONE) => 
             (EU.enqueueError
-               (loc, E.StructureNameUndefined("EI-140", {longsymbol = argument}));
+               (loc, E.StructureNameUndefined("EI-140", {longsymbol = map #symbol argument}));
              (renameEnv,  externSet, 
               {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate()), 
                definedSymbol = path,
@@ -756,11 +756,11 @@ in
               fun instVarE (varE,actualVarE) {typIdS, tvarS, conIdS, exnIdS, newProvider} =
                 let
                   val conIdS =
-                        SymbolEnv.foldri
+                        SymbolWithLocEnv.foldri
                           (fn (name, idstatus, conIdS) =>
                               case idstatus of
                                 I.IDCON {id, longsymbol, ty, defRange} =>
-                                (case SymbolEnv.find(actualVarE, name) of
+                                (case SymbolWithLocEnv.find(actualVarE, name) of
                                    SOME (idstatus as I.IDCON _) =>
                                    (* defRangeの妥当性？ *)
                                    ConID.Map.insert(conIdS, id, idstatus)
@@ -792,12 +792,12 @@ in
                          then tfv1 := tfunkind
                          else EU.enqueueError
                                 (loc, E.FunctorParamRestriction
-                                        ("440", {longsymbol=path}))
+                                        ("440", {longsymbol=map #symbol path}))
                        | I.TFUN_VAR _ => raise bug "tfun var"
                        | I.TFUN_DEF _ =>
                          EU.enqueueError
                            (loc, E.FunctorParamRestriction
-                                   ("440", {longsymbol=path}));
+                                   ("440", {longsymbol=map #symbol path}));
                        subst)
                     | I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {dtyKind,...})) =>
                       (case actualTfun of
@@ -848,18 +848,18 @@ in
                      )
                   )
               fun instTyE path (tyE, actualTyE) subst =
-                  SymbolEnv.foldri
+                  SymbolWithLocEnv.foldri
                     (fn (name, tstr, subst) =>
                         let
                           val actualTstr = 
-                              case SymbolEnv.find(actualTyE, name) of
+                              case SymbolWithLocEnv.find(actualTyE, name) of
                                 SOME tstr => tstr
                               | NONE =>
                                 (
                                  raise bug "tstr not found"
                                 )
                         in
-                          instTstr (Symbol.prefixPath(path,name)) (tstr, actualTstr) subst
+                          instTstr (SymbolWithLoc.prefixPath(path,name)) (tstr, actualTstr) subst
                         end
                     )
                     subst
@@ -874,14 +874,14 @@ in
                     subst
                   end
               and instStrE path (V.STR envMap, V.STR actualEnvMap) subst =
-                  SymbolEnv.foldri
+                  SymbolWithLocEnv.foldri
                     (fn (name, {env, strKind, loc, definedSymbol}, subst) =>
                         let
-                          val actualEnv = case SymbolEnv.find(actualEnvMap, name) of
+                          val actualEnv = case SymbolWithLocEnv.find(actualEnvMap, name) of
                                             SOME {env, strKind, ...} => env 
                                           | NONE => raise bug "actualEnv not found"
                         in
-                          instEnv (Symbol.prefixPath(path,name)) (env, actualEnv) subst
+                          instEnv (SymbolWithLoc.prefixPath(path,name)) (env, actualEnv) subst
                         end
                     )
                     subst
@@ -894,7 +894,7 @@ in
                   | I.IDVAR_TYPED _ => idstatus
                   | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId, defRange} =>
                     I.IDEXVAR
-                      {exInfo={longsymbol= Symbol.concatPath(copyPath , longsymbol),
+                      {exInfo={longsymbol= SymbolWithLoc.concatPath(copyPath , longsymbol),
                                ty=ty,
                                used = used, 
                                version=version},
@@ -902,7 +902,7 @@ in
                        internalId=internalId}
                   | I.IDEXVAR_TOBETYPED {longsymbol, id, version, defRange} =>
                     I.IDEXVAR_TOBETYPED
-                      {longsymbol= Symbol.concatPath(copyPath, longsymbol), 
+                      {longsymbol= SymbolWithLoc.concatPath(copyPath, longsymbol),
                        defRange = defRange,
                        id=id, version=version}
                   | I.IDBUILTINVAR _ => idstatus
@@ -913,19 +913,19 @@ in
                     I.IDEXEXN  
                       {used = used, 
                        defRange = defRange,
-                       longsymbol= Symbol.concatPath(copyPath,longsymbol), ty=ty, version=version}
+                       longsymbol= SymbolWithLoc.concatPath(copyPath,longsymbol), ty=ty, version=version}
                   | I.IDEXEXNREP {used, longsymbol, ty, version, defRange} =>
                     I.IDEXEXNREP
                       {used = used, 
                        defRange = defRange,
-                       longsymbol = Symbol.concatPath(copyPath,longsymbol), 
+                       longsymbol = SymbolWithLoc.concatPath(copyPath,longsymbol),
                        ty=ty, version=version}
                   | I.IDOPRIM _ => idstatus
                   | I.IDSPECVAR _ => idstatus
                   | I.IDSPECEXN _ => idstatus
                   | I.IDSPECCON _ => idstatus
               fun setPathVarE copyPath varE =
-                  SymbolEnv.map (setPathIdstatus copyPath) varE
+                  SymbolWithLocEnv.map (setPathIdstatus copyPath) varE
               fun setPathEnv copyPath (V.ENV{tyE, strE, varE}) =
                   let
                     val strE = setPathStrE copyPath strE
@@ -936,7 +936,7 @@ in
               and setPathStrE copyPath (V.STR envMap) =
                   V.STR
                     (
-                     SymbolEnv.map
+                     SymbolWithLocEnv.map
                        (fn {env, strKind, loc, definedSymbol} => 
                            {env=setPathEnv copyPath env, strKind=strKind, 
                             definedSymbol = definedSymbol,
@@ -965,10 +965,10 @@ in
                     handle e => raise e
                   end
               val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-              val argStrSymbol = Symbol.mkSymbol "arg" Loc.noloc
-              val argStrLongsymbol = Symbol.mkLongsymbol ["arg"] Loc.noloc
-              val bodyStrSymbol = Symbol.mkSymbol "body" Loc.noloc
-              val bodyStrLongsymbol = Symbol.mkLongsymbol ["body"] Loc.noloc
+              val argStrSymbol = SymbolWithLoc.mkSymbol "arg" Loc.noloc
+              val argStrLongsymbol = SymbolWithLoc.mkLongsymbol ["arg"] Loc.noloc
+              val bodyStrSymbol = SymbolWithLoc.mkSymbol "body" Loc.noloc
+              val bodyStrLongsymbol = SymbolWithLoc.mkLongsymbol ["body"] Loc.noloc
               val tempEnv =
                   VP.reinsertStr(VP.reinsertStr(V.emptyEnv, argStrSymbol, argStrEntry),
                                 bodyStrSymbol,
@@ -1074,19 +1074,19 @@ in
       (* defRangeの妥当性 *)
       case idstatus of
         I.IDEXEXN (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, longsymbol) of
+        (case LongsymbolEnv.find(pathEnv, map #symbol longsymbol) of
            SOME idstatus => (pathEnv, idstatus)
          | NONE => 
            let
              val newId = ExnID.generate() (* dummy *)
              val idstatus = I.IDEXN {id=newId, longsymbol=longsymbol, ty= ty, defRange=defRange}
-             val pathEnv = LongsymbolEnv.insert(pathEnv, longsymbol, idstatus)
+             val pathEnv = LongsymbolEnv.insert(pathEnv, map #symbol longsymbol, idstatus)
            in
               (pathEnv, idstatus)
             end
         )
       | I.IDEXEXNREP (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, longsymbol) of
+        (case LongsymbolEnv.find(pathEnv, map #symbol longsymbol) of
            SOME idstatus => (pathEnv, idstatus)
          | NONE => (pathEnv, idstatus)
         )
@@ -1096,33 +1096,33 @@ in
       (* defRangeの妥当性 *)
       let
         val (pathEnv, varE) = 
-            SymbolEnv.foldri
+            SymbolWithLocEnv.foldri
               (fn (name, idstatus, (pathEnv, varE)) =>
                   let
                     val (pathEnv, idstatus)=  internalizeIdstatus (pathEnv, idstatus)
-                    val varE = SymbolEnv.insert(varE, name, idstatus)
+                    val varE = SymbolWithLocEnv.insert(varE, name, idstatus)
                   in
                     (pathEnv, varE)
                   end
               )
-              (pathEnv, SymbolEnv.empty)
+              (pathEnv, SymbolWithLocEnv.empty)
               varE
         val (pathEnv, strE) = 
             let
               val (pathEnv, envMap) =
-                  SymbolEnv.foldri
+                  SymbolWithLocEnv.foldri
                     (fn (name, {env, strKind, loc, definedSymbol}, (pathEnv, envMap)) => 
                         let
                           val (pathEnv, env) = internalizeEnv (pathEnv, env)
                           val envMap = 
-                              SymbolEnv.insert
+                              SymbolWithLocEnv.insert
                                 (envMap, name, 
                                  {env=env, loc=loc, strKind=strKind, definedSymbol = definedSymbol})
                         in
                           (pathEnv, envMap)
                         end
                     )
-                    (pathEnv, SymbolEnv.empty)
+                    (pathEnv, SymbolWithLocEnv.empty)
                     envMap
             in
               (pathEnv, V.STR envMap)
@@ -1134,7 +1134,7 @@ in
       (* defRangeの妥当性 *)
       case idstatus of
         I.IDEXEXNREP (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, longsymbol) of
+        (case LongsymbolEnv.find(pathEnv, map #symbol longsymbol) of
            SOME (I.IDEXN exInfo) => I.IDEXNREP exInfo
          | _ => idstatus
         )
@@ -1144,24 +1144,24 @@ in
       (* defRangeの妥当性 *)
       let
         val varE = 
-            SymbolEnv.foldri
+            SymbolWithLocEnv.foldri
               (fn (name, idstatus, varE) =>
                   let
                     val idstatus=  internalizeIdstatusRep pathEnv idstatus
                   in
-                   SymbolEnv.insert(varE, name, idstatus)
+                   SymbolWithLocEnv.insert(varE, name, idstatus)
                   end
               )
-              SymbolEnv.empty
+              SymbolWithLocEnv.empty
               varE
         val strE = 
             let
               val envMap =
-                  SymbolEnv.foldri
+                  SymbolWithLocEnv.foldri
                     (fn (name, {env, strKind, loc, definedSymbol}, envMap) => 
                         let
                           val env = internalizeEnvRep pathEnv env
-                          val envMap = SymbolEnv.insert
+                          val envMap = SymbolWithLocEnv.insert
                                          (envMap, name, 
                                           {env=env, loc = loc, definedSymbol =  definedSymbol,
                                            strKind=strKind})
@@ -1169,7 +1169,7 @@ in
                           envMap
                         end
                     )
-                    SymbolEnv.empty
+                    SymbolWithLocEnv.empty
                     envMap
             in
               V.STR envMap
@@ -1299,7 +1299,7 @@ in
              bodyVarExp = functorExp
             }
             
-        val funE =  VP.rebindFunE VP.INTERFACE (SymbolEnv.empty, functorSymbol, funEEntry)
+        val funE =  VP.rebindFunE VP.INTERFACE (SymbolWithLocEnv.empty, functorSymbol, funEEntry)
         val returnTopEnv = VP.topEnvWithFunE(V.emptyTopEnv, funE)
       in
         (returnTopEnv, [decl])

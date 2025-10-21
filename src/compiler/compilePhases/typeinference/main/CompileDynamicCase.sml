@@ -80,16 +80,6 @@ struct
   fun newVar ty =
       {path = [], ty = ty, id = VarID.generate (), opaque = false} : T.varInfo
 
-  fun NewVar ty =
-      {exp = TC.TPVAR {path = [], 
-                       ty = ty, 
-                       id = VarID.generate (), 
-                       opaque = false},
-       ty = ty}
-
-  fun Var (varInfo as {ty,path,id,opaque}) =
-      {exp = TC.TPVAR varInfo, ty = ty}
-
   fun Fn loc {expFn, argTy, bodyTy} =
       let
         val v = newVar argTy

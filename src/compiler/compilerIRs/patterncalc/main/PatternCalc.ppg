@@ -70,11 +70,11 @@ struct
   (*% @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty *)
   type ty = AbsynTy.ty
 
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
-  type symbol = Symbol.symbol
+  (*% @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol *)
+  type symbol = SymbolWithLoc.symbol
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol *)
-  type longsymbol = Symbol.longsymbol
+  (*% @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.format_longsymbol *)
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (*% @formatter(RecordLabel.label) RecordLabel.format_label *)
   type label = RecordLabel.label
@@ -695,7 +695,7 @@ struct
       case plexp of
         PLCONSTANT x => #2 x
       | PLSIZEOF x => #2 x
-      | PLVAR x => Symbol.longsymbolToLoc x
+      | PLVAR x => SymbolWithLoc.longsymbolToLoc x
       | PLTYPED x => #3 x
       | PLAPPM x => #3 x
       | PLLET x => #3 x
@@ -725,7 +725,7 @@ struct
   fun getLocPat pat =
       case pat of
         PLPATWILD x => x
-      | PLPATID x => Symbol.longsymbolToLoc x
+      | PLPATID x => SymbolWithLoc.longsymbolToLoc x
       | PLPATCONSTANT x => #2 x
       | PLPATCONSTRUCT x => #3 x
       | PLPATRECORD x => #3 x
@@ -753,7 +753,7 @@ struct
   fun getLocSigexp sigexp =
       case sigexp of
         PLSIGEXPBASIC (plspec, loc) => loc
-      | PLSIGID symbol => Symbol.symbolToLoc symbol
+      | PLSIGID symbol => SymbolWithLoc.symbolToLoc symbol
       | PLSIGWHERE (plsigexp, tybind, loc) => loc
   fun getLocTopDec topdec =
       case topdec of

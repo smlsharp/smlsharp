@@ -31,6 +31,6 @@ struct
 *)
   val TyRep  : Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
   val TyRepWithLookUp
-      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option)
+      : (BoundTypeVarID.id -> {id:VarID.id, path:SymbolWithLoc.longsymbol, ty:Types.ty} option)
         -> Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
 end

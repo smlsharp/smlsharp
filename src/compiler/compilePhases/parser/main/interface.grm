@@ -113,10 +113,10 @@ structure Interface
     | WITHTYPE
 
 %nonterm
-      id of Symbol.symbol
-    | id_noEQ of Symbol.symbol
-    | id_noEQSTAR of Symbol.symbol
-    | longId of Symbol.longsymbol
+      id of I.symbol
+    | id_noEQ of I.symbol
+    | id_noEQSTAR of I.symbol
+    | longId of I.longsymbol
 (*
       id of string
     | id_noEQ of string
@@ -124,11 +124,11 @@ structure Interface
     | longId of string list
     | longtyconid of string list
 *)
-    | tycon of Symbol.symbol
-    | strid of Symbol.symbol
-    | funid of Symbol.symbol
+    | tycon of I.symbol
+    | strid of I.symbol
+    | funid of I.symbol
     | tyvar of A.tvar
-    | longtycon of Symbol.longsymbol
+    | longtycon of I.longsymbol
 
     | tyvarCommaList of A.tvar list
     | tyvarseq_noNIL of A.tvar list
@@ -153,7 +153,7 @@ structure Interface
     | datbind_1 of I.datbind
     | datbinds of I.datbind list
     | datbind of I.datbind list * I.typbind_trans list
-    | conname of Symbol.symbol
+    | conname of I.symbol
     | conbind_1 of I.conbind
     | conbind of I.conbind list
     | exbind_1 of I.exbind
@@ -165,18 +165,18 @@ structure Interface
     | strdecs of I.idec list
     | sigdec of I.sigbind list
     | funParam of I.funParam
-    | funbindLeft of Symbol.symbol * I.funParam
+    | funbindLeft of I.symbol * I.funParam
                      (* (I.constraint * A.sigexp) option *)
     | funbind of I.funbind
     | fundec of I.itopdec
     | precLevel of string option
-    | vidList of Symbol.symbol list
+    | vidList of I.symbol list
     | infixDec of I.itopdec
     | topdec of I.itopdec
     | topdecs of I.itopdec list
     | sigdec' of A.topdec
     | sigdecs of A.topdec list
-    | require_options of Symbol.symbol list
+    | require_options of I.symbol list
     | requires of I.irequire list
     | includes of (RequirePath.path * I.loc) list
     | top of I.itop
@@ -192,34 +192,34 @@ structure Interface
     | overloadMatch of {instTy: A.ty, instance: I.overloadInstance} list
 
     | lab of RecordLabel.label
-    | sigid of Symbol.symbol
+    | sigid of I.symbol
 (*
     | longstrid of string list
 *)
-    | longstrid of Symbol.longsymbol
-    | longstrsymbol of Symbol.longsymbol
+    | longstrid of I.longsymbol
+    | longstrsymbol of I.longsymbol
 (*
     | constraint of I.constraint
 *)
-    | sigidlist of Symbol.symbol list
-    | valdesc of (Symbol.symbol * A.ty) list
-    | typdesc of (A.tvar list * Symbol.symbol) list
-    | typdescAlias of (A.tvar list * Symbol.symbol * A.ty) list
+    | sigidlist of I.symbol list
+    | valdesc of (I.symbol * A.ty) list
+    | typdesc of (A.tvar list * I.symbol) list
+    | typdescAlias of (A.tvar list * I.symbol * A.ty) list
     | datdesc_1 of
-        A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc
+        A.tvar list * I.symbol * (I.symbol * A.ty option * A.loc) list * A.loc
     | datdesc of
-        (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc) list
-    | condesc_1 of Symbol.symbol * A.ty option * A.loc
-    | condesc of (Symbol.symbol * A.ty option * A.loc) list
-    | exdesc of (Symbol.symbol * A.ty option * A.loc) list
-    | strdesc of (Symbol.symbol * A.sigexp) list
+        (A.tvar list * I.symbol * (I.symbol * A.ty option * A.loc) list * A.loc) list
+    | condesc_1 of I.symbol * A.ty option * A.loc
+    | condesc of (I.symbol * A.ty option * A.loc) list
+    | exdesc of (I.symbol * A.ty option * A.loc) list
+    | strdesc of (I.symbol * A.sigexp) list
     | spec_1 of A.spec
     | spec of A.spec
-    | tyEquation of Symbol.longsymbol list
-    | strEquation of Symbol.longsymbol list
-    | whereSpec of A.tvar list * Symbol.longsymbol * A.ty
+    | tyEquation of I.longsymbol list
+    | strEquation of I.longsymbol list
+    | whereSpec of A.tvar list * I.longsymbol * A.ty
     | sigexpWhere of A.sigexp
-        (* (A.tvar list * Symbol.longsymbol * A.ty) list *)
+        (* (A.tvar list * I.longsymbol * A.ty) list *)
     | sigexp of A.sigexp
     | sigexp_AND of A.sigexp
     | sigbind of I.sigbind list
@@ -275,21 +275,21 @@ structure Interface
 
 id_noEQSTAR
         : SYMBOLICID
-          (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+          (SymbolWithLoc.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
         | ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
 
 id_noEQ
         : id_noEQSTAR
           (id_noEQSTAR)
         | ASTERISK
-          (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
+          (SymbolWithLoc.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 id
         : id_noEQ
           (id_noEQ)
         | EQ
-          (Symbol.mkSymbol "=" (EQleft, EQright))
+          (SymbolWithLoc.mkSymbol "=" (EQleft, EQright))
 
 tycon
         : id
@@ -297,29 +297,29 @@ tycon
 
 strid
         : ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
 
 funid
         : ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
 
 sigid
         : ALPHABETICID
-          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
+          (SymbolWithLoc.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
 
 tyvar
         : TYVAR
-          ({symbol = Symbol.mkSymbol TYVAR (TYVARleft, TYVARright),
+          ({symbol = SymbolWithLoc.mkSymbol TYVAR (TYVARleft, TYVARright),
             isEq = false})
         | EQTYVAR
-          ({symbol = Symbol.mkSymbol EQTYVAR (EQTYVARleft, EQTYVARright),
+          ({symbol = SymbolWithLoc.mkSymbol EQTYVAR (EQTYVARleft, EQTYVARright),
             isEq = true})
 
 longId
         : id
           ([id])
         | ALPHABETICID PERIOD longId
-          (Symbol.mkSymbol 
+          (SymbolWithLoc.mkSymbol
 	      ALPHABETICID 
               (ALPHABETICIDleft, ALPHABETICIDright) :: longId)
 
@@ -327,16 +327,16 @@ longtycon
         : id_noEQSTAR
           ([id_noEQSTAR])
         | ALPHABETICID PERIOD longId
-          (Symbol.mkSymbol 
+          (SymbolWithLoc.mkSymbol
 	      ALPHABETICID 
               (ALPHABETICIDleft, ALPHABETICIDright) :: longId)
 longstrid
         : ALPHABETICID
-          ([Symbol.mkSymbol 
+          ([SymbolWithLoc.mkSymbol
 	      ALPHABETICID 
               (ALPHABETICIDleft, ALPHABETICIDright)])
         | ALPHABETICID PERIOD longstrid
-          (Symbol.mkSymbol 
+          (SymbolWithLoc.mkSymbol
 	      ALPHABETICID 
               (ALPHABETICIDleft, ALPHABETICIDright) :: longstrid)
 
@@ -441,7 +441,7 @@ typbind_trans
 
 opaque_impl
         : longId
-          (case Symbol.longsymbolToString longId of
+          (case SymbolWithLoc.longsymbolToString longId of
              "*" => I.IMPL_TUPLE
            | _ => I.IMPL_TY longId)
         | ARROW
@@ -799,7 +799,7 @@ overloadMatch
 
 lab
         : id
-          (RecordLabel.fromString (Symbol.symbolToString id))
+          (RecordLabel.fromString (SymbolWithLoc.symbolToString id))
         | INTLAB
           (RecordLabel.fromString INTLAB)
         | PREFIXEDLABEL

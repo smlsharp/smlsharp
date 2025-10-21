@@ -57,7 +57,7 @@ struct
     | I.IDSPECCON _ => raise bug "IDSPECCON in setTy"
 
   fun setTyVarE tyVarE varE = 
-      SymbolEnv.map (setTyIdstatus tyVarE) varE
+      SymbolWithLocEnv.map (setTyIdstatus tyVarE) varE
 
   fun setTyEnv tyVarE (NameEvalEnv.ENV {varE, tyE, strE}) =
       let
@@ -69,12 +69,12 @@ struct
 
   and setTyStrE tyVarE (NameEvalEnv.STR envMap) =
       NameEvalEnv.STR
-        (SymbolEnv.map
+        (SymbolWithLocEnv.map
            (fn strEntry as {env,...} => strEntry # {env= setTyEnv tyVarE env})
            envMap)
 
   fun setTyFunE tyVarE funE =
-      SymbolEnv.map
+      SymbolWithLocEnv.map
       (fn {id, loc, version, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
                       polyArgTys, typidSet, exnIdSet, bodyEnv, bodyVarExp}
           =>
@@ -136,7 +136,7 @@ struct
 
   fun resetInternalIdEnv (V.ENV{varE, strE, tyE}) =
       let
-        val varE = SymbolEnv.map resetInternalIdIdstatus varE
+        val varE = SymbolWithLocEnv.map resetInternalIdIdstatus varE
         val strE = resetInternalIdStrE strE
       in
         V.ENV{varE=varE, strE=strE, tyE=tyE}
@@ -145,7 +145,7 @@ struct
   and resetInternalIdStrE (V.STR strEmap) =
       let
         val strEmap = 
-            SymbolEnv.map 
+            SymbolWithLocEnv.map
             (fn (strEntry as {env, ...}) =>
                 strEntry # {env=resetInternalIdEnv env}
             )

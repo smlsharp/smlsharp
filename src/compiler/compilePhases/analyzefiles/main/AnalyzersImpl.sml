@@ -7,7 +7,7 @@ struct
 local
   structure D = Dynamic 
   structure I = IDCalc 
-  structure S = Symbol 
+  structure S = SymbolWithLoc
   structure L = Loc
   structure P = PrintUtils
   structure B = BuiltinPrimitive
@@ -107,17 +107,17 @@ local
   val bindTracingSave = ref false
 
 in
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type idstatus = IDCalc.idstatus
 
   type analyzers =
     {
-     idstatus: int -> Symbol.symbol * IDCalc.idstatus -> unit, 
-     tstr : int -> Symbol.symbol * NameEvalEnv.tstr -> unit,
-     strEntry: int -> Symbol.symbol * NameEvalEnv.strEntry -> unit,
-     funEEntry: int -> Symbol.symbol * NameEvalEnv.funEEntry -> unit,
-     sigEntry: int -> Symbol.symbol * NameEvalEnv.sigEntry -> unit
+     idstatus: int -> SymbolWithLoc.symbol * IDCalc.idstatus -> unit, 
+     tstr : int -> SymbolWithLoc.symbol * NameEvalEnv.tstr -> unit,
+     strEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.strEntry -> unit,
+     funEEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.funEEntry -> unit,
+     sigEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.sigEntry -> unit
     }
 
   fun startNameRefTracing () = 
@@ -289,7 +289,7 @@ in
             V.TSTR {tfun, defRange} => (tfun, "TSTR", defRange)
           | V.TSTR_DTY {tfun, defRange, ...} => (tfun, "TSTR_DTY", defRange)
       val definedSymbol =
-          Symbol.longsymbolToString
+          SymbolWithLoc.longsymbolToString
             (IDCalc.tfunLongsymbol tfun)
     in
       {tstrInfo = idInfo
@@ -363,7 +363,7 @@ in
     if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
-      val definedSymbol = Symbol.longsymbolToString definedSymbol
+      val definedSymbol = SymbolWithLoc.longsymbolToString definedSymbol
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
@@ -479,7 +479,7 @@ in
   fun analyzeStr fileId (sym, {loc=defRange, definedSymbol,...}) =
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
-      val definedSymbol = Symbol.longsymbolToString definedSymbol
+      val definedSymbol = SymbolWithLoc.longsymbolToString definedSymbol
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
@@ -587,7 +587,7 @@ in
     if !Control.doNameAnalysis andalso !nameRefTracing then
       let
         val {locKey, refSymInfo} = refLongSymLocInfo longsymbol
-        val definedSymbol = Symbol.longsymbolToString definedSymbol
+        val definedSymbol = SymbolWithLoc.longsymbolToString definedSymbol
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
@@ -676,7 +676,7 @@ in
     if !Control.doNameAnalysis andalso !provideTracing then
       let
         val {locKey, refSymInfo} = refSymLocInfo symbol
-        val definedSymbol = Symbol.longsymbolToString definedSymbol
+        val definedSymbol = SymbolWithLoc.longsymbolToString definedSymbol
         val provideInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}
@@ -719,7 +719,7 @@ in
     if !Control.doNameAnalysis andalso !provideTracing then
       let
         val {locKey, refSymInfo} = refSymLocInfo symbol
-        val definedSymbol = Symbol.longsymbolToString definedSymbol
+        val definedSymbol = SymbolWithLoc.longsymbolToString definedSymbol
         val provideInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}
@@ -783,12 +783,12 @@ in
   fun insertUPRefMap (symbol, sym) =
       if !Control.doNameAnalysis then
         let
-          val refSymbolLoc = Symbol.symbolToLoc symbol
+          val refSymbolLoc = SymbolWithLoc.symbolToLoc symbol
           val refSymbol = S.symbolToString symbol
           val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 
               locRange refSymbolLoc
-          val defSymbolLoc = Symbol.symbolToLoc sym
-          val defSymbol = Symbol.symbolToString sym
+          val defSymbolLoc = SymbolWithLoc.symbolToLoc sym
+          val defSymbol = SymbolWithLoc.symbolToString sym
           val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
         in
@@ -827,12 +827,12 @@ in
   fun analyzeIdRefForUP (longsymbol, (sym, idstatus)) =
     if !Control.doNameAnalysis then
       let
-        val refLongsymbolLoc = Symbol.longsymbolToLoc longsymbol
+        val refLongsymbolLoc = SymbolWithLoc.longsymbolToLoc longsymbol
         val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 
             locRange refLongsymbolLoc
         val refSymbol = S.longsymbolToString longsymbol
-        val defSymbolLoc = Symbol.symbolToLoc sym
-        val defSymbol = Symbol.symbolToString sym
+        val defSymbolLoc = SymbolWithLoc.symbolToLoc sym
+        val defSymbol = SymbolWithLoc.symbolToString sym
         val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
       in
@@ -871,7 +871,7 @@ in
   fun analyzeTstrRefForUP (longsymbol, (sym, tstr)) =
     if !Control.doNameAnalysis then
       let
-        val longsymbolLoc = Symbol.longsymbolToLoc longsymbol
+        val longsymbolLoc = SymbolWithLoc.longsymbolToLoc longsymbol
       in
         if Loc.isNoloc longsymbolLoc then ()
         else
@@ -881,7 +881,7 @@ in
             val refSymbol = S.longsymbolToString longsymbol
             val {tfun,...} = tstrInfo tstr
             val tfunLongsymbol = I.tfunLongsymbol tfun
-            val tfunLoc = Symbol.longsymbolToLoc tfunLongsymbol
+            val tfunLoc = SymbolWithLoc.longsymbolToLoc tfunLongsymbol
             val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) =
                 locRange tfunLoc
             val key = {refFileId = refSymbolFileId,
@@ -896,7 +896,7 @@ in
                   refSymbolStartPos = refSymbolStartPos,
                   refSymbolEndPos = refSymbolEndPos, 
                   refSymbolFileId = refSymbolFileId,
-                  defSymbol = Symbol.longsymbolToString tfunLongsymbol}
+                  defSymbol = SymbolWithLoc.longsymbolToString tfunLongsymbol}
             val _ = IM.insertUPRefMap (key, UPRefInfo)
           in
             ()

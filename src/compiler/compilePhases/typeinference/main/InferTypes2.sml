@@ -58,9 +58,9 @@ local
 
   val emptyScopedTvars = nil : IC.scopedTvars
 
-  fun setVersion (longsymbol, IC.STEP x) = Symbol.setVersion (longsymbol, x)
-    | setVersion (longsymbol, IC.OTHER _) = longsymbol
-    | setVersion (longsymbol, IC.SELF) = longsymbol
+  fun setVersion (longsymbol, IC.STEP x) = map #symbol (SymbolWithLoc.setVersion (longsymbol, x))
+    | setVersion (longsymbol, IC.OTHER _) = map #symbol longsymbol
+    | setVersion (longsymbol, IC.SELF) = map #symbol longsymbol
 
   fun exInfoToLongsymbol {used, longsymbol, version, ty} =
       setVersion(longsymbol, version)
@@ -81,7 +81,7 @@ local
                     )
                   else
                     let
-                      val newVarInfo = TCU.newTCVarInfo loc ty
+                      val newVarInfo = TCU.newTCVarInfo ty
                     in
                       (
                        RecordLabel.Map.insert
@@ -1043,8 +1043,8 @@ in
                 E.CyclicTvarkindSpec 
                   ("008",
                    case utvarOpt of
-                     SOME {symbol, ...} => symbol
-                   | NONE => Symbol.mkSymbol "" Loc.noloc
+                     SOME {symbol, ...} => #symbol symbol
+                   | NONE => Symbol.fromString ""
                   )
                )
            else ();
@@ -1782,7 +1782,7 @@ in
                        )
                     val (ty, tpexp) =
                         typeinfExp lambdaDepth inf context newIcexp
-                    val varInfo = TCU.newTCVarInfo loc ty
+                    val varInfo = TCU.newTCVarInfo ty
                   in
                     (nil, [(varInfo, tpexp)], nil, TC.TPVAR varInfo, ty)
                   end
@@ -1830,7 +1830,7 @@ in
                        )
                     val (tupleTy, tpexp) =
                         typeinfExp lambdaDepth inf context newIcexp
-                    val newVarInfo = TCU.newTCVarInfo loc tupleTy
+                    val newVarInfo = TCU.newTCVarInfo tupleTy
                     val tyList =
                       case tupleTy of
                         T.RECORDty tyFields => RecordLabel.Map.listItems tyFields
@@ -1873,13 +1873,13 @@ in
                     generalizeIfNotExpansive
                     lambdaDepth
                     (typeinfExp lambdaDepth zero context icexp, icexpLoc)
-                  val newVarInfo = TCU.newTCVarInfo loc ty
+                  val newVarInfo = TCU.newTCVarInfo ty
                 in
                   (nil,[(newVarInfo,tpexp)], nil, TC.TPVAR newVarInfo, ty)
                 end
             | IC.ICPATVAR_TRANS {longsymbol,id} =>
                 let
-                  val loc = Symbol.longsymbolToLoc longsymbol
+                  val loc = SymbolWithLoc.longsymbolToLoc longsymbol
                   val (ty, tpexp) =
                       typeinfExp lambdaDepth zero context icexp
                   val (ty, tpexp) =
@@ -1898,7 +1898,7 @@ in
                 end
             | IC.ICPATVAR_OPAQUE {longsymbol,id} =>
                 let
-                  val loc = Symbol.longsymbolToLoc longsymbol
+                  val loc = SymbolWithLoc.longsymbolToLoc longsymbol
                   val (ty, tpexp) =
                       typeinfExp lambdaDepth zero context icexp
                   val (ty, tpexp) =
@@ -2209,9 +2209,9 @@ in
          end
       | IC.ICVAR (var as {longsymbol, id}) =>
         let
-          val loc  = Symbol.longsymbolToLoc longsymbol
+          val loc  = SymbolWithLoc.longsymbolToLoc longsymbol
           fun setLoc (v as {path, ...}) =
-              v # {path = Symbol.replaceLocLongsymbol loc path}
+              v # {path = SymbolWithLoc.replaceLocLongsymbol loc path}
         in
           (
            case VarMap.find(#varEnv context, var)  of
@@ -2230,7 +2230,7 @@ in
       | IC.ICEXVAR {longsymbol=refLongsymbol,
                     exInfo= exInfo as {used, longsymbol, version, ty}} =>
         let
-          val loc = Symbol.longsymbolToLoc refLongsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity4\n"; raise e)
@@ -2250,7 +2250,7 @@ in
               val (subst, newBoundEnv) = TB.copyBoundEnv boundtvars
               val newArgTy = TB.substBTvar subst argTy
               val newResultTy = TB.substBTvar subst resultTy
-              val argVarInfo = TCU.newTCVarInfo loc newArgTy
+              val argVarInfo = TCU.newTCVarInfo newArgTy
               val newTy =
                   T.POLYty {boundtvars=newBoundEnv,
                             constraints = constraints,
@@ -2285,7 +2285,7 @@ in
             raise bug "Uncurried fun type in OPRIM"
           | T.FUNMty([argTy], resultTy) =>
             let
-              val argVarInfo = TCU.newTCVarInfo loc argTy
+              val argVarInfo = TCU.newTCVarInfo argTy
             in
               (
                ty,
@@ -2310,13 +2310,13 @@ in
         end
       | IC.ICCON (con as {longsymbol, id, ty}) =>
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity6\n";
                            P.printIcexp icexp;
                            P.print "\n";
                            raise e)
-          val conInfo = {path=longsymbol, ty=ty, id=id}
+          val conInfo = {path=map #symbol longsymbol, ty=ty, id=id}
         in
           case ty of
             T.POLYty{boundtvars, constraints, body = T.FUNMty([argTy], resultTy)} =>
@@ -2324,7 +2324,7 @@ in
               val (subst, newBoundEnv) = TB.copyBoundEnv boundtvars
               val newArgTy = TB.substBTvar subst argTy
               val newResultTy = TB.substBTvar subst resultTy
-              val argVarInfo = TCU.newTCVarInfo loc newArgTy
+              val argVarInfo = TCU.newTCVarInfo newArgTy
               val newTy =
                   T.POLYty {boundtvars=newBoundEnv,
                             constraints = constraints,
@@ -2360,7 +2360,7 @@ in
             raise bug "Uncurried fun type in OPRIM"
           | T.FUNMty([argTy], resultTy) =>
             let
-              val argVarInfo = TCU.newTCVarInfo loc argTy
+              val argVarInfo = TCU.newTCVarInfo argTy
             in
               (ty,
                TC.TPFNM
@@ -2417,15 +2417,15 @@ in
         end
       | IC.ICEXN (exn as {longsymbol, id, ty}) =>
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity7\n";raise e)
-          val exnInfo = {path=longsymbol, ty=ty, id=id}
+          val exnInfo = {path=map #symbol longsymbol, ty=ty, id=id}
         in
           case ty of
             T.FUNMty([argTy], resultTy) =>
             let
-              val argVarInfo = TCU.newTCVarInfo loc argTy
+              val argVarInfo = TCU.newTCVarInfo argTy
             in
               (ty,
                TC.TPFNM
@@ -2452,10 +2452,10 @@ in
         end
       | IC.ICEXN_CONSTRUCTOR (exn as {longsymbol, id, ty}) =>
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity8\n";raise e)
-          val exnInfo = {path=longsymbol, ty=ty, id=id}
+          val exnInfo = {path=map #symbol longsymbol, ty=ty, id=id}
         in
           (BT.exntagTy,
            TC.TPEXNTAG{exnInfo = exnInfo, loc=loc}
@@ -2463,7 +2463,7 @@ in
         end
       | IC.ICEXEXN_CONSTRUCTOR {longsymbol=refLongsymbol, exInfo=exInfo as {longsymbol, ty,...}} =>
         let
-          val loc = Symbol.longsymbolToLoc refLongsymbol 
+          val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity9\n";raise e)
@@ -2476,7 +2476,7 @@ in
       | IC.ICEXEXN {longsymbol=refLongsymbol, 
                     exInfo = exInfo as {longsymbol,ty,...}} =>
         let
-          val loc = Symbol.longsymbolToLoc refLongsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity10\n"; raise e)
@@ -2485,7 +2485,7 @@ in
           case ty of
             T.FUNMty([argTy], resultTy) =>
             let
-              val argVarInfo = TCU.newTCVarInfo loc argTy
+              val argVarInfo = TCU.newTCVarInfo argTy
             in
               (ty,
                TC.TPFNM
@@ -2512,7 +2512,7 @@ in
         end
       | IC.ICOPRIM oprimInfo =>
         let
-          val loc = Symbol.longsymbolToLoc (#longsymbol oprimInfo)
+          val loc = SymbolWithLoc.longsymbolToLoc (#longsymbol oprimInfo)
           val oprimInfo as {id, path, ty} =
               case OPrimMap.find(#oprimEnv context, oprimInfo) of
                 SOME oprimInfo => oprimInfo
@@ -2524,7 +2524,7 @@ in
               val (subst, newBoundEnv) = TB.copyBoundEnv boundtvars
               val newArgTy = TB.substBTvar subst argTy
               val newResultTy = TB.substBTvar subst resultTy
-              val argVarInfo = TCU.newTCVarInfo loc newArgTy
+              val argVarInfo = TCU.newTCVarInfo newArgTy
               val newTy =
                   T.POLYty {boundtvars=newBoundEnv,
                             constraints = constraints,
@@ -2646,7 +2646,7 @@ in
                {revealTyTo = revealTyInterface,
                 revealTyFrom = revealTyInterface,
                 loc = loc,
-                path = map Symbol.symbolToString path,
+                path = map SymbolWithLoc.symbolToString path,
                 tpexp = tpexp,
                 tpexpTy = ty1,
                 toTy = ty2}
@@ -2864,9 +2864,9 @@ in
           case funExp of
             IC.ICVAR var =>
 	    (let
-              val funVarLoc = Symbol.longsymbolToLoc (#longsymbol var)
+              val funVarLoc = SymbolWithLoc.longsymbolToLoc (#longsymbol var)
               fun setLoc (v as {path, ...}) =
-                  v # {path = Symbol.replaceLocLongsymbol funVarLoc path}
+                  v # {path = SymbolWithLoc.replaceLocLongsymbol funVarLoc path}
               val (funExp, funTy) =
                   case VarMap.find(#varEnv context, var) of
                     SOME (TC.VARID (var as {ty,...})) =>
@@ -2889,7 +2889,7 @@ in
           | IC.ICEXVAR {longsymbol=refLongsymbol, 
                         exInfo=exInfo as {used, ty, longsymbol, version}} =>
 	    let
-              val loc = Symbol.longsymbolToLoc refLongsymbol
+              val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
               val externalLongsymbol = exInfoToLongsymbol exInfo
               val ty = ITy.evalIty context ty
                   handle e => (P.print "ity17\n"; raise e)
@@ -2971,12 +2971,12 @@ in
 *)
           | IC.ICCON {longsymbol, id, ty=funIty} =>
             let
-              val funLoc = Symbol.longsymbolToLoc longsymbol
+              val funLoc = SymbolWithLoc.longsymbolToLoc longsymbol
               val lambdaDepth = incDepth ()
               fun makeNewTermBody (argExp, argTy, funTy, instTyList) =
                   TC.TPDATACONSTRUCT
                     {
-                     con={path=longsymbol,id=id,ty=funTy},
+                     con={path=map #symbol longsymbol,id=id,ty=funTy},
                      instTyList=instTyList,
                      argExpOpt=SOME argExp,
                      loc=loc
@@ -2986,14 +2986,14 @@ in
             end
           | IC.ICEXN {longsymbol, id, ty} =>
             let
-              val loc = Symbol.longsymbolToLoc longsymbol
+              val loc = SymbolWithLoc.longsymbolToLoc longsymbol
               val lambdaDepth = incDepth ()
               fun makeNewTermBody (_, _, _, SOME _) =
                   raise Bug.Bug "ICEXN: makeNewTermBody"
                 | makeNewTermBody (argExp, argTy, funTy, NONE) =
                   TC.TPEXNCONSTRUCT
                     {
-                     exn=TC.EXN {path=longsymbol,id=id,ty=funTy},
+                     exn=TC.EXN {path=map #symbol longsymbol,id=id,ty=funTy},
                      argExpOpt=SOME argExp,
                      loc=loc
                     }
@@ -3003,7 +3003,7 @@ in
           | IC.ICEXEXN {longsymbol=refLongsymbol, 
                         exInfo=exInfo as {longsymbol, ty,...}} =>
             let
-              val loc = Symbol.longsymbolToLoc refLongsymbol
+              val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
               val externalLongsymbol = exInfoToLongsymbol exInfo
               val lambdaDepth = incDepth ()
               fun makeNewTermBody (_, _, _, SOME _) =
@@ -3021,7 +3021,7 @@ in
             end
           | IC.ICOPRIM oprimInfo =>
             let
-              val loc = Symbol.longsymbolToLoc (#longsymbol oprimInfo)
+              val loc = SymbolWithLoc.longsymbolToLoc (#longsymbol oprimInfo)
               val oprimInfo as {ty,...} =
                   case OPrimMap.find(#oprimEnv context, oprimInfo) of
                     SOME oprimInfo => oprimInfo
@@ -3208,7 +3208,7 @@ in
                 T.FUNMty([domTy], ranTy)=>(domTy, ranTy)
               | T.ERRORty => (T.ERRORty, T.ERRORty)
               | _ => raise bug "Case Type Inference"
-          val newVarInfo = TCU.newTCVarInfo loc domTy
+          val newVarInfo = TCU.newTCVarInfo domTy
         in
           (
            U.unify [(ty1, ranTy)];
@@ -3566,7 +3566,7 @@ in
                 (nil, tpexp2)
               else
                 let
-                  val newVarInfo = TCU.newTCVarInfo Loc.noloc ty2
+                  val newVarInfo = TCU.newTCVarInfo ty2
                 in
                   ([(newVarInfo, tpexp2)], TC.TPVAR newVarInfo)
                 end
@@ -3813,7 +3813,7 @@ in
                     let
                       val (ty, tpexp) =
                           typeinfExp lambdaDepth applyDepth context icexp
-                      val newVarInfo = TCU.newTCVarInfo loc ty
+                      val newVarInfo = TCU.newTCVarInfo ty
                     in
                       ((newVarInfo, tpexp), loc) :: bindListRev
                     end)
@@ -4117,10 +4117,10 @@ in
         end
       | IC.ICPATCON {longsymbol, id, ty=ity} =>
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ity
               handle e => (P.print "ity23\n"; raise e)
-          val conInfo = {path=longsymbol, id=id, ty=ty}
+          val conInfo = {path=map #symbol longsymbol, id=id, ty=ty}
           val (ty1, tylist) =
               case ty of
                 (T.POLYty{boundtvars, body, ...}) =>
@@ -4136,7 +4136,7 @@ in
                 (
                  E.enqueueError "Typeinf 046"
                    (loc,
-                    E.ConRequireArg("046",{longsymbol = longsymbol}));
+                    E.ConRequireArg("046",{longsymbol = map #symbol longsymbol}));
                  (
                   VarMap.empty,
                   T.ERRORty,
@@ -4157,17 +4157,17 @@ in
 
       | IC.ICPATEXN {longsymbol, id, ty=ity} =>
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ity
               handle e => (P.print "ity24\n"; raise e)
-          val exnInfo = {path=longsymbol, id=id, ty=ty}
+          val exnInfo = {path=map #symbol longsymbol, id=id, ty=ty}
         in
           case TB.derefTy ty of
             T.FUNMty _ =>
             (
              E.enqueueError "Typeinf 047"
                (loc,
-                E.ConRequireArg("047",{longsymbol = longsymbol}));
+                E.ConRequireArg("047",{longsymbol = map #symbol longsymbol}));
              (
               VarMap.empty,
               T.ERRORty,
@@ -4189,7 +4189,7 @@ in
         let
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val longsymbol = setVersion(longsymbol, version)
-          val loc = Symbol.longsymbolToLoc refLongsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
           val ty = ITy.evalIty context ity
               handle e => (P.print "ity25\n"; raise e)
           val exExnInfo = {path=externalLongsymbol, ty=ty}
@@ -4227,10 +4227,10 @@ in
         (case icpat1 of
            IC.ICPATCON {longsymbol, id, ty=ity} =>
            let
-             val loc = Symbol.longsymbolToLoc longsymbol
+             val loc = SymbolWithLoc.longsymbolToLoc longsymbol
              val ty = ITy.evalIty context ity
                  handle e => (P.print "ity26\n"; raise e)
-             val conInfo = {path=longsymbol, id=id, ty=ty}
+             val conInfo = {path=map #symbol longsymbol, id=id, ty=ty}
              val (ty1, tylist) =
                  case ty of
                    (T.POLYty{boundtvars, body, ...}) =>
@@ -4281,10 +4281,10 @@ in
            end
          | IC.ICPATEXN {longsymbol, id, ty=ity} =>
            let
-             val loc = Symbol.longsymbolToLoc longsymbol
+             val loc = SymbolWithLoc.longsymbolToLoc longsymbol
              val ty = ITy.evalIty context ity
                  handle e => (P.print "ity27\n"; raise e)
-             val exnInfo = {path=longsymbol, id=id, ty=ty}
+             val exnInfo = {path=map #symbol longsymbol, id=id, ty=ty}
              val (varEnv1, patTy2, tppat2) =
                  typeinfPat lambdaDepth context icpat2
              val (domtyList, ranty, instTyList, constraints) =
@@ -4328,7 +4328,7 @@ in
          | IC.ICPATEXEXN {longsymbol=refLongsymbol, 
                           exInfo= exInfo as {used, longsymbol, version, ty=ity}} =>
            let
-             val loc = Symbol.longsymbolToLoc refLongsymbol
+             val loc = SymbolWithLoc.longsymbolToLoc refLongsymbol
              val externalLongsymbol = exInfoToLongsymbol exInfo
              val ty = ITy.evalIty context ity
                  handle e => (P.print "ity28\n"; raise e)
@@ -4659,7 +4659,7 @@ in
             then E.enqueueError "Typeinf 092"
                                 (loc,
                                  E.UserTvarNotGeneralized
-                                   ("092", #symbol utvar))
+                                   ("092", #symbol (#symbol utvar)))
             else ()
         val _ = TvarMap.appi checkEscape addedUtvars
 
@@ -4775,9 +4775,9 @@ in
                            (E.enqueueError
                               "Typeinf 064"
                               (
-                               Symbol.longsymbolToLoc path,
+                               SymbolWithLoc.longsymbolToLoc path,
                                E.DuplicatePatternVar
-                                 ("064", {longsymbol = path}));
+                                 ("064", {longsymbol = map #symbol path}));
                             varId)
                          | _ =>
                            raise
@@ -4893,7 +4893,7 @@ in
                                         (loc,
                                          E.UserTvarNotGeneralized
                                            ("067",
-                                            #symbol utvar))
+                                            #symbol (#symbol utvar)))
                                     else ()
                                   | _ =>
                                     (
@@ -4907,7 +4907,7 @@ in
                                      (loc,
                                       E.UserTvarNotGeneralized
                                         ("068",
-                                         #symbol utvar)
+                                         #symbol (#symbol utvar))
                                      )
                                  else ()
                              )
@@ -4972,7 +4972,7 @@ in
                    {revealTyTo = fn x => revealTy revealKey x,
                     revealTyFrom = fn x => x,
                     loc = icexploc,
-                    path = map Symbol.symbolToString longsymbol,
+                    path = map SymbolWithLoc.symbolToString longsymbol,
                     tpexp = tpexp,
                     tpexpTy = ty1,
                     toTy = ty2}
@@ -5078,7 +5078,7 @@ in
                    {revealTyTo = fn x => x,
                     revealTyFrom = fn x => x,
                     loc = icexploc,
-                    path = map Symbol.symbolToString longsymbol,
+                    path = map SymbolWithLoc.symbolToString longsymbol,
                     tpexp = tpexp,
                     tpexpTy = ty1,
                     toTy = ty2}
@@ -5255,7 +5255,7 @@ in
                                      E.RecDefinitionAndOccurrenceNotAgree
                                        ("069",
                                         {
-                                         longsymbol = longsymbol,
+                                         longsymbol = map #symbol longsymbol,
                                          definition = funType,
                                          occurrence = funTy
                                         }
@@ -5282,7 +5282,7 @@ in
               T.RECORDty
                 (foldl
                    (fn ({funVarInfo={path, id, ty, opaque},...}, tyFields) =>
-                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol path, ty))
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (map #symbol path), ty))
                    RecordLabel.Map.empty
                    funBindList)
 
@@ -5297,7 +5297,7 @@ in
                        E.enqueueError "Typeinf 070"
                          (loc,
                           E.UserTvarNotGeneralized
-                            ("070", symbol))
+                            ("070", #symbol symbol))
                      | _ =>
                        (
                         raise
@@ -5310,7 +5310,7 @@ in
                     E.enqueueError "Typeinf 071"
                       (loc,
                        E.UserTvarNotGeneralized
-                         ("071", symbol)
+                         ("071", #symbol symbol)
                       )
                 )
                 addedUtvars
@@ -5466,7 +5466,7 @@ in
                               E.RecDefinitionAndOccurrenceNotAgree
                                 ("072",
                                  {
-                                  longsymbol = path,
+                                  longsymbol = map #symbol path,
                                   definition = icexpTy,
                                   occurrence = ty
                                  }
@@ -5483,7 +5483,7 @@ in
               T.RECORDty
                 (foldl
                    (fn ({var={path,ty,id, opaque},...}, tyFields) =>
-                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol path, ty))
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (map #symbol path), ty))
                    RecordLabel.Map.empty
                    varInfoTpexpList)
           val {boundEnv, boundConstraints, ...} =
@@ -5497,7 +5497,7 @@ in
                        E.enqueueError "Typeinf 073"
                          (loc,
                           E.UserTvarNotGeneralized
-                            ("073", symbol))
+                            ("073", #symbol symbol))
                      | _ =>
                        (
                         raise
@@ -5511,7 +5511,7 @@ in
                       (loc,
                        E.UserTvarNotGeneralized
                          ("074",
-                          symbol
+                          #symbol symbol
                          )
                       )
                 )
@@ -5604,7 +5604,7 @@ in
                                    E.enqueueError "Typeinf 075"
                                                   (loc,
                                                    E.UserTvarNotGeneralized
-                                                     ("075", symbol))
+                                                     ("075", #symbol symbol))
                                  | _ =>
                                    (
                                     raise
@@ -5618,7 +5618,7 @@ in
                                                (loc,
                                                 E.UserTvarNotGeneralized
                                                   ("076",
-                                                   symbol
+                                                   #symbol symbol
                                                   )
                                                )
                             )
@@ -5671,7 +5671,7 @@ in
          map
            (fn {exnInfo = {longsymbol, id, ty=ity}, loc} =>
                TC.TPEXD
-                 ({path= longsymbol,
+                 ({path= map #symbol longsymbol,
                    id=id,
                    ty=ITy.evalIty context ity
                    handle e => (P.print "ity32\n"; raise e)
@@ -5681,11 +5681,11 @@ in
         )
       | IC.ICEXNTAGD ({exnInfo={longsymbol, id, ty=ity}, varInfo},loc) =>
         let
-          val varInfoLoc = Symbol.longsymbolToLoc (#longsymbol varInfo)
+          val varInfoLoc = SymbolWithLoc.longsymbolToLoc (#longsymbol varInfo)
           val varInfo =
               case VarMap.find(#varEnv context, varInfo)  of
                 SOME (TC.VARID varInfo) =>
-                varInfo # {path = Symbol.replaceLocLongsymbol
+                varInfo # {path = SymbolWithLoc.replaceLocLongsymbol
                                     varInfoLoc
                                     (#path varInfo)}
               | SOME (TC.RECFUNID _) =>
@@ -5697,7 +5697,7 @@ in
           (TIC.emptyContext,
            [TC.TPEXNTAGD
               (
-               {exnInfo = {path=longsymbol,id=id,
+               {exnInfo = {path=map #symbol longsymbol,id=id,
                            ty=ITy.evalIty context ity
                               handle e => (P.print "ity33\n"; raise e)
                           },
@@ -5728,7 +5728,7 @@ in
           BODY is ICLET(..., ICCONSTANT or ICRECORD)
          *)
         let
-          val loc = Symbol.longsymbolToLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val ty1 = ITy.evalIty context ity handle e => (P.print "ity34\n"; raise e)
           val (ty2, tpdecl) =
@@ -5787,9 +5787,9 @@ in
                                  raise Fail
                                 )
                             val _ = checkPoly (actualPolyTys, polyTys)
-                            val firstVar = TCU.newTCVarInfo loc first
+                            val firstVar = TCU.newTCVarInfo first
                             val firstExp = TC.TPVAR firstVar
-                            val polyVars = map (TCU.newTCVarInfo loc) polyTys
+                            val polyVars = map TCU.newTCVarInfo polyTys
                             val polyExps = map TC.TPVAR polyVars
                             val bodyExp1 =
                                 TC.TPAPPM{funExp=tpexp,
@@ -5874,7 +5874,7 @@ in
                                           ("083",{ty=ty2,annotatedTy=ty1}));
                                 raise Fail
                                )
-                           val firstVar = TCU.newTCVarInfo loc first
+                           val firstVar = TCU.newTCVarInfo first
                            val firstExp = TC.TPVAR firstVar
                            val bodyExp =
                                TC.TPAPPM{funExp=tpexp,
@@ -5926,7 +5926,7 @@ in
                        T.FUNMty(actualPolyTys,actualBodyTy) =>
                        (let
                           val _ = checkPoly (actualPolyTys, polyTys)
-                          val polyVars = map (TCU.newTCVarInfo loc) polyTys
+                          val polyVars = map TCU.newTCVarInfo polyTys
                           val polyExps = map TC.TPVAR polyVars
                           val bodyExp =
                               TC.TPAPPM{funExp=tpexp,
@@ -5997,7 +5997,7 @@ in
         end
       | IC.ICEXPORTVAR {exInfo= exInfo as {used, longsymbol, ty=ity, version}, id} =>
         let
-          val loc = Symbol.longsymbolToLastLoc longsymbol
+          val loc = SymbolWithLoc.longsymbolToLastLoc longsymbol
           val externalLongsymbol = exInfoToLongsymbol exInfo
           val ty1 = ITy.evalIty context ity handle e => (P.print "ity35\n"; raise e)
           val (ty2, tpexp) =
@@ -6103,7 +6103,7 @@ in
               handle e => (P.print "ity38\n"; raise e)
         in
           (TIC.emptyContext,
-           [TC.TPBUILTINEXN {path=longsymbol, ty=ty}]
+           [TC.TPBUILTINEXN {path=map #symbol longsymbol, ty=ty}]
            )
         end
       | IC.ICTYCASTDECL (tycastList, icdeclList, loc) =>
@@ -6266,7 +6266,7 @@ in
           val (ty, keyList, match) = typeinfOverloadCase overloadCase
 
           val selectors = [{oprimId = id,
-                            longsymbol = longsymbol,
+                            longsymbol = map #symbol longsymbol,
                             match = match}]
           val _ =
               app (fn (r as ref (T.TVAR {lambdaDepth, id, kind = T.KIND kind, utvarOpt}),
@@ -6289,7 +6289,7 @@ in
               then ty 
               else T.POLYty {boundtvars = boundEnv, constraints = boundConstraints, body = ty}
           val oprimInfo =
-              {ty = oprimTy, path = longsymbol, id = id}
+              {ty = oprimTy, path = map #symbol longsymbol, id = id}
         in
           (TIC.bindOPrim (TIC.emptyContext, {longsymbol=longsymbol, id=id}, oprimInfo), nil)
         end
@@ -6415,12 +6415,12 @@ in
                             val loc =
                                 foldl
                                   (fn (longsymbol, loc) =>
-                                      Loc.mergeLocs(Symbol.longsymbolToLoc longsymbol, loc))
-                                  (Symbol.longsymbolToLoc first)
+                                      Loc.mergeLocs(SymbolWithLoc.longsymbolToLoc longsymbol, loc))
+                                  (SymbolWithLoc.longsymbolToLoc first)
                                   rest
                           in
                             E.enqueueWarning
-                              (loc, E.ValueRestriction("065",{dummyTyPaths=dummyTyPaths}))
+                              (loc, E.ValueRestriction("065",{dummyTyPaths=map (map #symbol) dummyTyPaths}))
                           end
                       end
 

@@ -229,7 +229,7 @@ in
           | _ => tfun
 
     and redConSpecWithInterface ifInterface tvarEnv conSpec =
-        SymbolEnv.mapi
+        SymbolWithLocEnv.mapi
           (fn (name, tyOpt) => (Option.map (redTyWithInterface ifInterface tvarEnv) tyOpt)
           )
           conSpec
@@ -285,13 +285,13 @@ in
     fun redEnv env =
         let
           val V.ENV{tyE, varE, strE=V.STR envMap} = env
-          val tyE = SymbolEnv.map redTstr tyE
+          val tyE = SymbolWithLocEnv.map redTstr tyE
           val envMap = 
-              SymbolEnv.map
+              SymbolWithLocEnv.map
                 (fn (strEntry as {env,...}) => 
                     strEntry # {env=redEnv env}) 
                 envMap
-          val varE = SymbolEnv.map redIdstatus varE
+          val varE = SymbolWithLocEnv.map redIdstatus varE
         in
           V.ENV{tyE=tyE, varE=varE, strE=V.STR envMap} 
         end
@@ -564,7 +564,7 @@ to re-structure builtins.
                    {id=id,
                     admitsEqRef=admitsEqRef,
                     args=args,
-                    conSpec=SymbolEnv.listItems conSpec}
+                    conSpec=SymbolWithLocEnv.listItems conSpec}
                    :: datadeclList
                   )
               )
@@ -631,26 +631,26 @@ to re-structure builtins.
             TvarID.Map.empty
             (ListPair.zip (formals1,formals2))
         val (tyerrors, nameList1, conSpec2) =
-            SymbolEnv.foldli
+            SymbolWithLocEnv.foldli
             (fn (name, tyopt1, (tyerrors, nameList1, conSpec2)) =>
                 let
-                  val (conSpec2, tyopt2) = SymbolEnv.remove(conSpec2, name)
+                  val (conSpec2, tyopt2) = SymbolWithLocEnv.remove(conSpec2, name)
                 in
                   case (tyopt1,tyopt2) of
                     (NONE, NONE) => (tyerrors, nameList1, conSpec2)
-                  | (SOME _, NONE) => (name::tyerrors, nameList1, conSpec2)
-                  | (NONE, SOME _) => (name::tyerrors, nameList1, conSpec2)
+                  | (SOME _, NONE) => (#symbol name::tyerrors, nameList1, conSpec2)
+                  | (NONE, SOME _) => (#symbol name::tyerrors, nameList1, conSpec2)
                   | (SOME ty1, SOME ty2) => 
                     if equalTy (typIdEquiv, tvarIdEquiv) (ty1, ty2) then 
                       (tyerrors, nameList1, conSpec2)
-                    else (name::tyerrors, nameList1, conSpec2)
+                    else (#symbol name::tyerrors, nameList1, conSpec2)
                 end
                 handle LibBase.NotFound => 
-                       (tyerrors, name::nameList1, conSpec2)
+                       (tyerrors, #symbol name::nameList1, conSpec2)
             )
             (nil, nil, conSpec2)
             conSpec1
-        val nameList2 = SymbolEnv.listKeys conSpec2
+        val nameList2 = map #symbol (SymbolWithLocEnv.listKeys conSpec2)
         val errors = case tyerrors of
                        nil => errors
                      | _ => Type tyerrors :: errors

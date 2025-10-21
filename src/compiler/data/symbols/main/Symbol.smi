@@ -6,23 +6,38 @@ _require "./Loc.smi"
 
 structure Symbol =
 struct
-
-  type symbol =  {string:string, loc:Loc.loc}
-(*
-  type symbol (= boxed)
-*)
+  eqtype symbol (= string)
   type longsymbol = symbol list
+  val format_symbol : symbol -> SMLFormat.format
+  val format_longsymbol : longsymbol -> SMLFormat.format
+
+  val toString : symbol -> string
+  val fromString : string -> symbol
   val compare : symbol * symbol -> order
+
+  val toStringList : longsymbol -> string list
+  val fromStringList : string list -> longsymbol
+  val longsymbolToString : longsymbol -> string
+  val compareLongsymbol : longsymbol * longsymbol -> order
+
+  val mkLongsymbol : string list -> Loc.loc -> longsymbol (* for bootstrap *)
+end
+
+structure SymbolWithLoc =
+struct
+  type symbol = {symbol : Symbol.symbol, loc : Loc.loc}
+  type longsymbol = symbol list
+
+  val compareLoc : symbol * symbol -> order
   val lastSymbol : longsymbol -> symbol
   val symbolToString : symbol -> string
-  val symbolToStringWithLoc : symbol -> string
   val symbolToLoc : symbol -> Loc.loc
   val longsymbolToString : longsymbol -> string
   val longsymbolToLoc : longsymbol -> Loc.loc
   val longsymbolToLastLoc : longsymbol -> Loc.loc
   val longsymbolToLongid : longsymbol -> string list
-  val mkSymbol : string ->  Loc.loc -> symbol
-  val mkLongsymbol : string list -> Loc.loc -> longsymbol
+  val mkSymbol : string -> Loc.loc -> symbol
+  val mkLongsymbol:  string list -> Loc.loc -> longsymbol
   val coerceLongsymbolToSymbol : longsymbol -> symbol
   val setVersion : longsymbol * int -> longsymbol
   val symbolCompare : symbol * symbol -> order
@@ -44,15 +59,23 @@ end
 structure SymbolOrd =
 struct
   type ord_key = Symbol.symbol
-  val compare : Symbol.symbol * Symbol.symbol -> order
+  val compare : ord_key * ord_key -> order
 end
 structure SymbolEnv = BinaryMapFn2(SymbolOrd)
 structure SymbolSet = BinarySetFn(SymbolOrd)
-structure LongsymbolOrd = 
-struct
-  type ord_key = Symbol.symbol list
-  val compare : Symbol.longsymbol * Symbol.longsymbol -> order
-end
 
+structure LongsymbolOrd =
+struct
+  type ord_key = Symbol.longsymbol
+  val compare : ord_key * ord_key -> order
+end
 structure LongsymbolEnv = BinaryMapFn2(LongsymbolOrd)
 structure LongsymbolSet = BinarySetFn(LongsymbolOrd)
+
+structure SymbolWithLocOrd =
+struct
+  type ord_key = SymbolWithLoc.symbol
+  val compare = SymbolWithLoc.symbolCompare
+end
+structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)
+structure SymbolWithLocSet = BinarySetFn(SymbolWithLocOrd)

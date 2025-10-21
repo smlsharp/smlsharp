@@ -7,8 +7,8 @@ structure AbsynTy =
 struct
 
   type loc = Loc.loc
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
 
   datatype ty
     = TYWILD of loc

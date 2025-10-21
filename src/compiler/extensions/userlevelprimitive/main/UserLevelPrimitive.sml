@@ -10,7 +10,6 @@ struct
 
   structure N = NameEvalEnv
   structure I = IDCalc
-  structure S = Symbol
   structure T = Types
   structure E = EvalIty
   structure L = LongsymbolEnv
@@ -18,12 +17,12 @@ struct
 
   val analyzeIdRefOptRef =
       ref NONE
-      : (Symbol.longsymbol * (Symbol.symbol * IDCalc.idstatus) -> unit)
+      : (SymbolWithLoc.longsymbol * (SymbolWithLoc.symbol * IDCalc.idstatus) -> unit)
           option ref
 
   val analyzeTstrRefOptRef =
       ref NONE
-      : (Symbol.longsymbol * (Symbol.symbol * NameEvalEnv.tstr) -> unit)
+      : (SymbolWithLoc.longsymbol * (SymbolWithLoc.symbol * NameEvalEnv.tstr) -> unit)
           option ref
 
   val requireEnvOpt =
@@ -40,7 +39,7 @@ struct
       : IDCalc.exInfo LongsymbolEnv.map ref
 
   fun insert exInfo =
-      stack := LongsymbolEnv.insert (!stack, #longsymbol exInfo, exInfo)
+      stack := LongsymbolEnv.insert (!stack, map #symbol (#longsymbol exInfo), exInfo)
 
   exception UserLevelPrimError of Loc.loc * exn
   exception IDNotFound
@@ -58,7 +57,7 @@ struct
           let
             val decls =
                 map (fn {used, longsymbol, version, ty} =>
-                        ({path = longsymbol, ty = E.evalIty E.emptyContext ty},
+                        ({path = map #symbol longsymbol, ty = E.evalIty E.emptyContext ty},
                          version))
                     exInfoList
             val _ = initExternalDecls ()
@@ -93,14 +92,14 @@ struct
 
   fun getTyCon (path : string list) (loc : Loc.loc) : T.tyCon =
       let
-        val refLongsymbol = S.mkLongsymbol path loc
+        val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
       in
         (
           case N.findTstr (requireEnv (), refLongsymbol) of
             NONE =>
             raise
               UserLevelPrimError
-              (loc, UE.TyConNotFound ("002", {longsymbol = refLongsymbol}))
+              (loc, UE.TyConNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
           | SOME (sym, tstr as N.TSTR {tfun, defRange}) =>
             (analyzeTstrRef (refLongsymbol, (sym, tstr));
              E.evalTfun E.emptyContext tfun)
@@ -111,7 +110,7 @@ struct
         handle E.EVALTFUN _ =>
                raise
                  UserLevelPrimError
-                 (loc, UE.TyConNotFound ("003", {longsymbol = refLongsymbol}))
+                 (loc, UE.TyConNotFound ("003", {longsymbol = map #symbol refLongsymbol}))
       end
 
   fun findIdstatus longsymbol =
@@ -121,18 +120,18 @@ struct
 
   fun getCon (path : string list) (loc : Loc.loc) : T.conInfo =
       let
-        val refLongsymbol = S.mkLongsymbol path loc
+        val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
             findIdstatus refLongsymbol
 	    handle IDNotFound =>
                    raise
 		     UserLevelPrimError
-                     (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol}))
+                     (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
       in
         case idstatus of
           I.IDCON {id, longsymbol, ty, defRange} =>
           (analyzeIdRef (refLongsymbol, (sym, idstatus));
-           {id = id, path = longsymbol, ty = E.evalIty E.emptyContext ty})
+           {id = id, path = map #symbol longsymbol, ty = E.evalIty E.emptyContext ty})
         | _ =>
           (
             Bug.printError "not a con id (findCon):";
@@ -142,19 +141,19 @@ struct
             Bug.printError "\n";
             raise
               UserLevelPrimError
-              (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol}))
+              (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
           )
       end
 
   fun getExInfo (path : string list) (loc : Loc.loc) : I.exInfo =
       let
-        val refLongsymbol = S.mkLongsymbol path loc
+        val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
             findIdstatus refLongsymbol
             handle IDNotFound =>
                    raise
                      UserLevelPrimError
-                     (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol}))
+                     (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
       in
         case idstatus of
           I.IDEXVAR {exInfo = exInfo as {used, ty, longsymbol, ...}, ...} =>
@@ -170,27 +169,27 @@ struct
             Bug.printError "\n";
             raise
               UserLevelPrimError
-              (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol}))
+              (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
           )
       end
 
   fun getExExnInfo (path : string list) (loc : Loc.loc) : T.exExnInfo =
       let
-        val refLongsymbol = S.mkLongsymbol path loc
+        val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
             findIdstatus refLongsymbol
             handle IDNotFound =>
                    raise
                      UserLevelPrimError
-                     (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol}))
+                     (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol}))
       in
         case idstatus of
           I.IDEXEXN {used, longsymbol,version, ty, defRange} =>
           (analyzeIdRef (refLongsymbol, (sym, idstatus));
-           {path = longsymbol, ty = E.evalIty E.emptyContext ty})
+           {path = map #symbol longsymbol, ty = E.evalIty E.emptyContext ty})
         | I.IDEXEXNREP {used, longsymbol,version, ty, defRange} =>
           (analyzeIdRef (refLongsymbol, (sym, idstatus));
-           {path = longsymbol, ty = E.evalIty E.emptyContext ty})
+           {path = map #symbol longsymbol, ty = E.evalIty E.emptyContext ty})
         | _ =>
           (
             Bug.printError "not an expected id (getExExnInfo):";
@@ -200,7 +199,7 @@ struct
             Bug.printError "\n";
             raise
               UserLevelPrimError
-              (loc, UE.IdNotFound ("002", {longsymbol = refLongsymbol})))
+              (loc, UE.IdNotFound ("002", {longsymbol = map #symbol refLongsymbol})))
       end
 
   fun getIcexp (path : string list) (loc : Loc.loc) : I.icexp =
@@ -214,7 +213,7 @@ struct
       let
         val exInfo = getExInfo path loc
       in
-        {path = #longsymbol exInfo, ty = E.evalIty E.emptyContext (#ty exInfo)}
+        {path = map #symbol (#longsymbol exInfo), ty = E.evalIty E.emptyContext (#ty exInfo)}
       end
 
   val SQL_tyCon_command =
@@ -372,8 +371,8 @@ struct
 
   val REIFY_exInfo_RecordLabelFromString =
       getExVar ["RecordLabel", "fromString"]
-  val REIFY_exInfo_SymbolMkLongSymbol =
-      getExVar ["Symbol", "mkLongsymbol"]
+  val REIFY_exInfo_SymbolFromStringList =
+      getExVar ["Symbol", "fromStringList"]
   val REIFY_exInfo_TyRep =
       getExVar ["ReifiedTy", "TyRep"]
   val REIFY_exInfo_TyRepToReifiedTy =

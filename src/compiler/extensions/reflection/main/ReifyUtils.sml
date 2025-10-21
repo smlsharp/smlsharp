@@ -276,36 +276,7 @@ struct
       String loc (RecordLabel.toString label)
 
   fun SymbolAsString loc symbol =
-      String loc (Symbol.symbolToString symbol)
-
-  fun Pos loc pos =
-      let
-        val (isNoPos, isStdPath, name, line, col, pos, gap) =
-            case pos of
-              Loc.POS {source = Loc.FILE (Loc.STDPATH,name), line, col,
-                       pos, gap} =>
-              (false, true, SOME (Filename.toString name), line, col, pos, gap)
-            | Loc.POS {source = Loc.FILE (Loc.USERPATH,name), line, col,
-                       pos, gap} =>
-              (false, false, SOME (Filename.toString name), line, col, pos, gap)
-            | Loc.POS {source = Loc.INTERACTIVE, line, col, pos, gap} =>
-              (false, false, NONE, line, col, pos, gap)
-            | Loc.NOPOS =>
-              (true, false, NONE, 0, 0, 0, 0)
-        val IsNoPos = Bool loc isNoPos
-        val IsStdPath = Bool loc isStdPath
-        val Name = Option loc StringTy (Option.map (String loc) name)
-        val Line = Int loc line
-        val Col = Int loc col
-        val Pos = Int loc pos
-        val Gap = Int loc gap
-        val MakePos = MonoVar loc (U.REIFY_exInfo_makePos loc)
-      in
-        ApplyList loc MakePos [IsNoPos, IsStdPath, Name, Line, Col, Pos, Gap]
-      end
-
-  fun Loc (loc as (pos1, pos2)) =
-      Pair loc (Pos loc pos1) (Pos loc pos2)
+      String loc (Symbol.toString symbol)
 
   fun BtvId loc btvid =
       TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy loc)
@@ -313,11 +284,11 @@ struct
       TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy loc)
   fun Longsymbol loc longsymbol =
       let
-        val stringList = Symbol.longsymbolToLongid longsymbol
+        val stringList = Symbol.toStringList longsymbol
         val stringListExp = List loc StringTy (map (String loc) stringList)
-        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_SymbolMkLongSymbol loc)
+        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_SymbolFromStringList loc)
       in
-        ApplyList loc mkLongsymbolExp [stringListExp, Loc loc]
+        Apply loc mkLongsymbolExp stringListExp
       end
   fun RecordLabelFromString loc string =
       Apply

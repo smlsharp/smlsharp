@@ -39,7 +39,7 @@ struct
       P.PLAPPM (exp1 loc, [exp2 loc], loc)
 
   fun ExVar name loc =
-      P.PLVAR (Symbol.mkLongsymbol name loc)
+      P.PLVAR (SymbolWithLoc.mkLongsymbol name loc)
 
   fun Fun_FoeachArray e1 e2 e3 =
       App (App (App (ExVar Name.fun_ForeachArray) e1) e2) e3

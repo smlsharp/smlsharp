@@ -16,13 +16,13 @@ in
     let
       type key = {fileId:int, startPos:int}
       fun analyzeEnv (V.ENV{varE, tyE, strE = V.STR strEntryMap}) =
-          (SymbolEnv.appi
+          (SymbolWithLocEnv.appi
              (#idstatus analyzers fileId)
              varE;
-           SymbolEnv.appi
+           SymbolWithLocEnv.appi
              (#tstr analyzers fileId)
              tyE;
-           SymbolEnv.appi
+           SymbolWithLocEnv.appi
              (fn (symbol, strEntry as {env, ...}) => 
                  (#strEntry analyzers fileId (symbol, strEntry);
                   analyzeEnv env
@@ -31,13 +31,13 @@ in
              strEntryMap)
       val _ = analyzeEnv Env
       val _ =
-          SymbolEnv.appi
+          SymbolWithLocEnv.appi
             (fn (symbol, funEEntry as {bodyEnv, ...}) =>
                 (#funEEntry analyzers fileId (symbol, funEEntry);
                  analyzeEnv bodyEnv))
             FunE
       val _ =
-          SymbolEnv.appi 
+          SymbolWithLocEnv.appi
             (fn (symbol, sigEntry as {env, ...}) =>
                 (#sigEntry analyzers fileId (symbol, sigEntry);
                  analyzeEnv env))

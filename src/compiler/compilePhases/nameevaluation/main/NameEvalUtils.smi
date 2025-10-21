@@ -29,8 +29,8 @@ structure NameEvalUtils =
   struct
     val print : string -> unit
     val printProp : IDCalc.property -> unit
-    val printSymbol : Symbol.symbol -> unit
-    val printLongsymbol : Symbol.longsymbol -> unit
+    val printSymbol : SymbolWithLoc.symbol -> unit
+    val printLongsymbol : SymbolWithLoc.longsymbol -> unit
     val printPath : string list -> unit
     val printTvar : IDCalc.tvar -> unit
     val printTvarId : TvarID.id -> unit
@@ -41,8 +41,8 @@ structure NameEvalUtils =
     val printPITy : AbsynTy.ty -> unit
     val printTstr : NameEvalEnv.tstr -> unit
     val tstrToString : NameEvalEnv.tstr -> string
-    val printTyE : NameEvalEnv.tstr SymbolEnv.map -> unit
-    val printConSpec : IDCalc.ty option SymbolEnv.map -> unit
+    val printTyE : NameEvalEnv.tstr SymbolWithLocEnv.map -> unit
+    val printConSpec : IDCalc.ty option SymbolWithLocEnv.map -> unit
     val printTfun : IDCalc.tfun -> unit
     val printTfunkind : IDCalc.tfunkind -> unit
     val printIdstatus : IDCalc.idstatus -> unit

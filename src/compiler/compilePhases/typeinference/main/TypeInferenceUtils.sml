@@ -180,7 +180,7 @@ in
                        else raise CoerceTy
                val tyPairs = ListPair.zip (tyList, fromTyList)
                val _ = U.unify tyPairs handle U.Unify => raise CoerceTy
-               val argVarList = map (TCU.newTCVarInfo loc) tyList
+               val argVarList = map TCU.newTCVarInfo tyList
                val argExpList = map TPC.TPVAR argVarList
                val bodyExp = 
                    TPC.TPAPPM {funExp=tpexp,
@@ -216,13 +216,13 @@ in
                      (nil, fields)
                    | _ => 
                      let
-                       val var = TCU.newTCVarInfo loc fromTy
+                       val var = TCU.newTCVarInfo fromTy
                        val varExp = TPC.TPVAR var
                      in
                        RecordLabel.Map.foldli
                          (fn (label,fieldTy,(extraBindsRev, expFields)) =>
                              let
-                               val fieldVar = TCU.newTCVarInfo loc fieldTy
+                               val fieldVar = TCU.newTCVarInfo fieldTy
                                val fieldExp = TPC.TPVAR fieldVar
                                val newBind =
                                    (fieldVar,
@@ -258,7 +258,7 @@ in
                            (extraBindsRev, RecordLabel.Map.insert(newExpFields, label, newExp), constraints @ newConstraints)
                          else
                            let
-                             val fieldVar = TCU.newTCVarInfo loc toTy
+                             val fieldVar = TCU.newTCVarInfo toTy
                              val fieldExp = TPC.TPVAR fieldVar
                              val newBind = (fieldVar, newExp)
                            in

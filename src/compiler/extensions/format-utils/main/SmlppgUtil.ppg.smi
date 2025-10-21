@@ -19,15 +19,15 @@ struct
   val formatListWithEnclosureIfMoreThanOne
     : ('a -> format) * format * format * format
       -> 'a list -> format
-  val formatSymbolMap 
+  val formatSymbolWithLocMap
     : ('a -> format) * format * format * format * format
-      -> 'a SymbolEnv.map -> format
-  val formatGenericSymbolMap 
+      -> 'a SymbolWithLocEnv.map -> format
+  val formatGenericSymbolWithLocMap
     : ('a * format * format -> 'b -> format) * 'a * format * format * format
-      -> 'b SymbolEnv.map -> format
-  val formatSymbolMapWithEnclosure 
+      -> 'b SymbolWithLocEnv.map -> format
+  val formatSymbolWithLocMapWithEnclosure
     : ('a -> format) * format * format * format * format
-      -> 'a SymbolEnv.map -> format
+      -> 'a SymbolWithLocEnv.map -> format
   val formatPrependedOpt 
     : ('a -> format) * format -> 'a option -> format
   val formatEnclosedOpt 

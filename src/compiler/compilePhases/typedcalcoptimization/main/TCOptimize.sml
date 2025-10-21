@@ -467,7 +467,7 @@ local
                  ::declListRev
               | newExp => 
                 let
-                  val newVar = TCU.newTCVarInfo loc (#ty varInfo)
+                  val newVar = TCU.newTCVarInfo (#ty varInfo)
                   val bindDecl = TC.TPVAL ((newVar, newExp), loc)
                   val newTpexntag =
                       TC.TPEXNTAGD ({exnInfo=exnInfo,

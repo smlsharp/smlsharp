@@ -7,8 +7,8 @@ _require "./AbsynConst.smi"
 structure AbsynSQL =
 struct
 
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type label = RecordLabel.label
   type loc = Loc.loc
 

@@ -20,11 +20,11 @@ struct
   (*% @formatter(Absyn.ty) AbsynFormatter.format_ty *)
   type ty = Absyn.ty
 
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
-  type symbol = Symbol.symbol
+  (*% @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol*)
+  type symbol = SymbolWithLoc.symbol
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
-  type longsymbol = Symbol.longsymbol
+  (*% @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.format_longsymbol*)
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
@@ -309,19 +309,18 @@ struct
 
   (*%
    * @formatter(RequirePath.path) RequirePath.format_path
-   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   datatype irequire =
       (*%
        * @format(s * opt opts * l) "_require" +d s opts(opt)()
        * @format:opt(opt) +d opt
        *)
-      REQUIRE of RequirePath.path * Symbol.symbol list * loc
+      REQUIRE of RequirePath.path * symbol list * loc
     | (*%
        * @format(s * opt opts * l) "local" +d "_require" +d s opts(opt)()
        * @format:opt(opt) +d opt
        *)
-      LOCAL_REQUIRE of RequirePath.path * Symbol.symbol list * loc
+      LOCAL_REQUIRE of RequirePath.path * symbol list * loc
     | (*% @format(s * l) "local" +d "_use" +d s *)
       LOCAL_USE of RequirePath.path * loc
 

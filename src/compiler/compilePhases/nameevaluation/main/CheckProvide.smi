@@ -32,7 +32,7 @@ struct
        evalEnv:NameEvalEnv.topEnv, 
        argSigEnv:NameEvalEnv.env, 
        specArgSig:PatternCalc.plsigexp, 
-       functorSymbol:Symbol.symbol, 
+       functorSymbol:SymbolWithLoc.symbol,
        returnEnv:NameEvalEnv.env, 
        specBodyStr:PatternCalcInterface.pistrexp, 
        defLoc:Loc.loc,

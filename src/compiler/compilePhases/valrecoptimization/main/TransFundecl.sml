@@ -47,7 +47,7 @@ in
         val funBody =
             let
               val argVarList =
-                  map (fn _ => {longsymbol = Symbol.mkLongsymbol nil loc,
+                  map (fn _ => {longsymbol = SymbolWithLoc.mkLongsymbol nil loc,
                                 id = newVarId ()})
                       args
               val rules =

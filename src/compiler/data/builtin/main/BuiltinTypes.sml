@@ -11,12 +11,12 @@ struct
   structure R = RuntimeTypes
   fun bug s = Bug.Bug ("BuiltinTypes: " ^ s)
 
-  fun mkLongsymbol path = Symbol.mkLongsymbol path Loc.noloc
-  fun mkSymbol name = Symbol.mkSymbol name Loc.noloc
+  fun mkLongsymbol path = SymbolWithLoc.mkLongsymbol path Loc.noloc
+  val mkSymbol = Symbol.fromString
 
   type tstrInfo =
       {tfun : I.tfun,
-       varE : I.varE,
+       varE : I.idstatus SymbolWithLocEnv.map,
        defRange : Loc.loc,
        formals : I.formals,
        conSpec : I.conSpec}
@@ -69,7 +69,7 @@ struct
         val symbol = mkSymbol printName
         val formalTvars =
             map (fn tvarName =>
-                    {symbol = mkSymbol tvarName,
+                    {symbol = {symbol = mkSymbol tvarName, loc = Loc.noloc},
                      isEq = false,
                      id = TvarID.generate (),
                      lifted = false})
@@ -81,7 +81,7 @@ struct
               SymbolEnv.empty
               (formals, formalTvars)
         val tfvSpec =
-            {longsymbol = [symbol],
+            {longsymbol = [{symbol = symbol, loc = Loc.noloc}],
              id = case typIdOpt of NONE => TypID.generate () | SOME id => id,
              admitsEq = admitsEq,
              formals = formalTvars}
@@ -101,8 +101,10 @@ struct
                      ty = Option.map (evalTy (tvarEnv, tfun)) tyOpt})
                 conList
         val conSpec =
-            foldl (fn ({name, ty, ...}, z) => SymbolEnv.insert (z, name, ty))
-                  SymbolEnv.empty
+            foldl (fn ({name, ty, ...}, z) =>
+                      SymbolWithLocEnv.insert
+                        (z, {symbol = name, loc = Loc.noloc}, ty))
+                  SymbolWithLocEnv.empty
                   conList
         val conIDSet =
             foldl (fn ({id, ...}, z) => ConID.Set.add (z, id))
@@ -139,17 +141,17 @@ struct
                             nil => conMonoTy
                           | _::_ => I.TYPOLY (boundtvars, conMonoTy)
                     val conInfo : I.conInfo =
-                        {id = id, ty = conTy, longsymbol = [name]}
+                        {id = id, ty = conTy, longsymbol = [{symbol = name, loc = Loc.noloc}]}
                     in
                       (name, conInfo)
                     end)
                 conList
         val varE =
             foldl (fn ((k,v),z) => 
-                      SymbolEnv.insert 
-                        (z, k, 
+                      SymbolWithLocEnv.insert
+                        (z, {symbol = k, loc = Loc.noloc},
                          I.IDCON (I.conInfoToIdInfo v Loc.noloc)))
-                  SymbolEnv.empty
+                  SymbolWithLocEnv.empty
                   conInfoList
         val tyCon =
             Ity.evalTfun Ity.emptyContext tfun
@@ -163,7 +165,7 @@ struct
             map (fn (_, conInfo as {id, ty, longsymbol}) =>
                     (conInfo, {id = id,
                                ty = Ity.evalIty Ity.emptyContext ty,
-                               path = longsymbol}))
+                               path = map #symbol longsymbol}))
                 conInfoList
         val tstrInfo =
             {tfun=tfun, defRange = Loc.noloc,
@@ -397,7 +399,7 @@ struct
                      NONE => exnTy
                    | SOME ty => T.FUNMty([ty], exnTy)
       in
-        {path = mkLongsymbol longid, ty=ty}
+        {path = map mkSymbol longid, ty=ty}
       end
 
   val BindExExn = evalExn (["Bind"], NONE)

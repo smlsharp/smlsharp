@@ -60,7 +60,7 @@ struct
   val reduceTyWithInterface 
       : bool -> IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
   val tyForm : IDCalc.tvar list -> IDCalc.ty -> normalForm
-  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SymbolEnv.map,
+  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SymbolWithLocEnv.map,
                id:TypID.id, admitsEqRef:bool ref} list
               -> unit
   val makeTypIdEquiv : TypID.id list list -> (TypID.id * TypID.id) -> bool

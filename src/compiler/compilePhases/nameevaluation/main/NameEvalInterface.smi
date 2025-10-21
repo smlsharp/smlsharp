@@ -46,7 +46,7 @@ struct
                          -> LongsymbolSet.set * PatternCalcInterface.pitopdec list
                          -> LongsymbolSet.set * NameEvalEnv.topEnv * IDCalc.icdecl list
   val evalPistr : IDCalc.version
-                  -> Symbol.longsymbol
+                  -> SymbolWithLoc.longsymbol
                   -> NameEvalEnv.topEnv
                      -> LongsymbolSet.set * PatternCalcInterface.pistrexp
                         -> LongsymbolSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list

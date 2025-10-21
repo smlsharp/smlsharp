@@ -20,15 +20,15 @@ structure AnalyzersImpl =
 struct
   type analyzers =
     {
-     idstatus: int -> Symbol.symbol * IDCalc.idstatus -> unit,
-     tstr : int -> Symbol.symbol * NameEvalEnv.tstr -> unit,
-     strEntry: int -> Symbol.symbol * NameEvalEnv.strEntry -> unit,
-     funEEntry: int -> Symbol.symbol * NameEvalEnv.funEEntry -> unit,
-     sigEntry: int -> Symbol.symbol * NameEvalEnv.sigEntry -> unit
+     idstatus: int -> SymbolWithLoc.symbol * IDCalc.idstatus -> unit,
+     tstr : int -> SymbolWithLoc.symbol * NameEvalEnv.tstr -> unit,
+     strEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.strEntry -> unit,
+     funEEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.funEEntry -> unit,
+     sigEntry: int -> SymbolWithLoc.symbol * NameEvalEnv.sigEntry -> unit
     }
 
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type idstatus = IDCalc.idstatus
 
   val startNameRefTracing : unit -> unit

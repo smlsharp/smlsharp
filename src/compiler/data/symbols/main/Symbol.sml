@@ -5,15 +5,44 @@
  *)
 structure Symbol =
 struct
+  type symbol = string
+  type longsymbol = symbol list
+
+  fun toString (x : symbol) = x
+  fun fromString (x : string) = x
+  val compare = String.compare
+
+  fun toStringList (x : longsymbol) = x
+  fun fromStringList (x : string list) = x
+  fun longsymbolToString x = String.concatWith "." x
+
+  fun term s = SMLFormat.FormatExpression.Term (size s, s)
+  fun format_symbol symbol = [term symbol]
+  fun format_longsymbol longsymbol = [term (longsymbolToString longsymbol)]
+
+  fun compareLongsymbol (nil, nil) = EQUAL
+    | compareLongsymbol (_ :: _, nil) = GREATER
+    | compareLongsymbol (nil, _ :: _) = LESS
+    | compareLongsymbol (h1 :: t1, h2 :: t2) =
+      case String.compare (h1, h2) of
+        EQUAL => compareLongsymbol (t1, t2)
+      | LESS => LESS
+      | GREATER => GREATER
+
+  fun mkLongsymbol (x : string list) (loc : Loc.loc) = x (* for bootstrap *)
+end
+
+structure SymbolWithLoc =
+struct
 local
   type loc = Loc.loc
 in
   type symbol =
-    {string:string, loc:loc}
+    {symbol:Symbol.symbol, loc:loc}
 
-  fun format_symbol {string, loc} =
+  fun format_symbol {symbol=string, loc} =
       [SMLFormat.FormatExpression.Term (size string, string)]
-  fun formatWithLoc_symbol {string, loc} =
+  fun formatWithLoc_symbol {symbol=string, loc} =
       [SMLFormat.FormatExpression.Term (size string, string),
        SMLFormat.FormatExpression.Term (1, "("),
        SMLFormat.FormatExpression.Sequence (Loc.format_loc loc),
@@ -58,14 +87,14 @@ in
         (formatWithLoc_symbol, [SMLFormat.FormatExpression.Term (1, ".")])
         symbols
 
-  fun compare ({string=s1, loc=l1}, {string=s2, loc=l2}) =
+  fun compareLoc ({symbol=s1, loc=l1}, {symbol=s2, loc=l2}) =
       Loc.compareLoc (l1,l2)
 
   fun lastSymbol longsymbol = List.last longsymbol
-  fun symbolToString (s:symbol) = #string s
+  fun symbolToString (s:symbol) = #symbol s
   fun symbolToLoc (s:symbol) = #loc s
   fun symbolToStringWithLoc (s:symbol) = 
-      #string s ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
+      #symbol s ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
   fun longsymbolToString (s:longsymbol) = String.concatWith "." (map symbolToString s)
   fun longsymbolToLoc (s:longsymbol) =
       let
@@ -89,10 +118,10 @@ in
   fun longsymbolToLongid (s:longsymbol) = map symbolToString s
 
   fun coerceLongsymbolToSymbol longsymbol =
-      {string = longsymbolToString longsymbol,
+      {symbol = longsymbolToString longsymbol,
        loc = longsymbolToLoc longsymbol}
 
-  fun mkSymbol string loc = {string=string, loc=loc}
+  fun mkSymbol string loc = {symbol=string, loc=loc}
   fun mkLongsymbol stringList loc = map (fn s => mkSymbol s loc) stringList
 
   fun formatUserLongSymbol list =
@@ -113,7 +142,7 @@ in
   fun eqLongsymbol (s1:longsymbol, s2:longsymbol) = 
       longsymbolToString s1 = longsymbolToString s2
 
-  fun replaceLocSymbol loc {string, loc=_} = {string=string, loc=loc}
+  fun replaceLocSymbol loc {symbol, loc=_} = {symbol=symbol, loc=loc}
   fun replaceLocLongsymbol loc longsymbol = map (replaceLocSymbol loc) longsymbol
 
   fun prefixPath (path, symbol) =
@@ -147,15 +176,16 @@ in
 
   (* FIXME: how to ensure the generated symbol is fresh? *)
   fun generate () =
-      {string = "$" ^ gensym (), loc = Loc.noloc}
+      {symbol = "$" ^ gensym (), loc = Loc.noloc}
 
 end
 
 end
+
 structure SymbolOrd =
 struct
   type ord_key = Symbol.symbol
-  val compare = Symbol.symbolCompare
+  val compare = Symbol.compare
 end
 structure SymbolEnv = BinaryMapFn2(SymbolOrd)
 structure SymbolSet = BinarySetFn(SymbolOrd)
@@ -163,16 +193,16 @@ structure SymbolSet = BinarySetFn(SymbolOrd)
 structure LongsymbolOrd = 
 struct
   type ord_key = Symbol.symbol list
-  fun compare (path1,path2) =
-      case (path1, path2) of
-        (nil,nil) => EQUAL
-      | (nil, _) => LESS
-      | (_,nil) =>  GREATER
-      | (h1::t1, h2::t2) => 
-        (case Symbol.symbolCompare(h1,h2) of
-           EQUAL => compare(t1,t2)
-         | x => x)
+  val compare = Symbol.compareLongsymbol
 end
 
 structure LongsymbolEnv = BinaryMapFn2(LongsymbolOrd)
 structure LongsymbolSet = BinarySetFn(LongsymbolOrd)
+
+structure SymbolWithLocOrd =
+struct
+  type ord_key = SymbolWithLoc.symbol
+  val compare = SymbolWithLoc.symbolCompare
+end
+structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)
+structure SymbolWithLocSet = BinarySetFn(SymbolWithLocOrd)

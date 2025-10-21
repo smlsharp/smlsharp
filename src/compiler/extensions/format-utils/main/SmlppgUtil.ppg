@@ -119,7 +119,7 @@ struct
  (*%
   * @params(bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
   * @formatter(listWithEncousure)  formatListWithEnclosure
-  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  * @formatter(SymbolWithLoc.symbol)  SymbolWithLoc.format_symbol
   *)
  type 'a varenvSymbolWithEnclosure =
      (*%
@@ -127,12 +127,12 @@ struct
       *           fields(field)(itemsep, prefixIfNotNull, suffixIfNotNull)
       * @format:field(symbol * ty) symbol bindsep ty
       *)
-     (Symbol.symbol * 'a) list
+     (SymbolWithLoc.symbol * 'a) list
 
  (*%
   * @params(lparen, bindsep,itemsep,rparen)
   * @formatter(listWithEncousure)  formatListWithEnclosure
-  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  * @formatter(SymbolWithLoc.symbol)  SymbolWithLoc.format_symbol
   *)
  type 'a varenvSymbol =
      (*%
@@ -141,38 +141,38 @@ struct
         @format:field(symbol * ty) 
           { 2[ symbol bindsep ty ] }
       *)
-     (Symbol.symbol * 'a) list
+     (SymbolWithLoc.symbol * 'a) list
 
-  fun formatSymbolMap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
+  fun formatSymbolWithLocMap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
       format_varenvSymbol
         (elementFormatter,lparen, bindsep,itemsep, rparen) 
         (ListSorter.sort 
-           (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-           (SymbolEnv.listItemsi smap))
+           (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+           (SymbolWithLocEnv.listItemsi smap))
 
  (*%
   * @params(sname, lparen, itemsep, rparen)
   * @formatter(formatListWithEnclosure)  formatListWithEnclosure
-  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  * @formatter(SymbolWithLoc.symbol)  SymbolWithLoc.format_symbol
   *)
- type 'a genericSymbolVarenv =
+ type 'a genericSymbolWithLocVarenv =
      (*%
         @format(field fields)
           fields:formatListWithEnclosure(field)(itemsep, lparen, rparen) 
         @format:field(symbol * ty) 
           ty()(sname,,symbol)
       *)
-     (Symbol.symbol * 'a) list
+     (SymbolWithLoc.symbol * 'a) list
 
-  fun formatGenericSymbolMap
+  fun formatGenericSymbolWithLocMap
         (elementFormatter, sname, lparen, itemsep, rparen) smap =
-      format_genericSymbolVarenv
+      format_genericSymbolWithLocVarenv
         (elementFormatter, sname, lparen, itemsep, rparen)
         (ListSorter.sort 
-           (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-           (SymbolEnv.listItemsi smap))
+           (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+           (SymbolWithLocEnv.listItemsi smap))
 
-  fun formatSymbolMapWithEnclosure
+  fun formatSymbolWithLocMapWithEnclosure
           (
             elementFormatter,
             bindsep,
@@ -185,8 +185,8 @@ struct
       format_varenvSymbolWithEnclosure
       (elementFormatter, bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
         (ListSorter.sort 
-           (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
-           (SymbolEnv.listItemsi smap))
+           (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
+           (SymbolWithLocEnv.listItemsi smap))
 
   fun formatPrependedOpt (formatter, prefixIfSome) =
       fn NONE => [FE.Term (0, "")]

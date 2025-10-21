@@ -50,7 +50,7 @@ struct
                     I.TYPOLY (tvarTvarKindList, 
                               replaceTfunTy ty)
                   | I.INFERREDTY typesTy => ty
-              val newConSpec = SymbolEnv.map (Option.map replaceTfunTy) conSpec
+              val newConSpec = SymbolWithLocEnv.map (Option.map replaceTfunTy) conSpec
               val _ = newTfunkind := 
                       I.TFUN_DTY 
                         {id=newId,
@@ -70,9 +70,9 @@ struct
 
   fun replacePathLongsymbol (longsymbol, path) =
       let
-        val symbol = Symbol.lastSymbol longsymbol
+        val symbol = SymbolWithLoc.lastSymbol longsymbol
       in
-        Symbol.prefixPath(path, symbol)
+        SymbolWithLoc.prefixPath(path, symbol)
       end
 
   fun replacePathTfun renameEnv path tfun =
@@ -117,7 +117,7 @@ struct
                     I.TYPOLY (tvarTvarKindList, 
                               replaceTfunTy ty)
                   | I.INFERREDTY typesTy => ty
-              val newConSpec = SymbolEnv.map (Option.map replaceTfunTy) conSpec
+              val newConSpec = SymbolWithLocEnv.map (Option.map replaceTfunTy) conSpec
               val _ = newTfunkind := 
                       I.TFUN_DTY 
                         {id=newId,
@@ -138,32 +138,32 @@ struct
       let
         val (tyE, renameEnv) = replacePathTyE renameEnv path tyE
         val (newenvStrkindSymbolMap, renameEnv) = 
-            SymbolEnv.foldri
+            SymbolWithLocEnv.foldri
             (fn (symbol, strEntry as {env,...}, (envStrkindSymbolMap,renameEnv)) =>
                 let
-                  val newPath = Symbol.prefixPath (path, symbol)
+                  val newPath = SymbolWithLoc.prefixPath (path, symbol)
                   val (newEnv, renameEnv) = replacePathEnv renameEnv newPath env
                   val envStrkinSymbolMap =
-                      SymbolEnv.insert
+                      SymbolWithLocEnv.insert
                         (envStrkindSymbolMap, symbol, strEntry # {env=newEnv})
                 in
                   (envStrkindSymbolMap, renameEnv)
                 end
             )
-            (SymbolEnv.empty, renameEnv)
+            (SymbolWithLocEnv.empty, renameEnv)
             envStrkindSymbolMap
       in
         (V.ENV {varE = varE, tyE = tyE, strE = V.STR envStrkindSymbolMap}, renameEnv)
       end
   and replacePathTyE renameEnv path tyE =
-      SymbolEnv.foldri
+      SymbolWithLocEnv.foldri
         (fn (symbol, tstr, (tyE, renameEnv)) => 
             let
               val (tsrt, renameEnv) = replacePathTstr renameEnv path tstr
             in
-              (SymbolEnv.insert(tyE, symbol, tstr), renameEnv)
+              (SymbolWithLocEnv.insert(tyE, symbol, tstr), renameEnv)
             end)
-        (SymbolEnv.empty, renameEnv)
+        (SymbolWithLocEnv.empty, renameEnv)
         tyE
 
   and replacePathTstr renameEnv path tstr = 
@@ -200,7 +200,7 @@ struct
                   )
                 )  => 
            let
-             val newConSpec = SymbolEnv.map (Option.map (renameLongsymbolTy renameEnv)) conSpec
+             val newConSpec = SymbolWithLocEnv.map (Option.map (renameLongsymbolTy renameEnv)) conSpec
              val _ = tfunkind := 
                      I.TFUN_DTY 
                        {id=id,
@@ -282,10 +282,10 @@ struct
       | I.IDSPECCON {symbol, defRange} => idstatus
 
   fun renameLongsymbolVarE renameEnv varE =
-      SymbolEnv.map (renameLongsymbolIdstatus renameEnv) varE
+      SymbolWithLocEnv.map (renameLongsymbolIdstatus renameEnv) varE
 
   fun renameLongsymbolConSpec renameEnv conSpec =
-      SymbolEnv.map (fn NONE => NONE | SOME ty => SOME (renameLongsymbolTy renameEnv ty)) conSpec
+      SymbolWithLocEnv.map (fn NONE => NONE | SOME ty => SOME (renameLongsymbolTy renameEnv ty)) conSpec
 
   fun renameLongsymbolTstr renameEnv tstr =
       case tstr of
@@ -299,14 +299,14 @@ struct
                     conSpec = renameLongsymbolConSpec renameEnv conSpec}
 
   fun renameLongsymbolTyE renameEnv tyE =
-      SymbolEnv.map (renameLongsymbolTstr renameEnv) tyE
+      SymbolWithLocEnv.map (renameLongsymbolTstr renameEnv) tyE
 
   fun renameLomgsymbolEnv renameEnv (V.ENV {varE, tyE, strE=V.STR envSymbolMap}) =
       V.ENV {varE = renameLongsymbolVarE renameEnv varE,
              tyE = renameLongsymbolTyE renameEnv tyE,
              strE = 
              V.STR
-               (SymbolEnv.map
+               (SymbolWithLocEnv.map
                   (fn strEntry as {env,...} => 
                       strEntry # {env=renameLomgsymbolEnv renameEnv env})
                   envSymbolMap)

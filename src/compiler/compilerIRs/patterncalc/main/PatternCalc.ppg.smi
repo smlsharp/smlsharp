@@ -19,8 +19,8 @@ struct
   type ty =  AbsynTy.ty
   type tvar = AbsynTy.tvar
   type kindedTvar = AbsynTy.kindedTvar
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
 
   datatype caseKind 
     = BIND

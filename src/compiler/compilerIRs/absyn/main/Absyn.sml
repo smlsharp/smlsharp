@@ -11,11 +11,11 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
-  type symbol = Symbol.symbol
+  (*% @formatter(Symbol.symbol) SymbolWithLoc.format_symbol *)
+  type symbol = SymbolWithLoc.symbol
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
-  type longsymbol = Symbol.longsymbol
+  (*% @formatter(Symbol.longsymbol) SymbolWithLoc.format_longsymbol *)
+  type longsymbol = SymbolWithLoc.longsymbol
 
   (*% @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant *)
   datatype constant = datatype AbsynConst.constant
@@ -954,7 +954,7 @@ struct
       case exp of
         EXPCONSTANT (_, loc) => loc
       | EXPSIZEOF (_, loc) => loc
-      | EXPID longsymbol => Symbol.longsymbolToLoc longsymbol
+      | EXPID longsymbol => SymbolWithLoc.longsymbolToLoc longsymbol
       | EXPOPID (_, loc) => loc
       | EXPRECORD (_, loc) => loc
       | EXPRECORD_UPDATE (_, _, loc) => loc

@@ -78,9 +78,9 @@ struct
              val rigidConSet = 
                  SymbolEnv.foldli
                    (fn (label, NONE, senv) => 
-                       SEnv.insert(senv, Symbol.symbolToString label, NONE)
+                       SEnv.insert(senv, Symbol.toString label, NONE)
                      | (label, SOME f, senv) => 
-                       SEnv.insert(senv, Symbol.symbolToString label, SOME (f ()))
+                       SEnv.insert(senv, Symbol.toString label, SOME (f ()))
                    )
                    SEnv.empty
                    conSet

@@ -8,7 +8,7 @@ _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 
 structure OPrimOrd =
   struct
-    type ord_key = {longsymbol:Symbol.longsymbol, id:OPrimID.id}
+    type ord_key = {longsymbol:SymbolWithLoc.longsymbol, id:OPrimID.id}
     val compare : ord_key * ord_key -> order
   end
 

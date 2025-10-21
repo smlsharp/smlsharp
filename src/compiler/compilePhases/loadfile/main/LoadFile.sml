@@ -383,9 +383,9 @@ struct
         val {init} =
             foldl
               (fn (symbol, options) =>
-                  case Symbol.symbolToString symbol of
+                  case SymbolWithLoc.symbolToString symbol of
                     "init" => options # {init = true}
-                  | s => raiseError (Symbol.symbolToLoc symbol,
+                  | s => raiseError (SymbolWithLoc.symbolToLoc symbol,
                                      E.UnknownRequireOption s))
               {init = false}
               symbols

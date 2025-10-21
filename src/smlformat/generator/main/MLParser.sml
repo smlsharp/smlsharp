@@ -110,10 +110,10 @@ struct
       (pos1, pos2)
 
   fun scanLongid longsymbol =
-      map Symbol.symbolToString longsymbol
+      map SymbolWithLoc.symbolToString longsymbol
 
   fun scanTyvar ({symbol, isEq} : A.tvar) =
-      S.Tyv (Symbol.symbolToString symbol)
+      S.Tyv (SymbolWithLoc.symbolToString symbol)
 
   fun scanTy ty =
       let
@@ -141,7 +141,7 @@ struct
   fun scanTb c {tyvars, tyConSymbol, ty = (ty, tyLoc), loc} =
       S.Tb {innerHeaderFormatComments = scanInnerHeaderFormatComments c loc,
             formatComments = scanDefiningFormatComments c tyLoc,
-            tyConName = Symbol.symbolToString tyConSymbol,
+            tyConName = SymbolWithLoc.symbolToString tyConSymbol,
             ty = scanTy ty,
             tyvars = map scanTyvar tyvars}
 
@@ -153,12 +153,12 @@ struct
 
   fun scanDbrhs c {opFlag, conSymbol, tyOpt, loc} =
       {formatComments = scanDefiningFormatComments c loc,
-       valConName = Symbol.symbolToString conSymbol,
+       valConName = SymbolWithLoc.symbolToString conSymbol,
        argTypeOpt = Option.map scanTy tyOpt}
 
   fun scanDb c {tyvars, tyConSymbol, rhs, loc} =
       S.Db {innerHeaderFormatComments = scanInnerHeaderFormatComments c loc,
-            tyConName = Symbol.symbolToString tyConSymbol,
+            tyConName = SymbolWithLoc.symbolToString tyConSymbol,
             tyvars = map scanTyvar tyvars,
             rhs = S.Constrs (map (scanDbrhs c) rhs)}
 
@@ -175,8 +175,8 @@ struct
          datatycs =
            [S.Db
               {innerHeaderFormatComments =
-                 scanInnerHeaderFormatComments c (Symbol.symbolToLoc defSymbol),
-               tyConName = Symbol.symbolToString defSymbol,
+                 scanInnerHeaderFormatComments c (SymbolWithLoc.symbolToLoc defSymbol),
+               tyConName = SymbolWithLoc.symbolToString defSymbol,
                tyvars = nil,
                rhs = S.Repl (scanLongid refLongsymbol)}],
          withtycs = nil,
@@ -199,7 +199,7 @@ struct
         in
           S.EbGen {innerHeaderFormatComments = innerHeaderFormatComments,
                    formatComments = definingFormatComments,
-                   exn = Symbol.symbolToString conSymbol,
+                   exn = SymbolWithLoc.symbolToString conSymbol,
                    etype = Option.map scanTy tyOpt}
         end
       | A.EXBINDREP {opFlag1, conSymbol, refLongsymbol, opFlag2, loc} =>
@@ -209,7 +209,7 @@ struct
         in
           S.EbDef {innerHeaderFormatComments = innerHeaderFormatComments,
                    formatComments = definingFormatComments,
-                   exn = Symbol.symbolToString conSymbol,
+                   exn = SymbolWithLoc.symbolToString conSymbol,
                    edef = scanLongid refLongsymbol}
         end
 
@@ -254,11 +254,11 @@ struct
   and scanStrbind c strbind =
       case strbind of
         A.STRBINDTRAN (id, sigexp, strexp, loc) =>
-        S.Strb {name = Symbol.symbolToString id, def = scanStrexp c strexp}
+        S.Strb {name = SymbolWithLoc.symbolToString id, def = scanStrexp c strexp}
       | A.STRBINDOPAQUE (id, sigexp, strexp, loc) =>
-        S.Strb {name = Symbol.symbolToString id, def = scanStrexp c strexp}
+        S.Strb {name = SymbolWithLoc.symbolToString id, def = scanStrexp c strexp}
       | A.STRBINDNONOBSERV (id, strexp, loc) =>
-        S.Strb {name = Symbol.symbolToString id, def = scanStrexp c strexp}
+        S.Strb {name = SymbolWithLoc.symbolToString id, def = scanStrexp c strexp}
 
   and scanStrdec c strdec =
       case strdec of
@@ -271,22 +271,22 @@ struct
   and scanFunbind c funbind =
       case funbind of
         A.FUNBINDTRAN (funid, argid, argsig, funsig, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
       | A.FUNBINDOPAQUE (funid, argid, argsig, funsig, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
       | A.FUNBINDNONOBSERV (funid, argid, argsig, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
       | A.FUNBINDSPECTRAN (funid, spec, funsig, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
       | A.FUNBINDSPECOPAQUE (funid, spec, funsig, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
       | A.FUNBINDSPECNONOBSERV (funid, spec, strexp, loc) =>
-        S.Fctb {name = Symbol.symbolToString funid,
+        S.Fctb {name = SymbolWithLoc.symbolToString funid,
                 def = S.BaseFct {body = scanStrexp c strexp}}
 
   and scanTopdec c topdec =

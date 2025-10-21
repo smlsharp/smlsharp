@@ -20,8 +20,8 @@ struct
     | SIG_OPAQUE
 
   type ty = Absyn.ty
-  type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type symbol = SymbolWithLoc.symbol
+  type longsymbol = SymbolWithLoc.longsymbol
   type loc = Loc.loc
   datatype overloadInstance =
       INST_OVERLOAD of {tyvar: Absyn.tvar,
@@ -114,8 +114,8 @@ struct
     | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
   datatype irequire =
-      REQUIRE of RequirePath.path * Symbol.symbol list * loc
-    | LOCAL_REQUIRE of RequirePath.path * Symbol.symbol list * loc
+      REQUIRE of RequirePath.path * symbol list * loc
+    | LOCAL_REQUIRE of RequirePath.path * symbol list * loc
     | LOCAL_USE of RequirePath.path * loc
 
   datatype itop =

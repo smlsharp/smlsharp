@@ -114,7 +114,7 @@ in
         | I.REALIZED {id, tfun} => raise bug "REALIZED"
         | I.INSTANTIATED {tfunkind, tfun} => raise bug "REALIZED"
     and substConSpec subst conSpec =
-        SymbolEnv.map
+        SymbolWithLocEnv.map
         (fn tyOpt => Option.map (substTy subst) tyOpt)
         conSpec
     and substTfun (subst:subst as {tvarS,...}) tfun = 
@@ -278,7 +278,7 @@ in
         | I.IDSPECEXN {ty, symbol, defRange} => 
           I.IDSPECEXN {ty=substTy subst ty, symbol=symbol, defRange=defRange}
         | I.IDSPECCON {symbol, defRange} => I.IDSPECCON {symbol=symbol, defRange = defRange} 
-    and substVarE subst varE = SymbolEnv.map (substIdstatus subst) varE
+    and substVarE subst varE = SymbolWithLocEnv.map (substIdstatus subst) varE
     fun substTstr subst tstr =
         let
           val {tvarS,...} = subst
@@ -290,10 +290,10 @@ in
                          varE=substVarE subst varE,
                          formals=formals,
                          defRange = defRange,
-                         conSpec= SymbolEnv.map (Option.map (substTy subst)) conSpec
+                         conSpec= SymbolWithLocEnv.map (Option.map (substTy subst)) conSpec
                         }
         end
-    fun substTyE subst tyE = SymbolEnv.map (substTstr subst) tyE
+    fun substTyE subst tyE = SymbolWithLocEnv.map (substTstr subst) tyE
     fun substEnv subst (IV.ENV {varE, tyE, strE}) =
         IV.ENV
           {varE = substVarE subst varE,
@@ -302,7 +302,7 @@ in
           }
     and substStrE subst (IV.STR specEnvMap) =
         IV.STR 
-          (SymbolEnv.map
+          (SymbolWithLocEnv.map
              (fn strEntry as {env, ...} => strEntry # {env=substEnv subst env})
              specEnvMap)
   
@@ -426,7 +426,7 @@ in
         I.IDSPECEXN {ty=substTfvTy tfvSubst ty, symbol=symbol, defRange = defRange}
       | I.IDSPECCON {symbol, defRange} => I.IDSPECCON {symbol=symbol, defRange = defRange}
 
-  and substTfvVarE tfvSubst varE = SymbolEnv.map (substTfvIdstatus tfvSubst) varE
+  and substTfvVarE tfvSubst varE = SymbolWithLocEnv.map (substTfvIdstatus tfvSubst) varE
 
   fun substTfvTstr tfvSubst tstr = 
       case tstr of 
@@ -436,10 +436,10 @@ in
         IV.TSTR_DTY {tfun=substTfvTfun tfvSubst tfun,
                      varE=substTfvVarE tfvSubst varE,
                      defRange = defRange,formals=formals,
-                     conSpec=SymbolEnv.map (Option.map (substTfvTy tfvSubst)) conSpec
+                     conSpec=SymbolWithLocEnv.map (Option.map (substTfvTy tfvSubst)) conSpec
                    }
 
-  fun substTfvTyE tfvSubst tyE = SymbolEnv.map (substTfvTstr tfvSubst) tyE
+  fun substTfvTyE tfvSubst tyE = SymbolWithLocEnv.map (substTfvTstr tfvSubst) tyE
 
   fun substTfvEnv tfvSubst (IV.ENV {varE, tyE, strE}) =
       IV.ENV
@@ -449,7 +449,7 @@ in
         }
   and substTfvStrE tfvSubst (IV.STR specEnvMap) =
       IV.STR
-        (SymbolEnv.map
+        (SymbolWithLocEnv.map
            (fn strEntry as {env, ...} => 
                strEntry # {env=substTfvEnv tfvSubst env}) 
            specEnvMap)

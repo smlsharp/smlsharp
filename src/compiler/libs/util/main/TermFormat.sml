@@ -76,9 +76,8 @@ structure TermFormat :> sig
   val formatEnclosedSEnvPlain
       : 'a formatter * format * format -> 'a SEnv.map formatter
 
-  val formatEnclosedSymbolEnvPlain
-      : 'a formatter * format * format -> 'a SymbolEnv.map formatter
-
+  val formatEnclosedSymbolWithLocEnvPlain
+      : 'a formatter * format * format -> 'a SymbolWithLocEnv.map formatter
 
   (* formatting records and tuples *)
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
@@ -347,12 +346,12 @@ struct
         )
         (SEnv.listItemsi senv)
 
-  fun formatEnclosedSymbolEnvPlain (formatter, comma, mapsto) senv =
+  fun formatEnclosedSymbolWithLocEnvPlain (formatter, comma, mapsto) senv =
       formatDeclList
         (fn (symbol, value) =>
             begin_
               nest_ 1
-                 $(Symbol.format_symbol symbol)
+                 $(SymbolWithLoc.format_symbol symbol)
                  $mapsto
                  $(formatter value)
               end_
@@ -360,7 +359,7 @@ struct
          comma,
          comma
         )
-        (SymbolEnv.listItemsi senv)
+        (SymbolWithLocEnv.listItemsi senv)
      
   structure FormatComb =
   struct

@@ -132,7 +132,7 @@ struct
       end
 
   fun recordLabelToSymbol label loc =
-      Symbol.mkSymbol (RecordLabel.toString label) loc
+      SymbolWithLoc.mkSymbol (RecordLabel.toString label) loc
 
   fun Ty ty (_:S.loc) = ty : A.ty
 
@@ -147,7 +147,7 @@ struct
 
   fun TyCon args name loc =
       A.TYCONSTRUCT
-        (map (fn arg => arg loc) args, Symbol.mkLongsymbol name loc, loc)
+        (map (fn arg => arg loc) args, SymbolWithLoc.mkLongsymbol name loc, loc)
 
   fun TyFun (ty1, ty2) loc =
       A.TYFUN (ty1 loc, ty2 loc, loc)
@@ -181,7 +181,7 @@ struct
       P.PLPATLAYERED (recordLabelToSymbol label loc, NONE, pat loc, loc)
 
   fun PatCon name symbol loc =
-      P.PLPATCONSTRUCT (P.PLPATID (Symbol.mkLongsymbol name loc),
+      P.PLPATCONSTRUCT (P.PLPATID (SymbolWithLoc.mkLongsymbol name loc),
                         P.PLPATID [symbol], loc)
 
   fun PatTyped (pat, ty) loc =
@@ -201,7 +201,7 @@ struct
       P.PLVAR [recordLabelToSymbol label loc]
 
   fun ExVar name loc =
-      P.PLVAR (Symbol.mkLongsymbol name loc)
+      P.PLVAR (SymbolWithLoc.mkLongsymbol name loc)
 
   fun Case1 exp1 (pat, exp2) loc =
       P.PLCASEM ([exp1 loc], [([pat loc], exp2 loc, loc)], P.MATCH, loc)
@@ -211,7 +211,7 @@ struct
 
   fun Fn1 f =
       let
-        val x = Symbol.generate ()
+        val x = SymbolWithLoc.generate ()
       in
         Fn (PatVar x, f (Var x))
       end
@@ -234,7 +234,7 @@ struct
       String (RecordLabel.toString label)
 
   fun SymbolString symbol =
-      String (Symbol.symbolToString symbol)
+      String (SymbolWithLoc.symbolToString symbol)
 
   fun App exp1 exp2 loc =
       P.PLAPPM (exp1 loc, [exp2 loc], loc)
@@ -619,7 +619,7 @@ struct
 
   fun sqlFunName symbol =
         String.translate (fn #"'" => "" | c => str (Char.toUpper c))
-                         (Symbol.symbolToString symbol)
+                         (SymbolWithLoc.symbolToString symbol)
 
   (* syntactic category of each query construct *)
   datatype ty =
@@ -693,9 +693,9 @@ struct
       | S.NULL loc => loc
       | S.TRUE loc => loc
       | S.FALSE loc => loc
-      | S.ID id => Symbol.symbolToLoc id
+      | S.ID id => SymbolWithLoc.symbolToLoc id
       | S.OPID (_, loc) => loc
-      | S.PARENID id => Symbol.symbolToLoc id
+      | S.PARENID id => SymbolWithLoc.symbolToLoc id
       | S.TUPLE (_, loc) => loc
       | S.APP (_, loc) => loc
 
@@ -924,8 +924,8 @@ struct
     | distinctToToy selectList (SOME S.ALL) = (fn c => c)
     | distinctToToy selectList (SOME S.DISTINCT) =
       let
-        val l = Symbol.generate ()
-        val r = Symbol.generate ()
+        val l = SymbolWithLoc.generate ()
+        val r = SymbolWithLoc.generate ()
         fun toTuple e = nestedPair (map (fn (l,_) => Select l e) selectList)
         fun compare x =
             Case1 x (PatTuple [PatVar l, PatVar r],
@@ -1051,14 +1051,14 @@ struct
       | SQLAPP (_, f, arg, loc) =>
         let
           val f =
-              Symbol.mkLongsymbol Name.structure_Op (Symbol.symbolToLoc f) @ [f]
+              SymbolWithLoc.mkLongsymbol Name.structure_Op (SymbolWithLoc.symbolToLoc f) @ [f]
         in
           fn c => Loc loc (App (LongVar f) (queryToToy arg c))
         end
       | APPOP2 (f, x, y, loc) =>
         let
           val f =
-              Symbol.mkLongsymbol Name.structure_Op (Symbol.symbolToLoc f) @ [f]
+              SymbolWithLoc.mkLongsymbol Name.structure_Op (SymbolWithLoc.symbolToLoc f) @ [f]
         in
           fn c => Loc loc (App (LongVar f)
                                (Tuple [queryToToy x c, queryToToy y c]))
@@ -1277,11 +1277,11 @@ struct
         (UserErrorUtils.enqueueError (loc, F.AppInSQLQuery); Unit)
       | SQLAPP (true, _, arg, _) => queryToTerm arg
       | SQLAPP (false, funid, TUPLE (args, loc1), loc) =>
-        (case Symbol.symbolToString funid of
+        (case SymbolWithLoc.symbolToString funid of
            "~" => (UserErrorUtils.enqueueError (loc, F.NegNotUnary); Unit)
          | _ => Loc loc (Con_FUNCALL (sqlFunName funid) (map queryToTerm args)))
       | SQLAPP (false, funid, arg, loc) =>
-        (case Symbol.symbolToString funid of
+        (case SymbolWithLoc.symbolToString funid of
            "~" => Loc loc (Con_UNARYOP "-" (queryToTerm arg))
          | _ => Loc loc (Con_FUNCALL (sqlFunName funid) [queryToTerm arg]))
       | APPOP2 (f, x, y, loc) =>
@@ -1496,7 +1496,7 @@ struct
     | toSQL (ML (q as CONST _)) = (emptyRet, q)
     | toSQL (ML q) =
       let
-        val x = Symbol.generate ()
+        val x = SymbolWithLoc.generate ()
         val loc = getLoc q
       in
         ({binds = [{pat = PatVar x loc,
@@ -1515,7 +1515,7 @@ struct
 
   fun embed (ty, plexp, loc) =
       let
-        val x = Symbol.generate ()
+        val x = SymbolWithLoc.generate ()
         val plpat = PatCon (tyToConName ty) x loc
       in
         ({binds = [{pat = plpat, exp = plexp, loc = loc}],
@@ -1596,7 +1596,7 @@ struct
           case (q1, q2) of
             (ML q1, ML q2) =>
             (merge [ret1, ret2],
-             ML (APP (MLEXP ([id], Symbol.symbolToLoc id),
+             ML (APP (MLEXP ([id], SymbolWithLoc.symbolToLoc id),
                       TUPLE ([q1, q2], loc),
                       loc)))
           | _ =>
@@ -1630,7 +1630,7 @@ struct
       | S.CONST (A.CHAR c, loc) => (emptyRet, ML (CONST (CHAR c, loc)))
       | S.CONST (A.UNITCONST, loc) =>
         let
-          val x = Symbol.generate ()
+          val x = SymbolWithLoc.generate ()
         in
           ({binds = [{pat = PatVar x loc,
                       exp = P.PLCONSTANT (A.UNITCONST, loc),
@@ -1641,9 +1641,9 @@ struct
       | S.NULL loc => (emptyRet, SQL (NULL loc))
       | S.TRUE loc => (emptyRet, ML (CONST (BOOL true, loc)))
       | S.FALSE loc => (emptyRet, ML (CONST (BOOL false, loc)))
-      | S.ID id => (emptyRet, ML (MLEXP ([id], Symbol.symbolToLoc id)))
+      | S.ID id => (emptyRet, ML (MLEXP ([id], SymbolWithLoc.symbolToLoc id)))
       | S.OPID (id, loc) => (emptyRet, ML (MLEXP (id, loc)))
-      | S.PARENID id => (emptyRet, ML (MLEXP ([id], Symbol.symbolToLoc id)))
+      | S.PARENID id => (emptyRet, ML (MLEXP ([id], SymbolWithLoc.symbolToLoc id)))
       | S.OP1 (op1, e, loc) =>
         let
           val (ret, q) = elabExp env e
@@ -1669,7 +1669,7 @@ struct
         end
       | S.APP (exps, loc) =>
         let
-          fun getLongsymbol (S.ID id) = [id]
+          fun getLongsymbol (S.ID id) = [#symbol id]
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
           fun error (Fixity.Conflict, _, loc) =
               UserErrorUtils.enqueueError
@@ -1682,7 +1682,7 @@ struct
                 (loc, E.EndWithInfixID (getLongsymbol exp))
           val src =
               map (fn exp as S.ID id =>
-                      (case SymbolEnv.find (#fixEnv env, id) of
+                      (case SymbolEnv.find (#fixEnv env, #symbol id) of
                          SOME (x,loc) => (x, exp, expLoc exp)
                        | NONE => (Fixity.NONFIX, exp, expLoc exp))
                     | exp => (Fixity.NONFIX, exp, expLoc exp))
@@ -1754,7 +1754,7 @@ struct
 
   and elabTableId env ({db, label, loc}:S.table_selector) =
       let
-        val exploc = (A.EXPID [db], Symbol.symbolToLoc db)
+        val exploc = (A.EXPID [db], SymbolWithLoc.symbolToLoc db)
         val (ret, db) = elabEmbed env DBty exploc
       in
         (ret, {db = db, label = label, loc = loc})
@@ -2109,8 +2109,8 @@ struct
 
   fun sqlFn (pat, exp) =
       let
-        val t = Tyvar (Symbol.generate ())
-        val x = Symbol.generate ()
+        val t = Tyvar (SymbolWithLoc.generate ())
+        val x = SymbolWithLoc.generate ()
         val patTy = Ty_db (TyWild, TyID t)
         val expTy = Ty_command (TyWild, TyID t)
       in
@@ -2155,16 +2155,16 @@ struct
       let
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "like" Loc.noloc, (Fixity.INFIX 5, Loc.noloc))
+              (fixEnv, Symbol.fromString "like", (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "||" Loc.noloc, (Fixity.INFIX 5, Loc.noloc))
+              (fixEnv, Symbol.fromString "||", (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "%" Loc.noloc, (Fixity.INFIX 7, Loc.noloc))
+              (fixEnv, Symbol.fromString "%", (Fixity.INFIX 7, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "mod" Loc.noloc, (Fixity.NONFIX, Loc.noloc))
+              (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, Loc.noloc))
         val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
       in
         elabSqlexp {elabPat = elabPat, env = env} (sqlexp, loc)

@@ -43,7 +43,13 @@ struct
       
   fun generateInstance {btvEnv, lookup} ty loc =
       let
-        fun lookUp btv = lookup (T.REIFYty (T.BOUNDVARty btv))
+        fun lookUp btv =
+            case lookup (T.REIFYty (T.BOUNDVARty btv)) of
+              NONE => NONE
+            | SOME {path, id, ty} =>
+              SOME {path = map (fn x => {symbol = x, loc = loc}) path,
+                    id = id,
+                    ty = ty}
         val tyRep = TyToReifiedTy.toTy loc ty
         val tyRepExp = ReifyTy.TyRepWithLookUp lookUp loc tyRep
         val retExp = DatatypeCompilation.compileExp

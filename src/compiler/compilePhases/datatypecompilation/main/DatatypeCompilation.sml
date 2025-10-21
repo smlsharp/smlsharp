@@ -63,7 +63,7 @@ struct
         fun find i k nil = NONE
           | find i k (h::t) = if k = h then SOME i else find (i+1) k t
       in
-        case find 0 (Symbol.symbolToString (Symbol.lastSymbol path)) tagMap of
+        case find 0 (Symbol.toString (List.last path)) tagMap of
           NONE => raise Bug.Bug ("dataconTag " ^ Symbol.longsymbolToString path)
         | SOME tag => tag
       end
@@ -75,7 +75,7 @@ struct
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
           val vid = EmitTypedLambda.newId ()
-          val nullName = [Symbol.mkSymbol nullName Loc.noloc]
+          val nullName = [Symbol.fromString nullName]
         in
           E.Let ([(vid, exp)],
                  E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),
@@ -129,8 +129,8 @@ struct
             case argExpOpt of
               SOME _ => raise Bug.Bug "composeCon: LAYOUT_CHOICE"
             | NONE =>
-              E.Cast (if Symbol.eqSymbol (Symbol.lastSymbol (#path conInfo),
-                                          Symbol.mkSymbol falseName Loc.noloc)
+              E.Cast (if List.last (#path conInfo)
+                         = Symbol.fromString falseName
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
           )
@@ -196,15 +196,15 @@ struct
           end
         | LAYOUT_CHOICE {falseName} =>
           let
-            val falseName = Symbol.mkSymbol falseName Loc.noloc
+            val falseName = Symbol.fromString falseName
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
                   [(con1, NONE, exp1), (con2, NONE, exp2)] =>
-                  if Symbol.eqSymbol (Symbol.lastSymbol (#path con1), falseName)
+                  if List.last (#path con1) = falseName
                   then (con1, exp2, exp1)
                   else (con1, exp1, exp2)
                 | [(con1, NONE, exp1)] =>
-                  if Symbol.eqSymbol (Symbol.lastSymbol (#path con1), falseName)
+                  if List.last (#path con1) = falseName
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
                 | _ => raise Bug.Bug "switchCon: LAYOUT_CHOICE"
@@ -372,7 +372,7 @@ struct
               TL.TLCONSTANT (TL.UNIT, loc)) (*dummy*)
 
   fun compileVarInfo ({id, path, ty, ...}:Types.varInfo) : TypedLambda.varInfo =
-      {id = id, path = path, ty = ty}
+      {id = id, path = map #symbol path, ty = ty}
 
   fun compileExp (env:env) rcexp =
       case rcexp of

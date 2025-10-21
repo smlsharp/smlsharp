@@ -39,7 +39,7 @@ local
   exception FunIDUndefind
   fun bug s = Bug.Bug ("NameEval: " ^ s)
 
-  val symbolToLoc = Symbol.symbolToLoc
+  val symbolToLoc = SymbolWithLoc.symbolToLoc
   
  (* the following three functions are copied from IDTypes
     and slightly changed to fix the bug 152
@@ -157,7 +157,7 @@ local
                                    formals,conSpec,liftedTys,id})) =>
               let
                 val conSpec =
-                    SymbolEnv.map
+                    SymbolWithLocEnv.map
                     (fn tyOpt =>
                         Option.map (S.substTfvTy tfvSubst) tyOpt)
                     conSpec
@@ -231,7 +231,7 @@ local
                             (loc,
                              E.ArityErrorInSigShare
                                ("Sig-030",
-                                {longsymbolList=longsymbolList}));
+                                {longsymbolList=map (map #symbol) longsymbolList}));
                           raise ProcessShare)
               val isEqtype = checkEqtypeTfvList tfvList
               val _ =
@@ -244,7 +244,7 @@ local
                         (EU.enqueueError
                            (loc, E.EqtypeInSigShare
                                    ("Sig-040",
-                                    {longsymbolList=longsymbolList}));
+                                    {longsymbolList=map (map #symbol) longsymbolList}));
                          raise ProcessShare)
                     | _ => raise bug "impossible"
                   else ()
@@ -281,7 +281,7 @@ local
                     (EU.enqueueError
                        (loc, E.SigErrorInSigShare
                                ("Sig-050",
-                                {longsymbolList=errorPathList}));
+                                {longsymbolList=map (map #symbol) errorPathList}));
                      raise ProcessShare)
               val firstTfv =
                   case pathTypIdDtyTfvList of
@@ -341,13 +341,13 @@ local
                                 (EU.enqueueError
                                    (loc, 
                                     E.ImproperSigshare
-                                      ("Sig-010",{longsymbol=longsymbol}));
+                                      ("Sig-010",{longsymbol=map #symbol longsymbol}));
                                  raise ProcessShare)
                               | Undef =>
                                 (EU.enqueueError
                                    (loc,
                                     E.TypUndefinedInSigshare
-                                      ("Sig-020",{longsymbol=longsymbol}));
+                                      ("Sig-020",{longsymbol=map #symbol longsymbol}));
                                  raise ProcessShare)
                           in
                             ((longsymbol,tfv)::pathTfvList, id::idList)
@@ -383,7 +383,7 @@ local
               case VP.findSigETopEnv(topEnv, symbol) of
                 NONE => (EU.enqueueError
                            (symbolToLoc symbol,
-                            E.SigIdUndefined("Sig-060", {symbol = symbol}));
+                            E.SigIdUndefined("Sig-060", {symbol = #symbol symbol}));
                          (V.emptyEnv, symbol)
                         )
               | SOME (sym, {loc, sigId, env=specEnv}) => (#2 (refreshSpecEnv path specEnv), sym)
@@ -449,14 +449,14 @@ local
                                    }
                   val realizerVarE =
                       case realizeeTstr of
-                        V.TSTR _ => SymbolEnv.empty
+                        V.TSTR _ => SymbolWithLocEnv.empty
                       | V.TSTR_DTY _=> 
                         (case I.derefTfun realizerTfun of
                            I.TFUN_VAR(ref (I.TFUN_DTY {conSpec,...})) =>
-                           SymbolEnv.foldri
+                           SymbolWithLocEnv.foldri
                              (fn (name, _, varE) =>
                                 (
-                                 SymbolEnv.insert
+                                 SymbolWithLocEnv.insert
                                    (varE, 
                                     name,
                                     lookupId (#Env topEnv)
@@ -474,9 +474,9 @@ local
                                         )
                                 )
                              )
-                             SymbolEnv.empty
+                             SymbolWithLocEnv.empty
                              conSpec
-                         | _ => SymbolEnv.empty
+                         | _ => SymbolWithLocEnv.empty
                         )
                   fun getTfvTfun tfun =
                       case tfun of 
@@ -617,7 +617,7 @@ local
                         (ref (I.TFUN_DTY {formals, conSpec,...})))) =>
                     let
                       val returnEnv = 
-                          SymbolEnv.foldri
+                          SymbolWithLocEnv.foldri
                             (fn (name, _, returnEnv) =>
                                   VP.rebindIdLongsymbol VP.BIND_SIG
                                     (returnEnv, realizeePath@[name], 
@@ -674,44 +674,44 @@ local
                 Rigid =>
                 (EU.enqueueError
                    (loc, 
-                    E.ImproperSigwhere("Sig-080",{longsymbol=longsymbol}));
+                    E.ImproperSigwhere("Sig-080",{longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Type =>
                 (EU.enqueueError
                    (loc,
                     E.TypeErrorInSigwhere
-                      ("Sig-090",{longsymbol=longsymbol}));
+                      ("Sig-090",{longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Type1 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere
-                          ("Sig-100", {longsymbol=longsymbol}));
+                          ("Sig-100", {longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Type2 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-110",
-                                              {longsymbol=longsymbol}));
+                                              {longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Type3 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-120",
-                                              {longsymbol=longsymbol}));
+                                              {longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Eq =>
                 (EU.enqueueError
                    (loc, E.EqtypeInSigwhere
-                           ("Sig-130",{longsymbol=longsymbol}));
+                           ("Sig-130",{longsymbol=map #symbol longsymbol}));
                  specEnv)
               | Arity =>
                 (EU.enqueueError
                    (loc, E.ArityErrorInSigwhere
                            ("Sig-140",
-                            {longsymbolList=[longsymbol]}));
+                            {longsymbolList=[map #symbol longsymbol]}));
                  specEnv)
               | Undef =>
                 (EU.enqueueError
                    (loc, E.TypUndefinedInSigwhere
-                           ("Sig-150",{longsymbol=longsymbol}));
+                           ("Sig-150",{longsymbol=map #symbol longsymbol}));
                  specEnv)
             val specEnv = setRealizer (typbind, specEnv)
         in
@@ -755,7 +755,7 @@ local
                            tvarList
                            (fn s => E.DuplicateTypParms("Sig-160",s))
                  val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
-                 val defRange = Symbol.symbolToLoc symbol
+                 val defRange = SymbolWithLoc.symbolToLoc symbol
                  val id = TypID.generate()
                  val longsymbol = path @ [symbol]
                  val tfunvar =
@@ -832,13 +832,13 @@ local
                           Ty.genTvarList Ty.emptyTvarEnv tvarList
                       val id = TypID.generate()
                       val admitsEqRef = ref true
-                      val longsymbol = Symbol.prefixPath(path , symbol)
+                      val longsymbol = SymbolWithLoc.prefixPath(path , symbol)
                       val tfv =
                           I.mkTfv(I.TFV_DTY{id=id,
                                             longsymbol=longsymbol,
                                             admitsEq=true,
                                             formals=tvarList,
-                                            conSpec=SymbolEnv.empty,
+                                            conSpec=SymbolWithLocEnv.empty,
                                             liftedTys=I.emptyLiftedTys
                                            }
                                )
@@ -888,15 +888,15 @@ local
                                           SOME ty
                                         end
                               in
-                                (SymbolEnv.insert
+                                (SymbolWithLocEnv.insert
                                    (conVarE, symbol, 
                                     I.IDSPECCON
                                       {symbol=symbol, defRange = loc}),
-                                 SymbolEnv.insert(conSpec, symbol, tyOption)
+                                 SymbolWithLocEnv.insert(conSpec, symbol, tyOption)
                                 )
                               end
                             )
-                            (SymbolEnv.empty, SymbolEnv.empty)
+                            (SymbolWithLocEnv.empty, SymbolWithLocEnv.empty)
                             conbinds
                     in
                       {name=name,
@@ -964,7 +964,7 @@ local
         (case VP.findTstr (env, longsymbol) of
            NONE =>
            (EU.enqueueError(loc,E.DtyUndefinedInSpec
-                                  ("Sig-210", {longsymbol = longsymbol}));
+                                  ("Sig-210", {longsymbol = map #symbol longsymbol}));
             V.emptyEnv
            )
          | SOME (sym, tstr) =>
@@ -1029,7 +1029,7 @@ local
                  val sigId = SignatureID.generate()
                  val defLoc =
                      Loc.mergeLocs
-                     (Symbol.symbolToLoc symbol,
+                     (SymbolWithLoc.symbolToLoc symbol,
                       P.getLocSigexp sigexp)
                  val specEnv =
                      VP.rebindStr VP.BIND_SIG
@@ -1090,9 +1090,9 @@ local
                 (pathEnv, LongsymbolEnv.singleton(key, [x]))
 
           and addTyE path key tyE pathEnv =
-              SymbolEnv.foldli
+              SymbolWithLocEnv.foldli
               (fn (name, tstr, pathEnv) => 
-                  addToListEnv (pathEnv, (key@[name]), path@[name])
+                  addToListEnv (pathEnv, map #symbol (key@[name]), path@[name])
               )
               pathEnv
               tyE
@@ -1104,7 +1104,7 @@ local
               let
                 val pathEnv = addTyE path key tyE pathEnv
               in
-                SymbolEnv.foldli
+                SymbolWithLocEnv.foldli
                 (fn (name, {env=specEnv, strKind, loc, definedSymbol}, pathEnv) =>
                     addSpecEnv (path@[name]) (key@[name]) specEnv pathEnv
                 )
@@ -1122,7 +1122,7 @@ local
                      of NONE =>
                         (EU.enqueueError
                            (loc,E.StrUndefinedInSpec
-                                  ("Sig-220", {longsymbol=longsymbol}));
+                                  ("Sig-220", {longsymbol=map #symbol longsymbol}));
                          pathEnv
                         )
                       | SOME {env=specEnv, strKind, loc, definedSymbol} =>

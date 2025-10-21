@@ -21,7 +21,7 @@ struct
   type id = string
 
   fun touch path =
-      NameMangle.mangle (Symbol.longsymbolToLongid path)
+      NameMangle.mangle (Symbol.toStringList path)
 
   fun toString x = x : id
 

@@ -42,8 +42,8 @@ struct
         -> 'a RecordLabel.Map.map formatter
   val formatEnclosedSEnvPlain
       : 'a formatter * format * format -> 'a SEnv.map formatter
-  val formatEnclosedSymbolEnvPlain
-      : 'a formatter * format * format -> 'a SymbolEnv.map formatter
+  val formatEnclosedSymbolWithLocEnvPlain
+      : 'a formatter * format * format -> 'a SymbolWithLocEnv.map formatter
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordExpToJson : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
