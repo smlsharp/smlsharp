@@ -7,7 +7,7 @@ _require "./Loc.smi"
 structure Symbol =
 struct
   eqtype symbol (= string)
-  type longsymbol = symbol list
+  eqtype longsymbol (= list)
   val format_symbol : symbol -> SMLFormat.format
   val format_longsymbol : longsymbol -> SMLFormat.format
 
@@ -17,8 +17,12 @@ struct
 
   val toStringList : longsymbol -> string list
   val fromStringList : string list -> longsymbol
+  val toSymbolList : longsymbol -> symbol list
+  val fromSymbolList : symbol list -> longsymbol
   val longsymbolToString : longsymbol -> string
   val compareLongsymbol : longsymbol * longsymbol -> order
+  val append : longsymbol * symbol -> longsymbol
+  val lastSymbol : longsymbol -> symbol
 end
 
 structure SymbolOrd =

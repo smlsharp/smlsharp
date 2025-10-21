@@ -56,7 +56,7 @@ local
         val longsymbol = setVersion(longsymbol, version)
       in
         ((*V.exnConAdd (V.EXEXN exInfo);*)
-         LongsymbolEnv.insert(externExnSet, map #symbol longsymbol, exInfo)
+         LongsymbolEnv.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
         )
       end
 
@@ -65,7 +65,7 @@ local
       let
         val longsymbol = setVersion(longsymbol, version)
       in
-        LongsymbolEnv.insert(externVarSet, map #symbol longsymbol, exInfo)
+        LongsymbolEnv.insert(externVarSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
       end
 
   fun exSetMember (externExnSet:I.exInfo LongsymbolEnv.map, 
@@ -73,7 +73,7 @@ local
       let
         val longsymbol = setVersion(longsymbol, version)
       in
-        LongsymbolEnv.inDomain(externExnSet, map #symbol longsymbol)
+        LongsymbolEnv.inDomain(externExnSet, SymbolWithLoc.toLongsymbol longsymbol)
       end
 
   val emptyExternVarSet = LongsymbolEnv.empty : I.exInfo LongsymbolEnv.map
@@ -202,7 +202,7 @@ local
                 NONE =>
                 (EU.enqueueError
                    (SymbolWithLoc.longsymbolToLoc refLongsymbol,
-                    E.ConNotFound("020", {longsymbol = map #symbol refLongsymbol}));
+                    E.ConNotFound("020", {longsymbol = SymbolWithLoc.toLongsymbol refLongsymbol}));
                  (V.emptyEnv, I.ICPATERROR)
                 )
               | SOME (sym, I.IDCON {id, ty, ...}) =>
@@ -328,7 +328,7 @@ local
                 else
                   (EU.enqueueError
                      (SymbolWithLoc.symbolToLoc symbol,
-                      E.VarPatExpected("090", {longsymbol = [#symbol symbol]}));
+                      E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol [symbol]}));
                    VarID.generate())
             val longsymbol =  SymbolWithLoc.prefixPath (path, symbol)
             val rangeLoc = case defRange of
@@ -633,7 +633,7 @@ local
 
       | P.PDDATATYPE (datadeclList, loc) =>
         let
-          val (returnEnv, icdecls) = Ty.evalDatatype (map #symbol path) env (datadeclList, loc)
+          val (returnEnv, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, loc)
         in
           (renameEnv, returnEnv, icdecls)
         end
@@ -641,7 +641,7 @@ local
         (case (VP.findTstr (env, longsymbol)) handle e => raise e of
            NONE => (EU.enqueueError
                       (SymbolWithLoc.longsymbolToLoc longsymbol,
-                       E.DataTypeNameUndefined("140", {longsymbol = map #symbol longsymbol}));
+                       E.DataTypeNameUndefined("140", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                     (renameEnv, V.emptyEnv, nil))
          | SOME (sym, tstr) => 
            let
@@ -735,7 +735,7 @@ local
                   abstractTstr tstr tfvSubst)
               tfvSubst
               tyE
-          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype (map #symbol path) env (datadeclList, loc)
+          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, loc)
           val evalEnv = VP.envWithEnv (env, env1)
           val (renameEnv, newEnv, icdeclList) = evalPdeclList (renameEnv:renameEnv)  path tvarEnv evalEnv pdeclList
           val absEnv = V.ENV{varE=SymbolWithLocEnv.empty, tyE=tyE, strE=V.STR SymbolWithLocEnv.empty}
@@ -809,12 +809,12 @@ local
                        | SOME _ =>
                          (EU.enqueueError
                             (SymbolWithLoc.longsymbolToLoc longsymbol,
-                             E.ExnExpected("170", {longsymbol = map #symbol longsymbol}));
+                             E.ExnExpected("170", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                           (exEnv, exdeclList)
                          )
                        | NONE => 
                          (EU.enqueueError
-                            (loc,E.ExnUndefined("160",{longsymbol = map #symbol longsymbol}));
+                            (loc,E.ExnUndefined("160",{longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                           (exEnv, exdeclList)
                          )
                       )
@@ -853,7 +853,7 @@ local
                     | NONE => 
                       (EU.enqueueError
                          (SymbolWithLoc.longsymbolToLoc longsymbol,
-                          E.StrNotFound("180", {longsymbol = map #symbol longsymbol}));
+                          E.StrNotFound("180", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                        (returnEnv, renameEnv))
                 )
                 (V.emptyEnv, renameEnv)
@@ -906,7 +906,7 @@ local
                 | NONE => 
                   (EU.enqueueError
                      (SymbolWithLoc.longsymbolToLoc refLongsymbol,
-                      E.VarNotFound("190",{longsymbol=map #symbol refLongsymbol}));
+                      E.VarNotFound("190",{longsymbol=SymbolWithLoc.toLongsymbol refLongsymbol}));
                    I.IDVAR {longsymbol=refLongsymbol, id = VarID.generate(),
                             defRange=Loc.noloc}
                   )
@@ -1220,7 +1220,7 @@ local
            let
              val loc = SymbolWithLoc.longsymbolToLoc longsymbol
            in
-             (EU.enqueueError (loc, E.StrNotFound("430",{longsymbol = map #symbol longsymbol}));
+             (EU.enqueueError (loc, E.StrNotFound("430",{longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
               (renameEnv, {env=V.emptyEnv, 
                            loc = Loc.noloc,
                            definedSymbol = path, 
@@ -1412,14 +1412,14 @@ U.print "substitution performed\n";
                      )
                    else (EU.enqueueError
                            (loc, E.FunctorParamRestriction
-                                   ("440", {longsymbol=map #symbol path}));
+                                   ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
                          subst
                         )
                  | I.TFUN_VAR _ => raise bug "tfun var"
                  | I.TFUN_DEF _ =>
                    (EU.enqueueError
                       (loc, E.FunctorParamRestriction
-                              ("440", {longsymbol=map #symbol path}));
+                              ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
                     subst)
                 )
               | I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {id=id1,dtyKind,...})) =>
@@ -2511,11 +2511,11 @@ So we change exnSet to path exnMap in genExportIdstatus
               let
                 val longsymbol = setVersion(longsymbol, version)
               in
-                LongsymbolEnv.insert(externExnSet, map #symbol longsymbol, exInfo)
+                LongsymbolEnv.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
               end
             | I.ICBUILTINEXN {longsymbol, ty} => 
               LongsymbolEnv.insert
-                (externExnSet, map #symbol longsymbol,
+                (externExnSet, SymbolWithLoc.toLongsymbol longsymbol,
                  {used = ref false, longsymbol=longsymbol, ty=ty, version=I.SELF})
             | _ => externExnSet
         )
@@ -2527,7 +2527,7 @@ So we change exnSet to path exnMap in genExportIdstatus
           T.OVERLOAD_EXVAR {exVarInfo={path, ty}, instTyList} =>
           let
             val idstatus = 
-                case VP.findId (#Env env, map (fn x => {symbol = x, loc = Loc.noloc}) path) of
+                case VP.findId (#Env env, SymbolWithLoc.fromLongsymbol path Loc.noloc) of
                   SOME (sym, idstatus) => idstatus
                 | NONE => raise bug  (Symbol.longsymbolToString path
                                       ^

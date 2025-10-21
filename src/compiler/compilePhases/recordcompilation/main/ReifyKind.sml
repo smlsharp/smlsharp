@@ -49,7 +49,7 @@ struct
             | SOME {path = NONE, id, ty} =>
               SOME {path = nil, id = id, ty = ty}
             | SOME {path = SOME path, id, ty} =>
-              SOME {path = map (fn x => {symbol = x, loc = loc}) path,
+              SOME {path = SymbolWithLoc.fromLongsymbol path loc,
                     id = id,
                     ty = ty}
         val tyRep = TyToReifiedTy.toTy loc ty

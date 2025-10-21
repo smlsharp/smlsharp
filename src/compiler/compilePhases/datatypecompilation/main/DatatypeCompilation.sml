@@ -63,7 +63,7 @@ struct
         fun find i k nil = NONE
           | find i k (h::t) = if k = h then SOME i else find (i+1) k t
       in
-        case find 0 (Symbol.toString (List.last path)) tagMap of
+        case find 0 (Symbol.toString (Symbol.lastSymbol path)) tagMap of
           NONE => raise Bug.Bug ("dataconTag " ^ Symbol.longsymbolToString path)
         | SOME tag => tag
       end
@@ -75,7 +75,7 @@ struct
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
           val vid = EmitTypedLambda.newId ()
-          val nullName = [Symbol.fromString nullName]
+          val nullName = Symbol.fromStringList [nullName]
         in
           E.Let ([(vid, exp)],
                  E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),
@@ -129,7 +129,7 @@ struct
             case argExpOpt of
               SOME _ => raise Bug.Bug "composeCon: LAYOUT_CHOICE"
             | NONE =>
-              E.Cast (if List.last (#path conInfo)
+              E.Cast (if Symbol.lastSymbol (#path conInfo)
                          = Symbol.fromString falseName
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
@@ -200,11 +200,11 @@ struct
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
                   [(con1, NONE, exp1), (con2, NONE, exp2)] =>
-                  if List.last (#path con1) = falseName
+                  if Symbol.lastSymbol (#path con1) = falseName
                   then (con1, exp2, exp1)
                   else (con1, exp1, exp2)
                 | [(con1, NONE, exp1)] =>
-                  if List.last (#path con1) = falseName
+                  if Symbol.lastSymbol (#path con1) = falseName
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
                 | _ => raise Bug.Bug "switchCon: LAYOUT_CHOICE"
@@ -373,7 +373,8 @@ struct
 
   fun compileVarInfo ({id, path, ty, ...}:Types.varInfo) : TypedLambda.varInfo =
       {id = id,
-       path = case path of nil => NONE | _ => SOME (map #symbol path),
+       path = case path of nil => NONE
+                         | _ => SOME (SymbolWithLoc.toLongsymbol path),
        ty = ty}
 
   fun compileExp (env:env) rcexp =

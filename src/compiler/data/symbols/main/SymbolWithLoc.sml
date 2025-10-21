@@ -87,6 +87,11 @@ in
         
   fun longsymbolToLongid (s:longsymbol) = map symbolToString s
 
+  fun toLongsymbol (s:longsymbol) =
+      Symbol.fromSymbolList (map #symbol s)
+  fun fromLongsymbol (s:Symbol.longsymbol) loc =
+      map (fn s => {symbol = s, loc = loc}) (Symbol.toSymbolList s)
+
   fun coerceLongsymbolToSymbol longsymbol =
       {symbol = Symbol.fromString (longsymbolToString longsymbol),
        loc = longsymbolToLoc longsymbol}

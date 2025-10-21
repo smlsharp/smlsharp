@@ -1669,7 +1669,7 @@ struct
         end
       | S.APP (exps, loc) =>
         let
-          fun getLongsymbol (S.ID id) = [#symbol id]
+          fun getLongsymbol (S.ID id) = SymbolWithLoc.toLongsymbol [id]
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
           fun error (Fixity.Conflict, _, loc) =
               UserErrorUtils.enqueueError

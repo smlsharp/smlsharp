@@ -267,7 +267,7 @@ in
                      in
                        ( 
                         tfv := I.REALIZED{id= id, tfun=tfun};
-                        LongsymbolEnv.insert(extraTvarsMap, map #symbol path, tvar))
+                        LongsymbolEnv.insert(extraTvarsMap, SymbolWithLoc.toLongsymbol path, tvar))
                      end
                    | _ => extraTvarsMap
                   )

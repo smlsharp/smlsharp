@@ -29658,16 +29658,16 @@ src/compiler/compilePhases/recordcompilation/main/ReifyKind.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
- src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/libs/env/main/IOrd.smi \
- src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/libs/env/main/IOrd.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \

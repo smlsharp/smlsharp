@@ -152,12 +152,12 @@ in
                     val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc name,
-                                 E.SIGEqtype("200",{longsymbol=map #symbol (path@[name])}))
+                                 E.SIGEqtype("200",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}))
                             else ()
                     val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
                               EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc name,
-                                 E.SIGArity("210",{longsymbol=map #symbol (path@[name])}))
+                                 E.SIGArity("210",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}))
                             else ()
                   in
                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
@@ -171,12 +171,12 @@ in
                     val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc name,
-                                 E.SIGEqtype("220",{longsymbol=map #symbol (path@[name])}))
+                                 E.SIGEqtype("220",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}))
                             else ()
                     val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
                               EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc name,
-                                 E.SIGArity("230",{longsymbol=map #symbol (path@[name])}))
+                                 E.SIGArity("230",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}))
                             else ()
                   in
                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
@@ -222,25 +222,25 @@ in
                   if List.length specFormals <> List.length strFormals then
                      EU.enqueueError 
                        (SymbolWithLoc.symbolToLoc strSymbol,
-                        E.SIGArity("240",{longsymbol=map #symbol (path@[strSymbol])}))
+                        E.SIGArity("240",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}))
                   else if N.eqTydef N.emptyTypIdEquiv ((specFormals,specTy),(strFormals,strTy))
                   then ()
                   else (EU.enqueueError 
                           (SymbolWithLoc.symbolToLoc strSymbol,
-                           E.SIGDtyMismatch ("250",{longsymbol=map #symbol (path@[specSymbol])})))
+                           E.SIGDtyMismatch ("250",{longsymbol=SymbolWithLoc.toLongsymbol (path@[specSymbol])})))
                 | (I.TFUN_VAR (ref (I.TFUN_DTY {id=id1,...})), I.TFUN_VAR (ref (I.TFUN_DTY {id=id2,...}))) =>
                   if TypID.eq(id1,id2) then ()
                   else 
                     (EU.enqueueError 
                        (SymbolWithLoc.symbolToLoc strSymbol,
-                        E.SIGDtyMismatch("260",{longsymbol=map #symbol (path@[specSymbol])})))
+                        E.SIGDtyMismatch("260",{longsymbol=SymbolWithLoc.toLongsymbol (path@[specSymbol])})))
                 | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=specTfun,...})), strTfun) =>
                   checkTfun (specSymbol, strSymbol) (specTfun, strTfun)
                 | (specTfun, I.TFUN_VAR (ref (I.FUN_DTY {tfun=strTfun,...}))) =>
                   checkTfun (specSymbol, strSymbol) (specTfun, strTfun)
                 | _ =>(EU.enqueueError
                          (SymbolWithLoc.symbolToLoc strSymbol,
-                          E.SIGDtyMismatch("270",{longsymbol=map #symbol (path@[strSymbol])})))
+                          E.SIGDtyMismatch("270",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])})))
               end
 
           fun checkConSpec typIdEquiv ((formals1, conSpec1), (formals2, conSpec2)) =
@@ -263,12 +263,12 @@ in
                           | (SOME _, NONE) => 
                             (EU.enqueueError 
                                (SymbolWithLoc.symbolToLoc strSymbol,
-                                E.SIGConType ("280",{longsymbol=map #symbol (path@[strSymbol])}));
+                                E.SIGConType ("280",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
                              conSpec2)
                           | (NONE, SOME _) =>
                             (EU.enqueueError 
                                (SymbolWithLoc.symbolToLoc strSymbol,
-                                E.SIGConType ("290",{longsymbol=map #symbol (path@[strSymbol])}));
+                                E.SIGConType ("290",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
                              conSpec2)
                           | (SOME ty1, SOME ty2) => 
                             if N.equalTy (typIdEquiv, tvarIdEquiv) (ty1, ty2) then 
@@ -276,13 +276,13 @@ in
                             else 
                               (EU.enqueueError 
                                  (SymbolWithLoc.symbolToLoc strSymbol,
-                                  E.SIGConType ("300",{longsymbol=map #symbol (path@[strSymbol])}));
+                                  E.SIGConType ("300",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
                                conSpec2)
                         end
                         handle LibBase.NotFound => 
                             (EU.enqueueError 
                                (SymbolWithLoc.symbolToLoc specSymbol,
-                                E.SIGConNotFoundInDty ("310",{longsymbol=map #symbol (path@[specSymbol])}));
+                                E.SIGConNotFoundInDty ("310",{longsymbol=SymbolWithLoc.toLongsymbol (path@[specSymbol])}));
                              conSpec2)
                     )
                     conSpec2
@@ -292,7 +292,7 @@ in
                       (fn (strSymbol,_) =>
                           EU.enqueueError 
                             (SymbolWithLoc.symbolToLoc strSymbol,
-                             E.SIGConNotInSig ("320",{longsymbol=map #symbol (path@[strSymbol])})
+                             E.SIGConNotInSig ("320",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])})
                             )
                       )
                       conSpec2
@@ -312,7 +312,7 @@ in
                           NONE => 
                           EU.enqueueError 
                             (SymbolWithLoc.symbolToLoc conSymbol,
-                             E.SIGConNotFound ("330",{longsymbol=map #symbol (path@[conSymbol])}))
+                             E.SIGConNotFound ("330",{longsymbol=SymbolWithLoc.toLongsymbol (path@[conSymbol])}))
                         | SOME strIdstatus =>
                           (case (idstatus, strIdstatus) of
                              (I.IDCON {id=conid1, ty=ty1,...}, I.IDCON {id=conid2, ty=ty2,...}) =>
@@ -320,11 +320,11 @@ in
                              else
                                (EU.enqueueError 
                                   (SymbolWithLoc.symbolToLoc conSymbol,
-                                   E.SIGConNotFound ("340",{longsymbol=map #symbol (path@[conSymbol])})))
+                                   E.SIGConNotFound ("340",{longsymbol=SymbolWithLoc.toLongsymbol (path@[conSymbol])})))
                            | (I.IDCON _, _) => 
                              EU.enqueueError 
                                (SymbolWithLoc.symbolToLoc conSymbol,
-                                E.SIGConNotFound("350",{longsymbol=map #symbol (path@[conSymbol])}))
+                                E.SIGConNotFound("350",{longsymbol=SymbolWithLoc.toLongsymbol (path@[conSymbol])}))
                            | (I.IDSPECCON _, I.IDCON _) => ()
                            | _ => raise bug "non conid"
                           )
@@ -344,14 +344,14 @@ in
                    V.TSTR _ =>
                    (EU.enqueueError 
                       (SymbolWithLoc.symbolToLoc strSymbol,
-                       E.SIGDtyRequired("360",{longsymbol=map #symbol (path@[strSymbol])}));
+                       E.SIGDtyRequired("360",{longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
                     specTstr)
                  | V.TSTR_DTY {tfun=strTfun, varE=strVarE, formals=strFormals, conSpec=strConSpec,...} =>
                    (checkTfun (specSymbol, strSymbol) (specTfun, strTfun);
                     if List.length formals <> List.length strFormals then
                       EU.enqueueError 
                         (SymbolWithLoc.symbolToLoc strSymbol,
-                         E.SIGArity ("370",{longsymbol=map #symbol (path@[specSymbol])}))
+                         E.SIGArity ("370",{longsymbol=SymbolWithLoc.toLongsymbol (path@[specSymbol])}))
                     else ();
                     checkConSpec 
                       N.emptyTypIdEquiv
@@ -370,7 +370,7 @@ in
                       NONE => 
                       (EU.enqueueError 
                          (SymbolWithLoc.symbolToLoc specSymbol,
-                          E.SIGTypUndefined("380",{longsymbol=map #symbol (path@[specSymbol])}));
+                          E.SIGTypUndefined("380",{longsymbol=SymbolWithLoc.toLongsymbol (path@[specSymbol])}));
                        tyE)
                     | SOME (strSymbol, strTstr) => 
                       let
@@ -459,7 +459,7 @@ in
                           NONE =>
                           (EU.enqueueError
                              (SymbolWithLoc.symbolToLoc name,
-                              E.SIGVarUndefined ("390",{longsymbol = map #symbol (path@[name])}));
+                              E.SIGVarUndefined ("390",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                            (varE, icdeclList)
                           )
                         | SOME (strName, I.IDVAR {id,longsymbol,defRange}) => 
@@ -540,7 +540,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc name,
-                             E.SIGVarUndefined("400",{longsymbol = map #symbol (path@[name])}));
+                             E.SIGVarUndefined("400",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                           (varE, icdeclList)
                          )
                        | SOME (strName, 
@@ -561,7 +561,7 @@ in
                            else 
                              (EU.enqueueError 
                                 (SymbolWithLoc.symbolToLoc name,
-                                 E.SIGExnType("410",{longsymbol = map #symbol (path@[name])}));
+                                 E.SIGExnType("410",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                               (varE, icdeclList)
                              )
                          end
@@ -576,7 +576,7 @@ in
                            else 
                              (EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc strName,
-                                 E.SIGExnType("420",{longsymbol = map #symbol (path@[strName])}));
+                                 E.SIGExnType("420",{longsymbol = SymbolWithLoc.toLongsymbol (path@[strName])}));
                               (varE, icdeclList)
                              )
                          end
@@ -592,7 +592,7 @@ in
                            else 
                              (EU.enqueueError
                                 (SymbolWithLoc.symbolToLoc strName,
-                                 E.SIGExnType ("430",{longsymbol = map #symbol (path@[strName])}));
+                                 E.SIGExnType ("430",{longsymbol = SymbolWithLoc.toLongsymbol (path@[strName])}));
                               (varE, icdeclList)
                              )
                          end
@@ -607,14 +607,14 @@ in
                            else 
                              (EU.enqueueError 
                                 (SymbolWithLoc.symbolToLoc strName,
-                                 E.SIGExnType ("440",{longsymbol = map #symbol (path@[name])}));
+                                 E.SIGExnType ("440",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                               (varE, icdeclList)
                              )
                          end
                        | SOME (strName, _) =>
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc strName,
-                             E.SIGExnExpected ("450",{longsymbol = map #symbol (path@[strName])}));
+                             E.SIGExnExpected ("450",{longsymbol = SymbolWithLoc.toLongsymbol (path@[strName])}));
                           (varE, icdeclList)
                          )
                       )
@@ -623,7 +623,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc name,
-                             E.SIGVarUndefined("460",{longsymbol = map #symbol (path@[name])}));
+                             E.SIGVarUndefined("460",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                           (varE, icdeclList)
                          )
                        | SOME (strName, idstatus as I.IDCON {id,ty,...}) => 
@@ -631,7 +631,7 @@ in
                        | SOME (strName, _) => 
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc strName,
-                             E.SIGConNotFound ("470",{longsymbol = map #symbol (path@[strName])}));
+                             E.SIGConNotFound ("470",{longsymbol = SymbolWithLoc.toLongsymbol (path@[strName])}));
                           (varE, icdeclList)
                          )
                       )
@@ -640,7 +640,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc name,
-                             E.SIGVarUndefined ("480",{longsymbol = map #symbol (path@[name])}));
+                             E.SIGVarUndefined ("480",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                           (varE, icdeclList)
                          )
                        | SOME (strName, idstatus as I.IDCON {id=id2, ty=ty2,...}) => 
@@ -649,13 +649,13 @@ in
                          else 
                            (EU.enqueueError
                               (SymbolWithLoc.symbolToLoc name,
-                               E.SIGConNotFound ("490",{longsymbol = map #symbol (path@[name])}));
+                               E.SIGConNotFound ("490",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                             (varE, icdeclList)
                            )
                        | SOME _ => 
                          (EU.enqueueError
                             (SymbolWithLoc.symbolToLoc name,
-                             E.SIGConNotFound ("500",{longsymbol = map #symbol (path@[name])}));
+                             E.SIGConNotFound ("500",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
                           (varE, icdeclList)
                          )
                       )
@@ -677,7 +677,7 @@ in
                       NONE => 
                       (EU.enqueueError
                          (SymbolWithLoc.symbolToLoc name,
-                          E.SIGStrUndefined("510",{longsymbol=map #symbol (path@[name])}));
+                          E.SIGStrUndefined("510",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}));
                        (strE, icdeclList))
                     | SOME (strName, {env=strEnv, strKind=strStrKind, loc, definedSymbol}) =>
                       let

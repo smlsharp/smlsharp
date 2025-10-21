@@ -14,6 +14,8 @@ struct
 
   fun toStringList (x : longsymbol) = x
   fun fromStringList (x : string list) = x
+  val toSymbolList = toStringList
+  val fromSymbolList = fromStringList
   fun longsymbolToString x = String.concatWith "." x
 
   fun term s = SMLFormat.FormatExpression.Term (size s, s)
@@ -28,6 +30,9 @@ struct
         EQUAL => compareLongsymbol (t1, t2)
       | LESS => LESS
       | GREATER => GREATER
+
+  fun append (x : longsymbol, y) = x @ [y]
+  fun lastSymbol (x : longsymbol) = List.last x
 end
 
 structure SymbolOrd =

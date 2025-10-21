@@ -165,7 +165,7 @@ struct
             map (fn (_, conInfo as {id, ty, longsymbol}) =>
                     (conInfo, {id = id,
                                ty = Ity.evalIty Ity.emptyContext ty,
-                               path = map #symbol longsymbol}))
+                               path = SymbolWithLoc.toLongsymbol longsymbol}))
                 conInfoList
         val tstrInfo =
             {tfun=tfun, defRange = Loc.noloc,
@@ -399,7 +399,7 @@ struct
                      NONE => exnTy
                    | SOME ty => T.FUNMty([ty], exnTy)
       in
-        {path = map mkSymbol longid, ty=ty}
+        {path = Symbol.fromStringList longid, ty=ty}
       end
 
   val BindExExn = evalExn (["Bind"], NONE)

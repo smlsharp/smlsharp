@@ -199,12 +199,12 @@ in
             SOME (sym, V.TSTR {tfun,...}) => makeTy tfun
           | SOME (sym, V.TSTR_DTY {tfun, ...}) => makeTy tfun
           | NONE => 
-            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = map #symbol path}));
+            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = SymbolWithLoc.toLongsymbol path}));
              I.TYERROR
             )
         end
         handle Arity =>
-               (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol = map #symbol path}));
+               (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol = SymbolWithLoc.toLongsymbol path}));
                 I.TYERROR
                )
       end
@@ -362,7 +362,7 @@ in
             case VP.findTstr(evalEnv, runtimeTyLongsymbol) of
               NONE =>
               (EU.enqueueError
-                 (loc, E.TypNotFound("Ty-090", {longsymbol = map #symbol runtimeTyLongsymbol}));
+                 (loc, E.TypNotFound("Ty-090", {longsymbol = SymbolWithLoc.toLongsymbol runtimeTyLongsymbol}));
                NONE)
             | x => x
         val prop =
@@ -376,7 +376,7 @@ in
         | NONE =>
           (EU.enqueueError
              (loc, E.IllegalBuiltinTy
-                     ("Ty-090", {symbol = map #symbol runtimeTyLongsymbol}));
+                     ("Ty-090", {symbol = SymbolWithLoc.toLongsymbol runtimeTyLongsymbol}));
            I.PROP R.recordProp)  (*dummy*)
       end
 
@@ -469,11 +469,11 @@ in
           end
           handle LookupTstr => 
                  (EU.enqueueError
-                    (loc, E.TypNotFound("Ty-100",{longsymbol = map #symbol typath}));
+                    (loc, E.TypNotFound("Ty-100",{longsymbol = SymbolWithLoc.toLongsymbol typath}));
                   I.FFIBASETY (I.TYERROR, loc))
                | UnqeualLengths =>
                  (EU.enqueueError
-                    (loc, E.TypArity("Ty-110",{longsymbol = map #symbol typath}));
+                    (loc, E.TypArity("Ty-110",{longsymbol = SymbolWithLoc.toLongsymbol typath}));
                   I.FFIBASETY (I.TYERROR, loc))
       end
 
@@ -482,7 +482,7 @@ in
       evalKindedTvarList false tvarEnv env tvars
  
   fun evalDatatype 
-        (path:Symbol.symbol list) 
+        (path:Symbol.longsymbol)
         (env:V.env) 
         (datbindList:PatternCalc.datbind list, loc:Loc.loc) 
        : NameEvalEnv.env * IDCalc.icdecl list

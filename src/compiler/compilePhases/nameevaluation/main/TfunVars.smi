@@ -25,14 +25,6 @@ structure TfvSet = BinarySetFn(TfvKey2)
 
 structure TfunVars =
   struct
-    val tfvsTfun : (IDCalc.tfunkind ref -> bool)
-                   -> Symbol.longsymbol
-                   -> Symbol.symbol * IDCalc.tfun * Symbol.longsymbol TfvMap.map
-                   -> Symbol.longsymbol TfvMap.map
-    val tfvsTstr : (IDCalc.tfunkind ref -> bool)
-                   -> Symbol.longsymbol
-                   -> Symbol.symbol * NameEvalEnv.tstr * Symbol.longsymbol TfvMap.map
-                   -> Symbol.longsymbol TfvMap.map
     val tfvsTyE : (IDCalc.tfunkind ref -> bool)
                   -> SymbolWithLoc.longsymbol
                   -> NameEvalEnv.tstr SymbolWithLocEnv.map * SymbolWithLoc.longsymbol TfvMap.map
@@ -56,14 +48,6 @@ structure TfunVars =
 
 structure TfunVarsRefresh =
   struct
-    val tfvsTfun : (IDCalc.tfunkind ref -> bool)
-                   -> Symbol.longsymbol
-                   -> Symbol.symbol * IDCalc.tfun * Symbol.longsymbol TfvMap.map
-                   -> Symbol.longsymbol TfvMap.map
-    val tfvsTstr : (IDCalc.tfunkind ref -> bool)
-                   -> Symbol.longsymbol
-                   -> Symbol.symbol * NameEvalEnv.tstr * Symbol.longsymbol TfvMap.map
-                   -> Symbol.longsymbol TfvMap.map
     val tfvsTyE : (IDCalc.tfunkind ref -> bool)
                   -> SymbolWithLoc.longsymbol
                   -> NameEvalEnv.tstr SymbolWithLocEnv.map * SymbolWithLoc.longsymbol TfvMap.map

@@ -58,9 +58,9 @@ local
 
   val emptyScopedTvars = nil : IC.scopedTvars
 
-  fun setVersion (longsymbol, IC.STEP x) = map #symbol (SymbolWithLoc.setVersion (longsymbol, x))
-    | setVersion (longsymbol, IC.OTHER _) = map #symbol longsymbol
-    | setVersion (longsymbol, IC.SELF) = map #symbol longsymbol
+  fun setVersion (longsymbol, IC.STEP x) = SymbolWithLoc.toLongsymbol (SymbolWithLoc.setVersion (longsymbol, x))
+    | setVersion (longsymbol, IC.OTHER _) = SymbolWithLoc.toLongsymbol longsymbol
+    | setVersion (longsymbol, IC.SELF) = SymbolWithLoc.toLongsymbol longsymbol
 
   fun exInfoToLongsymbol {used, longsymbol, version, ty} =
       setVersion(longsymbol, version)
@@ -2316,7 +2316,7 @@ in
                            P.printIcexp icexp;
                            P.print "\n";
                            raise e)
-          val conInfo = {path=map #symbol longsymbol, ty=ty, id=id}
+          val conInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, ty=ty, id=id}
         in
           case ty of
             T.POLYty{boundtvars, constraints, body = T.FUNMty([argTy], resultTy)} =>
@@ -2420,7 +2420,7 @@ in
           val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity7\n";raise e)
-          val exnInfo = {path=map #symbol longsymbol, ty=ty, id=id}
+          val exnInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, ty=ty, id=id}
         in
           case ty of
             T.FUNMty([argTy], resultTy) =>
@@ -2455,7 +2455,7 @@ in
           val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity8\n";raise e)
-          val exnInfo = {path=map #symbol longsymbol, ty=ty, id=id}
+          val exnInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, ty=ty, id=id}
         in
           (BT.exntagTy,
            TC.TPEXNTAG{exnInfo = exnInfo, loc=loc}
@@ -2976,7 +2976,7 @@ in
               fun makeNewTermBody (argExp, argTy, funTy, instTyList) =
                   TC.TPDATACONSTRUCT
                     {
-                     con={path=map #symbol longsymbol,id=id,ty=funTy},
+                     con={path=SymbolWithLoc.toLongsymbol longsymbol,id=id,ty=funTy},
                      instTyList=instTyList,
                      argExpOpt=SOME argExp,
                      loc=loc
@@ -2993,7 +2993,7 @@ in
                 | makeNewTermBody (argExp, argTy, funTy, NONE) =
                   TC.TPEXNCONSTRUCT
                     {
-                     exn=TC.EXN {path=map #symbol longsymbol,id=id,ty=funTy},
+                     exn=TC.EXN {path=SymbolWithLoc.toLongsymbol longsymbol,id=id,ty=funTy},
                      argExpOpt=SOME argExp,
                      loc=loc
                     }
@@ -4120,7 +4120,7 @@ in
           val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ity
               handle e => (P.print "ity23\n"; raise e)
-          val conInfo = {path=map #symbol longsymbol, id=id, ty=ty}
+          val conInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, id=id, ty=ty}
           val (ty1, tylist) =
               case ty of
                 (T.POLYty{boundtvars, body, ...}) =>
@@ -4136,7 +4136,7 @@ in
                 (
                  E.enqueueError "Typeinf 046"
                    (loc,
-                    E.ConRequireArg("046",{longsymbol = map #symbol longsymbol}));
+                    E.ConRequireArg("046",{longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                  (
                   VarMap.empty,
                   T.ERRORty,
@@ -4160,14 +4160,14 @@ in
           val loc = SymbolWithLoc.longsymbolToLoc longsymbol
           val ty = ITy.evalIty context ity
               handle e => (P.print "ity24\n"; raise e)
-          val exnInfo = {path=map #symbol longsymbol, id=id, ty=ty}
+          val exnInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, id=id, ty=ty}
         in
           case TB.derefTy ty of
             T.FUNMty _ =>
             (
              E.enqueueError "Typeinf 047"
                (loc,
-                E.ConRequireArg("047",{longsymbol = map #symbol longsymbol}));
+                E.ConRequireArg("047",{longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
              (
               VarMap.empty,
               T.ERRORty,
@@ -4230,7 +4230,7 @@ in
              val loc = SymbolWithLoc.longsymbolToLoc longsymbol
              val ty = ITy.evalIty context ity
                  handle e => (P.print "ity26\n"; raise e)
-             val conInfo = {path=map #symbol longsymbol, id=id, ty=ty}
+             val conInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, id=id, ty=ty}
              val (ty1, tylist) =
                  case ty of
                    (T.POLYty{boundtvars, body, ...}) =>
@@ -4284,7 +4284,7 @@ in
              val loc = SymbolWithLoc.longsymbolToLoc longsymbol
              val ty = ITy.evalIty context ity
                  handle e => (P.print "ity27\n"; raise e)
-             val exnInfo = {path=map #symbol longsymbol, id=id, ty=ty}
+             val exnInfo = {path=SymbolWithLoc.toLongsymbol longsymbol, id=id, ty=ty}
              val (varEnv1, patTy2, tppat2) =
                  typeinfPat lambdaDepth context icpat2
              val (domtyList, ranty, instTyList, constraints) =
@@ -4777,7 +4777,7 @@ in
                               (
                                SymbolWithLoc.longsymbolToLoc path,
                                E.DuplicatePatternVar
-                                 ("064", {longsymbol = map #symbol path}));
+                                 ("064", {longsymbol = SymbolWithLoc.toLongsymbol path}));
                             varId)
                          | _ =>
                            raise
@@ -5255,7 +5255,7 @@ in
                                      E.RecDefinitionAndOccurrenceNotAgree
                                        ("069",
                                         {
-                                         longsymbol = map #symbol longsymbol,
+                                         longsymbol = SymbolWithLoc.toLongsymbol longsymbol,
                                          definition = funType,
                                          occurrence = funTy
                                         }
@@ -5282,7 +5282,7 @@ in
               T.RECORDty
                 (foldl
                    (fn ({funVarInfo={path, id, ty, opaque},...}, tyFields) =>
-                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (map #symbol path), ty))
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (SymbolWithLoc.toLongsymbol path), ty))
                    RecordLabel.Map.empty
                    funBindList)
 
@@ -5466,7 +5466,7 @@ in
                               E.RecDefinitionAndOccurrenceNotAgree
                                 ("072",
                                  {
-                                  longsymbol = map #symbol path,
+                                  longsymbol = SymbolWithLoc.toLongsymbol path,
                                   definition = icexpTy,
                                   occurrence = ty
                                  }
@@ -5483,7 +5483,7 @@ in
               T.RECORDty
                 (foldl
                    (fn ({var={path,ty,id, opaque},...}, tyFields) =>
-                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (map #symbol path), ty))
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol (SymbolWithLoc.toLongsymbol path), ty))
                    RecordLabel.Map.empty
                    varInfoTpexpList)
           val {boundEnv, boundConstraints, ...} =
@@ -5671,7 +5671,7 @@ in
          map
            (fn {exnInfo = {longsymbol, id, ty=ity}, loc} =>
                TC.TPEXD
-                 ({path= map #symbol longsymbol,
+                 ({path= SymbolWithLoc.toLongsymbol longsymbol,
                    id=id,
                    ty=ITy.evalIty context ity
                    handle e => (P.print "ity32\n"; raise e)
@@ -5697,7 +5697,7 @@ in
           (TIC.emptyContext,
            [TC.TPEXNTAGD
               (
-               {exnInfo = {path=map #symbol longsymbol,id=id,
+               {exnInfo = {path=SymbolWithLoc.toLongsymbol longsymbol,id=id,
                            ty=ITy.evalIty context ity
                               handle e => (P.print "ity33\n"; raise e)
                           },
@@ -6103,7 +6103,7 @@ in
               handle e => (P.print "ity38\n"; raise e)
         in
           (TIC.emptyContext,
-           [TC.TPBUILTINEXN {path=map #symbol longsymbol, ty=ty}]
+           [TC.TPBUILTINEXN {path=SymbolWithLoc.toLongsymbol longsymbol, ty=ty}]
            )
         end
       | IC.ICTYCASTDECL (tycastList, icdeclList, loc) =>
@@ -6266,7 +6266,7 @@ in
           val (ty, keyList, match) = typeinfOverloadCase overloadCase
 
           val selectors = [{oprimId = id,
-                            longsymbol = map #symbol longsymbol,
+                            longsymbol = SymbolWithLoc.toLongsymbol longsymbol,
                             match = match}]
           val _ =
               app (fn (r as ref (T.TVAR {lambdaDepth, id, kind = T.KIND kind, utvarOpt}),
@@ -6289,7 +6289,7 @@ in
               then ty 
               else T.POLYty {boundtvars = boundEnv, constraints = boundConstraints, body = ty}
           val oprimInfo =
-              {ty = oprimTy, path = map #symbol longsymbol, id = id}
+              {ty = oprimTy, path = SymbolWithLoc.toLongsymbol longsymbol, id = id}
         in
           (TIC.bindOPrim (TIC.emptyContext, {longsymbol=longsymbol, id=id}, oprimInfo), nil)
         end
@@ -6420,7 +6420,7 @@ in
                                   rest
                           in
                             E.enqueueWarning
-                              (loc, E.ValueRestriction("065",{dummyTyPaths=map (map #symbol) dummyTyPaths}))
+                              (loc, E.ValueRestriction("065",{dummyTyPaths=map SymbolWithLoc.toLongsymbol dummyTyPaths}))
                           end
                       end
 

@@ -68,7 +68,7 @@ in
       end
     | I.IDEXVAR {exInfo={used, longsymbol, ty, version}, internalId = NONE, defRange,...} =>
       let
-        val accessLongsymbol = map #symbol (setVersion(longsymbol, version))
+        val accessLongsymbol = SymbolWithLoc.toLongsymbol (setVersion(longsymbol, version))
         val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
@@ -328,7 +328,7 @@ in
         val ty = #ty Exp
         val symbol = SymbolWithLoc.mkSymbol string loc
         val longsymbol = [symbol]
-        val externalInfo = {path = map #symbol (setVersion(longsymbol, version)), ty = ty}
+        val externalInfo = {path = SymbolWithLoc.toLongsymbol (setVersion(longsymbol, version)), ty = ty}
         val idstatus = 
             I.IDEXVAR {exInfo = {used = ref false, 
                                  longsymbol = longsymbol, ty = I.INFERREDTY ty, 

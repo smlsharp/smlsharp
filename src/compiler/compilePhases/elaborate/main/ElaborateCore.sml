@@ -372,7 +372,7 @@ struct
    *)
   fun resolveInfixExp env elist =
       let
-        fun getLongsymbol (A.EXPID longsymbol) = map #symbol longsymbol
+        fun getLongsymbol (A.EXPID longsymbol) = SymbolWithLoc.toLongsymbol longsymbol
           | getLongsymbol exp = raise Bug.Bug "getLongsymbol expects EXPID."
         fun elab (Fixity.APP (x, y, loc)) =
             PC.PLAPPM (elab x, [elab y], loc)
@@ -399,7 +399,7 @@ struct
    *)
   and resolveInfixPat env elist =
       let
-        fun getLongsymbol (A.PATID {longsymbol, ...}) = map #symbol longsymbol
+        fun getLongsymbol (A.PATID {longsymbol, ...}) = SymbolWithLoc.toLongsymbol longsymbol
           | getLongsymbol pat = raise Bug.Bug "getLongsymbol expects PATID"
         fun elab (Fixity.APP (x, y, loc)) =
             PC.PLPATCONSTRUCT (elab x, elab y, loc)
@@ -491,7 +491,7 @@ struct
               then arg 
               else
                 (
-                  enqueueError (loc, E.InfixUsedWithoutOP (map #symbol fid));
+                  enqueueError (loc, E.InfixUsedWithoutOP (SymbolWithLoc.toLongsymbol fid));
                   arg
                 )
             | _ => arg
@@ -518,7 +518,7 @@ struct
                 else
                   (
                    enqueueError
-                     (loc, E.InfixUsedWithoutOP (map #symbol longsymbol));
+                     (loc, E.InfixUsedWithoutOP (SymbolWithLoc.toLongsymbol longsymbol));
                    (opf, pat, argPats, tyOpt, exp, loc)
                   )
               end

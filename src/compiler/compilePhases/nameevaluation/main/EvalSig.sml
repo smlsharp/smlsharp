@@ -231,7 +231,7 @@ local
                             (loc,
                              E.ArityErrorInSigShare
                                ("Sig-030",
-                                {longsymbolList=map (map #symbol) longsymbolList}));
+                                {longsymbolList=map SymbolWithLoc.toLongsymbol longsymbolList}));
                           raise ProcessShare)
               val isEqtype = checkEqtypeTfvList tfvList
               val _ =
@@ -244,7 +244,7 @@ local
                         (EU.enqueueError
                            (loc, E.EqtypeInSigShare
                                    ("Sig-040",
-                                    {longsymbolList=map (map #symbol) longsymbolList}));
+                                    {longsymbolList=map SymbolWithLoc.toLongsymbol longsymbolList}));
                          raise ProcessShare)
                     | _ => raise bug "impossible"
                   else ()
@@ -281,7 +281,7 @@ local
                     (EU.enqueueError
                        (loc, E.SigErrorInSigShare
                                ("Sig-050",
-                                {longsymbolList=map (map #symbol) errorPathList}));
+                                {longsymbolList=map SymbolWithLoc.toLongsymbol errorPathList}));
                      raise ProcessShare)
               val firstTfv =
                   case pathTypIdDtyTfvList of
@@ -341,13 +341,13 @@ local
                                 (EU.enqueueError
                                    (loc, 
                                     E.ImproperSigshare
-                                      ("Sig-010",{longsymbol=map #symbol longsymbol}));
+                                      ("Sig-010",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                                  raise ProcessShare)
                               | Undef =>
                                 (EU.enqueueError
                                    (loc,
                                     E.TypUndefinedInSigshare
-                                      ("Sig-020",{longsymbol=map #symbol longsymbol}));
+                                      ("Sig-020",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                                  raise ProcessShare)
                           in
                             ((longsymbol,tfv)::pathTfvList, id::idList)
@@ -674,44 +674,44 @@ local
                 Rigid =>
                 (EU.enqueueError
                    (loc, 
-                    E.ImproperSigwhere("Sig-080",{longsymbol=map #symbol longsymbol}));
+                    E.ImproperSigwhere("Sig-080",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Type =>
                 (EU.enqueueError
                    (loc,
                     E.TypeErrorInSigwhere
-                      ("Sig-090",{longsymbol=map #symbol longsymbol}));
+                      ("Sig-090",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Type1 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere
-                          ("Sig-100", {longsymbol=map #symbol longsymbol}));
+                          ("Sig-100", {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Type2 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-110",
-                                              {longsymbol=map #symbol longsymbol}));
+                                              {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Type3 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-120",
-                                              {longsymbol=map #symbol longsymbol}));
+                                              {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Eq =>
                 (EU.enqueueError
                    (loc, E.EqtypeInSigwhere
-                           ("Sig-130",{longsymbol=map #symbol longsymbol}));
+                           ("Sig-130",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
               | Arity =>
                 (EU.enqueueError
                    (loc, E.ArityErrorInSigwhere
                            ("Sig-140",
-                            {longsymbolList=[map #symbol longsymbol]}));
+                            {longsymbolList=[SymbolWithLoc.toLongsymbol longsymbol]}));
                  specEnv)
               | Undef =>
                 (EU.enqueueError
                    (loc, E.TypUndefinedInSigwhere
-                           ("Sig-150",{longsymbol=map #symbol longsymbol}));
+                           ("Sig-150",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                  specEnv)
             val specEnv = setRealizer (typbind, specEnv)
         in
@@ -964,7 +964,7 @@ local
         (case VP.findTstr (env, longsymbol) of
            NONE =>
            (EU.enqueueError(loc,E.DtyUndefinedInSpec
-                                  ("Sig-210", {longsymbol = map #symbol longsymbol}));
+                                  ("Sig-210", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
             V.emptyEnv
            )
          | SOME (sym, tstr) =>
@@ -1092,7 +1092,7 @@ local
           and addTyE path key tyE pathEnv =
               SymbolWithLocEnv.foldli
               (fn (name, tstr, pathEnv) => 
-                  addToListEnv (pathEnv, map #symbol (key@[name]), path@[name])
+                  addToListEnv (pathEnv, SymbolWithLoc.toLongsymbol (key@[name]), path@[name])
               )
               pathEnv
               tyE
@@ -1122,7 +1122,7 @@ local
                      of NONE =>
                         (EU.enqueueError
                            (loc,E.StrUndefinedInSpec
-                                  ("Sig-220", {longsymbol=map #symbol longsymbol}));
+                                  ("Sig-220", {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
                          pathEnv
                         )
                       | SOME {env=specEnv, strKind, loc, definedSymbol} =>
