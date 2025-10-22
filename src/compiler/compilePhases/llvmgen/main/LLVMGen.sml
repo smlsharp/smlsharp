@@ -258,6 +258,15 @@ print
   (* "tail" indicates that the function neither access nor reference
    * callees' stack frames.  This implies that functions declared with
    * "tail" never cause garbage collection. *)
+  val llvm_expect_i1 =
+      R {name = "llvm.expect.i1",
+         tail = NONE,
+         argTys = [L.I1, L.I1],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.I1,
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
   val llvm_memcpy =
       R {name = "llvm.memcpy.p0i8.p0i8.i32",
          tail = NONE,
@@ -1869,6 +1878,7 @@ print
           val offLabel = FunLocalLabel.generate NONE
           val flag = VarID.generate ()
           val cmpResult = VarID.generate ()
+          val cmpResult2 = VarID.generate ()
           val flagValue = (L.I32, L.VAR flag)
         in
           scope
@@ -1876,8 +1886,11 @@ print
                                    {order = L.UNORDERED, align = 0w4}),
                     L.ICMP (cmpResult, L.EQ, flagValue,
                             (L.I32, L.CONST (L.INTCONST 0w0)))]
+             o callIntrinsic (SOME cmpResult2) llvm_expect_i1
+                             [(L.I1, L.VAR cmpResult),
+                              (L.I1, L.CONST (L.INTCONST 0w1))]
              o scope
-                 (last (L.BR_C ((L.I1, L.VAR cmpResult),
+                 (last (L.BR_C ((L.I1, L.VAR cmpResult2),
                                 (offLabel, nil),
                                 (onLabel, nil))))
              o label (onLabel, nil)
