@@ -17,6 +17,11 @@ struct
   val EOF = ML.Tokens.EOF (Loc.nopos, Loc.nopos) : token
   val SEMICOLON = ML.Tokens.SEMICOLON (Loc.nopos, Loc.nopos) : token
 
+  fun getLoc (ML.ParserData.Token.TOKEN (_, (_, l, r))) = (l, r)
+
+  fun semicolonUnit loc =
+      Absyn.UNIT (NONE, [Absyn.TOPSEMICOLON loc], loc)
+
   type source =
       {
         source : Loc.source,
@@ -74,24 +79,21 @@ struct
   fun parseWhole errorFn parseStep lex =
       case parseStep lex of
         (Absyn.EOF, lex) => (Absyn.EOF, lex)
-      | (u1 as Absyn.UNIT unit1, lex) =>
+      | (u1 as Absyn.UNIT (unit1 as (interface1, tops1, loc1)), lex) =>
         case parseWhole errorFn parseStep lex of
           (Absyn.EOF, lex) => (u1, lex)
-        | (Absyn.UNIT {interface, tops, loc}, lex) =>
+        | (Absyn.UNIT (interface, tops, loc), lex) =>
           let
             val interface =
-                case (unit1, interface) of
-                  ({interface,...}, Absyn.NOINTERFACE) => interface
-                | ({tops=nil,interface=Absyn.NOINTERFACE,...}, i) => i
-                | (_, Absyn.INTERFACE (filename, (pos1, pos2))) =>
+                case (interface1, tops1, interface) of
+                  (_, _, NONE) => interface1
+                | (NONE, nil, _) => interface
+                | (_, _, SOME (filename, (pos1, pos2))) =>
                   (errorFn ("_interface must be at the beginning of a file",
                             pos1, pos2);
-                   Absyn.NOINTERFACE)
+                   NONE)
           in
-            (Absyn.UNIT {interface = interface,
-                         tops = #tops unit1 @ tops,
-                         loc = (#1 (#loc unit1), #2 loc)},
-             lex)
+            (Absyn.UNIT (interface, tops1 @ tops, (#1 loc1, #2 loc)), lex)
           end
 
   fun parse ({lookahead, atOnce, streamRef, first, errors, errorFn, source}:input) =
@@ -106,8 +108,10 @@ struct
               val (tok, stream2) = Parser.getStream stream
               val _ = first := false
             in
-              if Parser.sameToken (tok, EOF) then (Absyn.EOF, stream)
-              else if Parser.sameToken (tok, SEMICOLON) then parseStep stream2
+              if Parser.sameToken (tok, EOF)
+              then (Absyn.EOF, stream)
+              else if Parser.sameToken (tok, SEMICOLON)
+              then (semicolonUnit (getLoc tok), stream2)
               else Parser.parse {lookahead = lookahead,
                                  stream = stream,
                                  error = errorFn,

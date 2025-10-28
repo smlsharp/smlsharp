@@ -33,6 +33,7 @@ local
 
   fun mkSymbol s = SymbolWithLoc.mkSymbol s Loc.noloc
   fun mkLongsymbol s = SymbolWithLoc.mkLongsymbol s Loc.noloc
+  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
 
 
   fun printStrKind strkind =
@@ -590,7 +591,7 @@ local
                 (fn ((tvarList, symbol, ty, defRange), (returnEnv, renameEnv)) =>
                     let
                       val _ = EU.checkSymbolDuplication
-                                (fn {symbol, isEq} => symbol)
+                                (fn (isEq, symbol) => toSymbol symbol)
                                 tvarList
                                 (fn s => E.DuplicateTypParms("130",s))
 

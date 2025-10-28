@@ -8,9 +8,12 @@ _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 (* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatterUtils.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "./PatternCalc.ppg.smi"
 
@@ -23,17 +26,40 @@ struct
 
   type longsymbol = SymbolWithLoc.longsymbol
 
-  type tvar = AbsynTy.tvar
+  type tvar = AbsynTy.tyvar
 
   type scopedTvars = PatternCalc.scopedTvars
 
-  type overloadCase = AbsynInterface.overloadCase
+  datatype overloadInstance
+    = INST_OVERLOAD of overloadCase
+    | INST_LONGVID of {longsymbol: longsymbol}
 
-  datatype overloadInstance = datatype AbsynInterface.overloadInstance
+  withtype overloadCase
+    = {tyvar: Absyn.tyvar,
+       expTy: ty,
+       matches: {instTy: ty, instance: overloadInstance} list,
+       loc: loc}
 
-  datatype valbindBody = datatype AbsynInterface.valbindBody
+  datatype valbindBody =
+      VAL_EXTERN of {ty: ty}
+    | VALALIAS_EXTERN of longsymbol
+    | VAL_BUILTIN of {builtinSymbol: symbol, ty: ty}
+    | VAL_OVERLOAD of overloadCase
 
-  type datbind = AbsynInterface.datbind
+  type conbind =
+      {symbol : symbol, ty : ty option, loc : loc}
+
+  type datbind =
+      {tyvars : Absyn.tyvar list,
+       symbol : symbol,
+       conbind : conbind list,
+       loc : loc}
+
+  datatype opaque_impl =
+      IMPL_TY of longsymbol
+    | IMPL_TUPLE
+    | IMPL_RECORD
+    | IMPL_FUNC
 
   datatype pidec 
     = PIVAL of
@@ -55,7 +81,7 @@ struct
         eq: bool,
         tyvars: tvar list,
         symbol: symbol,
-        runtimeTy: AbsynTy.opaque_impl,
+        runtimeTy: opaque_impl,
         loc: loc
       }
     | PITYPEBUILTIN of

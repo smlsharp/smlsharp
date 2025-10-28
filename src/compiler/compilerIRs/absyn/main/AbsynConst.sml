@@ -5,6 +5,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author Liu Bochao
+ * @author Katsuhiro Ueno
  *)
 
 structure AbsynConst =

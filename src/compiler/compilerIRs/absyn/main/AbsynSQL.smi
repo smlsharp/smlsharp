@@ -1,31 +1,32 @@
 (* _require local "../../../../basis.smi" *)
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
-_require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/symbols/main/Loc.smi"
 _require "./AbsynConst.smi"
+_require "./AbsynTy.smi"
 
 structure AbsynSQL =
 struct
 
-  type symbol = SymbolWithLoc.symbol
-  type longsymbol = SymbolWithLoc.longsymbol
-  type label = RecordLabel.label
-  type loc = Loc.loc
+  type loc = AbsynTy.loc
+  type lab = AbsynTy.lab
+  type vid = AbsynTy.vid
+  type op_longvid = AbsynTy.op_longvid
 
-  datatype ('exp,'a) clause =
-      EMBED of 'exp * loc
-    | CLAUSE of 'a
-
-  type table_selector =
-      {db : symbol, label : label, loc : loc}
+  type table_selector = vid * lab * loc
 
   datatype asc_desc =
       ASC
     | DESC
 
-  datatype distinct =
+  datatype distinct_all =
       DISTINCT
     | ALL
+
+  datatype first_next =
+      FIRST
+    | NEXT
+
+  datatype row_rows =
+      ROW
+    | ROWS
 
   datatype op1 =
       IS_NULL
@@ -48,98 +49,139 @@ struct
     | NULL of loc
     | TRUE of loc
     | FALSE of loc
-    | COLUMN1 of label * loc
-    | COLUMN2 of (label * label) * loc
-    | EXISTS of 'exp query * loc
-    | EXP_SUBQUERY of 'exp query * loc
+    | COLUMN1 of lab * loc
+    | COLUMN2 of lab * lab * loc
+    | KWEXP of bool * 'exp kwexp * loc
+    | EXP_SUBQUERY of bool * 'exp query * loc
     | OP1 of op1 * 'exp exp * loc
     | OP2 of op2 * 'exp exp * 'exp exp * loc
-    | ID of symbol
-    | OPID of longsymbol * loc
-    | PARENID of symbol
+    | ID of op_longvid
+    | PAREN of 'exp exp * loc
     | APP of 'exp exp list * loc
     | TUPLE of 'exp exp list * loc
 
-  and 'exp join =
-      INNER_JOIN of {inner : bool} * 'exp exp
-    | CROSS_JOIN
-    | NATURAL_JOIN
+  and 'exp kwexp =
+      EXISTS of 'exp query * loc
 
   and 'exp table =
       TABLE of table_selector
-    | TABLE_AS of 'exp table * label * loc
-    | TABLE_JOIN of 'exp table * 'exp join * 'exp table * loc
-    | TABLE_SUBQUERY of 'exp query * loc
+    | TABLE_AS of 'exp table * lab * loc
+    | TABLE_INNER_JOIN of 'exp table * bool * 'exp table * 'exp exp * loc
+    | TABLE_CROSS_JOIN of 'exp table * 'exp table * loc
+    | TABLE_NATURAL_JOIN of 'exp table * 'exp table * loc
+    | TABLE_SUBQUERY of bool * 'exp query * loc
+    | TABLE_PAREN of 'exp table * loc
 
   and 'exp from =
       FROM of 'exp table list * loc
+    | FROM_EMBED of 'exp * loc
 
   and 'exp whr =
       WHERE of 'exp exp * loc
+    | WHERE_EMBED of 'exp * loc
 
   and 'exp groupby =
-      GROUP_BY of ('exp exp list * loc) * 'exp having option
-
-  and 'exp having =
-      HAVING of 'exp exp * loc
+      GROUPBY of ('exp exp list * loc) * ('exp exp * loc) option * loc
 
   and 'exp orderby =
-      ORDER_BY of ('exp exp * asc_desc option) list * loc
+      ORDERBY of ('exp exp * asc_desc option * loc) list * loc
+    | ORDERBY_EMBED of 'exp * loc
 
   and 'exp limit =
-      LIMIT of {limit : 'exp exp option * loc,
-                offset : ('exp exp * loc) option,
-                loc : loc}
+      LIMIT of ('exp exp option * loc) * ('exp exp * loc) option * loc
+    | LIMIT_EMBED of 'exp * loc
 
   and 'exp offset =
-      OFFSET of {offset : 'exp exp * string * loc,
-                 fetch : (string * 'exp exp option * string * loc) option,
-                 loc : loc}
-
-  and 'exp limit_or_offset =
-      LIMIT_CLAUSE of ('exp, 'exp limit) clause
-    | OFFSET_CLAUSE of ('exp, 'exp offset) clause
+      OFFSET of ('exp exp * row_rows * loc)
+                * (first_next * 'exp exp option * row_rows * loc) option
+                * loc
+    | OFFSET_EMBED of 'exp * loc
 
   and 'exp select =
-      SELECT of distinct option * ((label option * 'exp exp) list * loc) * loc
+      SELECT of distinct_all option
+                * (('exp exp * lab option * loc) list * loc)
+                * loc
+    | SELECT_EMBED of 'exp * loc
 
   and 'exp query =
-      QUERY of ('exp, 'exp select) clause
-                * ('exp, 'exp from) clause
-                * ('exp, 'exp whr) clause option
-		* 'exp groupby option
-                * ('exp, 'exp orderby) clause option
-                * 'exp limit_or_offset option
-                * loc
+      QUERY of 'exp select
+               * 'exp from
+               * 'exp whr option
+               * 'exp groupby option
+               * 'exp orderby option
+               * 'exp offset_or_limit option
+               * loc
     | QUERY_EMBED of 'exp * loc
 
+  and 'exp offset_or_limit =
+      OFFSET_CLAUSE of 'exp offset
+    | LIMIT_CLAUSE of 'exp limit
+
+  type 'exp order_key = 'exp exp * asc_desc option * loc
+
+  type 'exp select_row = 'exp exp * lab option * loc
+
+  type 'exp groupby_clause = 'exp exp list * loc
+
+  type 'exp having_clause = 'exp exp * loc
+
+  type 'exp limit_clause = 'exp exp option * loc
+
+  type 'exp limit_offset_clause = 'exp exp * loc
+
+  type 'exp offset_clause = 'exp exp * row_rows * loc
+
+  type 'exp fetch_clause = first_next * 'exp exp option * row_rows * loc
+
+  datatype 'exp insert_value =
+      VALUE of 'exp exp
+    | DEFAULT of loc
+
+  type 'exp insert_row = 'exp insert_value list * loc
+
   datatype 'exp insert_values =
-      INSERT_VALUES of (('exp exp option * loc) list * loc) list
-    | INSERT_VAR of longsymbol * loc
+      INSERT_VALUES of 'exp insert_row list * loc
+    | INSERT_VAR of op_longvid * loc
     | INSERT_SELECT of 'exp query
 
-  datatype 'exp sql =
-      EXP of 'exp exp
-    | QRY of 'exp query
+  type insert_labels = lab list * loc
+
+  type 'exp set_row = lab * 'exp exp * loc
+
+  type 'exp set = 'exp set_row list * loc
+
+  datatype 'exp sqlcon =
+      QRY of 'exp query
     | SEL of 'exp select
     | FRM of 'exp from
     | WHR of 'exp whr
     | ORD of 'exp orderby
     | OFF of 'exp offset
     | LMT of 'exp limit
-    | INSERT_LABELED of table_selector * (label list * loc) * 'exp insert_values
-    | INSERT_NOLABEL of table_selector * 'exp query
-    | UPDATE of table_selector * ((label * 'exp exp) list * loc)
-                * ('exp, 'exp whr) clause option
-    | DELETE of table_selector * ('exp, 'exp whr) clause option
-    | BEGIN
-    | COMMIT
-    | ROLLBACK
-    | SEQ of ('exp, 'exp sql * loc) clause list
+    | INSERT_LABELED of table_selector
+                        * insert_labels
+                        * 'exp insert_values
+                        * loc
+    | INSERT_NOLABEL of table_selector * 'exp query * loc
+    | UPDATE of table_selector * 'exp set * 'exp whr option * loc
+    | DELETE of table_selector * 'exp whr option * loc
+    | BEGIN of loc
+    | COMMIT of loc
+    | ROLLBACK of loc
+
+  datatype 'exp step =
+      STEP of bool * 'exp sqlcon * loc
+    | STEP_EMBED of 'exp * loc
+
+  datatype 'exp sql =
+      CON of bool * 'exp sqlcon * loc
+    | EXP of 'exp exp
+    | SEQ of 'exp step list * loc
+    | SQLPAREN of 'exp sql * loc
 
   datatype ('exp, 'pat, 'ty) sqlexp =
-      SQLSERVER of 'exp option * 'ty
-    | SQL of 'exp sql
-    | SQLFN of 'pat * 'exp sql
+      SQLSERVER of 'exp option * 'ty * loc
+    | SQL of 'exp sql * loc
+    | SQLFN of 'pat * 'exp sql * loc
 
 end

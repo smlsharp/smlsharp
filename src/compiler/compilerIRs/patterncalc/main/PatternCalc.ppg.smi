@@ -17,10 +17,11 @@ structure PatternCalc =
 struct
   type loc = Loc.loc
   type ty =  AbsynTy.ty
-  type tvar = AbsynTy.tvar
-  type kindedTvar = AbsynTy.kindedTvar
+  type tvar = AbsynTy.tyvar
+  type kindedTvar = AbsynTy.kinded_tyvar
   type symbol = SymbolWithLoc.symbol
   type longsymbol = SymbolWithLoc.longsymbol
+  type label = RecordLabel.label
 
   datatype caseKind 
     = BIND
@@ -33,7 +34,7 @@ struct
 
   datatype ffiTy 
     = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
-    | FFITYVAR of AbsynTy.tvar * loc
+    | FFITYVAR of tvar * loc
     | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | FFICONTY of ffiTy list * longsymbol * loc
 
@@ -134,7 +135,7 @@ struct
     | PLSPECEXCEPTION of (symbol * ty option * loc) list * loc (* exception *)
     | PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
     | PLSPECINCLUDE of plsigexp * loc (* include *)
-    | PLSPECSEQ of plspec * plspec * loc 
+    | PLSPECSEQ of plspec * plspec
     | PLSPECSHARE of plspec * longsymbol list * loc 
     | PLSPECSHARESTR of plspec * longsymbol list * loc 
     | PLSPECEMPTY

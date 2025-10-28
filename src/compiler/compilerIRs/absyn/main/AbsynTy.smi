@@ -1,45 +1,76 @@
 (* _require local "../../../../basis.smi" *)
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 
 structure AbsynTy =
 struct
 
+  type pos = Loc.pos
   type loc = Loc.loc
-  type symbol = SymbolWithLoc.symbol
-  type longsymbol = SymbolWithLoc.longsymbol
 
-  datatype ty
-    = TYWILD of loc
-    | TYID of {symbol:symbol, isEq:bool} * loc
-    | FREE_TYID of {freeTvar:{symbol:symbol, isEq:bool}, tvarKind:tvarKind, loc:loc}
-    | TYRECORD of {ifFlex:bool, fields:(RecordLabel.label * ty) list, loc:loc}
-    | TYCONSTRUCT of ty list * longsymbol * loc
+  type id = Symbol.symbol * loc
+
+  type longid = id list * loc
+
+  type vid = id
+
+  type longvid = longid
+
+  type tycon = id
+
+  type longtycon = longid
+
+  type lab = RecordLabel.label * loc
+
+  type tyvar = bool * id
+
+  type tyvarseq = tyvar list * loc
+
+  type op_longvid = bool * longvid * loc
+
+  datatype ty =
+      TYVAR of tyvar
+    | TYRECORD of (lab * ty * loc) list * bool * loc
+    | TYCON of (ty list * loc) * longtycon * loc
     | TYTUPLE of ty list * loc
     | TYFUN of ty * ty * loc
-    | TYPOLY of ({symbol:symbol, isEq:bool} * tvarKind) list * ty * loc
+    | TYPAREN of ty * loc
+    | TYWILD of loc
+    | TYVAR_FREE of tyvar * kind * loc
+    | TYPOLY of (tyvar * kind * loc) list * ty * loc
 
-  and tvarKind
-    = UNIV of string list * loc
-    | REC of {properties:string list,
-              recordKind:(RecordLabel.label * ty) list} * loc
+  and kind =
+      UNIV of id list * loc
+    | REC of id list * (lab * ty * loc) list * loc
 
-  type tvar = {symbol:symbol, isEq:bool}
-  type kindedTvar = {symbol:symbol, isEq:bool} * tvarKind
+  type kinded_tyvar = tyvar * kind * loc
 
-  datatype ffiTy
-    = FFIFUNTY of string list * ffiTy list * ffiTy list option * ffiTy list
+  type tyrow = lab * ty * loc
+
+  type tyseq = ty list * loc
+
+  type kinded_tyvarseq = kinded_tyvar list * loc
+
+  type ffi_attr = id list * loc
+
+  datatype ffi_ty =
+      FFITYVAR of tyvar
+    | FFITYRECORD of (lab * ffi_ty * loc) list * loc
+    | FFITYCON of (ffi_ty list * loc) * longtycon * loc
+    | FFITYTUPLE of ffi_ty list * loc
+    | FFITYFUN of ffi_attr
+                  * (ffi_ty list * ffi_ty list option * loc)
+                  * (ffi_ty list * loc)
                   * loc
-    | FFITUPLETY of ffiTy list * loc
-    | FFITYVAR of tvar * loc
-    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
-    | FFICONTY of ffiTy list * longsymbol * loc
+    | FFITYPAREN of ffi_ty * loc
 
-  datatype opaque_impl
-    = IMPL_TY of longsymbol
-    | IMPL_TUPLE
-    | IMPL_RECORD
-    | IMPL_FUNC
+  type ffi_tyrow = lab * ffi_ty * loc
+
+  type ffi_tyseq = ffi_ty list * loc
+
+  type ffi_arg = ffi_ty list * ffi_ty list option * loc
+
+  type ffi_ret = ffi_ty list * loc
 
 end

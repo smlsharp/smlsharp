@@ -23,8 +23,8 @@ struct
 
   fun Loc (loc:P.loc) x = fn (_:P.loc) => x loc
 
-  fun PatVar symbol (_:P.loc) =
-      P.PLPATID [symbol]
+  fun PatVar (sym, loc) (_:P.loc) =
+      P.PLPATID [{symbol = sym, loc = loc}]
 
   fun PatRecord fields loc =
       P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, loc)
@@ -47,50 +47,51 @@ struct
   fun Fun_ForeachData e1 e2 e3 e4 =
       App (App (App (App (ExVar Name.fun_ForeachData) e1) e2) e3) e4
 
-  fun elaborateExp {elabExp, elabPat} (foreach, loc) =
-      case foreach of
-        A.FOREACHARRAY {id, pat, data, iterate, pred} =>
-        (*
-         * _foreach <id> in <data> with <pat> do <iterate> while <pred> end
-         *   ||
-         *   vv
-         * ForeachArray.ForeachArray
-         *   <data>
-         *   (fn (<id>, <pat>) => <iterate>)
-         *   (fn (<id>, <pat>) => <pred>)
-         *)
-        let
-          val pat = Pat (elabPat pat)
-          val idPat = PatVar id
-          val pat = PatTuple [idPat, pat]
-          val data = Exp (elabExp data)
-          val iterator = Fn (pat, Exp (elabExp iterate))
-          val pred = Fn (pat, Exp (elabExp pred))
-        in
-          Fun_FoeachArray data iterator pred loc
-        end
-      | A.FOREACHDATA {id, whereParam, pat, data, iterate, pred} =>
-        (*
-         * _foreach <id> in <data> where <whereParam> with <pat>
-         * do <iterate> while <pred> end
-         *      ||
-         *      vv
-         * ForeachData.ForeachData
-         *   <whereParam>
-         *   <data>
-         *   (fn (<id>, <pat>) => <iterate>)
-         *   (fn (<id>, <pat>) => <pred>)
-         *)
-        let
-          val pat = Pat (elabPat pat)
-          val idPat = PatVar id
-          val pat = PatTuple [idPat, pat]
-          val data = Exp (elabExp data)
-          val whereParam = Exp (elabExp whereParam)
-          val iterator = Fn (pat, Exp (elabExp iterate))
-          val pred = Fn (pat, Exp (elabExp pred))
-        in
-          Fun_ForeachData whereParam data iterator pred loc
-        end
+  fun elaborateForeachArray {elabExp, elabPat}
+                            (id, data, pat, iterate, pred, loc) =
+      (*
+       * _foreach <id> in <data> with <pat> do <iterate> while <pred> end
+       *   ||
+       *   vv
+       * ForeachArray.ForeachArray
+       *   <data>
+       *   (fn (<id>, <pat>) => <iterate>)
+       *   (fn (<id>, <pat>) => <pred>)
+       *)
+      let
+        val pat = Pat (elabPat pat)
+        val idPat = PatVar id
+        val pat = PatTuple [idPat, pat]
+        val data = Exp (elabExp data)
+        val iterator = Fn (pat, Exp (elabExp iterate))
+        val pred = Fn (pat, Exp (elabExp pred))
+      in
+        Fun_FoeachArray data iterator pred loc
+      end
+
+  fun elaborateForeachData {elabExp, elabPat}
+                           (id, data, whereParam, pat, iterate, pred, loc) =
+      (*
+       * _foreach <id> in <data> where <whereParam> with <pat>
+       * do <iterate> while <pred> end
+       *      ||
+       *      vv
+       * ForeachData.ForeachData
+       *   <whereParam>
+       *   <data>
+       *   (fn (<id>, <pat>) => <iterate>)
+       *   (fn (<id>, <pat>) => <pred>)
+       *)
+      let
+        val pat = Pat (elabPat pat)
+        val idPat = PatVar id
+        val pat = PatTuple [idPat, pat]
+        val data = Exp (elabExp data)
+        val whereParam = Exp (elabExp whereParam)
+        val iterator = Fn (pat, Exp (elabExp iterate))
+        val pred = Fn (pat, Exp (elabExp pred))
+      in
+        Fun_ForeachData whereParam data iterator pred loc
+      end
 
 end

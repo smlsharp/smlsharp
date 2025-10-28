@@ -4,8 +4,8 @@ _require local "../../../../smlformat-lib.smi"
 
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../compilerIRs/absyn/main/Absyn.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
@@ -157,8 +157,8 @@ structure NameEvalError =
     exception StrNotFound of code * {longsymbol: Symbol.longsymbol}
     exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
     exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
-    exception InvalidKind of code * Absyn.tvarKind
+    exception InvalidKind of code * AbsynTy.kind
     exception InvalidKindName of code * string
-    exception FlexRecordNotAllowed of code * Absyn.ty
+    exception FlexRecordNotAllowed of code * AbsynTy.ty
     exception LIFTEDPropNotAllowedInOpaqueInterface of code * {symbol:Symbol.symbol}
   end

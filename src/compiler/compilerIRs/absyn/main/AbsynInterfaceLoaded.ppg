@@ -1,0 +1,116 @@
+(* -*- sml -*- *)
+(**
+ * syntax for the interface.
+ *
+ * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
+ * @author Atsushi Ohori
+ * @author Liu Bochao
+ *)
+structure AbsynInterfaceLoaded =
+struct
+
+  type loc = Absyn.loc
+
+  (*%
+   * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(InterfaceName.interface_name)
+   * InterfaceName.format_interface_name
+   * @formatter(AbsynInterface.topdec) AbsynInterface.format_topdec
+   *)
+  type interface_dec =
+      (*%
+       * @format({interfaceId, interfaceName, requiredIds: req reqs,
+       *          provideTopdecs: dec decs})
+       * "interface" +d interfaceId 2[
+       * reqs(req)()
+       * +1 "provide" +d interfaceName
+       * decs(dec)()
+       * +1 "end"
+       * ]
+       * @format:req({id, loc}) +1 "require" +d id
+       * @format:dec(dec) +1 dec
+       *)
+      {
+        interfaceId: InterfaceID.id,
+        interfaceName: InterfaceName.interface_name,
+        requiredIds: {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs: AbsynInterface.topdec list
+      }
+
+  (*%
+   * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(AbsynInterface.topdec) AbsynInterface.format_topdec
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
+   *)
+  type interface =
+      (*%
+       * @format({interfaceDecs: bind binds, provide})
+       * binds(bind)()
+       * "provide" +d "interface" 2[ +1 provide ] "end"
+       * @format:bind(bind) bind +1
+       * @format:provide({requiredIds: req reqs, locallyRequiredIds: lreq lreqs,
+       *                  provideTopdecs: dec decs, topdecsInclude: inc incs})
+       * reqs(req)()
+       * lreqs(lreq)()
+       * decs(dec)()
+       * incs(inc)()
+       * @format:req({id, loc}) +1 "require" +d id
+       * @format:lreq({id, loc}) +1 "local" +d "require" +d id
+       * @format:dec(dec) +1 dec
+       * @format:inc(inc) +1 "include" +d inc
+       *)
+      {
+        interfaceDecs : interface_dec list,
+        provide :
+          {requiredIds : {id : InterfaceID.id, loc : loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+           provideTopdecs : AbsynInterface.topdec list,
+           topdecsInclude: Absyn.topdec list}
+      }
+
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
+   *)
+  type compile_unit =
+      (*%
+       * @format({interface:interface interfaceOpt, topdecsSource: dec decs})
+       * "interface"
+       * 2[ +1 interfaceOpt(interface) ]
+       * +1 "topdecsSource"
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * +1 "end"
+       *)
+      {
+        interface : interface option,
+        topdecsSource : Absyn.topdec list
+      }
+
+  (* an interface loaded as if it is "_require"-ed *)
+  (*%
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
+   * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   *)
+  type interface_unit =
+      (*%
+       * @format({interfaceDecs: bind binds,
+       *          requiredIds: req reqs,
+       *          topdecsInclude: inc incs})
+       * "interfaces"
+       * 2[ binds:ifcons()(+1,) binds(bind)(+1) ]
+       * +1 "requires"
+       * 2[ reqs:ifcons()(+1,) reqs(req)(+1) ]
+       * +1 "topdecsInclude"
+       * 2[ incs:ifcons()(+1,) incs(inc)(+1) ]
+       * +1 "end"
+       * @format:req({id, loc}) "require" +d id
+       *)
+      {
+        interfaceDecs : interface_dec list,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        topdecsInclude : Absyn.topdec list
+      }
+
+end

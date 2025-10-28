@@ -1,5 +1,5 @@
 _require local "../../../../ml-yacc-lib.smi"
-_require local "../../../data/symbols/main/SymbolWithLoc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 
 (* _require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi" *)
@@ -22,7 +22,7 @@ struct
     type svalue (= boxed)
     structure Token =
     struct
-      datatype token = TOKEN of EC.term * (svalue * Loc.pos * Loc.pos)
+      datatype token = TOKEN of EC.term * (svalue * Absyn.pos * Absyn.pos)
     end
   end
   structure Parser =
@@ -30,7 +30,7 @@ struct
     type token = ParserData.Token.token
     type stream (= ref)
     type result = Absyn.absyn
-    type pos = Loc.pos
+    type pos = Absyn.pos
     type arg = unit
     exception ParseError
     val makeStream : {lexer:unit -> token} -> stream

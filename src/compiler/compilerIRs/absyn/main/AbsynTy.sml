@@ -5,164 +5,280 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author Liu Bochao
+ * @author Katsuhiro Ueno
  *)
 
 structure AbsynTy =
 struct
 
+  type pos = Loc.pos
   type loc = Loc.loc
 
-  (*% @formatter(Symbol.symbol) SymbolWithLoc.format_symbol *)
-  type symbol = SymbolWithLoc.symbol
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
+  type id =
+      (*%
+       * @format(symbol * loc)
+       * symbol
+       *)
+      Symbol.symbol * loc
 
-  (*% @formatter(Symbol.longsymbol) SymbolWithLoc.format_longsymbol *)
-  type longsymbol = SymbolWithLoc.longsymbol
+  (*% *)
+  type longid =
+      (*%
+       * @format(id ids * loc)
+       * ids(id)(".")
+       *)
+      id list * loc
+
+  (*% *)
+  type vid = id
+
+  (*% *)
+  type longvid = longid
+
+  (*% *)
+  type tycon = id
+
+  (*% *)
+  type longtycon = longid
+
+  (*% @formatter(RecordLabel.label) RecordLabel.format_label *)
+  type lab =
+      (*%
+       * @format(label * loc)
+       * label
+       *)
+      RecordLabel.label * loc
+
+  (*% *)
+  type tyvar =
+      (*%
+       * @format(isEq * id)
+       * id
+       *)
+      bool * id
 
   (*%
-   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
-   * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
-   * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
-   * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
-   * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
-   * @formatter(NameMap.namePath) NameMap.format_namePath
-   * @formatter(seqList) TermFormat.formatSeqList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
+   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
    *)
-  datatype ty
-    = (*%
-         @format(loc) "_"
+  type tyvarseq =
+      (*%
+       * @format(tyvar tyvars * loc)
+       * tyvars:ifcons2()("(",)
+       * tyvars:N0ifcons2()(tyvars(tyvar)("," +1))
+       * tyvars:ifcons2()(")",)
        *)
-      TYWILD of loc
-    | (*%
-         @format(tvar * loc) tvar
+      tyvar list * loc
+
+  (*%
+   * @formatter(iftrue) AbsynFormatterUtils.iftrue
+   *)
+  type op_longvid =
+      (*%
+       * @format(op1 * longvid * loc)
+       * op1:iftrue()("op" +d,)
+       * longvid
        *)
-      TYID of tvar * loc
-    | (*%
-         @format({freeTvar:tvar, tvarKind, loc:loc}) 
-            tvar
+      bool * longvid * loc
+
+  (*%
+   * @formatter(iftrue) AbsynFormatterUtils.iftrue
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
+   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
+   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   *)
+  datatype ty =
+      (*%
+       * @format(tyvar)
+       * tyvar
        *)
-      FREE_TYID of {freeTvar:tvar, tvarKind:tvarKind, loc:loc}
+      TYVAR of tyvar
     | (*%
-         @format({ifFlex, fields:field fields, loc:loc})
-             ifFlex:binaryChoice()
-              (1[fields:listWithEnclosure(field)(","d, "{", ",...}") ],
-               1[fields:listWithEnclosure(field)(","d, "{", "}"   ) ])
-         @format:field(label * ty)
-           label ":" ty
+       * @format(row rows * flex * loc)
+       * "{" !N0{ rows(row)("," +1) flex:iftrue()("," +1 "...",) } "}"
        *)
-      TYRECORD of {ifFlex:bool, fields:(RecordLabel.label * ty) list, loc:loc}
+      TYRECORD of tyrow list * bool * loc
     | (*%
-         @format(arg args * longsymbol * loc)
-          args:seqList(arg)("(" d, "," d, d ")")
-          args:ifCons()(+)
-          longsymbol
+       * @format(tyseq * longtycon * loc)
+       * !N0{ tyseq tyseq:ifemptyseq()(,2[+1]) longtycon }
        *)
-      TYCONSTRUCT of ty list * longsymbol * loc
+      TYCON of tyseq * longtycon * loc
     | (*%
-         @format(elem elems * loc)
-           elems(elem)( + "*" +d )
+       * @format(ty tys * loc)
+       * !N0{ tys(ty)(+1 "*" +d) }
        *)
       TYTUPLE of ty list * loc
     | (*%
-       * @format(dom * result * loc)
-          "("
-           1[
-              dom + "->" +d result
-            ]
-           +1
-           ")"
+       * @format(argTy * retTy * loc)
+       * !N0{ argTy +1 "->" +d retTy }
        *)
       TYFUN of ty * ty * loc
     | (*%
-       * @format(tvar tvars * ty * loc)
-        "["
-          +1
-          1[
-            tvars(tvar)(",") "."
-            +1 ty
-           ]
-          +1
-         "]"
+       * @format(ty * loc)
+       * "(" !N0{ ty } ")"
        *)
-      TYPOLY of (kindedTvar) list * ty * loc
-
-  and tvarKind
-    = (*%
-       * @format (prop props * loc)
-          props:ifCons()("#")
-          props(prop)("#")
-       *)
-      UNIV of string list * loc
+      TYPAREN of ty * loc
     | (*%
-         @format({properties:prop props, recordKind:field fields} * loc)
-            props:ifCons()("#")
-            props(prop)("#")
-            "#{"
-              1[1 fields(field)(","+1)]
-            1
-            "}"
-         @format:field(label * ty) {label} +d ":" +d {ty}
+       * @format(loc)
+       * "_"
        *)
-      REC of {properties:string list,
-              recordKind:(RecordLabel.label * ty) list} * loc
+      TYWILD of loc
+    | (*%
+       * @format(tyvar)
+       * tyvar
+       *)
+      TYVAR_FREE of kinded_tyvar
+    | (*%
+       * @format(tyvar tyvars * ty * loc)
+       * "[" !N0{ tyvars(tyvar)("," +1) "." +1 ty } "]"
+       *)
+      TYPOLY of kinded_tyvar list * ty * loc
 
-  withtype tvar
-    = (*%
-       * @format({symbol:symbol, isEq}) symbol
+  and kind =
+      (*%
+       * @format(prop props * loc)
+       * props:ifcons()("#",)
+       * props(prop)("#")
        *)
-      {symbol:symbol, isEq:bool}
+      UNIV of id list * loc
+    | (*%
+       * @format(prop props * row rows * loc)
+       * props:ifcons()("#",)
+       * props(prop)("#")
+       * "#{" !N0{ 2[ rows(row)("," +1) ] } "}"
+       *)
+      REC of id list * tyrow list * loc
 
-  and kindedTvar
-    = (*%
-       * @format({symbol, isEq} * tvarKind) symbol tvarKind
+  withtype kinded_tyvar =
+      (*%
+       * @format(tyvar * tvkind * loc)
+       * tyvar tvkind
        *)
-      {symbol:symbol, isEq:bool} * tvarKind
+      tyvar * kind * loc
+
+  and tyrow =
+      (*%
+       * @format(lab * ty * loc)
+       * !N0{ lab +1 ":" +d ty }
+       *)
+      lab * ty * loc
+
+  and tyseq =
+      (*%
+       * @format(ty tys * loc)
+       * tys:ifcons2()("(",)
+       * tys:N0ifcons2()(tys(ty)("," +1))
+       * tys:ifcons2()(")",)
+       *)
+      ty list * loc
 
   (*%
-   * @formatter(seqList) TermFormat.formatSeqList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
+   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
    *)
-  datatype ffiTy
-    = (*%
-       * @format(attr attrs * dom doms * var vars varsOpt * ret rets * loc)
-       *           R1{ "(" doms(dom)("," + ) ")" +d "->"
-       *               2[ +1 "(" rets(ret)("," + ) ")" ] }
+  type kinded_tyvarseq =
+      (*%
+       * @format(tyvar tyvars * loc)
+       * tyvars:ifcons2()("(",)
+       * tyvars:N0ifcons2()(tyvars(tyvar)("," +1))
+       * tyvars:ifcons2()(")",)
        *)
-      FFIFUNTY of string list * ffiTy list * ffiTy list option * ffiTy list
-                  * loc
-    | (*%
-       * @format(elem elems * loc) N1{ d elems(elem)( + "*" +d ) }
-       *)
-      FFITUPLETY of ffiTy list * loc
-    | (*%
-       * @format(tvar * loc) tvar
-       *)
-      FFITYVAR of tvar * loc
-    | (*%
-       * @format(field fields * loc)
-       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
-       * @format:field(label * ty) {label} +d ":" +d {ty}
-       *)
-      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
-    | (*%
-       * @format(arg args * longsymbol * loc)
-          args:seqList(arg)("(" d, "," d, d ")")
-          args:ifCons()(+)
-          longsymbol
-       *)
-      FFICONTY of ffiTy list * longsymbol * loc
+      kinded_tyvar list * loc
 
-  (*% *)
-  datatype opaque_impl
-    = (*% @format(ty) ty *)
-      IMPL_TY of longsymbol
-    | (*% @format "*" *)
-      IMPL_TUPLE
-    | (*% @format "{}" *)
-      IMPL_RECORD
-    | (*% @format "->" *)
-      IMPL_FUNC
+  (*%
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(N0ifcons) AbsynFormatterUtils.N0ifcons
+   *)
+  type ffi_attr =
+      (*%
+       * @format(prop props * loc)
+       * props:ifcons()("__attribute__(",)
+       * props:N0ifcons()(props(prop)("," +1))
+       * props:ifcons()(")",)
+       *)
+      id list * loc
+
+  (*%
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
+   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
+   * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
+   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
+   * @formatter(N0ifnotsingle) AbsynFormatterUtils.N0ifnotsingle
+   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   *)
+  datatype ffi_ty =
+      (*%
+       * @format(tyvar)
+       * tyvar
+       *)
+      FFITYVAR of tyvar
+    | (*%
+       * @format(row rows * loc)
+       * "{" !N0{ rows(row)("," +1) } "}"
+       *)
+      FFITYRECORD of ffi_tyrow list * loc
+    | (*%
+       * @format(tyseq * longtycon * loc)
+       * !N0{ tyseq tyseq:ifemptyseq()(,2[+1]) longtycon }
+       *)
+      FFITYCON of ffi_tyseq * longtycon * loc
+    | (*%
+       * @format(ty tys * loc)
+       * !N0{ tys(ty)(+1 "*" +d) }
+       *)
+      FFITYTUPLE of ffi_ty list * loc
+    | (*%
+       * @format(attr * arg * ret * loc)
+       * !N0{ attr attr:ifemptyseq()(,+1) arg +1 "->" +d ret }
+       *)
+      FFITYFUN of ffi_attr * ffi_arg * ffi_ret * loc
+    | (*%
+       * @format(ty * loc)
+       * "(" !N0{ ty } ")"
+       *)
+      FFITYPAREN of ffi_ty * loc
+
+  withtype ffi_tyrow =
+      (*%
+       * @format(lab * ty * loc)
+       * !N0{ lab +1 ":" +d ty }
+       *)
+      lab * ffi_ty * loc
+
+  and ffi_tyseq =
+      (*%
+       * @format(ty tys * loc)
+       * tys:ifcons2()("(",)
+       * tys:N0ifcons2()(tys(ty)("," +1))
+       * tys:ifcons2()(")",)
+       *)
+      ffi_ty list * loc
+
+  and ffi_arg =
+      (*%
+       * @format(arg args * varg vargs vargOpt * loc)
+       * !N0{
+       *   "("
+       *   !N0{
+       *     args(arg)("," +1)
+       *     vargOpt:ifsome()("," +d "...(",)
+       *     !N0{ vargOpt(vargs(varg)("," +1)) }
+       *     vargOpt:ifsome()(")",)
+       *   }
+       *   ")"
+       * }
+       *)
+      ffi_ty list * ffi_ty list option * loc
+
+  and ffi_ret =
+      (*%
+       * @format(ty tys * loc)
+       * tys:ifsingle()(,"(")
+       * tys:N0ifnotsingle()(tys(ty)("," +1))
+       * tys:ifsingle()(,")")
+       *)
+      ffi_ty list * loc
 
 end

@@ -9,8 +9,7 @@ struct
   (***************************************************************************)
   
   (*%
-   * @formatter(Absyn.ffiTy) AbsynFormatter.format_ffiTy
-   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
+   * @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar
    * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
@@ -241,13 +240,6 @@ struct
 
   and
   (*%
-   * @format "pattern" +d "to" +d "left" +d "of" +d "AS" +d "must" +d "be"
-   *        +d "variable"
-   *)
-  LeftOfASMustBeVariable
-
-  and
-  (*%
    * @format(id) "infix" +d "symbol" +d id +d "used" +d "where" +d "a" +d
    *            "nonfix" +d "identifier" +d "was" +d "expected"
    *)
@@ -321,7 +313,7 @@ struct
    * @format({tvar})
    * "type" +d "variable" +d tvar +d "has" +d "inconsistent" +d "equality"
    *)
-  DifferentEqOfSameTvar of {tvar: Absyn.tvar}
+  DifferentEqOfSameTvar of {tvar: AbsynTy.tyvar}
 
   and
   (*%
@@ -329,7 +321,7 @@ struct
    * "duplicate" +d "user" +d "type" +d "variable" +d "in" +d "declaration:"
    * +d tvar
    *)
-  DuplicateUserTvar of {tvar: Absyn.tvar}
+  DuplicateUserTvar of {tvar: AbsynTy.tyvar}
 
   and
   (*%
@@ -337,7 +329,7 @@ struct
    * "user" +d "type" +d "variable" +d tvar +d "is" +d "scoped" +d "at"
    * +d "outer" +d "declaration"
    *)
-  UserTvarScopedAtOuterDecl of {tvar: Absyn.tvar}
+  UserTvarScopedAtOuterDecl of {tvar: AbsynTy.tyvar}
 
   and
   (*%

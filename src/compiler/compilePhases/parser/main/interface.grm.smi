@@ -1,4 +1,5 @@
 _require local "../../../../ml-yacc-lib.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 
@@ -15,7 +16,7 @@ struct
   struct
     type token (= boxed)
     type stream (= ref)
-    type result = AbsynInterface.itop
+    type result = AbsynInterface.top
     type pos = Loc.pos
     type arg = unit
     exception ParseError

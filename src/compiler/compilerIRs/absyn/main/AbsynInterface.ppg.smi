@@ -1,216 +1,112 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
-_require "../../../data/symbols/main/Loc.smi"
-_require "../../../libs/ids/main/LocalID.smi"
 _require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "./RequirePath.smi"
 _require "./Absyn.smi"
-_require local "./AbsynFormatter.smi"
 _require "./AbsynTy.smi"
+_require local "./AbsynFormatter.smi"
 _require local "./AbsynTyFormatter.smi"
-_require "./InterfaceName.ppg.smi"
+_require local "./AbsynFormatterUtils.smi"
 
 structure AbsynInterface =
 struct
-  datatype constraint =
-      SIG_TRANSPARENT
-    | SIG_OPAQUE
 
+  type loc = Absyn.loc
+
+  type id = AbsynTy.id
+  type vid = Absyn.vid
+  type longvid = Absyn.longvid
+  type tycon = Absyn.tycon
+  type longtycon = Absyn.longtycon
+  type tyvar = Absyn.tyvar
+  type tyvarseq = Absyn.tyvarseq
   type ty = Absyn.ty
-  type symbol = SymbolWithLoc.symbol
-  type longsymbol = SymbolWithLoc.longsymbol
-  type loc = Loc.loc
-  datatype overloadInstance =
-      INST_OVERLOAD of {tyvar: Absyn.tvar,
-                        expTy: ty,
-                        matches: {instTy: ty, instance: overloadInstance} list,
-                        loc: loc}
-    | INST_LONGVID of {longsymbol: longsymbol}
+  type strid = Absyn.strid
+  type sigid = Absyn.sigid
+  type funid = Absyn.funid
+  type longstrid = Absyn.longstrid
+  type require_path = Absyn.require_path
+  datatype exbind = datatype Absyn.exbind
+  datatype fun_param = datatype Absyn.fun_param
 
-  type overloadCase =
-      {tyvar: Absyn.tvar,
-       expTy: ty,
-       matches: {instTy: ty, instance: overloadInstance} list,
-       loc: loc}
+  datatype opaque_impl =
+      IMPL_TY of longtycon
+    | IMPL_TUPLE of loc
+    | IMPL_RECORD of loc
+    | IMPL_FUNC of loc
 
-  datatype valbindBody =
-      VAL_EXTERN of {ty: ty}
-    | VALALIAS_EXTERN of longsymbol
-    | VAL_BUILTIN of {builtinSymbol: symbol, ty: ty}
-    | VAL_OVERLOAD of overloadCase
+  datatype overload_instance =
+      INST_OVERLOAD of tyvar * ty * (ty * overload_instance * loc) list * loc
+    | INST_LONGVID of longvid
+    | INST_PAREN of overload_instance * loc
 
-  type valbind =
-      {symbol: symbol, body: valbindBody, loc: loc}
+  type overload_mrule =
+      ty * overload_instance * loc
 
-  type typbind_trans
-    = {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
+  type overload_case =
+      tyvar * ty * (ty * overload_instance * loc) list * loc
 
-  datatype opaque_impl = datatype AbsynTy.opaque_impl
+  datatype valbind =
+      VAL_EXTERN of vid * ty * loc
+    | VAL_ALIAS of vid * longvid * loc
+    | VAL_BUILTIN of vid * vid * ty * loc
+    | VAL_OVERLOAD of vid * overload_case * loc
+
+  type typdesc =
+      tyvarseq * tycon * opaque_impl * loc
 
   datatype typbind =
-      TRANSPARENT of typbind_trans
-    | OPAQUE of {eq: bool, tyvars: Absyn.tvar list, symbol: symbol,
-                 runtimeTy: opaque_impl, loc: loc}
+      TYPBIND of Absyn.typbind
+    | TYPDESC of typdesc
 
-  type conbind =
-      {symbol: symbol, ty: ty option, loc:loc}
+  datatype dec =
+      VAL of valbind * loc
+    | TYPE of typbind list * loc
+    | EQTYPE of typdesc list * loc
+    | DATATYPE of Absyn.datbind list * Absyn.typbind list * loc
+    | DATATYPEREP of tycon * longtycon * loc
+    | TYPEBUILTIN of tycon * tycon * loc
+    | EXCEPTION of exbind list * loc
+    | STRUCTURE of (strid * strexp * loc) * loc
+    | SEMICOLON of loc
 
-  type datbind =
-      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list, loc:loc}
+  and strexp =
+      STRBASIC of dec list * loc
+    | STRID of longstrid
+    | STRAPP of funid * longstrid * loc
 
-  datatype exbind =
-      EXNDEF of {symbol: symbol, ty: ty option, loc: loc}
-    | EXNREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
+  type strbind = strid * strexp * loc
 
-  datatype idec =
-      IVAL of valbind
-    | ITYPE of typbind list
-    | IDATATYPE of {datbind: datbind list, withType: typbind_trans list,
-                    loc: loc}
-    | ITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
-    | ITYPEBUILTIN of {symbol: symbol, builtinSymbol: symbol,loc: loc}
-    | IEXCEPTION of exbind list
-    | ISTRUCTURE of {symbol: symbol, strexp: istrexp, loc: loc}
+  type funbind = funid * fun_param * strexp * loc
 
+  datatype topdec =
+      DEC of dec
+    | FUNCTOR of funbind * loc
+    | INFIX of string option * vid list * loc
+    | INFIXR of string option * vid list * loc
+    | NONFIX of vid list * loc
 
-  and istrexp =
-      ISTRUCT of {decs: idec list, loc: loc}
-    | ISTRUCTREP of {longsymbol:longsymbol, loc: loc}
-    | IFUNCTORAPP of {functorSymbol:symbol, argument:longsymbol, loc: loc}
+  datatype require =
+      REQUIRE of require_path * id list * loc
+    | REQUIRE_LOCAL of require_path * id list * loc
+    | USE_LOCAL of require_path * loc
+    | REQSEMICOLON of loc
 
-  type strbind =
-      {
-        symbol: symbol,
-        strexp: istrexp,
-        loc: loc
-      }
+  datatype include_dec =
+      INCLUDE of require_path * loc
+    | INCSEMICOLON of loc
 
-  type sigbind =
-      {symbol: symbol, sigexp: Absyn.sigexp, loc: loc}
+  datatype sigdec =
+      SIGNATURE of Absyn.sigbind list * loc
+    | SIGSEMICOLON of loc
 
-  datatype funParam =
-      FUNPARAM_FULL of {symbol: symbol, sigexp: Absyn.sigexp}
-    | FUNPARAM_SPEC of Absyn.spec
+  datatype top =
+      INTERFACE of require list * topdec list * loc
+    | INCLUDES of include_dec list * sigdec list * loc
 
-  type funbind =
-      {
-        functorSymbol: symbol,
-        param: funParam,
-        strexp: istrexp,
-        loc: loc
-      }
-
-  datatype fixity =
-      INFIXL of string option
-    | INFIXR of string option
-    | NONFIX
-
-  datatype itopdec =
-      IDEC of idec
-    | IFUNDEC of funbind
-    | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
-
-  datatype irequire =
-      REQUIRE of RequirePath.path * symbol list * loc
-    | LOCAL_REQUIRE of RequirePath.path * symbol list * loc
-    | LOCAL_USE of RequirePath.path * loc
-
-  datatype itop =
-      INTERFACE of
-      {
-        requires: irequire list,
-        provide: itopdec list
-      }
-    | INCLUDES of
-      {
-        includes: (RequirePath.path * loc) list,
-        topdecs: Absyn.topdec list
-      }
-
-  type interface_dec =
-      {
-        interfaceId : InterfaceID.id,
-        interfaceName : InterfaceName.interface_name,
-        requiredIds : {id : InterfaceID.id, loc : loc} list,
-        provideTopdecs : itopdec list
-      }
-
-  type interface =
-      {
-        interfaceDecs : interface_dec list,
-        provide :
-          {requiredIds : {id : InterfaceID.id, loc : loc} list,
-           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
-           provideTopdecs : itopdec list,
-           topdecsInclude: Absyn.topdec list}
-      }
-
-  type compile_unit =
-      {
-        interface : interface option,
-        topdecsSource : Absyn.topdec list
-      }
-
-  type interface_unit =
-      {
-        interfaceDecs : interface_dec list,
-        requiredIds : {id: InterfaceID.id, loc: loc} list,
-        topdecsInclude : Absyn.topdec list
-      }
-
-  val format_constraint
-      : constraint -> SMLFormat.FormatExpression.expression list
-  val format_ty : ty -> SMLFormat.FormatExpression.expression list
-  val format_loc : loc -> SMLFormat.FormatExpression.expression list
-  val format_overloadInstance
-      : overloadInstance -> SMLFormat.FormatExpression.expression list
-(*
-  val format_overloadMatch
-      : overloadMatch -> SMLFormat.FormatExpression.expression list
-*)
-  val format_overloadCase
-      : overloadCase -> SMLFormat.FormatExpression.expression list
-  val format_valbindBody
-      : SMLFormat.FormatExpression.expression list
-        -> valbindBody -> SMLFormat.FormatExpression.expression list
-  val format_valbind
-      : valbind -> SMLFormat.FormatExpression.expression list
-  val format_typbind
-      : typbind -> SMLFormat.FormatExpression.expression list
-  val format_conbind
-      : conbind -> SMLFormat.FormatExpression.expression list
-  val format_datbind
-      : datbind -> SMLFormat.FormatExpression.expression list
-  val format_exbind
-      : exbind -> SMLFormat.FormatExpression.expression list
-  val format_idec
-      : idec -> SMLFormat.FormatExpression.expression list
-  val format_istrexp
-      : istrexp -> SMLFormat.FormatExpression.expression list
-  val format_strbind
-      : strbind -> SMLFormat.FormatExpression.expression list
-  val format_sigbind
-      : sigbind -> SMLFormat.FormatExpression.expression list
-  val format_funParam
-      : funParam -> SMLFormat.FormatExpression.expression list
-  val format_funbind
-      : funbind -> SMLFormat.FormatExpression.expression list
-  val format_fixity
-      : fixity -> SMLFormat.FormatExpression.expression list
-  val format_itopdec
-      : itopdec -> SMLFormat.FormatExpression.expression list
-  val format_itop
-      : itop -> SMLFormat.FormatExpression.expression list
-  val format_interface_dec
-      : interface_dec -> SMLFormat.FormatExpression.expression list
-  val format_interface
-      : interface -> SMLFormat.FormatExpression.expression list
-  val format_compile_unit
-      : compile_unit -> SMLFormat.FormatExpression.expression list
-  val format_interface_unit
-      : interface_unit -> SMLFormat.FormatExpression.expression list
+  val format_overload_instance : overload_instance -> SMLFormat.format
+  val format_overload_case : overload_case -> SMLFormat.format
+  val format_valbind : SMLFormat.format -> valbind -> SMLFormat.format
+  val format_topdec : topdec -> SMLFormat.format
 
 end

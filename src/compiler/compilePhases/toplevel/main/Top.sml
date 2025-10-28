@@ -74,11 +74,13 @@ struct
                 title [code]
 
   fun printAbsyn flag title code =
-      printCode [flag] (Bug.prettyPrint o AbsynInterface.format_compile_unit)
+      printCode [flag]
+                (Bug.prettyPrint o AbsynInterfaceLoaded.format_compile_unit)
                 title [code]
 
   fun printAbsynInterface flags title code =
-      printCode flags (Bug.prettyPrint o AbsynInterface.format_interface_unit)
+      printCode flags
+                (Bug.prettyPrint o AbsynInterfaceLoaded.format_interface_unit)
                 title [code]
 
   fun printFileDependency flags title code =
@@ -195,8 +197,7 @@ struct
       in
         case ret of
           Absyn.UNIT unit => unit
-        | Absyn.EOF =>
-          {interface = Absyn.NOINTERFACE, tops = nil, loc = Loc.noloc}
+        | Absyn.EOF => (NONE, nil, Loc.noloc)
       end
 
   fun doLoadFile ({baseFilename, loadPath, loadMode, defaultInterface,

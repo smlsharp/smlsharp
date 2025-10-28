@@ -35,6 +35,7 @@ local
   val mkLongsymbol = Symbol.fromStringList
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
+  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
 
   fun bug s = Bug.Bug ("NameEvalInterface: " ^ s)
   val nilPath = nil
@@ -246,9 +247,9 @@ in
               end
           and evalInstance instance =
               case instance of
-                AI.INST_OVERLOAD overloadCase =>
+                PI.INST_OVERLOAD overloadCase =>
                 I.INST_OVERLOAD (evalOverloadCase overloadCase)
-              | AI.INST_LONGVID {longsymbol=longsymbol} =>
+              | PI.INST_LONGVID {longsymbol=longsymbol} =>
                 let
                   val loc = longsymbolToLoc longsymbol
                   fun error e =
@@ -288,7 +289,7 @@ in
           val longsymbol= SymbolWithLoc.prefixPath(path, symbol)
         in
           case body of
-            AI.VAL_EXTERN {ty} =>
+            PI.VAL_EXTERN {ty} =>
             let
               val ty = Ty.evalTy tvarEnv env ty
               val ty = 
@@ -305,7 +306,7 @@ in
             in
               (renameEnv, externSet, VP.rebindId VP.INTERFACE (V.emptyEnv, symbol, idstatus), [icdecl])
             end
-          | AI.VALALIAS_EXTERN longsymbol =>
+          | PI.VALALIAS_EXTERN longsymbol =>
             let
               val loc = longsymbolToLoc longsymbol
             in
@@ -341,7 +342,7 @@ in
                     (loc, E.ProvideUndefinedID("EI-080", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                   (renameEnv, externSet, V.emptyEnv, nil))
             end
-          | AI.VAL_BUILTIN {builtinSymbol, ty} =>
+          | PI.VAL_BUILTIN {builtinSymbol, ty} =>
             let
               val loc = symbolToLoc builtinSymbol
               val ty = Ty.evalTy tvarEnv env ty
@@ -362,7 +363,7 @@ in
                    (loc, E.PrimitiveNotFound("EI-080", {symbol = #symbol builtinSymbol}));
                  (renameEnv, externSet, V.emptyEnv, nil))
             end
-          | AI.VAL_OVERLOAD overloadCase =>
+          | PI.VAL_OVERLOAD overloadCase =>
             let
               val id = OPrimID.generate()
               val overloadCase = evalOverloadCase overloadCase
@@ -382,7 +383,7 @@ in
         let
           val longsymbol = SymbolWithLoc.prefixPath(path , symbol)
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, isEq} => symbol) tyvars
+                    (fn (isEq, symbol) => toSymbol symbol) tyvars
                     (fn s => E.DuplicateTypParms("EI-090",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
           val ty = Ty.evalTy tvarEnv env ty
@@ -415,7 +416,7 @@ in
       | PI.PIOPAQUE_TYPE {eq, tyvars, symbol=tycon, runtimeTy, loc} =>
         (let
            val _ = EU.checkSymbolDuplication
-                     (fn {symbol, isEq} => symbol)
+                     (fn (isEq, symbol) => toSymbol symbol)
                      tyvars
                      (fn s => E.DuplicateTypParms("EI-090",s))
            val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars

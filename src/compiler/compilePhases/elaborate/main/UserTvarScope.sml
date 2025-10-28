@@ -14,69 +14,76 @@ struct
   structure E = ElaborateError
   val eqSymbol = SymbolWithLoc.eqSymbol
 
-  type tvset = (A.tvar * Loc.loc) list
-  type btvEnv = {isEq:bool, kind:A.tvarKind} SymbolEnv.map
+  type tvset = A.tyvar list
+  type btvEnv = {isEq:bool, kind:A.kind} SymbolEnv.map
 
   val noloc = Loc.noloc
   val empty = nil : tvset
   val emptyEnv = SymbolEnv.empty : btvEnv
 
-  fun member (set:tvset, {symbol=s1, isEq}:A.tvar) =
-      List.exists (fn ({symbol=s2, isEq},_) => eqSymbol(s1,s2)) set
+  fun member (set:tvset, (_, (s1, _)):A.tyvar) =
+      List.exists (fn (_, (s2, _)) => s1 = s2) set
 
-  fun singleton (tvar:A.tvar, loc) =
-      [(tvar, loc)] : tvset
+  fun singleton (tvar:A.tyvar) =
+      [tvar] : tvset
 
-  fun checkEq (tvar as {symbol, isEq}:A.tvar, isEq2, loc) =
+  fun checkEq (tvar as (isEq, (symbol, loc)):A.tyvar, isEq2) =
       if isEq = isEq2 then ()
       else EU.enqueueError
              (loc, E.DifferentEqOfSameTvar {tvar = tvar})
 
   fun union (tvs1:tvset, tvs2:tvset) =
       foldr
-        (fn (elem as (tv, loc), tvs:tvset) =>
-            case List.find (fn ({symbol=s1,...},_) => eqSymbol(s1,#symbol tv)) tvs1 of
-              NONE => elem::tvs
-            | SOME ({isEq,...}, _) => (checkEq (tv, isEq, loc); tvs))
+        (fn (tv2 as (_, (s2, _)), tvs:tvset) =>
+            case List.find (fn (_, (s1, _)) => s1 = s2) tvs1 of
+              NONE => tv2::tvs
+            | SOME (isEq, _) => (checkEq (tv2, isEq); tvs))
         tvs1
         tvs2
 
-  fun setminus (tvs1:tvset, tvs2) =
+  fun setminus (tvs1:tvset, tvs2:A.kinded_tyvar list) =
       List.filter
-        (fn (elem as (tv, loc)) =>
-            not (List.exists
-                   (fn ({symbol=s1,...},_) => eqSymbol (s1, #symbol tv))
-                   tvs2))
+        (fn (_, (s1, _)) =>
+            not (List.exists (fn ((_, (s2, _)), _, _) => s1 = s2) tvs2))
         tvs1
 
   fun toTvarList (tvset:tvset) =
-      map (fn (tv, _) => (tv, A.UNIV (nil,noloc))) (rev tvset)
+      map (fn tv as (_, (_, loc)) => (tv, A.UNIV (nil, noloc), loc)) (rev tvset)
 
-  fun toBtvEnv (kindedTvars:A.kindedTvar list, loc) =
-      foldl (fn ((tvar as {symbol, isEq}, kind), btvEnv) =>
-                (if SymbolEnv.inDomain (btvEnv, #symbol symbol)
-                 then EU.enqueueError
-                        (loc, E.DuplicateUserTvar {tvar = tvar})
+  fun toBtvEnv (kindedTvars:A.kinded_tyvar list) : btvEnv =
+      foldl (fn ((tvar as (isEq, (symbol, loc)), kind, _), btvEnv) =>
+                (if SymbolEnv.inDomain (btvEnv, symbol)
+                 then EU.enqueueError (loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
-                 SymbolEnv.insert (btvEnv, #symbol symbol, {isEq=isEq, kind=kind})))
+                 SymbolEnv.insert
+                   (btvEnv, symbol, {isEq = isEq, kind = kind})))
             SymbolEnv.empty
             kindedTvars
-            : btvEnv
 
-  fun bindKindedTvars btvEnv loc kindedTvars =
-      SymbolEnv.unionWith #2 (btvEnv, toBtvEnv (kindedTvars, loc))
+  fun bindKindedTvars btvEnv kindedTvars =
+      SymbolEnv.unionWith #2 (btvEnv, toBtvEnv kindedTvars)
 
-  fun bindTvars btvEnv loc tvars =
-      bindKindedTvars btvEnv loc (map (fn tv => (tv, A.UNIV (nil,noloc))) tvars)
+  fun bindTvars btvEnv tvars =
+      bindKindedTvars
+        btvEnv
+        (map (fn tv => (tv, A.UNIV (nil, noloc), #2 (#2 tv))) tvars)
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
-      foldl (fn (({symbol, isEq}, _), btvEnv) =>
-                SymbolEnv.insert (btvEnv, #symbol symbol, {isEq=isEq, kind=A.UNIV(nil,noloc)}))
+      foldl (fn ((isEq, (symbol, _)), btvEnv) =>
+                SymbolEnv.insert
+                  (btvEnv,
+                   symbol,
+                   {isEq = isEq, kind = A.UNIV (nil, noloc)}))
             btvEnv
             tvset
 
   fun sortTyrows rows =
-      ListSorter.sort (fn ((k1, _), (k2, _)) => RecordLabel.compare (k1, k2)) rows
+      ListSorter.sort
+        (fn (r1, r2) => RecordLabel.compare (#1 (#1 r1), #1 (#1 r2)))
+        rows
+
+  fun sortPlTyrows rows =
+      ListSorter.sort (fn (r1, r2) => RecordLabel.compare (#1 r1, #1 r2)) rows
 
   fun tyvarsOpt f (SOME x) = f x
     | tyvarsOpt f NONE = empty
@@ -84,20 +91,20 @@ struct
   fun tyvarsList f l =
       foldl (fn (x, z) => union (z, f x)) empty l
 
-  fun tyvarsTvar btvEnv (tv as {symbol,...}, loc) =
-      case SymbolEnv.find (btvEnv, #symbol symbol) of
-        NONE => singleton (tv, loc)
-      | SOME {isEq, kind} => (checkEq (tv, isEq, loc); empty)
+  fun tyvarsTvar btvEnv (tv as (_, (symbol, loc)) : A.tyvar) =
+      case SymbolEnv.find (btvEnv, symbol) of
+        NONE => singleton tv
+      | SOME {isEq, kind} => (checkEq (tv, isEq); empty)
 
   fun tyvarsTy btvEnv ty =
       case ty of
         A.TYWILD _ => empty
-      | A.TYID tv => tyvarsTvar btvEnv tv
-      | A.FREE_TYID tv => empty
-      | A.TYRECORD {ifFlex, fields = rows, loc} =>
+      | A.TYVAR tv => tyvarsTvar btvEnv tv
+      | A.TYVAR_FREE tv => empty
+      | A.TYRECORD (rows, ifFlex, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
-        tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows rows)
-      | A.TYCONSTRUCT (tys, tycon, loc) =>
+        tyvarsList (fn (k,t,_) => tyvarsTy btvEnv t) (sortTyrows rows)
+      | A.TYCON ((tys, _), tycon, loc) =>
         tyvarsList (tyvarsTy btvEnv) tys
       | A.TYTUPLE (tys, loc) =>
         tyvarsList (tyvarsTy btvEnv) tys
@@ -105,21 +112,22 @@ struct
         union (tyvarsTy btvEnv ty1, tyvarsTy btvEnv ty2)
       | A.TYPOLY (kindedTvars, ty, loc) =>
         let
-          val btvEnv = bindKindedTvars btvEnv loc kindedTvars
+          val btvEnv = bindKindedTvars btvEnv kindedTvars
         in
           union (tyvarsList (tyvarsKindedTvar btvEnv) kindedTvars,
                  tyvarsTy btvEnv ty)
         end
+      | A.TYPAREN (ty, loc) => tyvarsTy btvEnv ty
 
-  and tyvarsKindedTvar btvEnv ((_,kind):A.kindedTvar) =
+  and tyvarsKindedTvar btvEnv ((_,kind,_):A.kinded_tyvar) =
       tyvarsTvarKind btvEnv kind
 
   and tyvarsTvarKind btvEnv kind =
       case kind of
         A.UNIV _ => empty
-      | A.REC ({properties,recordKind}, loc) =>
+      | A.REC (properties, recordKind, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
-        tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows recordKind)
+        tyvarsList (fn (k,t,_) => tyvarsTy btvEnv t) (sortTyrows recordKind)
 
   and tyvarsFFIty btvEnv ty =
       case ty of
@@ -127,21 +135,21 @@ struct
         union (union (tyvarsList (tyvarsFFIty btvEnv) argTys,
                       tyvarsOpt (tyvarsList (tyvarsFFIty btvEnv)) varTys),
                tyvarsList (tyvarsFFIty btvEnv) retTys)
-      | P.FFITYVAR tv => tyvarsTvar btvEnv tv
+      | P.FFITYVAR (tv, _) => tyvarsTvar btvEnv tv
       | P.FFIRECORDTY (rows, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
-        tyvarsList (fn (k,t) => tyvarsFFIty btvEnv t) (sortTyrows rows)
+        tyvarsList (fn (k,t) => tyvarsFFIty btvEnv t) (sortPlTyrows rows)
       | P.FFICONTY (tys, tycon, loc) =>
         tyvarsList (tyvarsFFIty btvEnv) tys
 
-  fun tyvarsTypbind btvEnv loc (tvars, tycon, ty, defLoc) =
-      tyvarsTy (bindTvars btvEnv loc tvars) ty
+  fun tyvarsTypbind btvEnv (tvars, tycon, ty, defLoc) =
+      tyvarsTy (bindTvars btvEnv tvars) ty
 
   fun tyvarsConbind btvEnv ({symbol, ty, loc}:P.conbind) =
       tyvarsOpt (tyvarsTy btvEnv) ty
 
-  fun tyvarsDatbind btvEnv loc ({tyvars, symbol, conbind, loc=datLoc}:P.datbind) =
-      tyvarsList (tyvarsConbind (bindTvars btvEnv loc tyvars)) conbind
+  fun tyvarsDatbind btvEnv ({tyvars, symbol, conbind, loc=datLoc}:P.datbind) =
+      tyvarsList (tyvarsConbind (bindTvars btvEnv tyvars)) conbind
 
   fun tyvarsExbind btvEnv exbind =
       case exbind of
@@ -251,12 +259,12 @@ struct
       | P.PDNONRECFUN _ => empty  (* guard point *)
 *)
       | P.PDTYPE (typbinds, loc) =>
-        tyvarsList (tyvarsTypbind btvEnv loc) typbinds
+        tyvarsList (tyvarsTypbind btvEnv) typbinds
       | P.PDDATATYPE (datbinds, loc) =>
-        tyvarsList (tyvarsDatbind btvEnv loc) datbinds
+        tyvarsList (tyvarsDatbind btvEnv) datbinds
       | P.PDREPLICATEDAT _ => empty
       | P.PDABSTYPE (datbinds, decls, loc) =>
-        union (tyvarsList (tyvarsDatbind btvEnv loc) datbinds,
+        union (tyvarsList (tyvarsDatbind btvEnv) datbinds,
                tyvarsList (tyvarsDecl btvEnv) decls)
       | P.PDEXD (exbinds, loc) =>
         tyvarsList (tyvarsExbind btvEnv) exbinds
@@ -283,13 +291,13 @@ struct
 
   fun decideScope tyvarsFn btvEnv (explicitScope, x, loc) =
       let
-        val _ = app (fn (tvar as {symbol,...}, _) =>
-                        if SymbolEnv.inDomain (btvEnv, #symbol symbol)
+        val _ = app (fn (tvar as (_, (symbol, _)), _, _) =>
+                        if SymbolEnv.inDomain (btvEnv, symbol)
                         then EU.enqueueError
                                (loc, E.UserTvarScopedAtOuterDecl {tvar = tvar})
                         else ())
                     explicitScope
-        val btvEnv = bindKindedTvars btvEnv loc explicitScope
+        val btvEnv = bindKindedTvars btvEnv explicitScope
         val unguarded1 = tyvarsList (tyvarsKindedTvar btvEnv) explicitScope
         val unguarded2 = tyvarsFn btvEnv x
         val unguarded = union (unguarded1, unguarded2)
@@ -452,8 +460,8 @@ struct
         P.PLSPECSTRUCT (map (fn (k,e) => (k, decideSigexp e)) strdescs, loc)
       | P.PLSPECINCLUDE (sigexp, loc) =>
         P.PLSPECINCLUDE (decideSigexp sigexp, loc)
-      | P.PLSPECSEQ (spec1, spec2, loc) =>
-        P.PLSPECSEQ (decideSpec spec1, decideSpec spec2, loc)
+      | P.PLSPECSEQ (spec1, spec2) =>
+        P.PLSPECSEQ (decideSpec spec1, decideSpec spec2)
       | P.PLSPECSHARE (spec, tycons, loc) =>
         P.PLSPECSHARE (decideSpec spec, tycons, loc)
       | P.PLSPECSHARESTR (spec, strids, loc) =>
@@ -517,7 +525,7 @@ struct
       union (ftv instTy, tyvarsOverloadInstance instance)
   and tyvarsOverloadCase ({tyvar, expTy, matches, loc}:PI.overloadCase) =
       union
-        (union (singleton (tyvar, loc), ftv expTy),
+        (union (singleton tyvar, ftv expTy),
          tyvarsList tyvarsOverloadMatch matches)
   fun tyvarsValbindBody body =
       case body of
@@ -535,7 +543,7 @@ struct
                     (loc, E.UserTvarScopedAtOuterDecl
                             {tvar = tyvar}))
             else ()
-        val set = union (singleton (tyvar, loc), ftv expTy)
+        val set = union (singleton tyvar, ftv expTy)
         val used = union (used, set)
       in
         app (fn {instTy, instance} =>

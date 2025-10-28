@@ -131,23 +131,28 @@ struct
       in map f 0 l
       end
 
+  fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = loc}
+  fun toLongsymbol ((ids, _) : A.longvid) = map toSymbol ids
+
   fun recordLabelToSymbol label loc =
       SymbolWithLoc.mkSymbol (RecordLabel.toString label) loc
 
   fun Ty ty (_:S.loc) = ty : A.ty
 
-  fun Tyvar x : A.tvar =
-      {symbol = x, isEq = false}
+  fun Tyvar x loc : A.tyvar =
+      (false, (x, loc))
 
   fun TyWild loc =
       A.TYWILD loc
 
   fun TyID tv loc =
-      A.TYID (tv, loc)
+      A.TYVAR (tv loc)
 
   fun TyCon args name loc =
-      A.TYCONSTRUCT
-        (map (fn arg => arg loc) args, SymbolWithLoc.mkLongsymbol name loc, loc)
+      A.TYCON
+        ((map (fn arg => arg loc) args, loc),
+         (map (fn i => (Symbol.fromString i, loc)) name, loc),
+         loc)
 
   fun TyFun (ty1, ty2) loc =
       A.TYFUN (ty1 loc, ty2 loc, loc)
@@ -217,7 +222,7 @@ struct
       end
 
   fun Let tyvars (pat, exp) exp2 loc =
-      P.PLLET ([P.PDVAL (map (fn x => (x, A.UNIV(nil,loc))) tyvars,
+      P.PLLET ([P.PDVAL (map (fn x => (x loc, A.UNIV (nil, loc), loc)) tyvars,
                          [(pat loc, exp loc, Loc.noloc)], loc)],
                exp2 loc, loc)
   fun Unit loc =
@@ -235,6 +240,12 @@ struct
 
   fun SymbolString symbol =
       String (SymbolWithLoc.symbolToString symbol)
+
+  fun StringFirst S.FIRST = String "first"
+    | StringFirst S.NEXT = String "next"
+
+  fun StringRows S.ROW = String "row"
+    | StringRows S.ROWS = String "rows"
 
   fun App exp1 exp2 loc =
       P.PLAPPM (exp1 loc, [exp2 loc], loc)
@@ -513,12 +524,12 @@ struct
   fun Con_OFFSET {offset = (offset, rows), fetch} =
       Con Name.con_OFFSET
           [Record
-             [(RecordLabel.fromString "offset", Pair (offset, String rows)),
+             [(RecordLabel.fromString "offset", Pair (offset, StringRows rows)),
               (RecordLabel.fromString "fetch",
                case fetch of
                  NONE => None
                | SOME (first, count, rows) =>
-                 Tuple [String first, Option count, String rows])]]
+                 Tuple [StringFirst first, Option count, StringRows rows])]]
 
   fun Con_LIMIT {limit, offset} =
       Con Name.con_LIMIT
@@ -683,21 +694,20 @@ struct
   fun expLoc exp =
       case exp of
         S.EXP_EMBED (_, loc) => loc
-      | S.COLUMN1 (_, loc) => loc
-      | S.COLUMN2 (_, loc) => loc
-      | S.OP1 (_, _, loc) => loc
-      | S.OP2 (_, _, _, loc) => loc
-      | S.EXISTS (_, loc) => loc
-      | S.EXP_SUBQUERY (_, loc) => loc
       | S.CONST (_, loc) => loc
       | S.NULL loc => loc
       | S.TRUE loc => loc
       | S.FALSE loc => loc
-      | S.ID id => SymbolWithLoc.symbolToLoc id
-      | S.OPID (_, loc) => loc
-      | S.PARENID id => SymbolWithLoc.symbolToLoc id
-      | S.TUPLE (_, loc) => loc
+      | S.COLUMN1 (_, loc) => loc
+      | S.COLUMN2 (_, _, loc) => loc
+      | S.KWEXP (_, _, loc) => loc
+      | S.EXP_SUBQUERY (_, _, loc) => loc
+      | S.OP1 (_, _, loc) => loc
+      | S.OP2 (_, _, _, loc) => loc
+      | S.ID (_, _, loc) => loc
+      | S.PAREN (_, loc) => loc
       | S.APP (_, loc) => loc
+      | S.TUPLE (_, loc) => loc
 
   datatype query_const =
       INT of IntInf.int
@@ -711,55 +721,62 @@ struct
    * For simplicity, we define a single all-in-one datatype rather than
    * a datatype for each syntactic category. *)
   datatype query =
-      MLEXP of S.longsymbol * S.loc
-    | EMBED of S.symbol * ty * S.loc
+      MLEXP of P.longsymbol * S.loc
+    | EMBED of P.symbol * ty * S.loc
     | CONST of query_const * S.loc
     | NULL of S.loc
-    | COLUMN1 of S.label * S.loc
-    | COLUMN2 of (S.label * S.label) * S.loc
+    | COLUMN1 of P.label * S.loc
+    | COLUMN2 of (P.label * P.label) * S.loc
     | OP1 of S.op1 * query * S.loc
     | OP2 of S.op2 * query * query * S.loc
     | APP of query * query * S.loc
-    | SQLAPP of bool * S.symbol * query * S.loc
-    | APPOP2 of S.symbol * query * query * S.loc
+    | SQLAPP of bool * P.symbol * query * S.loc
+    | APPOP2 of P.symbol * query * query * S.loc
     | TUPLE of query list * S.loc
     | EXISTS of query * S.loc
     | EXP_SUBQUERY of query * S.loc
     | WHERE of query * S.loc
     | FROM of table list * S.loc
     | ORDERBY of (query * S.asc_desc option) list * S.loc
-    | OFFSET of {offset : query * string * S.loc,
-                 fetch : (string * query option * string * S.loc) option,
-                 loc : S.loc}
-    | LIMIT of {limit : query option * S.loc,
-                offset : (query * S.loc) option,
-                loc : S.loc}
-    | SELECT of S.distinct option * ((S.label * query) list * S.loc) * S.loc
-    | QUERY of {select : query,
-                from : query,
-                correlate : {outer : S.label list, inner : S.label list} option,
-                whr : query option,
-                groupBy : group_by option,
-                orderBy : query option,
-                limit : query option,
-                loc : S.loc}
+    | OFFSET of
+      {offset : query * S.row_rows * S.loc,
+       fetch : (S.first_next * query option * S.row_rows * S.loc) option,
+       loc : S.loc}
+    | LIMIT of
+      {limit : query option * S.loc,
+       offset : (query * S.loc) option,
+       loc : S.loc}
+    | SELECT of S.distinct_all option * ((P.label * query) list * S.loc) * S.loc
+    | QUERY of
+      {select : query,
+       from : query,
+       correlate : {outer : P.label list, inner : P.label list} option,
+       whr : query option,
+       groupBy : group_by option,
+       orderBy : query option,
+       limit : query option,
+       loc : S.loc}
     | QUERY_COMMAND of query
-    | INSERT_VALUES of {table : table_selector,
-                        labels : S.label list,
-                        values : ((query option * S.loc) list * S.loc) list,
-                        loc : S.loc}
-    | INSERT_SELECT of {table : table_selector,
-                        labels : S.label list option,
-                        query : query,
-                        loc : S.loc}
-    | INSERT_VAR of {table : table_selector,
-                     labels : S.label list,
-                     values : S.longsymbol * S.loc,
-                     loc : S.loc}
-    | UPDATE of {table : table_selector,
-                 setList : (S.label * query) list,
-                 whr : query option,
-                 loc : S.loc}
+    | INSERT_VALUES of
+      {table : table_selector,
+       labels : P.label list,
+       values : ((query option * S.loc) list * S.loc) list,
+       loc : S.loc}
+    | INSERT_SELECT of
+      {table : table_selector,
+       labels : P.label list option,
+       query : query,
+       loc : S.loc}
+    | INSERT_VAR of
+      {table : table_selector,
+       labels : P.label list,
+       values : P.longsymbol * S.loc,
+       loc : S.loc}
+    | UPDATE of
+      {table : table_selector,
+       setList : (P.label * query) list,
+       whr : query option,
+       loc : S.loc}
     | DELETE of {table : table_selector, whr : query option, loc : S.loc}
     | BEGIN of S.loc
     | COMMIT of S.loc
@@ -768,8 +785,8 @@ struct
 
   (* table expressions *)
   and table =
-      TABLE of table_selector * S.label option
-    | TABLE_AS of table * S.label * S.loc
+      TABLE of table_selector * P.label option
+    | TABLE_AS of table * P.label * S.loc
     | TABLE_SUBQUERY of query * S.loc
     | TABLE_JOIN of table * join * table * S.loc
 
@@ -781,7 +798,7 @@ struct
 
   (* table selector in the given database *)
   withtype table_selector =
-      {db : query, label : S.label, loc : S.loc}
+      {db : query, label : P.label, loc : S.loc}
 
   and group_by =
       {columns : column2set,
@@ -1526,9 +1543,9 @@ struct
   fun elabEmbed (env as {elabAbsynExp, ...}:env) ty (exp, loc) =
       case exp of
         A.EXPAPP ([atexp], loc) => elabEmbed env ty (atexp, loc)
-      | A.EXPSQL (S.SQL sql, loc) =>
+      | A.EXPSQL (S.SQL (sql, loc)) =>
         let
-          val (ty2, (ret1, query)) = elabSQL env (sql, loc)
+          val (ty2, (ret1, query)) = elabSQL env sql
           val (ret2, query) =
               if ty = ty2
               then (emptyRet, query)
@@ -1560,18 +1577,23 @@ struct
         elabApp env left args
       end
 
-  and elabSpine env (Fixity.TERM (S.PARENID id, loc1) :: t) =
+  and elabSpine
+        env
+        (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: t) =
       let
         val (ret1, q1) = elabSpine env t
         val (ret2, q1) = toSQL q1
-        val loc = Loc.mergeLocs (loc1, getLoc q1)
+        val loc = Loc.mergeLocs (loc, getLoc q1)
       in
-        (merge [ret1, ret2], SQL (SQLAPP (true, id, q1, loc)))
+        (merge [ret1, ret2], SQL (SQLAPP (true, toSymbol id, q1, loc)))
       end
-    | elabSpine env (Fixity.TERM (S.ID id, loc1) :: arg :: args) =
+    | elabSpine
+        env
+        (Fixity.TERM (S.ID (false, ([id], _), _), loc1) :: arg :: args) =
       let
         val loc = Loc.mergeLocs (loc1, fexpToLoc arg)
         val (ret2, q2) = elabInfixExp env arg
+        val id = toSymbol id
       in
         case q2 of
           ML q2 =>
@@ -1579,8 +1601,8 @@ struct
         | SQL q2 =>
           elabApp env (ret2, SQL (SQLAPP (false, id, q2, loc))) args
       end
-    | elabSpine env (Fixity.TERM (S.ID id, loc) :: nil) =
-      (emptyRet, ML (MLEXP ([id], loc)))
+    | elabSpine env (Fixity.TERM (S.ID (false, ([id], _), _), loc) :: nil) =
+      (emptyRet, ML (MLEXP ([toSymbol id], loc)))
     | elabSpine env (exp :: exps) =
       elabApp env (elabInfixExp env exp) exps
     | elabSpine env nil = raise Bug.Bug "elabSpine"
@@ -1588,7 +1610,7 @@ struct
   and elabInfixExp env exp =
       case exp of
         Fixity.APP _ => elabSpine env (getSpine exp)
-      | Fixity.OP2 (Fixity.TERM (S.ID id, _), (x, y), loc) =>
+      | Fixity.OP2 (Fixity.TERM (S.ID (false, ([id], _), _), _), (x, y), loc) =>
         let
           val (ret1, q1) = elabInfixExp env x
           val (ret2, q2) = elabInfixExp env y
@@ -1596,7 +1618,7 @@ struct
           case (q1, q2) of
             (ML q1, ML q2) =>
             (merge [ret1, ret2],
-             ML (APP (MLEXP ([id], SymbolWithLoc.symbolToLoc id),
+             ML (APP (MLEXP ([toSymbol id], #2 id),
                       TUPLE ([q1, q2], loc),
                       loc)))
           | _ =>
@@ -1604,7 +1626,8 @@ struct
               val (ret3, q1) = toSQL q1
               val (ret4, q2) = toSQL q2
             in
-              (merge [ret1, ret3, ret2, ret4], SQL (APPOP2 (id, q1, q2, loc)))
+              (merge [ret1, ret3, ret2, ret4],
+               SQL (APPOP2 (toSymbol id, q1, q2, loc)))
             end
         end
       | Fixity.OP2 _ => raise Bug.Bug "elabInfixExp: OP2"
@@ -1619,10 +1642,11 @@ struct
         in
           (ret, SQL q)
         end
-      | S.COLUMN1 (x, loc) =>
+      | S.COLUMN1 ((x, _), loc) =>
         (emptyRet, SQL (COLUMN1 (x, loc)))
-      | S.COLUMN2 (x, loc) =>
-        ({binds = nil, column2set = singleton x}, SQL (COLUMN2 (x, loc)))
+      | S.COLUMN2 ((x, _), (y, _), loc) =>
+        ({binds = nil, column2set = singleton (x, y)},
+         SQL (COLUMN2 ((x, y), loc)))
       | S.CONST (A.INT n, loc) => (emptyRet, ML (CONST (INT n, loc)))
       | S.CONST (A.WORD n, loc) => (emptyRet, ML (CONST (WORD n, loc)))
       | S.CONST (A.STRING s, loc) => (emptyRet, ML (CONST (STRING s, loc)))
@@ -1641,9 +1665,7 @@ struct
       | S.NULL loc => (emptyRet, SQL (NULL loc))
       | S.TRUE loc => (emptyRet, ML (CONST (BOOL true, loc)))
       | S.FALSE loc => (emptyRet, ML (CONST (BOOL false, loc)))
-      | S.ID id => (emptyRet, ML (MLEXP ([id], SymbolWithLoc.symbolToLoc id)))
-      | S.OPID (id, loc) => (emptyRet, ML (MLEXP (id, loc)))
-      | S.PARENID id => (emptyRet, ML (MLEXP ([id], SymbolWithLoc.symbolToLoc id)))
+      | S.ID (_, id, loc) => (emptyRet, ML (MLEXP (toLongsymbol id, loc)))
       | S.OP1 (op1, e, loc) =>
         let
           val (ret, q) = elabExp env e
@@ -1669,7 +1691,8 @@ struct
         end
       | S.APP (exps, loc) =>
         let
-          fun getLongsymbol (S.ID id) = SymbolWithLoc.toLongsymbol [id]
+          fun getLongsymbol (S.ID (_, id, _)) =
+              SymbolWithLoc.toLongsymbol (toLongsymbol id)
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
           fun error (Fixity.Conflict, _, loc) =
               UserErrorUtils.enqueueError
@@ -1681,8 +1704,8 @@ struct
               UserErrorUtils.enqueueError
                 (loc, E.EndWithInfixID (getLongsymbol exp))
           val src =
-              map (fn exp as S.ID id =>
-                      (case SymbolEnv.find (#fixEnv env, #symbol id) of
+              map (fn exp as S.ID (false, ([id], _), _) =>
+                      (case SymbolEnv.find (#fixEnv env, #1 id) of
                          SOME (x,loc) => (x, exp, expLoc exp)
                        | NONE => (Fixity.NONFIX, exp, expLoc exp))
                     | exp => (Fixity.NONFIX, exp, expLoc exp))
@@ -1710,18 +1733,19 @@ struct
               (merge rets, SQL (TUPLE (exps, loc)))
             end
         end
-      | S.EXISTS (query, loc) =>
+      | S.KWEXP (_, S.EXISTS (query, loc), _) =>
         let
           val (ret, q) = elabQuery env query
         in
           (ret, SQL (EXISTS (q, loc)))
         end
-      | S.EXP_SUBQUERY (query, loc) =>
+      | S.EXP_SUBQUERY (_, query, loc) =>
         let
           val (ret, q) = elabQuery env query
         in
           (ret, SQL (EXP_SUBQUERY (q, loc)))
         end
+      | S.PAREN (exp, _) => elabExp env exp
 
   and elabExpToQuery env exp =
       let
@@ -1737,50 +1761,38 @@ struct
       in
         (ret, WHERE (q, loc))
       end
+    | elabWhere env (S.WHERE_EMBED exploc) =
+      elabEmbed env WHRty exploc
 
-  and elabWhereClause env (S.EMBED exploc) = elabEmbed env WHRty exploc
-    | elabWhereClause env (S.CLAUSE clause) = elabWhere env clause
-
-  and elabJoin env join =
-      case join of
-        S.CROSS_JOIN => (emptyRet, CROSS_JOIN)
-      | S.NATURAL_JOIN => (emptyRet, NATURAL_JOIN)
-      | S.INNER_JOIN (b, exp) =>
-        let
-          val (ret, q) = elabExpToQuery env exp
-        in
-          (ret, INNER_JOIN (b, q))
-        end
-
-  and elabTableId env ({db, label, loc}:S.table_selector) =
+  and elabTableId env ((db as (_, loc1), label, loc):S.table_selector) =
       let
-        val exploc = (A.EXPID [db], SymbolWithLoc.symbolToLoc db)
+        val exploc = (A.EXPID (false, ([db], loc1), loc1), loc1)
         val (ret, db) = elabEmbed env DBty exploc
       in
-        (ret, {db = db, label = label, loc = loc})
+        (ret, {db = db, label = #1 label, loc = loc})
       end
 
   and elabTable env table =
       case table of
-        S.TABLE_AS (S.TABLE t, label, loc) =>
+        S.TABLE_AS (S.TABLE t, (label, _), loc) =>
         let
           val (ret, q) = elabTableId env t
         in
           (false, (ret, TABLE_AS (TABLE (q, NONE), label, loc)))
         end
-      | S.TABLE t =>
+      | S.TABLE (t as (_, (label, _), _)) =>
         let
           val (ret, q) = elabTableId env t
         in
-          (false, (ret, TABLE (q, SOME (#label t))))
+          (false, (ret, TABLE (q, SOME label)))
         end
-      | S.TABLE_SUBQUERY (query, loc) =>
+      | S.TABLE_SUBQUERY (_, query, loc) =>
         let
           val (ret, q) = elabQuery env query
         in
           (false, (ret, TABLE_SUBQUERY (q, loc)))
         end
-      | S.TABLE_AS (tab, label, loc) =>
+      | S.TABLE_AS (tab, (label, _), loc) =>
         let
           val (hasCrossJoin, (ret, tab)) = elabTable env tab
         in
@@ -1789,20 +1801,38 @@ struct
           else ();
           (hasCrossJoin, (ret, TABLE_AS (tab, label, loc)))
         end
-      | S.TABLE_JOIN (tab1, join, tab2, loc) =>
+      | S.TABLE_INNER_JOIN (tab1, inner, tab2, onExp, loc) =>
         let
           val (hasCrossJoin1, (ret1, tab1)) = elabTable env tab1
           val (hasCrossJoin2, (ret2, tab2)) = elabTable env tab2
-          val (ret3, join) = elabJoin env join
-          val isNatural = case join of NATURAL_JOIN => true | _ => false
+          val (ret3, q) = elabExpToQuery env onExp
         in
-          if isNatural andalso (hasCrossJoin1 orelse hasCrossJoin2)
+          (true,
+           (merge [ret1, ret2, ret3],
+            TABLE_JOIN (tab1, INNER_JOIN ({inner = inner}, q), tab2, loc)))
+        end
+      | S.TABLE_CROSS_JOIN (tab1, tab2, loc) =>
+        let
+          val (hasCrossJoin1, (ret1, tab1)) = elabTable env tab1
+          val (hasCrossJoin2, (ret2, tab2)) = elabTable env tab2
+        in
+          (true,
+           (merge [ret1, ret2],
+            TABLE_JOIN (tab1, CROSS_JOIN, tab2, loc)))
+        end
+      | S.TABLE_NATURAL_JOIN (tab1, tab2, loc) =>
+        let
+          val (hasCrossJoin1, (ret1, tab1)) = elabTable env tab1
+          val (hasCrossJoin2, (ret2, tab2)) = elabTable env tab2
+        in
+          if hasCrossJoin1 orelse hasCrossJoin2
           then UserErrorUtils.enqueueError (loc, F.UnnaturalNaturalJoin)
           else ();
-          (not isNatural,
-           (merge [ret1, ret2, ret3],
-            TABLE_JOIN (tab1, join, tab2, loc)))
+          (false,
+           (merge [ret1, ret2],
+            TABLE_JOIN (tab1, NATURAL_JOIN, tab2, loc)))
         end
+      | S.TABLE_PAREN (tab, _) => elabTable env tab
 
   and elabTableList env tables =
       elabList (#2 o elabTable env) tables
@@ -1819,25 +1849,23 @@ struct
       in
         (SOME (RecordLabel.Set.fromList labels), (ret, FROM (tables, loc)))
       end
+    | elabFrom env (S.FROM_EMBED exploc) =
+      (NONE, elabEmbed env FROMty exploc)
 
-  and elabFromClause env (S.EMBED exploc) = (NONE, elabEmbed env FROMty exploc)
-    | elabFromClause env (S.CLAUSE clause) = elabFrom env clause
-
-  and elabOrderBy env (S.ORDER_BY (keys, loc)) =
+  and elabOrderBy env (S.ORDERBY (keys, loc)) =
       let
         val (ret, keys) =
             elabList
               (fn ((b,e),a) => (b,(e,a)))
-              (map (fn (exp, ascdesc) => (elabExpToQuery env exp, ascdesc))
+              (map (fn (exp, ascdesc, _) => (elabExpToQuery env exp, ascdesc))
                    keys)
       in
         (ret, ORDERBY (keys, loc))
       end
+    | elabOrderBy env (S.ORDERBY_EMBED exploc) =
+      elabEmbed env ORDERBYty exploc
 
-  and elabOrderByClause env (S.EMBED exploc) = elabEmbed env ORDERBYty exploc
-    | elabOrderByClause env (S.CLAUSE clause) = elabOrderBy env clause
-
-  and elabOffset env (S.OFFSET {offset = (offset, rows, loc1), fetch, loc}) =
+  and elabOffset env (S.OFFSET ((offset, rows, loc1), fetch, loc)) =
       let
         val (ret1, offset) = elabExpToQuery env offset
         val (ret2, fetch) =
@@ -1853,8 +1881,10 @@ struct
         (merge [ret1, ret2],
          OFFSET {offset = (offset, rows, loc1), fetch = fetch, loc = loc})
       end
+    | elabOffset env (S.OFFSET_EMBED exploc) =
+      elabEmbed env OFFSETty exploc
 
-  and elabLimit env (S.LIMIT {limit = (limit, loc1), offset, loc}) =
+  and elabLimit env (S.LIMIT ((limit, loc1), offset, loc)) =
       let
         val (ret1, limit) = elabOpt (elabExpToQuery env) limit
         val (ret2, offset) =
@@ -1870,22 +1900,19 @@ struct
         (merge [ret1, ret2],
          LIMIT {limit = (limit, loc1), offset = offset, loc = loc})
       end
-
-  and elabLimitOrOffsetClause env (S.LIMIT_CLAUSE (S.EMBED exploc)) =
+    | elabLimit env (S.LIMIT_EMBED exploc) =
       elabEmbed env LIMITty exploc
-    | elabLimitOrOffsetClause env (S.OFFSET_CLAUSE (S.EMBED exploc)) =
-      elabEmbed env OFFSETty exploc
-    | elabLimitOrOffsetClause env (S.LIMIT_CLAUSE (S.CLAUSE limit)) =
-      elabLimit env limit
-    | elabLimitOrOffsetClause env (S.OFFSET_CLAUSE (S.CLAUSE offset)) =
-      elabOffset env offset
+
+  and elabLimitOrOffset env (S.LIMIT_CLAUSE limit) = elabLimit env limit
+    | elabLimitOrOffset env (S.OFFSET_CLAUSE offset) = elabOffset env offset
 
   and elabSelect env (S.SELECT (distinct, (selectList, loc1), loc2)) =
       let
         val (ret, selectList) =
             elabList
               (fn (l,(r,e)) => (r,(l,e)))
-              (map (fn (i,(k,e)) => (getOpt (k, i), elabExpToQuery env e))
+              (map (fn (i,(e, NONE, _)) => (i, elabExpToQuery env e)
+                     | (i,(e, SOME (l, _), _)) => (l, elabExpToQuery env e))
                    (RecordLabel.tupleList selectList))
         val _ = UserErrorUtils.checkRecordLabelDuplication
                   #1
@@ -1895,22 +1922,21 @@ struct
       in
         (ret, SELECT (distinct, (selectList, loc1), loc2))
       end
+    | elabSelect env (S.SELECT_EMBED exploc) =
+      elabEmbed env SELECTty exploc
 
-  and elabSelectClause env (S.EMBED exp) = elabEmbed env SELECTty exp
-    | elabSelectClause env (S.CLAUSE clause) = elabSelect env clause
-
-  and elabGroupByClause env (S.GROUP_BY ((groupBy, loc), having)) =
+  and elabGroupBy env (S.GROUPBY ((groupBy, loc), having, _)) =
       let
         val (ret1, keys) =
             case groupBy of
               [S.CONST (A.UNITCONST, _)] => (emptyRet, nil)
             | _ => elabList (elabExpToQuery env) groupBy
-        val (ret2, having) = elabOpt (elabHavingClause env) having
+        val (ret2, having) = elabOpt (elabHaving env) having
       in
         (merge [ret1, ret2], {groupBy = (keys, loc), having = having})
       end
 
-  and elabHavingClause env (S.HAVING (exp, loc)) =
+  and elabHaving env ((exp, loc) : A.exp S.having_clause) =
       let
         val (ret, q) = elabExpToQuery env exp
       in
@@ -1936,7 +1962,7 @@ struct
   and elabQuery env (S.QUERY (select, from, whr, groupBy, orderBy, limit,
                               loc)) =
       let
-        val (fromLabels, (ret2, from)) = elabFromClause env from
+        val (fromLabels, (ret2, from)) = elabFrom env from
         val (innerLabels, outerLabels) =
             case (fromLabels, #fromLabels env) of
               (SOME inner, SOME outer) =>
@@ -1951,11 +1977,11 @@ struct
             | _ => NONE
 
         val env = env # {fromLabels = innerLabels}
-        val (ret1, select) = elabSelectClause env select
-        val (ret3, whr) = elabOpt (elabWhereClause env) whr
-        val (ret4, groupBy) = elabOpt (elabGroupByClause env) groupBy
-        val (ret5, orderBy) = elabOpt (elabOrderByClause env) orderBy
-        val (ret6, limit) = elabOpt (elabLimitOrOffsetClause env) limit
+        val (ret1, select) = elabSelect env select
+        val (ret3, whr) = elabOpt (elabWhere env) whr
+        val (ret4, groupBy) = elabOpt (elabGroupBy env) groupBy
+        val (ret5, orderBy) = elabOpt (elabOrderBy env) orderBy
+        val (ret6, limit) = elabOpt (elabLimitOrOffset env) limit
 
         val groupBy =
             Option.map
@@ -1975,15 +2001,16 @@ struct
                 limit = limit,
                 loc = loc})
       end
-    | elabQuery env (S.QUERY_EMBED exp) =
-      elabEmbed env QUERYty exp
+    | elabQuery env (S.QUERY_EMBED exploc) =
+      elabEmbed env QUERYty exploc
 
-  and elabInsertValue env (value, loc) =
+  and elabInsertValue env (S.VALUE exp) =
       let
-        val (ret, q) = elabOpt (elabExpToQuery env) value
+        val (ret, q) = elabExpToQuery env exp
       in
-        (ret, (q, loc))
+        (ret, (SOME q, expLoc exp))
       end
+    | elabInsertValue env (S.DEFAULT loc) = (emptyRet, (NONE, loc))
 
   and elabInsertRow env numLabels (row, loc:S.loc) =
       (if length row = numLabels
@@ -1996,8 +2023,8 @@ struct
         (fn ((b,r),l) => (b,(r,l)))
         (map (elabInsertRow env numLabels) values)
 
-  and elabSQL env (sql, loc) =
-      case sql of
+  and elabSQLcon env sqlcon =
+      case sqlcon of
         S.SEL select => (SELECTty, elabSelect env select)
       | S.FRM from => (FROMty, #2 (elabFrom env from))
       | S.WHR whr => (WHRty, elabWhere env whr)
@@ -2005,11 +2032,11 @@ struct
       | S.OFF offset => (OFFSETty, elabOffset env offset)
       | S.LMT limit => (LIMITty, elabLimit env limit)
       | S.QRY query => (QUERYty, elabQuery env query)
-      | S.INSERT_LABELED (tid, (labels, loc), values) =>
+      | S.INSERT_LABELED (tid, (labels, loc), values, loc2) =>
         let
           val (ret1, table) = elabTableId env tid
           val _ = UserErrorUtils.checkRecordLabelDuplication
-                    (fn x => x)
+                    (fn (x, _) => x)
                     labels
                     loc
                     F.DuplicateSQLInsertLabel
@@ -2021,25 +2048,31 @@ struct
             in
               (COMMANDty,
                (merge [ret1, ret2],
-                INSERT_SELECT {table = table, labels = SOME labels, query = q,
-                              loc = loc}))
+                INSERT_SELECT {table = table,
+                               labels = SOME (map #1 labels),
+                               query = q,
+                               loc = loc2}))
             end
-          | S.INSERT_VALUES values =>
+          | S.INSERT_VALUES (values, _) =>
             let
               val (ret2, q) = elabInsertValues env (length labels) values
             in
               (COMMANDty,
                (merge [ret1, ret2],
-                INSERT_VALUES {table = table, labels = labels, values = q,
-                               loc = loc}))
+                INSERT_VALUES {table = table,
+                               labels = map #1 labels,
+                               values = q,
+                               loc = loc2}))
             end
-          | S.INSERT_VAR (id, loc) =>
+          | S.INSERT_VAR ((_, id, _), loc) =>
             (COMMANDty,
              (ret1,
-              INSERT_VAR {table = table, labels = labels, values = (id, loc),
+              INSERT_VAR {table = table,
+                          labels = map #1 labels,
+                          values = (toLongsymbol id, loc),
                           loc = loc}))
         end
-      | S.INSERT_NOLABEL (tid, query) =>
+      | S.INSERT_NOLABEL (tid, query, loc) =>
         let
           val (ret1, table) = elabTableId env tid
           val (ret2, q) = elabQuery env query
@@ -2048,58 +2081,63 @@ struct
            (merge [ret1, ret2],
             INSERT_SELECT {table = table, labels = NONE, query = q, loc = loc}))
         end
-      | S.UPDATE (tid, (sets, loc), whr) =>
+      | S.UPDATE (tid, (sets, loc), whr, loc2) =>
         let
           val (ret1, table) = elabTableId env tid
           val _ = UserErrorUtils.checkRecordLabelDuplication
-                    #1
+                    (fn ((l, _), _, _) => l)
                     sets
                     loc
                     F.DuplicateSQLSetLabel
           val (ret2, sets) =
-              elabList (fn (l,(b,e)) => (b,(l,e)))
-                       (map (fn (l,e) => (l, elabExpToQuery env e)) sets)
+              elabList
+                (fn (l,(b,e)) => (b,(l,e)))
+                (map (fn ((l,_),e,_) => (l, elabExpToQuery env e)) sets)
           val (ret3, whr) =
-              elabOpt (elabWhereClause env) whr
+              elabOpt (elabWhere env) whr
         in
           (COMMANDty,
            (merge [ret1, ret2, ret3],
-            UPDATE {table = table, setList = sets, whr = whr, loc = loc}))
+            UPDATE {table = table, setList = sets, whr = whr, loc = loc2}))
         end
-      | S.DELETE (tid, whr) =>
+      | S.DELETE (tid, whr, loc) =>
         let
           val (ret1, table) = elabTableId env tid
-          val (ret2, whr) = elabOpt (elabWhereClause env) whr
+          val (ret2, whr) = elabOpt (elabWhere env) whr
         in
           (COMMANDty,
            (merge [ret1, ret2],
             DELETE {table = table, whr = whr, loc = loc}))
         end
-      | S.BEGIN => (COMMANDty, (emptyRet, BEGIN loc))
-      | S.COMMIT => (COMMANDty, (emptyRet, COMMIT loc))
-      | S.ROLLBACK => (COMMANDty, (emptyRet, ROLLBACK loc))
+      | S.BEGIN loc => (COMMANDty, (emptyRet, BEGIN loc))
+      | S.COMMIT loc => (COMMANDty, (emptyRet, COMMIT loc))
+      | S.ROLLBACK loc => (COMMANDty, (emptyRet, ROLLBACK loc))
+
+  and elabSQL env sql =
+      case sql of
+        S.CON (_, sqlcon, _) => elabSQLcon env sqlcon
       | S.EXP exp => (EXPty, elabExpToQuery env exp)
-      | S.SEQ [S.CLAUSE (sql, loc)] => elabSQL env (sql, loc)
-      | S.SEQ seq => (COMMANDty, elabSeq env seq)
+      | S.SEQ (seq, _) => (COMMANDty, elabSeq env seq)
+      | S.SQLPAREN (sql, _) => elabSQL env sql
 
   and elabSeq env nil = raise Bug.Bug "elabSeq: nil"
-    | elabSeq env [S.CLAUSE sqlloc] =
-      (case elabSQL env sqlloc of
+    | elabSeq env [S.STEP (_, sql, _)] =
+      (case elabSQLcon env sql of
          (QUERYty, (ret, query)) => (ret, QUERY_COMMAND query)
        | (_, (ret, query)) => (ret, query))
-    | elabSeq env [S.EMBED exploc] = elabEmbed env COMMANDty exploc
-    | elabSeq env (S.CLAUSE sqlloc :: seq) =
+    | elabSeq env [S.STEP_EMBED exploc] = elabEmbed env COMMANDty exploc
+    | elabSeq env (S.STEP (_, sql, loc) :: seq) =
       let
-        val (ty, (ret1, query1)) = elabSQL env sqlloc
+        val (ty, (ret1, query1)) = elabSQLcon env sql
         val query1 =
             case ty of
               QUERYty => QUERY_COMMAND query1
             | _ => query1
         val (ret2, query2) = elabSeq env seq
       in
-        (merge [ret1, ret2], SEQ (query1, query2, #2 sqlloc))
+        (merge [ret1, ret2], SEQ (query1, query2, loc))
       end
-    | elabSeq env (S.EMBED exploc :: seq) =
+    | elabSeq env (S.STEP_EMBED exploc :: seq) =
       let
         val (ret1, query1) = elabEmbed env COMMANDty exploc
         val (ret2, query2) = elabSeq env seq
@@ -2109,7 +2147,7 @@ struct
 
   fun sqlFn (pat, exp) =
       let
-        val t = Tyvar (SymbolWithLoc.generate ())
+        val t = Tyvar (#symbol (SymbolWithLoc.generate ()))
         val x = SymbolWithLoc.generate ()
         val patTy = Ty_db (TyWild, TyID t)
         val expTy = Ty_command (TyWild, TyID t)
@@ -2121,18 +2159,18 @@ struct
                     (Fun_sqleval (Var x) y))
       end
 
-  fun elabSqlexp (context as {elabPat, env}) (sqlexp, loc) =
+  fun elabSqlexp (context as {elabPat, env}) sqlexp =
       case sqlexp of
-        S.SQL sql =>
+        S.SQL (sql, loc) =>
         let
-          val (ty, (ret, query)) = elabSQL env (sql, loc)
+          val (ty, (ret, query)) = elabSQL env sql
         in
           makeBind ret (queryToExp query) loc
         end
-      | S.SQLFN (pat, sql) =>
+      | S.SQLFN (pat, sql, loc) =>
         let
           val pat = elabPat pat
-          val (ty, (ret, query)) = elabSQL env (sql, loc)
+          val (ty, (ret, query)) = elabSQL env sql
           val query =
               case ty of
                 QUERYty => QUERY_COMMAND query
@@ -2141,7 +2179,7 @@ struct
         in
           sqlFn (pat, makeBind ret bodyExp) loc
         end
-      | S.SQLSERVER (exp, schema) =>
+      | S.SQLSERVER (exp, schema, loc) =>
         Fun_sqlserver
           (case exp of
              NONE => String ""
@@ -2151,7 +2189,7 @@ struct
                                loc = loc}))
           loc
 
-  fun elaborateExp {elabExp, elabPat} fixEnv (sqlexp, loc) =
+  fun elaborateExp {elabExp, elabPat} fixEnv sqlexp =
       let
         val fixEnv =
             SymbolEnv.insert
@@ -2167,7 +2205,7 @@ struct
               (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, Loc.noloc))
         val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
       in
-        elabSqlexp {elabPat = elabPat, env = env} (sqlexp, loc)
+        elabSqlexp {elabPat = elabPat, env = env} sqlexp
       end
 
 end

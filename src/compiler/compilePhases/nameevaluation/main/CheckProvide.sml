@@ -26,6 +26,7 @@ local
 
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
+  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
 
   exception Fail
   fun raiseFail i = (U.print ( "CheckProvide Fail exception at " ^ (Int.toString i) ^ "\n"); raise Fail)
@@ -268,7 +269,7 @@ local
       end
     end
       
-  fun checkDatbindList path evalEnv env (datbinds:A.datbind list) =
+  fun checkDatbindList path evalEnv env (datbinds:PI.datbind list) =
       let
         val nameTstrTfunDatbindList =
             foldr
@@ -352,7 +353,7 @@ local
         in
           case body of
             (* val name : ty *)
-            A.VAL_EXTERN {ty} => 
+            PI.VAL_EXTERN {ty} =>
             let
                val externLongsymbol = internalLongsymbol
                val bodyTy = Ty.evalTy tvarEnv evalEnv ty handle e => raise e
@@ -543,7 +544,7 @@ local
              end (* val name : ty *)
 
           | (* val name = aliasPath *)
-            A.VALALIAS_EXTERN aliasPath =>
+            PI.VALALIAS_EXTERN aliasPath =>
             (case VP.checkProvideId(env, name) of
                NONE =>
                (EU.enqueueError
@@ -680,7 +681,7 @@ local
                 raiseFail 25)
             ) (* val symbol = symbol *)
           | (* val symbol = _builtin symbol : ty *)
-            A.VAL_BUILTIN {builtinSymbol, ty} =>
+            PI.VAL_BUILTIN {builtinSymbol, ty} =>
             (case BuiltinPrimitive.findPrimitive
                     (SymbolWithLoc.symbolToString builtinSymbol) of
                NONE =>
@@ -698,12 +699,12 @@ local
                       ty = Ty.evalTy tvarEnv evalEnv ty}),
                 {exportDecls=nil, bindDecls=nil}))
           | (* val symbol = case tyvar of ... *)
-            A.VAL_OVERLOAD overloadCase =>
+            PI.VAL_OVERLOAD overloadCase =>
             let
               (* check only *)
-              fun checkOverloadInstance (A.INST_OVERLOAD overloadCase) =
+              fun checkOverloadInstance (PI.INST_OVERLOAD overloadCase) =
                   ignore (checkOverloadCase overloadCase)
-                | checkOverloadInstance (A.INST_LONGVID {longsymbol}) =
+                | checkOverloadInstance (PI.INST_LONGVID {longsymbol}) =
                   case VP.checkProvideAliasId(name, evalEnv, longsymbol) of
                     SOME (I.IDEXVAR _) => ()
                   | SOME (I.IDBUILTINVAR _) => ()
@@ -755,7 +756,7 @@ local
         let
           val internalLongsymbol = path @ [name]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, isEq} => symbol)
+                    (fn (isEq, symbol) => toSymbol symbol)
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-240",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
@@ -807,7 +808,7 @@ val _ = U.print "*** PI.PIOPAQUE_TYPE in checkPidec\n"
 *)
           val internalLongsymbol = path @ [name]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, isEq} => symbol)
+                    (fn (isEq, symbol) => toSymbol symbol)
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-270",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars

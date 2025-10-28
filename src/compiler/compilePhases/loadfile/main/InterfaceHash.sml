@@ -9,7 +9,7 @@ structure InterfaceHash : sig
   val generate
       : {filename : Filename.filename,
          requires : InterfaceName.interface_name list,
-         topdecs : AbsynInterface.itopdec list}
+         topdecs : AbsynInterface.topdec list}
         -> InterfaceName.hash
   val emptyHash : unit -> InterfaceName.hash
 
@@ -17,76 +17,87 @@ end =
 struct
 
   structure A = AbsynInterface
-  val symbolToString = SymbolWithLoc.symbolToString
 
-  fun listNamesValbind prefix ({symbol, body, loc}:A.valbind) =
-      [prefix ^ ".V" ^ symbolToString symbol]
+  fun idToString (symbol, loc) = Symbol.toString symbol
 
-  fun listNamesTypbindTrans prefix {tyvars, symbol, ty, loc} =
-      [prefix ^ ".T" ^ symbolToString symbol]
+  fun valbindName (A.VAL_EXTERN (id, ty, loc)) = id
+    | valbindName (A.VAL_ALIAS (id, longid, loc)) = id
+    | valbindName (A.VAL_BUILTIN (id, id2, ty, loc)) = id
+    | valbindName (A.VAL_OVERLOAD (id, exp, loc)) = id
 
-  fun listNamesTypbind prefix typbind =
-      case typbind of 
-	  A.TRANSPARENT t => listNamesTypbindTrans prefix t
-	| A.OPAQUE {eq, tyvars, symbol, runtimeTy, loc} => [prefix ^ ".T" ^ symbolToString symbol]
+  fun listNamesValbind prefix valbind =
+      [prefix ^ ".V" ^ idToString (valbindName valbind)]
 
-  fun listNamesDatbind prefix ({tyvars, symbol, conbind, loc}:A.datbind) =
-      prefix ^ ".T" ^ symbolToString symbol ::
-      map (fn {symbol, ty, loc} => prefix ^ ".C" ^ symbolToString symbol) conbind
+  fun listNamesTypbind prefix (tyvars, id, ty, loc) =
+      [prefix ^ ".T" ^ idToString id]
+
+  fun listNamesTypdesc prefix (tyvars, id, impl, loc) =
+      [prefix ^ ".T" ^ idToString id]
+
+  fun listNamesTypbindOrTypdesc prefix typbind =
+      case typbind of
+        A.TYPBIND typbind => listNamesTypbind prefix typbind
+      | A.TYPDESC typdesc => listNamesTypdesc prefix typdesc
+
+  fun listNamesConbind prefix ((_, id, _), ty, loc) =
+      prefix ^ ".C" ^ idToString id
+
+  fun listNamesDatbind prefix (tyvars, id, conbind, loc) =
+      prefix ^ ".T" ^ idToString id :: map (listNamesConbind prefix) conbind
+
+  fun exbindName (A.EXBIND ((_, id, _), ty, loc)) = id
+    | exbindName (A.EXBINDREP ((_, id, _), longid, loc)) = id
 
   fun listNamesExbind prefix exbind =
-      case exbind of
-        A.EXNDEF {symbol, ty, loc} => [prefix ^ ".E" ^ symbolToString symbol]
-      | A.EXNREP {symbol, longsymbol, loc} => [prefix ^ ".E" ^ symbolToString symbol]
+      [prefix ^ ".E" ^ idToString (exbindName exbind)]
 
   fun listNamesDec prefix pidec =
       case pidec of
-        A.IVAL valbind =>
+        A.VAL (valbind, loc) =>
         listNamesValbind prefix valbind
-      | A.ITYPE typbinds =>
-        List.concat (map (listNamesTypbind prefix) typbinds)
-      | A.IDATATYPE {datbind, withType, loc} =>
-        List.concat (map (listNamesDatbind prefix) datbind
-                     @ map (listNamesTypbindTrans prefix) withType)
-      | A.ITYPEREP {symbol, longsymbol, loc} =>
-        [prefix ^ ".T" ^ symbolToString symbol]
-      | A.ITYPEBUILTIN {symbol, builtinSymbol, loc} =>
-        [prefix ^ ".T" ^ symbolToString symbol]
-      | A.IEXCEPTION exbinds =>
+      | A.TYPE (typbinds, loc) =>
+        List.concat (map (listNamesTypbindOrTypdesc prefix) typbinds)
+      | A.EQTYPE (typdescs, loc) =>
+        List.concat (map (listNamesTypdesc prefix) typdescs)
+      | A.DATATYPE (datbinds, typbinds, loc) =>
+        List.concat (map (listNamesDatbind prefix) datbinds
+                     @ map (listNamesTypbind prefix) typbinds)
+      | A.DATATYPEREP (id, longtycon, loc) =>
+        [prefix ^ ".T" ^ idToString id]
+      | A.TYPEBUILTIN (id, name, loc) =>
+        [prefix ^ ".T" ^ idToString id]
+      | A.EXCEPTION (exbinds, loc) =>
         List.concat (map (listNamesExbind prefix) exbinds)
-      | A.ISTRUCTURE strbind => listNamesStrbind prefix strbind
+      | A.STRUCTURE (strbind, loc) => listNamesStrbind prefix strbind
+      | A.SEMICOLON loc => nil
 
-  and listNamesStrbind prefix ({symbol, strexp, loc}:A.strbind) =
-      listNamesStrexp (prefix ^ ".S" ^ symbolToString symbol) strexp
+  and listNamesStrbind prefix (strid, strexp, loc) =
+      listNamesStrexp (prefix ^ ".S" ^ idToString strid) strexp
 
-  and listNamesStrexp prefix istrexp =
-      case istrexp of
-        A.ISTRUCT {decs, loc} =>
+  and listNamesStrexp prefix strexp =
+      case strexp of
+        A.STRBASIC (decs, loc) =>
         List.concat (map (listNamesDec prefix) decs)
-      | A.ISTRUCTREP {longsymbol, loc} => [prefix] (* CHECK THIS *)
-      | A.IFUNCTORAPP {functorSymbol, argument, loc} => [prefix] (* CHECK THIS *)
+      | A.STRID id => [prefix] (* CHECK THIS *)
+      | A.STRAPP (funid, longstrid, loc) => [prefix] (* CHECK THIS *)
 
-  fun listNamesFunbind ({functorSymbol, param, strexp, loc}:A.funbind) =
-      listNamesStrexp (".F" ^ symbolToString functorSymbol) strexp
-
-  fun fixityToString fixity =
-      case fixity of
-        A.INFIXL (SOME n) => "infix" ^ n
-      | A.INFIXL NONE => "infix"
-      | A.INFIXR (SOME n) => "infixr" ^ n
-      | A.INFIXR NONE => "infixr"
-      | A.NONFIX => "nonfix"
+  fun listNamesFunbind (funid, param, strexp, loc) =
+      listNamesStrexp (".F" ^ idToString funid) strexp
 
   fun listNamesTopdec itopdec =
       case itopdec of
-        A.IDEC dec => listNamesDec "" dec
-      | A.IFUNDEC funbind => listNamesFunbind funbind
-      | A.IINFIX {fixity, symbols, loc} =>
-        let
-          val prefix = fixityToString fixity ^ " "
-        in
-          map (fn x => prefix ^ symbolToString x) symbols
-        end
+        A.DEC dec => listNamesDec "" dec
+      | A.FUNCTOR (funbind, loc) => listNamesFunbind funbind
+      | A.INFIX (SOME n, ids, loc) =>
+        map (fn id => "infix" ^ n ^ " " ^ idToString id) ids
+      | A.INFIX (NONE, ids, loc) =>
+        map (fn id => "infix " ^ idToString id) ids
+      | A.INFIXR (SOME n, ids, loc) =>
+        map (fn id => "infixr" ^ n ^ " " ^ idToString id) ids
+      | A.INFIXR (NONE, ids, loc) =>
+        map (fn id => "infixr " ^ idToString id) ids
+      | A.NONFIX (ids, loc) =>
+        map (fn id => "nonfix " ^ idToString id) ids
 
   fun generate {filename, requires, topdecs} =
       let

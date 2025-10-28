@@ -29,8 +29,8 @@ in
      @formatter(PatternCalc.plpat) PatternCalc.format_plpat
      @formatter(PatternCalc.ffiTy) PatternCalc.format_ffiTy
      @formatter(RecordLabel.label) RecordLabel.format_label
-     @formatter(Absyn.ty) AbsynFormatter.format_ty
-     @formatter(Absyn.tvarKind) AbsynFormatter.format_tvarKind
+     @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty
+     @formatter(AbsynTy.kind) AbsynTyFormatter.format_kind
    *)
   exception
   (*%
@@ -1300,7 +1300,7 @@ in
      "(name evaluation" +d code ")" +d
      "invalid" +d "kind:" +d s
    *)
-  InvalidKind of code * Absyn.tvarKind
+  InvalidKind of code * AbsynTy.kind
 
   and
   (**
@@ -1312,7 +1312,7 @@ in
      +d "allowed" +d "in" +d "type" +d "declaration:"
      +d ty
    *)
-  FlexRecordNotAllowed of code * Absyn.ty
+  FlexRecordNotAllowed of code * AbsynTy.ty
 
   and
   (**

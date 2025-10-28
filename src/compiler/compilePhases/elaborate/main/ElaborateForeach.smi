@@ -6,9 +6,27 @@ _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 
 structure ElaborateForeach =
 struct
-  val elaborateExp
+  val elaborateForeachArray
       : {elabExp : Absyn.exp -> PatternCalc.plexp,
          elabPat : Absyn.pat -> PatternCalc.plpat}
-        -> Absyn.exp_foreach * Absyn.loc
+        -> Absyn.vid
+           * Absyn.exp
+           * Absyn.pat
+           * Absyn.exp
+           * Absyn.exp
+           * Absyn.loc
         -> PatternCalc.plexp
+
+  val elaborateForeachData
+      : {elabExp : Absyn.exp -> PatternCalc.plexp,
+         elabPat : Absyn.pat -> PatternCalc.plpat}
+        -> Absyn.vid
+           * Absyn.exp
+           * Absyn.exp
+           * Absyn.pat
+           * Absyn.exp
+           * Absyn.exp
+           * Absyn.loc
+        -> PatternCalc.plexp
+
 end

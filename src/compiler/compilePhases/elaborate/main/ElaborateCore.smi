@@ -1,6 +1,7 @@
 _require local "../../../../basis.smi"
 
 _require       "../../../compilerIRs/absyn/main/Absyn.smi"
+_require       "../../../compilerIRs/absyn/main/AbsynUtils.smi"
 _require       "../../../compilerIRs/absyn/main/Fixity.smi"
 _require       "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
@@ -19,7 +20,7 @@ structure ElaborateCore =
   struct
     val checkReservedNameForConstructorBind : SymbolWithLoc.symbol -> unit
     val checkReservedNameForValBind : SymbolWithLoc.symbol -> unit
-    val elabFFITy : Absyn.ffiTy -> PatternCalc.ffiTy
+    val elabFFITy : Absyn.ffi_ty -> PatternCalc.ffiTy
     val elabExp : (Fixity.fixity * Loc.loc) SymbolEnv.map
                   -> Absyn.exp
                   -> PatternCalc.plexp

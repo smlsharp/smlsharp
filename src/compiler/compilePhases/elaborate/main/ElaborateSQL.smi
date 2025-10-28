@@ -21,6 +21,6 @@ structure ElaborateSQL =
          : {elabExp : Absyn.exp -> PatternCalc.plexp,
             elabPat : Absyn.pat -> PatternCalc.plpat}
            -> (Fixity.fixity * Loc.loc) SymbolEnv.map
-           -> (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp * Loc.loc
+           -> (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp
            -> PatternCalc.plexp
   end

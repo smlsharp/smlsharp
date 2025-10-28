@@ -15,14 +15,15 @@ _require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
-_require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 
 structure ElaborateInterface =
   struct
     type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
     val elaborate
-        : AbsynInterface.interface
+        : AbsynInterfaceLoaded.interface
           -> {interface : PatternCalcInterface.interface,
               requireFixEnv : fixEnv,
               provideFixEnv : fixEnv,

@@ -27,6 +27,9 @@ struct
   structure A = Absyn
   structure PC = PatternCalc
 
+  fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = loc}
+  fun toLongsymbol ((ids,_):A.longvid) = map toSymbol ids
+
   (**
    * name given to an anonymous parameter signature of a functor.
    * Example:
@@ -52,44 +55,41 @@ struct
       end
 
   fun elabBinds elaborator elements =
-      map (fn (label, element) => (label, elaborator element)) elements
+      map (fn (label, element, _) => (toSymbol label, elaborator element)) elements
 
-  fun specListToSpecSeq loc specList =
+  fun specListToSpecSeq specList =
       let
         fun makeSeqSpec [] = raise Bug.Bug "nilspec found in elaborate"
           | makeSeqSpec [spec] = spec
           | makeSeqSpec (spec :: specs) =
-            PC.PLSPECSEQ(spec, makeSeqSpec specs, loc)
+            PC.PLSPECSEQ(spec, makeSeqSpec specs)
       in makeSeqSpec specList
       end
 
     fun elabSpec spec =
-      case spec of
-        A.SPECSEQ(A.SPECEMPTY, spec, loc) => elabSpec spec
-      | A.SPECSEQ(spec, A.SPECEMPTY, loc) => elabSpec spec
-      | A.SPECSEQ(spec1, spec2, loc) =>
-          PC.PLSPECSEQ(elabSpec spec1, elabSpec spec2, loc)
-      | A.SPECVAL(valBinds, loc) =>
+       case spec of
+         A.SPECVAL(valBinds, loc) =>
           let
             val _ = checkSymbolDuplication
-                        #1
+                        (toSymbol o #1)
                         valBinds E.DuplicateValDesc
             val _ =
-                app (fn (vid, ty) =>
+                app (fn (vid, ty, _) =>
                         ElaborateCore.checkReservedNameForValBind
-                          vid)
+                          (toSymbol vid))
                     valBinds
             val specs =
-                map (fn (vid, ty) => PC.PLSPECVAL (emptyTvars, vid, ty, loc))
+                map (fn (vid, ty, _) => PC.PLSPECVAL (emptyTvars, toSymbol vid, ty, loc))
                     valBinds
           in
-            specListToSpecSeq loc specs
+            specListToSpecSeq specs
           end
       | A.SPECTYPE(tydescs, loc) => 
           let
             val _ =
                 UserErrorUtils.checkSymbolDuplication
-                  #2 tydescs E.DuplicateTypDesc
+                  (toSymbol o #2) tydescs E.DuplicateTypDesc
+            val tydescs = map (fn ((tvars, _), symbol, _) => (tvars, toSymbol symbol)) tydescs
           in
             PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=loc}
           end
@@ -103,23 +103,24 @@ struct
             PC.PLSPECTYPE(tydescs, loc)
           end
 *)
-      | A.SPECDERIVEDTYPE(maniftypedescs, loc) =>
+      | A.SPECTYPEINC(maniftypedescs, loc) =>
           let 
             val _ =
               checkSymbolDuplication
-                  #2
+                  (toSymbol o #2)
                   maniftypedescs E.DuplicateTypDesc
-            fun elabTypeEquation (tvars, symbol, ty) = 
-                PC.PLSPECTYPEEQUATION ((tvars, symbol, ty), loc)
+            fun elabTypeEquation ((tvars, _), symbol, ty, _) =
+                PC.PLSPECTYPEEQUATION ((tvars, toSymbol symbol, ty), loc)
           in 
-            specListToSpecSeq loc (map elabTypeEquation maniftypedescs)
+            specListToSpecSeq (map elabTypeEquation maniftypedescs)
           end
       | A.SPECEQTYPE(tydescs, loc) => 
           let
             val _ =
                 UserErrorUtils.checkSymbolDuplication
-                  #2
+                  (toSymbol o #2)
                   tydescs E.DuplicateTypDesc
+            val tydescs = map (fn ((tvars, _), symbol, _) => (tvars, toSymbol symbol)) tydescs
           in
             PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=loc}
           end
@@ -137,107 +138,122 @@ struct
           let
             val _ =
               checkSymbolDuplication
-                  #2
+                  (toSymbol o #2)
                   dataDescs E.DuplicateTypDesc
             fun check (tvar, name, conDescs, loc) = 
                 (
                  UserErrorUtils.checkSymbolDuplication
-                   (fn (con, ty, loc) => con)
+                   (fn (con, ty, loc) => toSymbol con)
                    conDescs E.DuplicateConstructorNameInDatatype;
                  app (fn (con, ty, loc) =>
                          ElaborateCore.checkReservedNameForConstructorBind
-                           con)
+                           (toSymbol con))
                    conDescs;
                  ()
                 )
             val _ = map check dataDescs
           in
             PC.PLSPECDATATYPE
-              (map (fn (tyvars, symbol, con, loc) =>
-                       {tyvars = tyvars, loc = loc, symbol = symbol,
-                        conbind = map (fn (id,ty, loc) => {symbol=id, ty=ty, loc=loc}) con})
+              (map (fn ((tyvars, _), symbol, con, loc) =>
+                       {tyvars = tyvars, loc = loc, symbol = toSymbol symbol,
+                        conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=loc}) con})
                    dataDescs,
                loc)
           end
-      | A.SPECREPLIC(tyCon, longTyCon, loc) =>
-          PC.PLSPECREPLIC(tyCon, longTyCon, loc)
+      | A.SPECDATATYPEREP(tyCon, longTyCon, loc) =>
+          PC.PLSPECREPLIC(toSymbol tyCon, toLongsymbol longTyCon, loc)
       | A.SPECEXCEPTION(exnDescs, loc) =>
           let
             val _ = 
               checkSymbolDuplication
-                  #1
+                  (toSymbol o #1)
                   exnDescs E.DuplicateConstructorNameInException
             val _ =
               app (fn (con, ty, loc) =>
                       ElaborateCore.checkReservedNameForConstructorBind
-                        con)
+                        (toSymbol con))
                   exnDescs;
             val exnDescs =
-                map (fn (symbol, tyOpt, loc) => (symbol, tyOpt, loc)) exnDescs
+                map (fn (symbol, tyOpt, loc) => (toSymbol symbol, tyOpt, loc)) exnDescs
           in
             PC.PLSPECEXCEPTION(exnDescs, loc)
           end
-      | A.SPECSTRUCT(strdescs, loc) => 
+      | A.SPECSTRUCTURE(strdescs, loc) =>
           let
-            val _ = checkSymbolDuplication #1 strdescs E.DuplicateStrDesc
+            val _ = checkSymbolDuplication (toSymbol o #1) strdescs E.DuplicateStrDesc
           in
             PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs, 
                              loc)
           end
       | A.SPECINCLUDE(sigexp, loc)=>
         PC.PLSPECINCLUDE(elabSigExp sigexp, loc)
-      | A.SPECDERIVEDINCLUDE(sigids, loc) => 
+      | A.SPECINCLUDE_ID(sigids, loc) =>
           let
             fun elabSigID sigid =
-                PC.PLSPECINCLUDE(PC.PLSIGID sigid, loc)
+                PC.PLSPECINCLUDE(PC.PLSIGID (toSymbol sigid), loc)
           in
-            specListToSpecSeq loc (map elabSigID sigids)
+            specListToSpecSeq (map elabSigID sigids)
           end
-      | A.SPECSHARE(spec, longTyCons, loc) => 
-          PC.PLSPECSHARE (elabSpec spec, longTyCons, loc)
-      | A.SPECSHARESTR(spec, longstrids, loc) => 
-          PC.PLSPECSHARESTR (elabSpec spec, longstrids, loc)
-      | A.SPECEMPTY => PC.PLSPECEMPTY
+      | A.SPECSHARINGTYPE(spec, longTyCons, loc) =>
+          PC.PLSPECSHARE (elabSpecList spec, map toLongsymbol longTyCons, loc)
+      | A.SPECSHARING(spec, longstrids, loc) =>
+          PC.PLSPECSHARESTR (elabSpecList spec, map toLongsymbol longstrids, loc)
+      | A.SPECSEMICOLON _ => PC.PLSPECEMPTY
 
+    and elabSpecList specs =
+        foldl
+          (fn (spec, z) =>
+              case (z, elabSpec spec) of
+                (z, PC.PLSPECEMPTY) => z
+              | (PC.PLSPECEMPTY, spec) => spec
+              | (z, spec) => PC.PLSPECSEQ (z, spec))
+          PC.PLSPECEMPTY
+          specs
 
     and elabSigExp sigexp =
-      case sigexp of 
-        A.SIGEXPBASIC(spec, loc) => PC.PLSIGEXPBASIC(elabSpec spec, loc)
-      | A.SIGID(sigid,loc) => PC.PLSIGID sigid
-      | A.SIGWHERE(sigexp, whtype, loc) =>
-        PC.PLSIGWHERE(elabSigExp sigexp, whtype, loc)
+        case sigexp of
+          A.SIGBASIC(spec, loc) => PC.PLSIGEXPBASIC(elabSpecList spec, loc)
+        | A.SIGID sigid => PC.PLSIGID (toSymbol sigid)
+        | A.SIGWHERE (sigexp, whtypes, loc) =>
+          foldl
+            (fn (((tvars, _), longsymbol, ty, _), plsigexp) =>
+                PC.PLSIGWHERE (plsigexp, (tvars, toLongsymbol longsymbol, ty), loc))
+            (elabSigExp sigexp)
+            whtypes
 
     and elabStrExp env strexp =
       case strexp of
-        A.STREXPBASIC(strdecs, loc) => 
+        A.STRBASIC(strdecs, loc) =>
           let val (plstrdecs, env') = elabStrDecs env strdecs
           in PC.PLSTREXPBASIC(plstrdecs, loc)
           end
-      | A.STRID(longid, loc) => PC.PLSTRID longid
-      | A.STRTRANCONSTRAINT(strexp, sigexp, loc) =>
+      | A.STRID longid => PC.PLSTRID (toLongsymbol longid)
+      | A.STRCONSTRAINT(strexp, A.TRANSPARENT, sigexp, loc) =>
           PC.PLSTRTRANCONSTRAINT
           (elabStrExp env strexp, elabSigExp sigexp, loc)
-      | A.STROPAQCONSTRAINT(strexp, sigexp, loc) =>
+      | A.STRCONSTRAINT(strexp, A.OPAQUE, sigexp, loc) =>
           PC.PLSTROPAQCONSTRAINT
           (elabStrExp env strexp, elabSigExp sigexp, loc)
-        | A.FUNCTORAPP(funid, A.STRID(longid, loc1), loc2) => 
-            PC.PLFUNCTORAPP(funid, longid, loc2)
-        | A.FUNCTORAPP(funid, strexp, loc) => 
+        | A.STRAPP(funid, A.FUNARG (A.STRID longid), loc) =>
+            PC.PLFUNCTORAPP(toSymbol funid, toLongsymbol longid, loc)
+        | A.STRAPP(funid, A.FUNARG strexp, loc) =>
             let
               val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
               val newStrLong = SymbolWithLoc.mkLongsymbol [newStrid] loc
               val newStrSymbol = SymbolWithLoc.mkSymbol newStrid loc
               val plstrexp = elabStrExp env strexp
-              val plstrbody = PC.PLFUNCTORAPP(funid, newStrLong, loc)
+              val plstrbody = PC.PLFUNCTORAPP(toSymbol funid, newStrLong, loc)
               val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp, loc)],loc)]
             in
               PC.PLSTRUCTLET(plstrDecs, plstrbody, loc)
             end
+        | A.STRAPP (funid, A.FUNARG_DEC strdecs, loc) =>
+          elabStrExp env (A.STRAPP (funid, A.FUNARG (A.STRBASIC (strdecs, loc)), loc))
 (*
       | A.FUNCTORAPP(funid, strexp, loc) => 
           PC.PLFUNCTORAPP(funid, elabStrExp env strexp, loc)
 *)
-      | A.STRUCTLET(strdecs, strexp, loc) =>
+      | A.STRLET(strdecs, strexp, loc) =>
           let
             val (plstrdecs, env') = elabStrDecs env strdecs
             val newenv = SymbolEnv.unionWith #1 (env', env)
@@ -247,33 +263,33 @@ struct
 
     and elabStrBind env strbind =
       case strbind of
-        A.STRBINDTRAN(strid, sigexp, strexp, loc) =>
+        (strid, SOME (A.TRANSPARENT, sigexp, _), strexp, loc) =>
           (
-           strid,
+           toSymbol strid,
            PC.PLSTRTRANCONSTRAINT
            (elabStrExp env strexp, elabSigExp sigexp, loc),
            loc
            )
-      | A.STRBINDOPAQUE(strid, sigexp, strexp, loc) =>
+      | (strid, SOME (A.OPAQUE, sigexp, _), strexp, loc) =>
           (
-           strid,
+           toSymbol strid,
            PC.PLSTROPAQCONSTRAINT
            (elabStrExp env strexp, elabSigExp sigexp, loc),
            loc
            )
-      | A.STRBINDNONOBSERV(strid, strexp, loc) =>
-          (strid, elabStrExp env strexp, loc)
+      | (strid, NONE, strexp, loc) =>
+          (toSymbol strid, elabStrExp env strexp, loc)
 
     and elabStrDec env strdec =
       case strdec of 
-        A.COREDEC(dec, loc) => 
+        A.STRDEC dec =>
           let val (pldecs, env) = ElaborateCore.elabDec env dec
-          in (map (fn pldec => PC.PLCOREDEC(pldec, loc)) pldecs, env)
+          in (map (fn pldec => PC.PLCOREDEC(pldec, AbsynUtils.decLoc dec)) pldecs, env)
           end
-      | A.STRUCTBIND(strbinds,loc) => 
+      | A.STRUCTURE(strbinds,loc) =>
           ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)],
            SymbolEnv.empty)
-      | A.STRUCTLOCAL(strdecs1, strdecs2, loc) =>
+      | A.STRLOCAL(strdecs1, strdecs2, loc) =>
           let
             val (plstrdecs1, env1) = elabStrDecs env strdecs1
             val (plstrdecs2, env2) =
@@ -281,6 +297,7 @@ struct
           in
             ([PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, loc)], env2)
           end
+      | A.STRSEMICOLON _ => (nil, SymbolEnv.empty)
 
     and elabStrDecs env strdecs = elabSequence elabStrDec env strdecs
 
@@ -288,83 +305,88 @@ struct
       case funbind of
         (* functor F(A:sig1) : sig2 = str  =>
                    functor F(A:sig1) = str : sig2 *)
-          A.FUNBINDTRAN (funid, strid, argSigexp, resSigexp, strexp, loc) =>
-        let val newStrexp = A.STRTRANCONSTRAINT(strexp, resSigexp, loc)
+        (funid, A.FUNPARAM (strid, argSigexp),
+         SOME (A.TRANSPARENT, resSigexp, _),
+         strexp, loc) =>
+        let val newStrexp = A.STRCONSTRAINT(strexp, A.TRANSPARENT, resSigexp, loc)
         in
           elabFunBind
             env
-            (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
+            (funid, A.FUNPARAM (strid, argSigexp), NONE, newStrexp, loc)
         end
           (* functor F(A:sig1) :> sig2 = str  =>
             functor F(A:sig1) = str :> sig2
            *)
-      | A.FUNBINDOPAQUE (funid, strid, argSigexp, resSigexp, strexp, loc) =>
-        let val newStrexp = A.STROPAQCONSTRAINT(strexp, resSigexp, loc)
+      | (funid, A.FUNPARAM (strid, argSigexp),
+         SOME (A.OPAQUE, resSigexp, _),
+         strexp, loc) =>
+        let val newStrexp = A.STRCONSTRAINT(strexp, A.OPAQUE, resSigexp, loc)
         in
           elabFunBind
             env
-            (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
+            (funid, A.FUNPARAM (strid, argSigexp), NONE, newStrexp, loc)
         end
       (* functor F(spec) : sig = str  =>
          functor F('x:sig spec end) = let open 'X in str:sig end 
        *)
-      | A.FUNBINDSPECTRAN(funid, spec, resSigexp, strexp, loc) =>
+      | (funid, A.FUNPARAM_SPEC spec,
+         SOME (A.TRANSPARENT, resSigexp, _),
+         strexp, loc) =>
         let
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
-              A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([ SymbolWithLoc.mkLongsymbol [newStrid] loc], loc), loc)],
-                 A.STRTRANCONSTRAINT(strexp,resSigexp,loc),
+              A.STRLET
+                ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
+                 A.STRCONSTRAINT(strexp,A.TRANSPARENT,resSigexp,loc),
                  loc)
-          val argSigExp = A.SIGEXPBASIC(spec, loc)
+          val argSigExp = A.SIGBASIC(spec, loc)
           val newFunBind =
-              A.FUNBINDNONOBSERV
-                (funid, SymbolWithLoc.mkSymbol newStrid loc, argSigExp, newStrexp, loc)
+              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp), NONE, newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
       (* functor F(spec) :> sig = str  =>
          functor F('x:sig spec end) = let open 'X in str:>sig end 
        *)
-      | A.FUNBINDSPECOPAQUE(funid, spec, resSigexp, strexp, loc) =>
+      | (funid, A.FUNPARAM_SPEC spec,
+         SOME (A.OPAQUE, resSigexp, _),
+         strexp, loc) =>
         let
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
-              A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([SymbolWithLoc.mkLongsymbol [newStrid] loc], loc), loc)],
-                 A.STROPAQCONSTRAINT(strexp,resSigexp,loc),
+              A.STRLET
+                ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
+                 A.STRCONSTRAINT(strexp,A.OPAQUE,resSigexp,loc),
                  loc)
-          val argSigExp = A.SIGEXPBASIC(spec, loc)
+          val argSigExp = A.SIGBASIC(spec, loc)
           val newFunBind =
-              A.FUNBINDNONOBSERV
-                (funid, SymbolWithLoc.mkSymbol newStrid loc, argSigExp, newStrexp, loc)
+              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp), NONE, newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
       (* functor F(spec) = str  =>
          functor F('x:sig spec end) = let open 'X in str end 
        *)
-      | A.FUNBINDSPECNONOBSERV (funid, spec, strexp, loc) =>
+      | (funid, A.FUNPARAM_SPEC spec, NONE, strexp, loc) =>
         let
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
-              A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([SymbolWithLoc.mkLongsymbol [newStrid] loc], loc), loc)], strexp, loc)
+              A.STRLET
+                ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))], strexp, loc)
           val newFunBind =
-              A.FUNBINDNONOBSERV
-                (funid, SymbolWithLoc.mkSymbol newStrid loc, A.SIGEXPBASIC(spec, loc), newStrexp, loc)
+              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), A.SIGBASIC(spec, loc)), NONE, newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
       (* functor F(A:sig) = str
        *)
-      | A.FUNBINDNONOBSERV(funid, strid, argSigexp, strexp, loc) =>
+      | (funid, A.FUNPARAM (strid, argSigexp), NONE, strexp, loc) =>
         let
           val newArgSigexp = elabSigExp argSigexp
           val newStrexp = elabStrExp env strexp
         in
-          {name = funid,
-           argStrName = strid,
+          {name = toSymbol funid,
+           argStrName = toSymbol strid,
            argSig=newArgSigexp,
            body=newStrexp,
            loc=loc}
@@ -372,17 +394,17 @@ struct
 
     and elabTopDec env topdec = 
       case topdec of 
-        A.TOPDECSTR(strdec, loc) => 
+        A.TOPSTRDEC strdec =>
           let val (plstrdecs, env') = elabStrDec env strdec
           in
-            (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, loc)) plstrdecs,
+            (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, AbsynUtils.strdecLoc strdec)) plstrdecs,
              env')
           end
-      | A.TOPDECSIG(sigdecs, loc) => 
+      | A.TOPSIGNATURE(sigdecs, loc) =>
           let val plsigdecs = elabBinds elabSigExp sigdecs
           in ([PC.PLTOPDECSIG(plsigdecs, loc)], SymbolEnv.empty)
           end
-      | A.TOPDECFUN(funbinds, loc) =>
+      | A.TOPFUNCTOR(funbinds, loc) =>
           let
             val plfunbinds = map (elabFunBind env) funbinds
           in ([PC.PLTOPDECFUN(plfunbinds, loc)
@@ -395,7 +417,7 @@ struct
           in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
           end
 *)
-      | A.TOPDECEXP (exp, loc) =>
+      | A.TOPEXP (exp, loc) =>
         ([PC.PLTOPDECSTR
             (PC.PLCOREDEC
                (PC.PDVAL

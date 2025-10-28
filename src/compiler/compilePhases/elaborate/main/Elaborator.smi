@@ -8,7 +8,7 @@ _require local "./UserTvarScope.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
@@ -19,12 +19,12 @@ struct
   val extendFixEnv : fixEnv * fixEnv -> fixEnv
   val elaborate :
       fixEnv
-      -> AbsynInterface.compile_unit
+      -> AbsynInterfaceLoaded.compile_unit
       -> fixEnv * PatternCalcInterface.compile_unit * UserError.errorInfo list
 
   val elaborateInterface :
       fixEnv
-      -> AbsynInterface.interface_unit
+      -> AbsynInterfaceLoaded.interface_unit
       -> fixEnv
          * PatternCalcInterface.interface_unit
          * UserError.errorInfo list

@@ -13,7 +13,7 @@ struct
   structure UE = UserError
   structure EU = UserErrorUtils
 
-  structure A = AbsynInterface
+  structure A = AbsynInterfaceLoaded
   structure E = ElaborateError
 
   type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map

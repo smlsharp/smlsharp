@@ -5,7 +5,7 @@ _require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../data/symbols/main/SymbolWithLoc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 
 _require local "../../../libs/toolchain/main/CoreUtils.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
@@ -14,7 +14,8 @@ _require local "../../../compilePhases/parser/main/Parser.smi"
 _require local "../../../compilePhases/parser/main/InterfaceParser.smi"
 _require local "./InterfaceHash.smi"
 _require local "./LoadFileError.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "../../../compilerIRs/absyn/main/RequirePath.smi"
@@ -31,7 +32,7 @@ struct
         -> Absyn.compile_unit
         -> InterfaceName.file_dependency
            * InterfaceName.toplevel_prelude
-           * AbsynInterface.compile_unit
+           * AbsynInterfaceLoaded.compile_unit
 
   (* load the given interface files for codes that require them *)
   val loadInterfaceFiles
@@ -39,7 +40,7 @@ struct
          loadMode : InterfaceName.file_load_mode}
         -> InterfaceName.source list
         -> InterfaceName.file_dependency
-           * AbsynInterface.interface_unit
+           * AbsynInterfaceLoaded.interface_unit
 
   val revisit
       : InterfaceName.file_dependency_root

@@ -16,56 +16,109 @@ struct
   (*% @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty *)
   type ty = AbsynTy.ty
 
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  (*% @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol*)
   type symbol = SymbolWithLoc.symbol
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
+  (*% @formatter(SymbolWithLoc.longsymbol) SymbolWithLoc.format_longsymbol*)
   type longsymbol = SymbolWithLoc.longsymbol
 
-  (*% @formatter(AbsynTy.tvar) AbsynTyFormatter.format_tvar *)
-  type tvar = AbsynTy.tvar
+  (*% @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar *)
+  type tvar = AbsynTy.tyvar
 
   (*% @formatter(PatternCalc.scopedTvars) PatternCalc.format_scopedTvars *)
   type scopedTvars = PatternCalc.scopedTvars
 
-  (*%
-   * @formatter(AbsynInterface.overloadCase) AbsynInterface.format_overloadCase
-   *)
-  type overloadCase = AbsynInterface.overloadCase
+  (*% *)
+  datatype overloadInstance
+    = (*% @format(exp) exp *)
+      INST_OVERLOAD of overloadCase
+    | (*% @format({longsymbol}) longsymbol *)
+      INST_LONGVID of {longsymbol: longsymbol}
 
-(*
-  (*%
-   * @formatter(AbsynInterface.overloadMatch)
-   * AbsynInterface.format_overloadMatch
-   *)
-  type overloadMatch = AbsynInterface.overloadMatch
-*)
+  withtype overloadCase
+    = (*%
+       * @format({tyvar, expTy, matches: m ms, loc})
+       * "case" +d tyvar +d "in" +d expTy +d "of" +1 ms(m)(+1 "|" +d)
+       * @format:m({instTy, instance})
+       * instTy +d "=>" 2[ +1 instance ]
+       *)
+      {tyvar: tvar,
+       expTy: ty,
+       matches: {instTy: ty, instance: overloadInstance} list,
+       loc: loc}
+
+  (*% @params(symbol) *)
+  datatype valbindBody
+    = (*%
+         @format({ty})
+           1[ symbol + ":" +1 ty]
+       *)
+      VAL_EXTERN of {ty: ty}
+    | (*%
+         @format(longsymbol)
+           1[ symbol + "=" + symbol]
+       *)
+      (* 2012-1-4 ohori: variable alias in interface added *)
+      VALALIAS_EXTERN of longsymbol
+    | (*%
+       * @format({builtinSymbol, ty})
+       * R0{ symbol +1 "=" +1 L2{ "_builtin" +d builtinSymbol +1 ":" +d ty }}
+       *)
+      VAL_BUILTIN of {builtinSymbol: symbol, ty: ty}
+    | (*%
+       * @format(cases)
+       * R0{ symbol +d "=" +1 cases }
+       *)
+      VAL_OVERLOAD of overloadCase
 
   (*%
-   * @formatter(AbsynInterface.overloadInstance)
-   * AbsynInterface.format_overloadInstance
+   * @formatter(option) TermFormat.formatOptionalOption
    *)
-  datatype overloadInstance = datatype AbsynInterface.overloadInstance
+  type conbind
+    = (*%
+       * @format({symbol, ty: ty tyopt, loc})
+       * R1{ symbol +d 2[ tyopt(ty)("of" +1,) ] }
+       *)
+      {symbol: symbol, ty: ty option, loc:loc}
 
   (*%
-   * @formatter(AbsynInterface.valbindBody) AbsynInterface.format_valbindBody
+   * @formatter(seq) TermFormat.formatSeqList
+   * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(Absyn.tyvar) AbsynTyFormatter.format_tyvar
    *)
-  datatype valbindBody = datatype AbsynInterface.valbindBody
+  type datbind
+    = (*%
+         @format({tyvars: tv tvs, symbol, conbind: bind binds, loc})
+         1[
+           tvs:seq(tv)("(",",",")")
+           tvs:ifCons()(+)
+           symbol +d "="
+           +1
+           binds(bind)(+1 "|" +d)
+         ]
+       *)
+      {tyvars: Absyn.tyvar list, symbol: symbol, conbind: conbind list, loc:loc}
 
-  (*%
-   * @formatter(AbsynInterface.datbind) AbsynInterface.format_datbind
-   *)
-  type datbind = AbsynInterface.datbind
+  (*% *)
+  datatype opaque_impl =
+      (*% @format(ty) ty *)
+      IMPL_TY of longsymbol
+    | (*% @format "*" *)
+      IMPL_TUPLE
+    | (*% @format "{}" *)
+      IMPL_RECORD
+    | (*% @format "->" *)
+      IMPL_FUNC
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
    * @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
-   * @formatter(AbsynTy.opaque_impl) AbsynTyFormatter.format_opaque_impl
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(decs) AbsynFormatterUtils.decs
    *)
   datatype pidec =
       (*%
@@ -112,7 +165,7 @@ struct
         eq: bool,
         tyvars: tvar list,
         symbol: symbol,
-        runtimeTy: AbsynTy.opaque_impl,
+        runtimeTy: opaque_impl,
         loc: loc
       }
     | (*%

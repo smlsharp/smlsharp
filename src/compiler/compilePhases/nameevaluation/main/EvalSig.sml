@@ -38,6 +38,7 @@ local
   exception ProcessShare
   exception FunIDUndefind
   fun bug s = Bug.Bug ("NameEval: " ^ s)
+  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
 
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   
@@ -404,7 +405,7 @@ local
                       SOME (sym, idstatus) => idstatus
                     | NONE => raise FindID
                 val _ = EU.checkSymbolDuplication
-                          (fn {symbol, isEq} => symbol)
+                          (fn (isEq, symbol) => toSymbol symbol)
                           tyvarList
                           (fn s => E.DuplicateTypParms("Sig-070",s))
                 val (tvarEnv, tvarList) =
@@ -415,8 +416,8 @@ local
                 val realizeePath = strPath longsymbol
                 val realizerPath =
                       case ty of
-                        A.TYCONSTRUCT (tyList, path, loc) => 
-                        strPath path
+                        A.TYCON (tyList, (path, _), loc) =>
+                        strPath (map toSymbol path)
                       | _ => nil
                   val ty = Ty.evalTy tvarEnv (#Env topEnv) ty
   
@@ -751,7 +752,7 @@ local
              (fn ((tvarList, symbol), specEnv) =>
                let
                  val _ = EU.checkSymbolDuplication
-                           (fn {symbol, isEq} => symbol)
+                           (fn (isEq, symbol) => toSymbol symbol)
                            tvarList
                            (fn s => E.DuplicateTypParms("Sig-160",s))
                  val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
@@ -784,7 +785,7 @@ local
         let
           val longsymbol = [symbol]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, isEq} => symbol)
+                    (fn (isEq, symbol) => toSymbol symbol)
                     tvarList
                     (fn s => E.DuplicateTypParms("Sig-170",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
@@ -825,7 +826,7 @@ local
                      (specEnv, datadeclListRev)) =>
                     let
                       val _ = EU.checkSymbolDuplication
-                                (fn {symbol, isEq} => symbol)
+                                (fn (isEq, symbol) => toSymbol symbol)
                                 tvarList
                                 (fn s => E.DuplicateTypParms("Sig-200", s))
                       val (tvarEnv, tvarList)=
@@ -1061,7 +1062,7 @@ local
         end
 
       (* spec; spec *)
-      | P.PLSPECSEQ (plspec1, plspec2, loc) =>
+      | P.PLSPECSEQ (plspec1, plspec2) =>
         let
           val specEnv1 = evalPlspec topEnv path plspec1
           val evalEnv = VP.topEnvWithEnv (topEnv,specEnv1)

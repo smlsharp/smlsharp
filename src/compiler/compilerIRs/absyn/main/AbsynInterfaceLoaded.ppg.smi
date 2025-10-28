@@ -1,0 +1,53 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../libs/util/main/TermFormat.smi"
+_require "./Absyn.smi"
+_require "./AbsynInterface.ppg.smi"
+_require local "./AbsynFormatter.smi"
+_require local "./AbsynFormatterUtils.smi"
+_require "./InterfaceName.ppg.smi"
+
+structure AbsynInterfaceLoaded =
+struct
+
+  type loc = Absyn.loc
+
+  type interface_dec =
+      {
+        interfaceId: InterfaceID.id,
+        interfaceName: InterfaceName.interface_name,
+        requiredIds: {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs: AbsynInterface.topdec list
+      }
+
+  type interface =
+      {
+        interfaceDecs : interface_dec list,
+        provide :
+          {requiredIds : {id : InterfaceID.id, loc : loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+           provideTopdecs : AbsynInterface.topdec list,
+           topdecsInclude: Absyn.topdec list}
+      }
+
+  type compile_unit =
+      {
+        interface : interface option,
+        topdecsSource : Absyn.topdec list
+      }
+
+  type interface_unit =
+      {
+        interfaceDecs : interface_dec list,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        topdecsInclude : Absyn.topdec list
+      }
+
+  val format_interface_dec : interface_dec -> SMLFormat.format
+  val format_interface : interface -> SMLFormat.format
+  val format_compile_unit : compile_unit -> SMLFormat.format
+  val format_interface_unit : interface_unit -> SMLFormat.format
+
+end

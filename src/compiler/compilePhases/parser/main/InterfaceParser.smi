@@ -16,5 +16,5 @@ struct
   type source = {read : int -> string, source : Loc.source}
   type input (= {})
   val setup : source -> input
-  val parse : input -> AbsynInterface.itop
+  val parse : input -> AbsynInterface.top
 end

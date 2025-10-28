@@ -4,8 +4,8 @@ _require local "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 (* _require "../../../data/symbols/main/Loc.smi" *)
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../compilerIRs/absyn/main/Absyn.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 
 structure ElaborateError =
   struct
@@ -18,9 +18,9 @@ structure ElaborateError =
     exception InvalidFixityPrecedence
     exception MultipleProvide of string
     exception LoadInterfaceFailed of {filename:string, msg:string}
-    exception UserTvarScopedAtOuterDecl of {tvar:Absyn.tvar}
-    exception DuplicateUserTvar of {tvar:Absyn.tvar}
-    exception DifferentEqOfSameTvar of {tvar:Absyn.tvar}
+    exception UserTvarScopedAtOuterDecl of {tvar:AbsynTy.tyvar}
+    exception DuplicateUserTvar of {tvar:AbsynTy.tyvar}
+    exception DifferentEqOfSameTvar of {tvar:AbsynTy.tyvar}
     exception UndefinedFFIAttribute of {attr:string}
     exception RealConstantInPattern
     exception NotFnBoundInValRec
@@ -29,7 +29,6 @@ structure ElaborateError =
     exception NotAllHaveFunctionName
     exception NonVariablePatternInValRec
     exception NonfixExpected of string
-    exception LeftOfASMustBeVariable
     exception InfixRequired
     exception InfixUsedWithoutOP of Symbol.longsymbol
     exception IllegalFunctionSymbol
