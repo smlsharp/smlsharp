@@ -685,11 +685,7 @@ exps_semicolon
 
 appexp
         : atexp
-          (case atexp of
-             A.EXPID (false, _, _) =>
-             (* EXPAPP for checking invalid use of infix identifiers *)
-             A.EXPAPP ([atexp], (atexpleft, atexpright))
-           | _ => atexp)
+          (atexp)
         | appexp atexp
           (case appexp of
              A.EXPAPP (l, _) =>
@@ -1355,23 +1351,21 @@ sqlpat
         : sqlapppat_noID
           (case sqlapppat_noID of
              [pat] => pat
-           | _ => A.PATAPP (sqlapppat_noID,
-                            (sqlapppat_noIDleft, sqlapppat_noIDright)))
+           | pats => A.PATAPP (pats, (sqlapppat_noIDleft, sqlapppat_noIDright)))
         | sqlapppat_noID COLON ty
-          (A.PATTYPED
-             (A.PATAPP
-                (sqlapppat_noID, (sqlapppat_noIDleft, sqlapppat_noIDright)),
-              ty,
-              (sqlapppat_noIDleft, tyright)))
+          (case sqlapppat_noID of
+             [pat] =>
+             A.PATTYPED (pat, ty, (sqlapppat_noIDleft, tyright))
+           | pats =>
+             A.PATTYPED
+               (A.PATAPP (pats, (sqlapppat_noIDleft, sqlapppat_noIDright)),
+                ty,
+                (sqlapppat_noIDleft, tyright)))
         | id_noEQ COLON ty
-          ((* PATAPP for checking invalid use of infix identifiers *)
-           A.PATTYPED
-             (A.PATAPP
-                ([A.PATID
-                    (false,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (id_noEQleft, id_noEQright))],
-                 (id_noEQleft, id_noEQright)),
+          (A.PATTYPED
+             (A.PATID (false,
+                       ([id_noEQ], (id_noEQleft, id_noEQright)),
+                       (id_noEQleft, id_noEQright)),
               ty,
               (id_noEQleft, tyright)))
         | OP id_noEQ COLON ty
@@ -1383,13 +1377,9 @@ sqlpat
               ty,
               (OPleft, tyright)))
         | id_noEQSQL
-          ((* PATAPP for checking invalid use of inifix identifiers *)
-           A.PATAPP
-             ([A.PATID
-                 (false,
-                  ([id_noEQSQL], (id_noEQSQLleft, id_noEQSQLright)),
-                  (id_noEQSQLleft, id_noEQSQLright))],
-              (id_noEQSQLleft, id_noEQSQLright)))
+          (A.PATID (false,
+                    ([id_noEQSQL], (id_noEQSQLleft, id_noEQSQLright)),
+                    (id_noEQSQLleft, id_noEQSQLright)))
         | OP id_noEQ
           (A.PATID (true,
                     ([id_noEQ], (id_noEQleft, id_noEQright)),
@@ -1703,21 +1693,15 @@ aspat
 pat
         : apppat
           (case apppat of
-             [A.PATID (false, _, _)] =>
-             (* PATAPP for checking invalid use of infix identifiers *)
-             A.PATAPP (apppat, (apppatleft, apppatright))
-           | [pat] => pat
-           | _ => A.PATAPP (apppat, (apppatleft, apppatright)))
+             [pat] => pat
+           | pats => A.PATAPP (pats, (apppatleft, apppatright)))
         | apppat_COLON_ty
-          (A.PATTYPED
-             (case apppat_COLON_ty of
-                (apppat as [A.PATID (false, _, _)], loc, _) =>
-                (* PATAPP for checking invalid use of infix identifiers *)
-                A.PATAPP (apppat, loc)
-              | ([pat], _, _) => pat
-              | (apppat, loc, _) => A.PATAPP (apppat, loc),
-              #3 apppat_COLON_ty,
-              (apppat_COLON_tyleft, apppat_COLON_tyright)))
+          (case apppat_COLON_ty of
+             ([pat], _, ty) =>
+             A.PATTYPED (pat, ty, (apppat_COLON_tyleft, apppat_COLON_tyright))
+           | (pats, loc, ty) =>
+             A.PATTYPED (A.PATAPP (pats, loc), ty,
+                         (apppat_COLON_tyleft, apppat_COLON_tyright)))
         | aspat
           (aspat)
 

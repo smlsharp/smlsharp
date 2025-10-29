@@ -310,6 +310,10 @@ struct
          | _ => NONFIX)
       | _ => NONFIX
 
+  fun beginWithInfixError ((ids, loc) : A.longvid) =
+      EU.enqueueError
+        (loc, E.BeginWithInfixID (Symbol.fromSymbolList (map #1 ids)))
+
   fun resolveInfixError getLongsymbol (Fixity.Conflict, _, loc) =
       EU.enqueueError (loc, E.InvalidFixityPrecedence)
     | resolveInfixError getLongsymbol (Fixity.BeginWithInfix, exp, loc) =
@@ -402,8 +406,10 @@ struct
               (elab f,
                [PC.PLRECORD (RecordLabel.tupleList [elab x, elab y], loc)],
                loc)
-          | elab (Fixity.TERM (x, _)) =
-            elabExp env x
+          | elab (Fixity.TERM (A.EXPID (false, longid, _), _)) =
+            PC.PLVAR (toLongsymbol longid)
+          | elab (Fixity.TERM (exp, _)) =
+            elabExp env exp
         val src =
             map (fn exp as A.EXPID (_, longsymbol, _) =>
                     (findFixity env longsymbol, exp, AbsynUtils.expLoc exp)
@@ -430,8 +436,10 @@ struct
                PC.PLPATRECORD
                  (false, RecordLabel.tupleList [elab x, elab y], loc),
                loc)
-          | elab (Fixity.TERM (x, _)) =
-            elabPat env x
+          | elab (Fixity.TERM (A.PATID (false, longid, _), _)) =
+            PC.PLPATID (toLongsymbol longid)
+          | elab (Fixity.TERM (pat, _)) =
+            elabPat env pat
         val src =
             map (fn pat as A.PATID (false, longsymbol, loc) =>
                     (findFixity env longsymbol, pat, loc)
@@ -680,7 +688,13 @@ struct
       case ast of 
         A.EXPCONST x => PC.PLCONSTANT x
       | A.EXPSIZEOF (ty, loc) => PC.PLSIZEOF (ty, loc)
-      | A.EXPID (_, x, _) => PC.PLVAR (toLongsymbol x)
+      | A.EXPID (true, longid, _) => PC.PLVAR (toLongsymbol longid)
+      | A.EXPID (false, longvid, _) =>
+        (case findFixity env longvid of
+           NONFIX => ()
+         | INFIX _ => beginWithInfixError longvid
+         | INFIXR _ => beginWithInfixError longvid;
+         PC.PLVAR (toLongsymbol longvid))
       | A.EXPRECORD (stringExpList, loc) =>
         (
           checkRecordLabelDuplication
@@ -917,7 +931,13 @@ struct
            (enqueueError (loc, E.RealConstantInPattern);
             PC.PLPATCONSTANT (constant, loc))
          | _ => PC.PLPATCONSTANT (constant, loc))
-      | A.PATID (_, longvid, _) => PC.PLPATID (toLongsymbol longvid)
+      | A.PATID (true, longvid, _) => PC.PLPATID (toLongsymbol longvid)
+      | A.PATID (false, longvid, _) =>
+        (case findFixity env longvid of
+           NONFIX => ()
+         | INFIX _ => beginWithInfixError longvid
+         | INFIXR _ => beginWithInfixError longvid;
+         PC.PLPATID (toLongsymbol longvid))
       | A.PATAPP (plist, loc) => resolveInfixPat env plist
       | A.PATRECORD (pfields, flex, loc) =>
         (
