@@ -10,7 +10,7 @@
  * @version $Id: iml.lex,v 1.42.6.6 2010/01/22 09:19:06 hiro-en Exp $
  *)
 
-structure T = ML.Tokens
+structure T = ImlGrm.Tokens
 
 type token = T.token
 type pos = Loc.pos
@@ -148,7 +148,7 @@ alpha=[A-Za-z\128-\255]
 
 %full
 %s COMM STR SKIP;
-%structure MLLex
+%structure ImlLex
 %arg (arg);
 
 underscore="\_";

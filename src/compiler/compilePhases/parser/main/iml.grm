@@ -28,8 +28,8 @@ structure S = AbsynSQL
 
 %%
 
-%name ML
-%header (structure ML)
+%name ImlGrm
+%header (structure ImlGrm)
 %footer ()
 %verbose
 

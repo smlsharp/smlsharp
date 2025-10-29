@@ -7,7 +7,7 @@
  * @author Atsushi Ohori
  *)
 
-structure T = Interface.Tokens
+structure T = InterfaceGrm.Tokens
 
 type token = T.token
 type pos = Loc.pos

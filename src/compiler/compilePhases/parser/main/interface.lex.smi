@@ -8,8 +8,8 @@ structure InterfaceLex =
 struct
   structure UserDeclarations =
   struct
-    type token = Interface.Tokens.token
-    type pos = Interface.Tokens.pos
+    type token = InterfaceGrm.Tokens.token
+    type pos = InterfaceGrm.Tokens.pos
     type arg (= {})
     val initArg : {source : Loc.source,
                    lexErrorFn : (string * pos * pos) -> unit,

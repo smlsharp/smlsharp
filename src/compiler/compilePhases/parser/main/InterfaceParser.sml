@@ -6,7 +6,7 @@
  *)
 structure InterfaceParser =
 struct
-  structure Parser = Interface.Parser
+  structure Parser = InterfaceGrm.Parser
   type token = Parser.token
   type source = {read : int -> string, source : Loc.source}
   type input =

@@ -10,7 +10,7 @@ _require "../../../../basis.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 
-structure Interface =
+structure InterfaceGrm =
 struct
   structure Parser =
   struct

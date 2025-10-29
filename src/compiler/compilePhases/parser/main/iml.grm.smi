@@ -10,7 +10,7 @@ _require "../../../../basis.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 
-structure ML =
+structure ImlGrm =
 struct
   structure ParserData =
   struct

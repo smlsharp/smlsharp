@@ -4,12 +4,12 @@ _require local "../../../extensions/debug/main/Bug.smi"
 
 _require "./iml.grm.smi"
 
-structure MLLex =
+structure ImlLex =
 struct
   structure UserDeclarations =
   struct
-    type token = ML.Tokens.token
-    type pos = ML.Tokens.pos
+    type token = ImlGrm.Tokens.token
+    type pos = ImlGrm.Tokens.pos
     type arg (= {})
     val isINITIAL : arg -> bool
     val initArg : {source : Loc.source,

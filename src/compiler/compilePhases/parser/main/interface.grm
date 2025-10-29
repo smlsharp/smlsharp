@@ -42,8 +42,8 @@ fun mapAppend f NIL l = l
   By this addition, we can effectively inline primitives in the user code.
 *)
 
-%name Interface
-%header (structure Interface)
+%name InterfaceGrm
+%header (structure InterfaceGrm)
 %footer ()
 %verbose
 

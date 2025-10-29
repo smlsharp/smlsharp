@@ -7,17 +7,17 @@
  *)
 structure SMLSharpParser =
 struct
-  structure Parser = ML.Parser
+  structure Parser = ImlGrm.Parser
   type token = Parser.token
 
   (* for debug *)
-  fun showToken (ML.ParserData.Token.TOKEN (t, _)) =
-      ML.ParserData.EC.showTerminal t
+  fun showToken (ImlGrm.ParserData.Token.TOKEN (t, _)) =
+      ImlGrm.ParserData.EC.showTerminal t
 
-  val EOF = ML.Tokens.EOF (Loc.nopos, Loc.nopos) : token
-  val SEMICOLON = ML.Tokens.SEMICOLON (Loc.nopos, Loc.nopos) : token
+  val EOF = ImlGrm.Tokens.EOF (Loc.nopos, Loc.nopos) : token
+  val SEMICOLON = ImlGrm.Tokens.SEMICOLON (Loc.nopos, Loc.nopos) : token
 
-  fun getLoc (ML.ParserData.Token.TOKEN (_, (_, l, r))) = (l, r)
+  fun getLoc (ImlGrm.ParserData.Token.TOKEN (_, (_, l, r))) = (l, r)
 
   fun semicolonUnit loc =
       Absyn.UNIT (NONE, [Absyn.TOPSEMICOLON loc], loc)
@@ -50,18 +50,18 @@ struct
         val interactive =
             case source of Loc.INTERACTIVE => true | Loc.FILE _ => false
         val lexarg =
-            MLLex.UserDeclarations.initArg
+            ImlLex.UserDeclarations.initArg
               {source = source,
                enableMeta = interactive,
                lexErrorFn = errorFn,
                initialLineno = initialLineno,
                allow8bitId = !Control.allow8bitId}
         fun input n =
-            read (!first andalso MLLex.UserDeclarations.isINITIAL lexarg, n)
+            read (!first andalso ImlLex.UserDeclarations.isINITIAL lexarg, n)
         fun inputInteractive n =
             case !errors of nil => input n | errors => raise Error (rev errors)
         val inputFn = if interactive then inputInteractive else input
-        val lexer = MLLex.makeLexer inputFn lexarg
+        val lexer = ImlLex.makeLexer inputFn lexarg
         val stream = Parser.makeStream {lexer=lexer}
       in
         {
