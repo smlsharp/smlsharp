@@ -432,6 +432,7 @@ src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
@@ -590,6 +591,7 @@ src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -615,7 +617,6 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -987,10 +988,10 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -1361,10 +1362,10 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -1802,6 +1803,7 @@ src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -1869,7 +1871,6 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -3113,6 +3114,7 @@ src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
@@ -3200,7 +3202,6 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \

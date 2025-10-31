@@ -50,10 +50,10 @@ fun newline pos yytext ({line as ref {count, begin}, ...} : arg) =
 
 fun pos yypos ({source, line = ref {count, begin}, ...} : arg) =
     Loc.POS {source = source,
-             line = count,
-             col = yypos - begin + 1,
-             pos = yypos - INITIAL_POS_OF_LEXER,
-             gap = 0}
+             pos = Loc.AT {line = count,
+                           col = yypos - begin + 1,
+                           pos = yypos - INITIAL_POS_OF_LEXER,
+                           gap = 0}}
 
 fun loc yytext yypos arg =
     (pos yypos arg, pos (yypos + size yytext - 1) arg)
@@ -89,19 +89,27 @@ fun closeString yypos (arg as {string = {buf, startPos, ty}, ...} : arg) =
 fun addString s ({string = {buf, startPos, ...}, ...}:arg) =
     buf := s :: !buf
 
-fun eof ({string, comment, error, ...} : arg) =
-    (case !(#startPos string) of
-       SOME pos => error ("unclosed string", (pos, Loc.NOPOS))
-     | NONE => ();
-     case !comment of
-       pos::_ => error ("unclosed comment", (pos, Loc.NOPOS))
-     | nil => ();
-     (T.EOF, (Loc.NOPOS, Loc.NOPOS)))
+fun eof ({source, string, comment, error, ...} : arg) =
+    let
+      val eof = Loc.POS {source = source, pos = Loc.EOF}
+    in
+      case !(#startPos string) of
+        SOME pos => error ("unclosed string", (pos, eof))
+      | NONE => ();
+      case !comment of
+        pos :: _ => error ("unclosed comment", (pos, eof))
+      | nil => ();
+      (T.EOF, (eof, eof))
+    end
 
 fun check8bit yytext yypos (arg as {allow8bitId, error, ...} : arg) =
     if allow8bitId orelse CharVector.all (fn x => ord x < 128) yytext
     then ()
     else error ("8 bit characters in ID is not permitted", loc yytext yypos arg)
+
+fun setGap (Loc.POS {source, pos = Loc.AT pos}) gap =
+    Loc.POS {source = source, pos = Loc.AT (pos # {gap = gap})}
+  | setGap loc _ = loc
 
 fun setupLexer lexer =
     let
@@ -116,13 +124,15 @@ fun setupLexer lexer =
                | T.EOF => pos1
                | _ =>
                  (case pos1 of
-                    Loc.NOPOS => pos1
-                  | Loc.POS pos =>
-                    Loc.POS (pos # {gap = #pos pos - !lastRight - 1}))
+                    Loc.POS {source, pos = Loc.AT pos} =>
+                    Loc.POS
+                      {source = source,
+                       pos = Loc.AT (pos # {gap = #pos pos - !lastRight - 1})}
+                  | _ => pos1)
                  before
                  (case pos2 of
-                    Loc.NOPOS => ()
-                  | Loc.POS pos => lastRight := #pos pos)
+                    Loc.POS {pos = Loc.AT pos, ...} => lastRight := #pos pos
+                  | _ => ())
          in
            (token, (pos1, pos2))
          end

@@ -9,9 +9,8 @@ structure Loc =
 struct
   datatype file_place = STDPATH | USERPATH
   datatype source = FILE of file_place * Filename.filename | INTERACTIVE
-  datatype pos = POS of {source : source, line : int, col : int,
-                         pos : int, gap : int}
-               | NOPOS
+  datatype at = AT of {line : int, col : int, pos : int, gap : int} | EOF
+  datatype pos = POS of {source : source, pos : at} | NOPOS
   type loc = pos * pos
   val compareLoc : loc * loc -> order
   val comparePos : pos * pos -> order

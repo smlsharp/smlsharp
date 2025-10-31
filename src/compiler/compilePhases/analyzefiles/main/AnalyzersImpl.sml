@@ -20,14 +20,14 @@ local
   structure IM = InfoMaps
   exception SYSTEMPATH
 
-  fun locToKey (L.POS{source = L.FILE s, pos,...},_) = 
+  fun locToKey (L.POS{source = L.FILE s, pos = L.AT {pos,...}},_) =
       ({fileId = #fileId (IM.findSourceMap s), startPos = pos}
        handle x => raise x)
     | locToKey _ = {fileId = ~1, startPos = ~1}
   fun locRange loc = 
       case loc of 
-        (L.POS{source = L.FILE s, pos=startPos, ...}, 
-         L.POS{pos=endPos, ...}) => 
+        (L.POS{source = L.FILE s, pos = L.AT {pos = startPos, ...}},
+         L.POS{pos=L.AT {pos = endPos, ...}, ...}) =>
         (startPos, endPos, #fileId (IM.findSourceMap s))
   |  _ => (~1, ~1, ~1)
   fun defRangeInfo loc =

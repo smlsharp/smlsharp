@@ -7023,6 +7023,12 @@ src/compiler/compilePhases/parser/main/iml.grm.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilePhases/parser/main/iml.grm.smi \
  $(SMLSHARP_DEP)
+src/compiler/libs/list-utils/main/Snoc.o: \
+ src/compiler/libs/list-utils/main/Snoc.sml \
+ src/basis/main/General.smi \
+ src/basis/main/List.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/iml.lex.o: \
  src/compiler/compilePhases/parser/main/iml.lex.sml \
  src/basis/main/General.smi \
@@ -7120,6 +7126,7 @@ src/compiler/compilePhases/parser/main/iml.lex.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
@@ -7249,6 +7256,7 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilePhases/parser/main/iml.grm.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilePhases/parser/main/iml.lex.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  $(SMLSHARP_DEP)
@@ -16968,12 +16976,6 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
  $(SMLSHARP_DEP)
-src/compiler/libs/list-utils/main/Snoc.o: \
- src/compiler/libs/list-utils/main/Snoc.sml \
- src/basis/main/General.smi \
- src/basis/main/List.smi \
- src/compiler/libs/list-utils/main/Snoc.smi \
- $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/compiler/compilePhases/parser/main/interface.grm.sml \
  src/basis/main/General.smi \
@@ -17216,6 +17218,7 @@ src/compiler/compilePhases/parser/main/InterfaceParser.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/compilePhases/parser/main/interface.grm.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/iml.lex.smi \
  src/compiler/compilePhases/parser/main/ParserError.ppg.smi \

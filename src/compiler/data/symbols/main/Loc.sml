@@ -18,8 +18,12 @@ struct
         FILE of file_place * Filename.filename
       | INTERACTIVE
 
-    datatype pos = 
-        POS of {source : source, line : int, col : int, pos : int, gap : int}
+    datatype at =
+        AT of {line : int, col : int, pos : int, gap : int}
+      | EOF
+
+    datatype pos =
+        POS of {source : source, pos : at}
       | NOPOS
 
     type loc = pos * pos
@@ -34,16 +38,19 @@ struct
       | format_source INTERACTIVE =
         [SMLFormat.FormatExpression.Term (13, "(interactive)")]
 
+    fun tokenPosToString EOF = "(eof)"
+      | tokenPosToString (AT {line, col, pos, ...}) =
+        Int.toString line ^ "." ^ Int.toString col
+        ^ "(" ^ Int.toString pos ^ ")"
+
     fun posToString NOPOS = "(none)"
-      | posToString (POS {source = INTERACTIVE, line, col, ...}) =
-        "(interactive):" ^ Int.toString line ^ "." ^ Int.toString col
-      | posToString (POS {source = FILE (_, filename), line, col, pos, ...}) =
-        Filename.toString filename ^ ":"
-        ^ Int.toString line ^ "." ^ Int.toString col ^ "(" ^ Int.toString pos ^ ")"
+      | posToString (POS {source = INTERACTIVE, pos}) =
+        "(interactive):" ^ tokenPosToString pos
+      | posToString (POS {source = FILE (_, filename), pos}) =
+        Filename.toString filename ^ ":" ^ tokenPosToString pos
 
     fun posToStringShort NOPOS = "(none)"
-      | posToStringShort (POS {line, col, pos,...}) =
-        Int.toString line ^ "." ^ Int.toString col ^ "(" ^ Int.toString pos ^ ")"
+      | posToStringShort (POS {pos, ...}) = tokenPosToString pos
 
     fun locToString (pos1, pos2) =
         posToString pos1 ^ "-" ^ posToStringShort pos2
@@ -66,13 +73,18 @@ struct
           EQUAL => Filename.compare (f1, f2)
         | x => x
 
+    fun compareAt (EOF, EOF) = EQUAL
+      | compareAt (AT _, EOF) = LESS
+      | compareAt (EOF, AT _) = GREATER
+      | compareAt (AT {pos = pos1, ...}, AT {pos = pos2, ...}) =
+        Int.compare (pos1, pos2)
+
     fun comparePos (NOPOS, NOPOS) = EQUAL
       | comparePos (NOPOS, _) = LESS
       | comparePos (POS _, NOPOS) = GREATER
-      | comparePos (POS {line=l1, col=c1, source=s1, pos=pos1, gap=gap1},
-                    POS {line=l2, col=c2, source=s2, pos=pos2, gap=gap2}) =
+      | comparePos (POS {source=s1, pos=pos1}, POS {source=s2, pos=pos2}) =
         case compareSource (s1, s2) of
-          EQUAL => Int.compare (pos1, pos2)
+          EQUAL => compareAt (pos1, pos2)
         | x => x
 
     fun compareLoc ((pos1, _), (pos2,_)) = comparePos (pos1, pos2)

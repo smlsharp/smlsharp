@@ -59,8 +59,8 @@ struct
       let
         val (gap, pos) =
             case loc of
-              (Loc.POS {gap, pos, ...}, _) => (gap, pos)
-            | (Loc.NOPOS, _) => raise Fail "BUG: parseFormatComments"
+              (Loc.POS {pos = Loc.AT {gap, pos, ...}, ...}, _) => (gap, pos)
+            | _ => raise Fail "BUG: parseFormatComments"
         val source = ref (String.substring (content, pos - gap, gap))
         fun input n = !source before source := ""
         val errors = ref nil
@@ -104,10 +104,13 @@ struct
         S.DefiningWithInner x => x
       | _ => raise Fail "BUG: scanDefiningFormatCommentsWithInners"
 
+  fun getPos Loc.EOF = raise Fail "BUG: locToRegion"
+    | getPos (Loc.AT {pos, ...}) = pos
+
   fun locToRegion (Loc.NOPOS, _) = raise Fail "BUG: locToRegion"
     | locToRegion (_, Loc.NOPOS) = raise Fail "BUG: locToRegion"
     | locToRegion (Loc.POS {pos = pos1, ...}, Loc.POS {pos = pos2, ...}) =
-      (pos1, pos2)
+      (getPos pos1, getPos pos2)
 
   fun scanLongid (longsymbol, _) =
       map (Symbol.toString o #1) longsymbol

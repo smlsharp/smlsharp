@@ -1,4 +1,5 @@
 _require local "../../../../basis.smi"
+_require "../../../libs/list-utils/main/Snoc.smi"
 _require "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
