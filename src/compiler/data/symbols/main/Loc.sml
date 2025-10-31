@@ -38,22 +38,39 @@ struct
       | format_source INTERACTIVE =
         [SMLFormat.FormatExpression.Term (13, "(interactive)")]
 
-    fun tokenPosToString EOF = "(eof)"
-      | tokenPosToString (AT {line, col, pos, ...}) =
+    fun sourceToString INTERACTIVE = "(interactive)"
+      | sourceToString (FILE (_, filename)) = Filename.toString filename
+
+    fun lineColToString {line, col, ...} =
         Int.toString line ^ "." ^ Int.toString col
-        ^ "(" ^ Int.toString pos ^ ")"
+
+    fun atToString EOF = "eof"
+      | atToString (AT at) = lineColToString at
+
+    fun atPairToString (EOF, EOF) = "eof"
+      | atPairToString (AT at1, AT at2) =
+        if at1 = at2
+        then lineColToString at1
+        else if #line at1 = #line at2
+        then lineColToString at1 ^ "-" ^ Int.toString (#col at2)
+        else lineColToString at1 ^ "-" ^ lineColToString at2
+      | atPairToString (at1, at2) =
+        atToString at1 ^ "-" ^ atToString at2
+
+    fun sourcePosToString {source, pos} =
+        sourceToString source ^ ":" ^ atToString pos
 
     fun posToString NOPOS = "(none)"
-      | posToString (POS {source = INTERACTIVE, pos}) =
-        "(interactive):" ^ tokenPosToString pos
-      | posToString (POS {source = FILE (_, filename), pos}) =
-        Filename.toString filename ^ ":" ^ tokenPosToString pos
+      | posToString (POS pos) = sourcePosToString pos
 
-    fun posToStringShort NOPOS = "(none)"
-      | posToStringShort (POS {pos, ...}) = tokenPosToString pos
-
-    fun locToString (pos1, pos2) =
-        posToString pos1 ^ "-" ^ posToStringShort pos2
+    fun locToString (NOPOS, NOPOS) = "(none)"
+      | locToString (NOPOS, POS pos) = sourcePosToString pos
+      | locToString (POS pos, NOPOS) = sourcePosToString pos
+      | locToString (pos1 as POS {source = source1, pos = at1},
+                     pos2 as POS {source = source2, pos = at2}) =
+        if source1 = source2
+        then sourceToString source1 ^ ":" ^ atPairToString (at1, at2)
+        else posToString pos1 ^ "-" ^ posToString pos2
 
     fun format_loc loc =
         SMLFormat.BasicFormatters.format_string (locToString loc)
