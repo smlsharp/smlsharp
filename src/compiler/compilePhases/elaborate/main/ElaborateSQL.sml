@@ -225,15 +225,18 @@ struct
       P.PLLET ([P.PDVAL (map (fn x => (x loc, A.UNIV (nil, loc), loc)) tyvars,
                          [(pat loc, exp loc, Loc.noloc)], loc)],
                exp2 loc, loc)
+
+  fun Const const loc =
+      P.PLCONSTANT (const, loc)
+
   fun Unit loc =
-      P.PLCONSTANT (A.UNITCONST, loc)
+      Const A.UNITCONST loc
 
-  fun Int n loc =
-      P.PLCONSTANT
-        (A.INT (Int.toLarge n), loc)
+  fun Int n =
+      Const (A.INT (Int.toLarge n))
 
-  fun String s loc =
-      P.PLCONSTANT (A.STRING s, loc)
+  fun String s =
+      Const (A.STRING s)
 
   fun LabelString label =
       String (RecordLabel.toString label)
@@ -426,19 +429,19 @@ struct
       Con Name.con_CONST [x]
 
   fun Con_INT const =
-      Con Name.con_INT [fn loc => P.PLCONSTANT (const, loc)]
+      Con Name.con_INT [Const const]
 
   fun Con_WORD const =
-      Con Name.con_WORD [fn loc => P.PLCONSTANT (const, loc)]
+      Con Name.con_WORD [Const const]
 
   fun Con_REAL const =
-      Con Name.con_REAL [fn loc => P.PLCONSTANT (const, loc)]
+      Con Name.con_REAL [Const const]
 
   fun Con_STRING const =
-      Con Name.con_STRING [fn loc => P.PLCONSTANT (const, loc)]
+      Con Name.con_STRING [Const const]
 
   fun Con_CHAR const =
-      Con Name.con_CHAR [fn loc => P.PLCONSTANT (const, loc)]
+      Con Name.con_CHAR [Const const]
 
   fun Con_BOOL x =
       Con Name.con_BOOL [x]
@@ -1025,11 +1028,11 @@ struct
       | EMBED (id, QUERYty, loc) =>
         (fn c => Loc loc (App (Snd (Var id)) UnitTuple))
       | EMBED (id, _, loc) => (fn c => Loc loc (App (Snd (Var id)) c))
-      | CONST (INT n, loc) => (fn _ => Exp (P.PLCONSTANT (A.INT n, loc)))
-      | CONST (WORD n, loc) => (fn _ => Exp (P.PLCONSTANT (A.WORD n, loc)))
-      | CONST (STRING s, loc) => (fn _ => Exp (P.PLCONSTANT (A.STRING s, loc)))
-      | CONST (REAL r, loc) => (fn _ => Exp (P.PLCONSTANT (A.REAL r, loc)))
-      | CONST (CHAR c, loc) => (fn _ => Exp (P.PLCONSTANT (A.CHAR c, loc)))
+      | CONST (INT n, loc) => (fn _ => Loc loc (Const (A.INT n)))
+      | CONST (WORD n, loc) => (fn _ => Loc loc (Const (A.WORD n)))
+      | CONST (STRING s, loc) => (fn _ => Loc loc (Const (A.STRING s)))
+      | CONST (REAL r, loc) => (fn _ => Loc loc (Const (A.REAL r)))
+      | CONST (CHAR c, loc) => (fn _ => Loc loc (Const (A.CHAR c)))
       | CONST (BOOL true, loc) => (fn _ => Loc loc True)
       | CONST (BOOL false, loc) => (fn _ => Loc loc False) 
       | NULL loc => (fn _ => Loc loc None)
@@ -1656,9 +1659,7 @@ struct
         let
           val x = SymbolWithLoc.generate ()
         in
-          ({binds = [{pat = PatVar x loc,
-                      exp = P.PLCONSTANT (A.UNITCONST, loc),
-                      loc = loc}],
+          ({binds = [{pat = PatVar x loc, exp = Unit loc, loc = loc}],
             column2set = emptySet},
            ML (MLEXP ([x], loc)))
         end
