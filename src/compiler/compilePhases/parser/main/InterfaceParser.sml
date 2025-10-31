@@ -120,6 +120,7 @@ struct
   type input =
       {
         streamRef : Parser.stream ref,
+        tokensRef : (Token.token * Loc.loc) snoc ref,
         errors : UserError.errorQueue,
         errorFn : string * Loc.pos * Loc.pos -> unit
       }
@@ -138,15 +139,17 @@ struct
                initialLineno = 1,
                allow8bitId = !Control.allow8bitId}
         val lexer = ImlLex.makeLexer read lexarg
-        val lexer = ImlLex.UserDeclarations.setupLexer lexer
+        val tokensRef = ref NIL
+        val lexer = ImlLex.UserDeclarations.setupLexer tokensRef lexer
         val stream = Parser.makeStream {lexer = toParserToken lexer}
       in
         {streamRef = ref stream,
+         tokensRef = tokensRef,
          errors = errors,
          errorFn = parseError errors} : input
       end
 
-  fun parse ({streamRef, errors, errorFn}:input) =
+  fun parse ({streamRef, tokensRef, errors, errorFn} : input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = if UserError.isEmptyErrorQueue errors
@@ -158,10 +161,11 @@ struct
                    raise UserError.UserErrors (UserError.getErrors errors)
 
         val _ = streamRef := newStream
+        val tokens = !tokensRef before tokensRef := NIL
       in
         if UserError.isEmptyErrorQueue errors
         then ()
         else raise UserError.UserErrors (UserError.getErrors errors);
-        result
+        (tokens, result)
       end
 end

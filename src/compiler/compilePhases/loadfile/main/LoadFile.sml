@@ -209,10 +209,10 @@ struct
       (if !Control.traceFileLoad
        then printErr ("smi: " ^ Filename.toString filename ^ "\n")
        else ();
-       InterfaceParser.parse
-         (InterfaceParser.setup
-            {read = fn n => TextIO.inputN (file, n),
-             source = Loc.FILE source}))
+       #2 (InterfaceParser.parse
+             (InterfaceParser.setup
+                {read = fn n => TextIO.inputN (file, n),
+                 source = Loc.FILE source})))
 
   fun parseSml (file, source as (_, filename)) =
       (if !Control.traceFileLoad

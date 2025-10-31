@@ -53,7 +53,7 @@ fun pos yypos ({source, line = ref {count, begin}, ...} : arg) =
              pos = Loc.AT {line = count,
                            col = yypos - begin + 1,
                            pos = yypos - INITIAL_POS_OF_LEXER,
-                           gap = 0}}
+                           token = 0}}
 
 fun loc yytext yypos arg =
     (pos yypos arg, pos (yypos + size yytext - 1) arg)
@@ -107,34 +107,24 @@ fun check8bit yytext yypos (arg as {allow8bitId, error, ...} : arg) =
     then ()
     else error ("8 bit characters in ID is not permitted", loc yytext yypos arg)
 
-fun setGap (Loc.POS {source, pos = Loc.AT pos}) gap =
-    Loc.POS {source = source, pos = Loc.AT (pos # {gap = gap})}
-  | setGap loc _ = loc
+fun setIndex (Loc.POS {source, pos = Loc.AT pos}) index =
+    Loc.POS {source = source, pos = Loc.AT (pos # {token = index})}
+  | setIndex loc _ = loc
 
-fun setupLexer lexer =
+fun setupLexer tokens lexer =
     let
-      val lastRight = ref 0
+      val count = ref 0
     in
       fn () =>
          let
            val (token, (pos1, pos2)) = lexer ()
-           val pos1 =
-               case token of
-                 T.COMMENT => pos1
-               | T.EOF => pos1
-               | _ =>
-                 (case pos1 of
-                    Loc.POS {source, pos = Loc.AT pos} =>
-                    Loc.POS
-                      {source = source,
-                       pos = Loc.AT (pos # {gap = #pos pos - !lastRight - 1})}
-                  | _ => pos1)
-                 before
-                 (case pos2 of
-                    Loc.POS {pos = Loc.AT pos, ...} => lastRight := #pos pos
-                  | _ => ())
+           val index = !count before count := !count + 1
+           val pos1 = setIndex pos1 index
+           val pos2 = setIndex pos2 index
+           val result = (token, (pos1, pos2))
          in
-           (token, (pos1, pos2))
+           tokens := !tokens ::> result;
+           result
          end
     end
 

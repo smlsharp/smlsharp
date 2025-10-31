@@ -19,7 +19,7 @@ struct
       | INTERACTIVE
 
     datatype at =
-        AT of {line : int, col : int, pos : int, gap : int}
+        AT of {line : int, col : int, pos : int, token : int}
       | EOF
 
     datatype pos =

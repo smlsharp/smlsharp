@@ -396,6 +396,7 @@ src/smlformat/generator/main/ErrorQueue.o \
 src/smlformat/generator/main/FormatTemplate.o \
 src/smlformat/generator/main/Ast.o \
 src/smlformat/generator/main/Constants_MLton.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/smlnj-lib/Util/parser-comb.o \
 src/smlformat/formatlib/main/FormatExpressionTypes.o \
 src/smlformat/formatlib/main/FormatExpression.o \
@@ -432,7 +433,6 @@ src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
@@ -586,12 +586,12 @@ src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -986,9 +986,9 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -1360,9 +1360,9 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -1798,12 +1798,12 @@ src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
@@ -3093,6 +3093,7 @@ src/smlformat/generator/main/ErrorQueue.o \
 src/smlformat/generator/main/FormatTemplate.o \
 src/smlformat/generator/main/Ast.o \
 src/smlformat/generator/main/Constants_MLton.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/smlnj-lib/Util/lib-base.o \
 src/smlnj-lib/Util/binary-map-fn.o \
 src/compiler/libs/env/main/SOrd.o \
@@ -3114,7 +3115,6 @@ src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \

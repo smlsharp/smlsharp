@@ -15,9 +15,11 @@ struct
                    errorFn : string * Loc.pos * Loc.pos -> unit,
                    initialLineno : int,
                    allow8bitId : bool} -> arg
-    val setupLexer : (unit -> lexresult) -> unit -> lexresult
+    val setupLexer
+        : lexresult snoc ref -> (unit -> lexresult) -> unit -> lexresult
   end
   val makeLexer
       : (int -> string) -> UserDeclarations.arg -> unit
         -> UserDeclarations.lexresult
+
 end

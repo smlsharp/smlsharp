@@ -1,11 +1,12 @@
 _require local "../../../../basis.smi"
+_require "../../../libs/list-utils/main/Snoc.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 (* _require local "../../../libs/toolchain/main/Filename.smi" *)
 _require local "../../../data/control/main/Control.smi"
 _require "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
-_require "./iml.grm.smi"
+_require local "./iml.grm.smi"
 _require local "./iml.lex.smi"
 
 structure SMLSharpParser =
@@ -17,7 +18,6 @@ struct
   exception Error of (Loc.loc * string) list
   val sourceOfInput : input -> Loc.source
   val setup : source -> input
-  val parse : input -> Absyn.absyn
+  val parse : input -> (Token.token * Loc.loc) snoc * Absyn.absyn
   val isEOF : input -> bool
-  val lex : input -> ImlGrm.Parser.token list
 end

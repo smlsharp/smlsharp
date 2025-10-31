@@ -20,7 +20,7 @@ struct
   val setup = SMLSharpParser.setup
 
   fun parse input =
-      SMLSharpParser.parse input
+      #2 (SMLSharpParser.parse input)
       handle SMLSharpParser.Error errors => raiseUserErrors errors
 
   fun isEOF input =

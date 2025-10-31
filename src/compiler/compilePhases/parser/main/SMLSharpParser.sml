@@ -186,6 +186,7 @@ struct
         lookahead : int,
         atOnce : bool,
         streamRef : Parser.stream ref,
+        tokensRef : (Token.token * Loc.loc) snoc ref,
         first : bool ref,
         errors : (Loc.loc * string) list ref,
         errorFn : string * Loc.pos * Loc.pos -> unit,
@@ -213,7 +214,8 @@ struct
             case !errors of nil => input n | errors => raise Error (rev errors)
         val inputFn = if interactive then inputInteractive else input
         val lexer = ImlLex.makeLexer inputFn lexarg
-        val lexer = ImlLex.UserDeclarations.setupLexer lexer
+        val tokensRef = ref NIL
+        val lexer = ImlLex.UserDeclarations.setupLexer tokensRef lexer
         val lexer = toParserToken interactive lexer
         val stream = Parser.makeStream {lexer = lexer}
       in
@@ -221,6 +223,7 @@ struct
           lookahead = if interactive then 0 else 15,
           atOnce = not interactive,
           streamRef = ref stream,
+          tokensRef = tokensRef,
           first = first,
           errors = errors,
           errorFn = errorFn,
@@ -249,7 +252,8 @@ struct
             (Absyn.UNIT (interface, tops1 @ tops, (#1 loc1, #2 loc)), lex)
           end
 
-  fun parse ({lookahead, atOnce, streamRef, first, errors, errorFn, source}:input) =
+  fun parse ({lookahead, atOnce, streamRef, tokensRef, first, errors,
+              errorFn, ...} : input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = case !errors of
@@ -278,12 +282,14 @@ struct
              else parseStep stream)
             handle Parser.ParseError => raise Error (rev (!errors))
         val _ = streamRef := newStream
+        val tokens = !tokensRef before tokensRef := NIL
       in
         case !errors of nil => () | errors => raise Error (rev errors);
-        result
+        (tokens, result)
       end
 
-  fun isEOF ({lookahead, atOnce, streamRef, first, errors, errorFn, source}:input) =
+  fun isEOF ({lookahead, atOnce, streamRef, tokensRef, first,
+              errors, ...} : input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = case !errors of
@@ -302,29 +308,10 @@ struct
 
         val (tok, stream) = skipSemicolons (!streamRef)
         val _ = streamRef := stream
+        val _ = tokensRef := NIL
       in
         case !errors of nil => () | errors => raise Error (rev errors);
         Parser.sameToken (tok, EOF)
-      end
-
-  fun lex ({streamRef, first, errors, ...} : input) =
-      let
-        (* prevent reading this source after parse error occurred. *)
-        val _ = case !errors of
-                  nil => () | _::_ => raise Bug.Bug "parse: aborted stream"
-
-        val _ = first := true
-        fun loop stream r =
-            let
-              val (tok, stream) = Parser.getStream stream
-              val _ = first := false
-            in
-              if Parser.sameToken (tok, EOF) then rev (tok :: r)
-              else loop stream (tok :: r)
-            end
-        val tokens = loop (!streamRef) nil
-      in
-        case !errors of nil => tokens | errors => raise Error (rev errors)
       end
 
 end

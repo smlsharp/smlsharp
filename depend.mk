@@ -5007,6 +5007,12 @@ src/smlformat/generator/main/Constants_MLton.o: \
  src/smlformat/generator/main/Constants_MLton.sml \
  src/smlformat/generator/main/Constants_MLton.smi \
  $(SMLSHARP_DEP)
+src/compiler/libs/list-utils/main/Snoc.o: \
+ src/compiler/libs/list-utils/main/Snoc.sml \
+ src/basis/main/General.smi \
+ src/basis/main/List.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ $(SMLSHARP_DEP)
 src/smlnj-lib/Util/lib-base.o: \
  src/smlnj-lib/Util/lib-base.sml \
  src/basis/main/General.smi \
@@ -7023,12 +7029,6 @@ src/compiler/compilePhases/parser/main/iml.grm.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilePhases/parser/main/iml.grm.smi \
  $(SMLSHARP_DEP)
-src/compiler/libs/list-utils/main/Snoc.o: \
- src/compiler/libs/list-utils/main/Snoc.sml \
- src/basis/main/General.smi \
- src/basis/main/List.smi \
- src/compiler/libs/list-utils/main/Snoc.smi \
- $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/iml.lex.o: \
  src/compiler/compilePhases/parser/main/iml.lex.sml \
  src/basis/main/General.smi \
@@ -7235,6 +7235,7 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
@@ -7256,7 +7257,6 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilePhases/parser/main/iml.grm.smi \
- src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilePhases/parser/main/iml.lex.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  $(SMLSHARP_DEP)
@@ -7680,6 +7680,7 @@ src/smlformat/generator/main/MLParser.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
@@ -7697,7 +7698,6 @@ src/smlformat/generator/main/MLParser.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/smlformat/generator/main/FormatTemplate.smi \
@@ -14238,8 +14238,8 @@ src/compiler/compilePhases/parser/main/Parser.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilePhases/parser/main/ParserError.ppg.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  $(SMLSHARP_DEP)
@@ -17196,6 +17196,7 @@ src/compiler/compilePhases/parser/main/InterfaceParser.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
@@ -17218,7 +17219,6 @@ src/compiler/compilePhases/parser/main/InterfaceParser.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/compilePhases/parser/main/interface.grm.smi \
- src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/iml.lex.smi \
  src/compiler/compilePhases/parser/main/ParserError.ppg.smi \
@@ -17575,8 +17575,8 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -33479,8 +33479,8 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilePhases/loadfile/main/LoadFile.smi \
@@ -33983,8 +33983,8 @@ src/compiler/compilePhases/main/main/MiniMain.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -38481,8 +38481,8 @@ src/compiler/compilePhases/main/main/Interactive.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
@@ -38634,8 +38634,8 @@ src/compiler/compilePhases/main/main/RunLoop.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/libs/toolchain/main/LLVMUtils.smi \
@@ -40122,8 +40122,8 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/libs/toolchain/main/ShellUtils.smi \
@@ -40322,8 +40322,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -40480,8 +40480,8 @@ src/compiler/compilePhases/main/main/Main.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilePhases/main/main/GetOptLong.smi \
@@ -40725,8 +40725,8 @@ src/compiler/smlsharp.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -41275,8 +41275,8 @@ tests/driver/Compiler.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -41612,8 +41612,8 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -41849,8 +41849,8 @@ tests/suite/regression/RegressionTests.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -42096,8 +42096,8 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -42331,8 +42331,8 @@ tests/suite/example/ExampleTests.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -42566,8 +42566,8 @@ tests/suite/document/DocumentTests.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -42810,8 +42810,8 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
@@ -51050,8 +51050,8 @@ tests/driver/dotest.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
- src/compiler/compilePhases/parser/main/iml.grm.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \

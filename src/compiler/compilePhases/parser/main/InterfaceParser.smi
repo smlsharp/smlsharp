@@ -1,4 +1,5 @@
 _require local "../../../../basis.smi"
+_require "../../../libs/list-utils/main/Snoc.smi"
 (* _require local "../../../../ml-yacc-lib.smi" *)
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
@@ -9,7 +10,7 @@ _require local "./interface.grm.smi"
 _require local "./iml.lex.smi"
 _require local "./ParserError.ppg.smi"
 
-_require local "../../../compilerIRs/absyn/main/Token.smi"
+_require "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 
 structure InterfaceParser =
@@ -17,5 +18,5 @@ struct
   type source = {read : int -> string, source : Loc.source}
   type input (= {})
   val setup : source -> input
-  val parse : input -> AbsynInterface.top
+  val parse : input -> (Token.token * Loc.loc) snoc * AbsynInterface.top
 end

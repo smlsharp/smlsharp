@@ -55,18 +55,22 @@ struct
         r
       end
 
-  fun parseFormatComments {filename, content, posToLoc} beg (loc:Loc.loc) =
+  fun getPos Loc.NOPOS = raise Fail "BUG: getPos"
+    | getPos (Loc.POS {pos = Loc.EOF, ...}) = raise Fail "Bug: getPos"
+    | getPos (Loc.POS {pos = Loc.AT {pos, ...}, ...}) = pos
+
+  fun parseFormatComments {filename, content, posToLoc, commentPos} beg loc =
       let
-        val (gap, pos) =
-            case loc of
-              (Loc.POS {pos = Loc.AT {gap, pos, ...}, ...}, _) => (gap, pos)
-            | _ => raise Fail "BUG: parseFormatComments"
-        val source = ref (String.substring (content, pos - gap, gap))
+        val left = getPos (#1 loc)
+        val leftmost = case commentPos left of
+                         NONE => left
+                       | SOME (_, leftmost) => leftmost
+        val source = ref (String.substring (content, leftmost, left - leftmost))
         fun input n = !source before source := ""
         val errors = ref nil
         fun error (s, p1, p2) = errors := (s, (p1, p2)) :: !errors
         val lexarg = FormatCommentLex.UserDeclarations.initArg
-                       {error = error, offset = pos - gap}
+                       {error = error, offset = leftmost}
         val lexer = FormatCommentLex.makeLexer input lexarg
         val stream = FormatCommentLrVals.Parser.makeStream {lexer = lexer}
         val stream = FormatCommentLrVals.Parser.consStream
@@ -104,13 +108,7 @@ struct
         S.DefiningWithInner x => x
       | _ => raise Fail "BUG: scanDefiningFormatCommentsWithInners"
 
-  fun getPos Loc.EOF = raise Fail "BUG: locToRegion"
-    | getPos (Loc.AT {pos, ...}) = pos
-
-  fun locToRegion (Loc.NOPOS, _) = raise Fail "BUG: locToRegion"
-    | locToRegion (_, Loc.NOPOS) = raise Fail "BUG: locToRegion"
-    | locToRegion (Loc.POS {pos = pos1, ...}, Loc.POS {pos = pos2, ...}) =
-      (getPos pos1, getPos pos2)
+  fun locToRegion (pos1, pos2) = (getPos pos1, getPos pos2)
 
   fun scanLongid (longsymbol, _) =
       map (Symbol.toString o #1) longsymbol
@@ -299,6 +297,40 @@ struct
         A.UNIT (interface, tops, loc) => List.concat (map (scanTop c) tops)
       | A.EOF => nil
 
+  fun makeCommMap map NIL = map
+    | makeCommMap map (tokens ::> (Token.EOF, _)) =
+      makeCommMap map tokens
+    | makeCommMap map (tokens ::> (Token.COMMENT, _)) =
+      makeCommMap map tokens
+    | makeCommMap map (tokens ::> (_, (pos, _))) =
+      let
+        val left = getPos pos
+        fun loop (tokens ::> (Token.COMMENT, (pos, _))) _ =
+            loop tokens (SOME (getPos pos))
+          | loop tokens NONE = makeCommMap map tokens
+          | loop tokens (SOME pos) = makeCommMap ((left, pos) :: map) tokens
+      in
+        loop tokens NONE
+      end
+
+  fun makeCommentMap tokens =
+      Vector.fromList (makeCommMap nil tokens)
+
+  fun binarySearch f vec b e =
+      if b >= e then NONE else
+      let
+        val c = (b + e) div 2
+        val item = Vector.sub (vec, c)
+      in
+        case f item of
+          EQUAL => SOME item
+        | GREATER => binarySearch f vec (c + 1) e
+        | LESS => binarySearch f vec b c
+      end
+
+  fun findCommentMap map pos =
+      binarySearch (fn (k, _) => Int.compare (pos, k)) map 0 (Vector.length map)
+
   fun parse (filename, content) =
       let
         val fname = Filename.fromString filename
@@ -308,7 +340,7 @@ struct
               {source = Loc.FILE (Loc.USERPATH, fname),
                read = fn _ => !source before source := "",
                initialLineno = 1}
-        val result =
+        val (tokens, result) =
             SMLSharpParser.parse input
             handle SMLSharpParser.Error errors =>
                    raise ParseError
@@ -317,7 +349,10 @@ struct
                               errors)
         val lineMap = lazyLineMap content
         val posToLoc = fn n => findLineMap (!lineMap ()) n
-        val c = {filename = filename, content = content, posToLoc = posToLoc}
+        val commentMap = makeCommentMap tokens
+        val commentPos = findCommentMap commentMap
+        val c = {filename = filename, content = content, posToLoc = posToLoc,
+                 commentPos = commentPos}
         val decs = scanUnitparseresult c result
       in
         (decs, posToLoc)
