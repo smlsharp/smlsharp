@@ -419,6 +419,7 @@ src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
@@ -584,6 +585,7 @@ src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
@@ -614,7 +616,6 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.o \
@@ -983,12 +984,12 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.o \
@@ -1356,12 +1357,12 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.o \
@@ -1793,6 +1794,7 @@ src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
@@ -1865,7 +1867,6 @@ src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.o \
@@ -2269,7 +2270,6 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
@@ -2322,6 +2322,7 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/Fixity.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilerIRs/anormal/main/ANormal.ppg.o \
 src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.o \
 src/compiler/compilerIRs/bitmapcalc/main/BitmapCalc2.ppg.o \
@@ -2688,7 +2689,6 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
 src/compiler/compilePhases/parser/main/iml.grm.smi \
 src/compiler/compilePhases/parser/main/iml.lex.smi \
 src/compiler/compilePhases/parser/main/interface.grm.smi \
-src/compiler/compilePhases/parser/main/interface.lex.smi \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.smi \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.smi \
 src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.smi \
@@ -2745,6 +2745,7 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
 src/compiler/compilerIRs/absyn/main/Fixity.smi \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
 src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+src/compiler/compilerIRs/absyn/main/Token.smi \
 src/compiler/compilerIRs/anormal/main/ANormal.ppg.smi \
 src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.smi \
 src/compiler/compilerIRs/bitmapcalc/main/BitmapCalc2.ppg.smi \
@@ -3096,6 +3097,7 @@ src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
+src/compiler/compilerIRs/absyn/main/Token.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
@@ -3193,7 +3195,6 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
-src/compiler/compilePhases/parser/main/interface.lex.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.o \
@@ -3509,7 +3510,6 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.sml \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.sml \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.sml \
 src/compiler/compilePhases/parser/main/interface.grm.sml \
-src/compiler/compilePhases/parser/main/interface.lex.sml \
 src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.sml \
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.sml \
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.sml \

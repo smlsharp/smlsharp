@@ -1,0 +1,115 @@
+structure Token =
+struct
+
+  datatype token =
+      EOF
+    | COMMENT
+    | INVALID of string
+      (* core keywords *)
+    | ABSTYPE
+    | AND
+    | ANDALSO
+    | AS
+    | CASE
+    | DATATYPE
+    | DO
+    | ELSE
+    | END
+    | EXCEPTION
+    | FN
+    | FUN
+    | HANDLE
+    | IF
+    | IN
+    | INFIX
+    | INFIXR
+    | LET
+    | LOCAL
+    | NONFIX
+    | OF
+    | OP
+    | OPEN
+    | ORELSE
+    | RAISE
+    | REC
+    | THEN
+    | TYPE
+    | VAL
+    | WITH
+    | WITHTYPE
+    | WHILE
+    | LPAREN
+    | RPAREN
+    | LBRACKET
+    | RBRACKET
+    | LBRACE
+    | RBRACE
+    | COMMA
+    | COLON
+    | SEMICOLON
+    | PERIODS
+    | UNDERBAR
+    | BAR
+    | EQ
+    | DARROW
+    | ARROW
+    | HASH
+      (* module keywords *)
+    | EQTYPE
+    | FUNCTOR
+    | INCLUDE
+    | SHARING
+    | SIG
+    | SIGNATURE
+    | STRUCT
+    | STRUCTURE
+    | WHERE
+    | OPAQUE
+      (* special symbols *)
+    | ASTERISK
+    | PERIOD
+      (* SML# extensions *)
+    | U_ATTRIBUTE
+    | U_BUILTIN
+    | U_FOREACH
+    | U_IMPORT
+    | U_INTERFACE
+    | U_JOIN
+    | U_EXTEND
+    | U_UPDATE
+    | U_DYNAMIC
+    | U_DYNAMICCASE
+    | U_DYNAMICNULL
+    | U_DYNAMICVIEW
+    | U_DYNAMICVOID
+    | U_POLYREC
+    | U_REIFYTY
+    | U_REQUIRE
+    | U_SIZEOF
+    | U_SQL
+    | U_SQLEVAL
+    | U_SQLEXEC
+    | U_SQLSERVER
+    | U_USE
+      (* identifiers *)
+    | ALNUMID of string
+    | EQTYVAR of string
+    | FREE_TYVAR of string
+    | FREE_EQTYVAR of string
+    | PREFIXEDLABEL of string
+    | SYMBOLID of string
+    | TYVAR of string
+      (* scon *)
+    | CHAR of string
+    | HASH_STRING of string
+    | INT of string
+    | INTX of string
+    | INTLAB of string
+    | REAL of string
+    | STRING of string
+    | WORD of string
+    | WORDX of string
+
+  val tokenName : token -> string
+
+end

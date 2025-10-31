@@ -3,6 +3,7 @@ _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 (* _require local "../../../libs/toolchain/main/Filename.smi" *)
 _require local "../../../data/control/main/Control.smi"
+_require "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "./iml.grm.smi"
 _require local "./iml.lex.smi"

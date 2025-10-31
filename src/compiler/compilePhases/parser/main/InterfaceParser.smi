@@ -6,9 +6,10 @@ _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
 _require local "../../../data/control/main/Control.smi"
 _require local "./interface.grm.smi"
-_require local "./interface.lex.smi"
+_require local "./iml.lex.smi"
 _require local "./ParserError.ppg.smi"
 
+_require local "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 
 structure InterfaceParser =

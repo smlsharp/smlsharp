@@ -37,150 +37,159 @@ structure S = AbsynSQL
 
 %term
     EOF
+  | INVALID of string
+    (* core keywords *)
   | ABSTYPE
-  | ALL
-  | ALPHABETICID of string
   | AND
   | ANDALSO
-  | ARROW
   | AS
-  | ASC
-  | ASTERISK
-  | ATTRIBUTE
-  | BAR
-  | BEGIN
-  | BUILTIN
-  | BY
   | CASE
-  | CHAR of string
-  | COLON
+  | DATATYPE
+  | DO
+  | ELSE
+  | END
+  | EXCEPTION
+  | FN
+  | FUN
+  | HANDLE
+  | IF
+  | IN
+  | INFIX
+  | INFIXR
+  | LET
+  | LOCAL
+  | NONFIX
+  | OF
+  | OP
+  | OPEN
+  | ORELSE
+  | RAISE
+  | REC
+  | THEN
+  | TYPE
+  | VAL
+  | WITH
+  | WITHTYPE
+  | WHILE
+  | LPAREN
+  | RPAREN
+  | LBRACKET
+  | RBRACKET
+  | LBRACE
+  | RBRACE
   | COMMA
+  | COLON
+  | SEMICOLON
+  | PERIODS
+  | UNDERBAR
+  | BAR
+  | EQ
+  | DARROW
+  | ARROW
+  | HASH
+    (* module keywords *)
+  | EQTYPE
+  | FUNCTOR
+  | INCLUDE
+  | SHARING
+  | SIG
+  | SIGNATURE
+  | STRUCT
+  | STRUCTURE
+  | WHERE
+  | OPAQUE
+    (* special symbols *)
+  | ASTERISK
+  | PERIOD
+    (* SML# extensions *)
+  | U_ATTRIBUTE
+  | U_BUILTIN
+  | U_FOREACH
+  | U_IMPORT
+  | U_INTERFACE
+  | U_JOIN
+  | U_EXTEND
+  | U_UPDATE
+  | U_DYNAMIC
+  | U_DYNAMICCASE
+  | U_DYNAMICNULL
+  | U_DYNAMICVIEW
+  | U_DYNAMICVOID
+  | U_POLYREC
+  | U_REIFYTY
+  | U_REQUIRE
+  | U_SIZEOF
+  | U_SQL
+  | U_SQLEVAL
+  | U_SQLEXEC
+  | U_SQLSERVER
+  | U_USE
+    (* identifiers *)
+  | ALNUMID of string
+  | EQTYVAR of string
+  | FREE_TYVAR of string
+  | FREE_EQTYVAR of string
+  | PREFIXEDLABEL of string
+  | SYMBOLID of string
+  | TYVAR of string
+    (* scon *)
+  | CHAR of string
+  | HASH_STRING of string
+  | INT of string
+  | INTX of string
+  | INTLAB of string
+  | REAL of string
+  | STRING of string
+  | WORD of string
+  | WORDX of string
+   (* metacommands *)
+  | USE
+   (* SQL keywords *)
+  | ALL
+  | ASC
+  | BEGIN
+  | BY
   | COMMIT
   | CROSS
-  | DARROW
-  | DATATYPE
   | DEFAULT
   | DELETE
   | DESC
   | DISTINCT
-  | DO
-  | ELSE
-  | END
-  | EQ
-  | EQTYPE
-  | EQTYVAR of string
-  | FREE_EQTYVAR of string
-  | EXCEPTION
   | EXISTS
   | FALSE
   | FETCH
   | FIRST
-  | FN
-  | FOREACH
   | FROM
-  | FUN
-  | FUNCTOR
   | GROUP
-  | HANDLE
-  | HASH
-  | HASH_STRING of string
   | HAVING
-  | IF
-  | IMPORT
-  | INCLUDE
-  | IN
-  | INFIX
-  | INFIXR
   | INNER
   | INSERT
-  | INT of {radix:StringCvt.radix, digits:string}
-  | INTERFACE
-  | INTLAB of string
   | INTO
   | IS
   | JOIN
-  | JOINOP
-  | EXTENDOP
-  | UPDATEOP
-  | DYNAMIC
-  | DYNAMICNULL
-  | DYNAMICTOP
-  | DYNAMICCASE
-  | DYNAMICVIEW
-  | DYNAMICIS
-  | LBRACE
-  | LBRACKET
-  | LET
   | LIMIT
-  | LOCAL
-  | LPAREN
   | NATURAL
   | NEXT
-  | NONFIX
   | NOT
   | NULL
-  | OF
   | OFFSET
   | ON
   | ONLY
-  | OP
-  | OPAQUE
-  | OPEN
   | OR
   | ORDER
-  | ORELSE
-  | PERIOD
-  | PERIODS
-  | POLYREC
-  | PREFIXEDLABEL of string
-  | RAISE
-  | RBRACE
-  | RBRACKET
-  | REAL of string
-  | REC
-  | REQUIRE
   | ROLLBACK
   | ROW
   | ROWS
-  | RPAREN
   | SELECT
-  | SEMICOLON
   | SET
-  | SHARING
-  | SIG
-  | SIGNATURE
-  | SIZEOF
-  | REIFYTY
-  | SPECIAL of string
-  | SQL
-  | SQLEVAL
-  | SQLEXEC
-  | SQLSERVER
-  | STRING of string
-  | STRUCT
-  | STRUCTURE
-  | SYMBOLICID of string
-  | THEN
   | TRUE
-  | TYPE
-  | TYVAR of string
-  | FREE_TYVAR of string
-  | UNDERBAR
   | UNKNOWN
   | UPDATE
-  | USE
-  | USE'
-  | VAL
   | VALUES
-  | WHERE
-  | WHILE
-  | WITH
-  | WITHTYPE
-  | WORD of {radix:StringCvt.radix, digits:string}
 
 %nonterm
     start of A.absyn
-  | int of {radix : StringCvt.radix, digits : string}
+  | int of string
   | constant of A.constant
   | alphabetic_id of A.id
   | id_noEQSTAR of A.id
@@ -406,17 +415,25 @@ int
         : INT
           (INT)
         | INTLAB
-          ({radix = StringCvt.DEC, digits = INTLAB})
+          (INTLAB)
 
 constant
         : int
           (A.INT (valOf (StringCvt.scanString
-                           (IntInf.scan (#radix int))
-                           (#digits int))))
+                           (IntInf.scan StringCvt.DEC)
+                           int)))
+        | INTX
+          (A.INT (valOf (StringCvt.scanString
+                           (IntInf.scan StringCvt.HEX)
+                           INTX)))
         | WORD
           (A.WORD (valOf (StringCvt.scanString
-                            (IntInf.scan (#radix WORD))
-                            (#digits WORD))))
+                            (IntInf.scan StringCvt.DEC)
+                            (String.extract (WORD, 2, NONE)))))
+        | WORDX
+          (A.WORD (valOf (StringCvt.scanString
+                            (IntInf.scan StringCvt.HEX)
+                            (String.extract (WORDX, 3, NONE)))))
         | STRING
           (A.STRING STRING)
         | REAL
@@ -425,9 +442,9 @@ constant
           (A.CHAR (String.sub (CHAR, 0)))
 
 alphabetic_id
-        : ALPHABETICID
-          (Symbol.fromString ALPHABETICID,
-           (ALPHABETICIDleft, ALPHABETICIDright))
+        : ALNUMID
+          (Symbol.fromString ALNUMID,
+           (ALNUMIDleft, ALNUMIDright))
         | ALL
           (Symbol.fromString "all", (ALLleft, ALLright))
         | ASC
@@ -514,8 +531,8 @@ alphabetic_id
 id_noEQSTAR
         : alphabetic_id
           (alphabetic_id)
-        | SYMBOLICID
-          (Symbol.fromString SYMBOLICID, (SYMBOLICIDleft, SYMBOLICIDright))
+        | SYMBOLID
+          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
 
 id_noEQ
         : id_noEQSTAR
@@ -536,11 +553,10 @@ id
           (Symbol.fromString "=", (EQleft, EQright))
 
 id_noEQSQL
-        : ALPHABETICID
-          (Symbol.fromString ALPHABETICID,
-           (ALPHABETICIDleft, ALPHABETICIDright))
-        | SYMBOLICID
-          (Symbol.fromString SYMBOLICID, (SYMBOLICIDleft, SYMBOLICIDright))
+        : ALNUMID
+          (Symbol.fromString ALNUMID, (ALNUMIDleft, ALNUMIDright))
+        | SYMBOLID
+          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
         | ASTERISK
           (Symbol.fromString "*", (ASTERISKleft, ASTERISKright))
 
@@ -595,16 +611,16 @@ longstrids
 atexp_noID
         : constant
           (A.EXPCONST (constant, (constantleft, constantright)))
-        | JOINOP LPAREN exp COMMA exp RPAREN
-          (A.EXPJOIN (exp1, exp2, (JOINOPleft, RPARENright)))
-        | EXTENDOP LPAREN exp COMMA exp RPAREN
-          (A.EXPEXTEND (exp1, exp2, (EXTENDOPleft, RPARENright)))
-        | UPDATEOP LPAREN exp COMMA exp RPAREN
-          (A.EXPUPDATE1 (exp1, exp2, (UPDATEOPleft, RPARENright)))
+        | U_JOIN LPAREN exp COMMA exp RPAREN
+          (A.EXPJOIN (exp1, exp2, (U_JOINleft, RPARENright)))
+        | U_EXTEND LPAREN exp COMMA exp RPAREN
+          (A.EXPEXTEND (exp1, exp2, (U_EXTENDleft, RPARENright)))
+        | U_UPDATE LPAREN exp COMMA exp RPAREN
+          (A.EXPUPDATE1 (exp1, exp2, (U_UPDATEleft, RPARENright)))
         | OP longid
           (A.EXPID (true, longid, (OPleft, longidright)))
-        | SIZEOF LPAREN ty RPAREN
-          (A.EXPSIZEOF (ty, (SIZEOFleft, RPARENright)))
+        | U_SIZEOF LPAREN ty RPAREN
+          (A.EXPSIZEOF (ty, (U_SIZEOFleft, RPARENright)))
         | LBRACE exprow RBRACE
           (A.EXPRECORD (exprow, (LBRACEleft, RBRACEright)))
         | LBRACE RBRACE
@@ -625,22 +641,22 @@ atexp_noID
           (A.EXPLIST (exps_comma, (LBRACKETleft, RBRACKETright)))
         | LET decs IN exps_semicolon END
           (A.EXPLET (decs, exps_semicolon, (LETleft, ENDright)))
-        | REIFYTY LPAREN ty RPAREN
-          (A.EXPREIFYTY (ty, (REIFYTYleft, RPARENright)))
-        | SQL sqlparen
-          (A.EXPSQL (S.SQL (sqlparen, (SQLleft, sqlparenright))))
+        | U_REIFYTY LPAREN ty RPAREN
+          (A.EXPREIFYTY (ty, (U_REIFYTYleft, RPARENright)))
+        | U_SQL sqlparen
+          (A.EXPSQL (S.SQL (sqlparen, (U_SQLleft, sqlparenright))))
         | LPAREN exps_comma RPAREN
           (A.EXPTUPLE (exps_comma, (LPARENleft, RPARENright)))
         | LPAREN expOrSQL SEMICOLON exps_semicolon RPAREN
           (A.EXPSEQ (expOrSQL :: exps_semicolon, (LPARENleft, RPARENright)))
         | LPAREN expOrSQL RPAREN
           (A.EXPPAREN (expOrSQL, (LPARENleft, RPARENright)))
-        | FOREACH id IN exp WHERE exp WITH pat DO exp WHILE exp END
+        | U_FOREACH id IN exp WHERE exp WITH pat DO exp WHILE exp END
           (A.EXPFOREACH_DATA
-             (id, exp1, exp2, pat1, exp3, exp4, (FOREACHleft, ENDright)))
-        | FOREACH id IN exp WITH pat DO exp WHILE exp END
+             (id, exp1, exp2, pat1, exp3, exp4, (U_FOREACHleft, ENDright)))
+        | U_FOREACH id IN exp WITH pat DO exp WHILE exp END
           (A.EXPFOREACH_ARRAY
-             (id, exp1, pat, exp2, exp3, (FOREACHleft, ENDright)))
+             (id, exp1, pat, exp2, exp3, (U_FOREACHleft, ENDright)))
 
 atexp
         : atexp_noID
@@ -705,7 +721,7 @@ colonexp
           (appexp)
         | colonexp COLON ty
           (A.EXPTYPED (colonexp, ty, (colonexpleft, tyright)))
-        | colonexp COLON IMPORT ffity
+        | colonexp COLON U_IMPORT ffity
           (A.EXPIMPORT_EXP (colonexp, ffity, (colonexpleft, ffityright)))
 
 conjexp
@@ -731,28 +747,29 @@ miscexp
           (A.EXPCASE (exp, match, (CASEleft, matchright)))
         | FN match
           (A.EXPFN (match, (FNleft, matchright)))
-        | IMPORT STRING COLON ffity
+        | U_IMPORT STRING COLON ffity
           (A.EXPIMPORT_NAME
              ((STRING, (STRINGleft, STRINGright)),
               ffity,
-              (IMPORTleft, ffityright)))
-        | SQLSERVER COLON ty
-          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (SQLSERVERleft, tyright))))
-        | SQLSERVER colonexp COLON ty
+              (U_IMPORTleft, ffityright)))
+        | U_SQLSERVER COLON ty
+          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (U_SQLSERVERleft, tyright))))
+        | U_SQLSERVER colonexp COLON ty
           (A.EXPSQL
-             (AbsynSQL.SQLSERVER (SOME colonexp, ty, (SQLSERVERleft, tyright))))
-        | DYNAMIC exp AS ty
-          (A.EXPDYNAMIC_AS (exp, ty, (DYNAMICleft, tyright)))
-        | DYNAMIC exp OF ty
-          (A.EXPDYNAMIC_OF (exp, ty, (DYNAMICleft, tyright)))
-        | DYNAMICVIEW exp AS ty
-          (A.EXPDYNAMICVIEW (exp, ty, (DYNAMICVIEWleft, tyright)))
-        | DYNAMICNULL AS ty
-          (A.EXPDYNAMICNULL (ty, (DYNAMICNULLleft, tyright)))
-        | DYNAMICTOP AS ty
-          (A.EXPDYNAMICTOP (ty, (DYNAMICTOPleft, tyright)))
-        | DYNAMICCASE exp OF dynmatch
-          (A.EXPDYNAMICCASE (exp, dynmatch, (DYNAMICCASEleft, dynmatchright)))
+             (AbsynSQL.SQLSERVER
+                (SOME colonexp, ty, (U_SQLSERVERleft, tyright))))
+        | U_DYNAMIC exp AS ty
+          (A.EXPDYNAMIC_AS (exp, ty, (U_DYNAMICleft, tyright)))
+        | U_DYNAMIC exp OF ty
+          (A.EXPDYNAMIC_OF (exp, ty, (U_DYNAMICleft, tyright)))
+        | U_DYNAMICVIEW exp AS ty
+          (A.EXPDYNAMICVIEW (exp, ty, (U_DYNAMICVIEWleft, tyright)))
+        | U_DYNAMICNULL AS ty
+          (A.EXPDYNAMICNULL (ty, (U_DYNAMICNULLleft, tyright)))
+        | U_DYNAMICVOID AS ty
+          (A.EXPDYNAMICTOP (ty, (U_DYNAMICVOIDleft, tyright)))
+        | U_DYNAMICCASE exp OF dynmatch
+          (A.EXPDYNAMICCASE (exp, dynmatch, (U_DYNAMICCASEleft, dynmatchright)))
 
 exp
         : disjexp
@@ -803,33 +820,33 @@ exist_quant
 (*************************** sql ********************************)
 
 sql
-        : SQL sqlpat DARROW sql_opt sqlcon
+        : U_SQL sqlpat DARROW sql_opt sqlcon
           (A.EXPSQL
              (S.SQLFN
                 (sqlpat,
                  S.CON (sql_opt, sqlcon, (sql_optleft, sqlconright)),
-                 (SQLleft, sqlconright))))
-        | SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
+                 (U_SQLleft, sqlconright))))
+        | U_SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
           (A.EXPSQL
              (S.SQLFN
                 (sqlpat,
                  S.SEQ
                    ([S.STEP_EMBED (expOrSQL, (PERIODSleft, RPARENright))],
                     (PERIODSleft, RPARENright)),
-                 (SQLleft, RPARENright))))
-        | SQL sqlpat DARROW sqlparen
-          (A.EXPSQL (S.SQLFN (sqlpat, sqlparen, (SQLleft, sqlparenright))))
-        | SQL sqlcon
+                 (U_SQLleft, RPARENright))))
+        | U_SQL sqlpat DARROW sqlparen
+          (A.EXPSQL (S.SQLFN (sqlpat, sqlparen, (U_SQLleft, sqlparenright))))
+        | U_SQL sqlcon
           (A.EXPSQL
              (S.SQL
                 (S.CON (false, sqlcon, (sqlconleft, sqlconright)),
-                 (SQLleft, sqlconright))))
-        | SQL sqlkwexp
+                 (U_SQLleft, sqlconright))))
+        | U_SQL sqlkwexp
           (A.EXPSQL
              (S.SQL
                 (S.EXP
                    (S.KWEXP (false, sqlkwexp, (sqlkwexpleft, sqlkwexpright))),
-                 (SQLleft, sqlkwexpright))))
+                 (U_SQLleft, sqlkwexpright))))
         | FN pat DARROW sql
           (A.EXPFN ([(pat, sql, (patleft, sqlright))], (FNleft, sqlright)))
 
@@ -866,7 +883,7 @@ sqlsteps
 sql_opt
         : (* none *)
           (false)
-        | SQL
+        | U_SQL
           (true)
 
 sqlcon
@@ -1410,7 +1427,7 @@ dec
           (A.DECVAL ((nil, Loc.noloc), valbind, (VALleft, valbindright)))
         | VAL kinded_tyvarseq valbind
           (A.DECVAL (kinded_tyvarseq, valbind, (VALleft, valbindright)))
-        | VAL POLYREC pvalbind
+        | VAL U_POLYREC pvalbind
           (A.DECPOLYREC (pvalbind, (VALleft, pvalbindright)))
         | FUN fvalbind
           (A.DECFUN ((nil, Loc.noloc), fvalbind, (FUNleft, fvalbindright)))
@@ -1441,7 +1458,7 @@ dec
 
 prec
         : int
-          (SOME (#digits int))
+          (SOME int)
         | (* none *)
           (NONE)
 
@@ -2014,8 +2031,8 @@ ffiattrs
           (alphabetic_id :: ffiattrs)
 
 ffiattr
-        : ATTRIBUTE LPAREN LPAREN ffiattrs RPAREN RPAREN
-          (ffiattrs, (ATTRIBUTEleft, RPAREN2right))
+        : U_ATTRIBUTE LPAREN LPAREN ffiattrs RPAREN RPAREN
+          (ffiattrs, (U_ATTRIBUTEleft, RPAREN2right))
 
 ffity
         : ffiatty
@@ -2352,9 +2369,9 @@ topuse
         : USE STRING
           (A.USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
                   (USEleft, STRINGright)))
-        | USE' STRING
+        | U_USE STRING
           (A.USE' ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-                   (USE'left, STRINGright)))
+                   (U_USEleft, STRINGright)))
 
 tops
         : topdecs
@@ -2367,9 +2384,9 @@ tops
           (topuse :: tops)
 
 interface
-        : INTERFACE STRING
+        : U_INTERFACE STRING
           ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-           (INTERFACEleft, STRINGright))
+           (U_INTERFACEleft, STRINGright))
 
 compile_unit
         : interface

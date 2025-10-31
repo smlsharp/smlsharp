@@ -49,73 +49,114 @@ fun mapAppend f NIL l = l
 
 %pos A.pos
 
-(* same token set as iml.grm *)
+(* copied from iml.grm *)
 %term
     EOF
+  | INVALID of string
+    (* core keywords *)
   | ABSTYPE
   | AND
   | ANDALSO
-  | ARROW
   | AS
-  | ASTERISK
-  | AT
-  | BAR
-  | BUILTIN
   | CASE
-  | CHAR of string
-  | COLON
-  | COMMA
-  | DARROW
   | DATATYPE
+  | DO
+  | ELSE
   | END
-  | EQ
-  | EQTYPE
-  | EQTYVAR of string
   | EXCEPTION
   | FN
-  | FREE_EQTYVAR of string
-  | FREE_TYVAR of string
   | FUN
-  | FUNCTOR
-  | HASH
-  | SYMBOLICID of string
-  | ALPHABETICID of string
+  | HANDLE
+  | IF
   | IN
-  | INCLUDE
   | INFIX
   | INFIXR
-  | INT of {radix:StringCvt.radix, digits:string}
-  | INTLAB of string
-  | PREFIXEDLABEL of string
-  | LBRACE
-  | LBRACKET
+  | LET
   | LOCAL
-  | LPAREN
   | NONFIX
   | OF
   | OP
-  | OPAQUE
-  | PERIOD
-  | PERIODS
-  | REQUIRE
-  | RBRACE
-  | RBRACKET
+  | OPEN
+  | ORELSE
+  | RAISE
+  | REC
+  | THEN
+  | TYPE
+  | VAL
+  | WITH
+  | WITHTYPE
+  | WHILE
+  | LPAREN
   | RPAREN
+  | LBRACKET
+  | RBRACKET
+  | LBRACE
+  | RBRACE
+  | COMMA
+  | COLON
   | SEMICOLON
+  | PERIODS
+  | UNDERBAR
+  | BAR
+  | EQ
+  | DARROW
+  | ARROW
+  | HASH
+    (* module keywords *)
+  | EQTYPE
+  | FUNCTOR
+  | INCLUDE
   | SHARING
   | SIG
   | SIGNATURE
-  | SPECIAL of string
-  | STRING of string
   | STRUCT
   | STRUCTURE
-  | TYPE
-  | TYVAR of string
-  | UNDERBAR
-  | USE'
-  | VAL
   | WHERE
-  | WITHTYPE
+  | OPAQUE
+    (* special symbols *)
+  | ASTERISK
+  | PERIOD
+    (* SML# extensions *)
+  | U_ATTRIBUTE
+  | U_BUILTIN
+  | U_FOREACH
+  | U_IMPORT
+  | U_INTERFACE
+  | U_JOIN
+  | U_EXTEND
+  | U_UPDATE
+  | U_DYNAMIC
+  | U_DYNAMICCASE
+  | U_DYNAMICNULL
+  | U_DYNAMICVIEW
+  | U_DYNAMICVOID
+  | U_POLYREC
+  | U_REIFYTY
+  | U_REQUIRE
+  | U_SIZEOF
+  | U_SQL
+  | U_SQLEVAL
+  | U_SQLEXEC
+  | U_SQLSERVER
+  | U_USE
+    (* identifiers *)
+  | EQTYVAR of string
+  | FREE_TYVAR of string
+  | FREE_EQTYVAR of string
+  | ALNUMID of string
+  | SYMBOLID of string
+  | PREFIXEDLABEL of string
+  | TYVAR of string
+    (* scon *)
+  | CHAR of string
+  | HASH_STRING of string
+  | INT of string
+  | INTX of string
+  | INTLAB of string
+  | REAL of string
+  | STRING of string
+  | WORD of string
+  | WORDX of string
 
 %nonterm
     (* the interface language *)
@@ -145,7 +186,7 @@ fun mapAppend f NIL l = l
   | isemicolons of I.loc snoc
   | itop of I.top
     (* copied from iml.grm *)
-  | int of {radix : StringCvt.radix, digits : string}
+  | int of string
   | alphabetic_id of A.id
   | id_noEQSTAR of A.id
   | id_noEQ of A.id
@@ -221,12 +262,12 @@ fun mapAppend f NIL l = l
 %nonassoc BAR
 
 (* for error recovery *)
-%keyword AND AS BUILTIN CASE DATATYPE END EQTYPE EXCEPTION FUNCTOR IN
-         INFIX INFIXR NONFIX OF OP OPAQUE REQUIRE SHARING SIG SIGNATURE
+%keyword AND AS U_BUILTIN CASE DATATYPE END EQTYPE EXCEPTION FUNCTOR IN
+         INFIX INFIXR NONFIX OF OP OPAQUE U_REQUIRE SHARING SIG SIGNATURE
         STRUCT STRUCTURE TYPE VAL WHERE
 %value TYVAR ("")
-%value SYMBOLICID ("")
-%value ALPHABETICID ("")
+%value SYMBOLID ("")
+%value ALNUMID ("")
 %change -> VAL | -> LPAREN | -> END | -> SEMICOLON
 
 %%
@@ -259,9 +300,9 @@ ivalbind
         | id EQ longid
           (* 2012-1-4 ohori: variable alias in interface added *)
           (I.VAL_ALIAS (id, longid, (idleft, longidright)))
-        | id EQ BUILTIN VAL id COLON ty
+        | id EQ U_BUILTIN VAL id COLON ty
           (I.VAL_BUILTIN (id1, id2, ty, (id1left, tyright)))
-        | id EQ BUILTIN VAL id COLON poly_ty
+        | id EQ U_BUILTIN VAL id COLON poly_ty
           (I.VAL_BUILTIN (id1, id2, poly_ty, (id1left, poly_tyright)))
         | id EQ ioverloadCase
           (I.VAL_OVERLOAD (id, ioverloadCase, (idleft, ioverloadCaseright)))
@@ -314,7 +355,7 @@ idec
           (I.DATATYPE (datbind, typbind, (DATATYPEleft, typbindright)))
         | DATATYPE id_noEQSTAR EQ DATATYPE longid
           (I.DATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
-        | DATATYPE id_noEQSTAR EQ BUILTIN DATATYPE id_noSTAR
+        | DATATYPE id_noEQSTAR EQ U_BUILTIN DATATYPE id_noSTAR
           (I.TYPEBUILTIN
              (id_noEQSTAR, id_noSTAR, (DATATYPEleft, id_noSTARright)))
         | EXCEPTION exbind
@@ -386,30 +427,30 @@ irequireopts
           (alphabetic_id :: irequireopts)
 
 irequire
-        : REQUIRE STRING
+        : U_REQUIRE STRING
           (I.REQUIRE
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               nil,
-              (REQUIREleft, STRINGright)))
-        | REQUIRE STRING irequireopts
+              (U_REQUIREleft, STRINGright)))
+        | U_REQUIRE STRING irequireopts
           (I.REQUIRE
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               irequireopts,
-              (REQUIREleft, irequireoptsright)))
-        | REQUIRE LOCAL STRING
+              (U_REQUIREleft, irequireoptsright)))
+        | U_REQUIRE LOCAL STRING
           (I.REQUIRE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               nil,
-              (REQUIREleft, STRINGright)))
-        | REQUIRE LOCAL STRING irequireopts
+              (U_REQUIREleft, STRINGright)))
+        | U_REQUIRE LOCAL STRING irequireopts
           (I.REQUIRE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               irequireopts,
-              (REQUIREleft, irequireoptsright)))
-        | USE' LOCAL STRING
+              (U_REQUIREleft, irequireoptsright)))
+        | U_USE LOCAL STRING
           (I.USE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-              (USE'left, STRINGright)))
+              (U_USEleft, STRINGright)))
 
 irequires
         : irequire
@@ -482,19 +523,19 @@ int
         : INT
           (INT)
         | INTLAB
-          ({radix = StringCvt.DEC, digits = INTLAB})
+          (INTLAB)
 
 alphabetic_id
-        : ALPHABETICID
-          (Symbol.fromString ALPHABETICID,
-           (ALPHABETICIDleft, ALPHABETICIDright))
+        : ALNUMID
+          (Symbol.fromString ALNUMID,
+           (ALNUMIDleft, ALNUMIDright))
           (* difference: sql keywords *)
 
 id_noEQSTAR
         : alphabetic_id
           (alphabetic_id)
-        | SYMBOLICID
-          (Symbol.fromString SYMBOLICID, (SYMBOLICIDleft, SYMBOLICIDright))
+        | SYMBOLID
+          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
 
 id_noEQ
         : id_noEQSTAR
@@ -557,7 +598,7 @@ lab
 
 prec
         : int
-          (SOME (#digits int))
+          (SOME int)
         | (* none *)
           (NONE)
 

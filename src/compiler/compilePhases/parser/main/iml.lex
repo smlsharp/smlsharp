@@ -10,11 +10,9 @@
  * @version $Id: iml.lex,v 1.42.6.6 2010/01/22 09:19:06 hiro-en Exp $
  *)
 
-structure T = ImlGrm.Tokens
+structure T = Token
 
-type token = T.token
-type pos = Loc.pos
-type lexresult = T.token
+type lexresult = Token.token * Loc.loc
 
 (* if you use ml-lex of SML/NJ, you need to specify this to 2. *)
 val INITIAL_POS_OF_LEXER = 0
@@ -24,26 +22,22 @@ type arg =
     {
       source : Loc.source,
       line : {count : int, begin : int} ref,
-      error : string * pos * pos -> unit,
-      comment : pos list ref,
+      error : string * Loc.loc -> unit,
+      comment : Loc.pos list ref,
       string : {buf : string list ref,
-                startPos : pos option ref,
+                startPos : Loc.pos option ref,
                 ty : string_type ref},
-      prevPos : int ref,
-      allow8bitId : bool,
-      enableMeta : bool
+      allow8bitId : bool
     }
 
-fun initArg {source, enableMeta, lexErrorFn, initialLineno, allow8bitId} =
+fun initArg {source, errorFn, initialLineno, allow8bitId} =
     {
       source = source,
       line = ref {count = initialLineno, begin = INITIAL_POS_OF_LEXER},
-      error = lexErrorFn,
+      error = fn (msg, (pos1, pos2)) => errorFn (msg, pos1, pos2),
       comment = ref nil,
       string = {buf = ref nil, startPos = ref NONE, ty = ref STRING},
-      prevPos = ref INITIAL_POS_OF_LEXER,
-      allow8bitId = allow8bitId,
-      enableMeta = enableMeta
+      allow8bitId = allow8bitId
     } : arg
 
 fun isINITIAL (arg : arg) =
@@ -51,92 +45,90 @@ fun isINITIAL (arg : arg) =
       {comment = ref nil, string = {startPos = ref NONE, ...}, ...} => true
     | _ => false
 
-fun newline (pos, yytext, {line as ref {count, begin}, ...} : arg) =
+fun newline pos yytext ({line as ref {count, begin}, ...} : arg) =
     line := {count = count + 1, begin = pos + size yytext}
 
-fun pos (yypos, {source, line = ref {count, begin}, prevPos, ...}:arg) =
-    Loc.POS {source = source, line = count, col = yypos - begin + 1,
-             pos = yypos - INITIAL_POS_OF_LEXER, gap = yypos - !prevPos}
+fun pos yypos ({source, line = ref {count, begin}, ...} : arg) =
+    Loc.POS {source = source,
+             line = count,
+             col = yypos - begin + 1,
+             pos = yypos - INITIAL_POS_OF_LEXER,
+             gap = 0}
 
-val left = pos
+fun loc yytext yypos arg =
+    (pos yypos arg, pos (yypos + size yytext - 1) arg)
 
-fun right (yypos, len, arg) = pos (yypos + len - 1, arg)
+fun startComment yypos (arg as {comment,...}) =
+    comment := pos yypos arg :: !comment
 
-fun keyword (yytext, yypos, arg as {prevPos, ...}) =
-    (left (yypos, arg), right (yypos, size yytext, arg))
-    before prevPos := yypos + size yytext
-
-fun string (yytext, yypos, arg) =
-    case keyword (yytext, yypos, arg) of (l, r) => (yytext, l, r)
-
-fun startComment (yypos, arg as {comment,...}) =
-    comment := pos (yypos, arg) :: !comment
-
-fun closeComment ({comment,...}:arg) =
+fun closeComment ({comment,...} : arg) =
     case !comment of
       nil => raise Bug.Bug "closeComment"
-    | h::t => (comment := t; case t of nil => true | _::_ => false)
+    | h :: t => (comment := t; case t of nil => SOME h | _ :: _ => NONE)
 
-fun startString (yypos, strTy, arg as {string = {buf, startPos, ty}, ...}) =
-    (buf := nil; startPos := SOME (pos (yypos, arg)); ty := strTy)
+fun startString yypos strTy (arg as {string = {buf, startPos, ty}, ...}) =
+    (buf := nil; startPos := SOME (pos yypos arg); ty := strTy)
 
-(*
-fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
+fun closeString yypos (arg as {string = {buf, startPos, ty}, ...} : arg) =
     case !startPos of
       NONE => raise Bug.Bug "closeString"
-    | SOME l =>
+    | SOME left =>
       let
-        val r = pos (yypos, arg)
+        val loc = (left, pos yypos arg)
         val s = String.concat (rev (!buf))
       in
         buf := nil;
         startPos := NONE;
-        #prevPos arg := yypos + 1;
         case !ty of
-          STRING => (T.STRING (s, l, r), l, r)
-        | CHAR => (if size s = 1 then ()
-                   else #error arg ("character constant not length 1", l, r);
-                   (T.CHAR (s, l, r), l, r))
-      end
-*)
-fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
-    case !startPos of
-      NONE => raise Bug.Bug "closeString"
-    | SOME l =>
-      let
-        val r = pos (yypos, arg)
-        val s = String.concat (rev (!buf))
-      in
-        buf := nil;
-        startPos := NONE;
-        #prevPos arg := yypos + 1;
-        case !ty of
-          STRING => (T.STRING (s, l, r), l, r)
-        | CHAR => if size s = 1 then (T.CHAR (s, l, r), l, r)
-                  else (T.HASH_STRING (s, l, r), l, r)
+          STRING => (T.STRING s, loc)
+        | CHAR => if size s = 1
+                  then (T.CHAR s, loc)
+                  else (T.HASH_STRING s, loc)
       end
 
-fun addString (s, {string = {buf, startPos, ...}, ...}:arg) =
+fun addString s ({string = {buf, startPos, ...}, ...}:arg) =
     buf := s :: !buf
 
 fun eof ({string, comment, error, ...} : arg) =
     (case !(#startPos string) of
-       SOME pos => error ("unclosed string", pos, Loc.nopos)
+       SOME pos => error ("unclosed string", (pos, Loc.NOPOS))
      | NONE => ();
      case !comment of
-       pos::_ => error ("unclosed comment", pos, Loc.nopos)
+       pos::_ => error ("unclosed comment", (pos, Loc.NOPOS))
      | nil => ();
-     T.EOF (Loc.nopos, Loc.nopos))
+     (T.EOF, (Loc.NOPOS, Loc.NOPOS)))
 
-fun check8bit (yytext, yypos, arg) =
-    (if #allow8bitId arg orelse CharVector.all (fn x => ord x < 128) yytext
-     then ()
-     else #error arg ("8 bit characters in ID is not permitted",
-                      left (yypos, arg),
-                      right (yypos, size yytext, arg));
-     (yytext, yypos, arg))
+fun check8bit yytext yypos (arg as {allow8bitId, error, ...} : arg) =
+    if allow8bitId orelse CharVector.all (fn x => ord x < 128) yytext
+    then ()
+    else error ("8 bit characters in ID is not permitted", loc yytext yypos arg)
 
-(* 
+fun setupLexer lexer =
+    let
+      val lastRight = ref 0
+    in
+      fn () =>
+         let
+           val (token, (pos1, pos2)) = lexer ()
+           val pos1 =
+               case token of
+                 T.COMMENT => pos1
+               | T.EOF => pos1
+               | _ =>
+                 (case pos1 of
+                    Loc.NOPOS => pos1
+                  | Loc.POS pos =>
+                    Loc.POS (pos # {gap = #pos pos - !lastRight - 1}))
+                 before
+                 (case pos2 of
+                    Loc.NOPOS => ()
+                  | Loc.POS pos => lastRight := #pos pos)
+         in
+           (token, (pos1, pos2))
+         end
+    end
+
+(*
 以下の
 alpha=[A-Za-z\127-\255]
 は，
@@ -174,205 +166,153 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 %%
 
 <INITIAL>{ws} => (continue ());
-<INITIAL>{eol} => (newline (yypos, yytext, arg); continue ());
-<INITIAL>"__attribute__" => (T.ATTRIBUTE (keyword (yytext, yypos, arg)));
-<INITIAL>"_builtin" => (T.BUILTIN (keyword (yytext, yypos, arg)));
-<INITIAL>"_foreach" => (T.FOREACH (keyword (yytext, yypos, arg)));
-<INITIAL>"_import" => (T.IMPORT (keyword (yytext, yypos, arg)));
-<INITIAL>"_interface" => (T.INTERFACE (keyword (yytext, yypos, arg)));
-<INITIAL>"_join" => (T.JOINOP (keyword (yytext, yypos, arg)));
-<INITIAL>"_extend" => (T.EXTENDOP (keyword (yytext, yypos, arg)));
-<INITIAL>"_update" => (T.UPDATEOP (keyword (yytext, yypos, arg)));
-<INITIAL>"_dynamic" => (T.DYNAMIC (keyword (yytext, yypos, arg)));
-<INITIAL>"_dynamiccase" => (T.DYNAMICCASE (keyword (yytext, yypos, arg)));
-<INITIAL>"_dynamicnull" => (T.DYNAMICNULL (keyword (yytext, yypos, arg)));
-<INITIAL>"_dynamicvoid" => (T.DYNAMICTOP (keyword (yytext, yypos, arg)));
-<INITIAL>"_polyrec" => (T.POLYREC (keyword (yytext, yypos, arg)));
-<INITIAL>"_require" => (T.REQUIRE (keyword (yytext, yypos, arg)));
-<INITIAL>"_sizeof" => (T.SIZEOF (keyword (yytext, yypos, arg)));
-<INITIAL>"_sql" => (T.SQL (keyword (yytext, yypos, arg)));
-<INITIAL>"_sqleval" => (T.SQLEVAL (keyword (yytext, yypos, arg)));
-<INITIAL>"_sqlexec" => (T.SQLEXEC (keyword (yytext, yypos, arg)));
-<INITIAL>"_sqlserver" => (T.SQLSERVER (keyword (yytext, yypos, arg)));
-<INITIAL>"_use" => (T.USE' (keyword (yytext, yypos, arg)));
-<INITIAL>"_sizeof" => (T.SIZEOF (keyword (yytext, yypos, arg)));
-<INITIAL>"_reifyTy" => (T.REIFYTY (keyword (yytext, yypos, arg)));
-<INITIAL>"_"{id}+ => (let val (l, r) = keyword (yytext, yypos, arg)
-                      in #error arg ("illeagal _ keyword", l, r);
-                         continue ()
-                      end);
-<INITIAL>"abstype" => (T.ABSTYPE (keyword (yytext, yypos, arg)));
-<INITIAL>"all" => (T.ALL (keyword (yytext, yypos, arg)));
-<INITIAL>"and" => (T.AND (keyword (yytext, yypos, arg)));
-<INITIAL>"andalso" => (T.ANDALSO (keyword (yytext, yypos, arg)));
-<INITIAL>"as" => (T.AS (keyword (yytext, yypos, arg)));
-<INITIAL>"asc" => (T.ASC (keyword (yytext, yypos, arg)));
-<INITIAL>"begin" => (T.BEGIN (keyword (yytext, yypos, arg)));
-<INITIAL>"by" => (T.BY (keyword (yytext, yypos, arg)));
-<INITIAL>"case" => (T.CASE (keyword (yytext, yypos, arg)));
-<INITIAL>"commit" => (T.COMMIT (keyword (yytext, yypos, arg)));
-<INITIAL>"cross" => (T.CROSS (keyword (yytext, yypos, arg)));
-<INITIAL>"datatype" => (T.DATATYPE (keyword (yytext, yypos, arg)));
-<INITIAL>"default" => (T.DEFAULT (keyword (yytext, yypos, arg)));
-<INITIAL>"delete" => (T.DELETE (keyword (yytext, yypos, arg)));
-<INITIAL>"desc" => (T.DESC (keyword (yytext, yypos, arg)));
-<INITIAL>"distinct" => (T.DISTINCT (keyword (yytext, yypos, arg)));
-<INITIAL>"do" => (T.DO (keyword (yytext, yypos, arg)));
-<INITIAL>"else" => (T.ELSE (keyword (yytext, yypos, arg)));
-<INITIAL>"end" => (T.END (keyword (yytext, yypos, arg)));
-<INITIAL>"eqtype" => (T.EQTYPE (keyword (yytext, yypos, arg)));
-<INITIAL>"exception" => (T.EXCEPTION (keyword (yytext, yypos, arg)));
-<INITIAL>"exists" => (T.EXISTS (keyword (yytext, yypos, arg)));
-<INITIAL>"false" => (T.FALSE (keyword (yytext, yypos, arg)));
-<INITIAL>"fetch" => (T.FETCH (keyword (yytext, yypos, arg)));
-<INITIAL>"first" => (T.FIRST (keyword (yytext, yypos, arg)));
-<INITIAL>"fn" => (T.FN (keyword (yytext, yypos, arg)));
-<INITIAL>"from" => (T.FROM (keyword (yytext, yypos, arg)));
-<INITIAL>"fun" => (T.FUN (keyword (yytext, yypos, arg)));
-<INITIAL>"functor" => (T.FUNCTOR (keyword (yytext, yypos, arg)));
-<INITIAL>"group" => (T.GROUP (keyword (yytext, yypos, arg)));
-<INITIAL>"handle" => (T.HANDLE (keyword (yytext, yypos, arg)));
-<INITIAL>"having" => (T.HAVING (keyword (yytext, yypos, arg)));
-<INITIAL>"if" => (T.IF (keyword (yytext, yypos, arg)));
-<INITIAL>"in" => (T.IN (keyword (yytext, yypos, arg)));
-<INITIAL>"include" => (T.INCLUDE (keyword (yytext, yypos, arg)));
-<INITIAL>"infix" => (T.INFIX (keyword (yytext, yypos, arg)));
-<INITIAL>"infixr" => (T.INFIXR (keyword (yytext, yypos, arg)));
-<INITIAL>"inner" => (T.INNER (keyword (yytext, yypos, arg)));
-<INITIAL>"insert" => (T.INSERT (keyword (yytext, yypos, arg)));
-<INITIAL>"into" => (T.INTO (keyword (yytext, yypos, arg)));
-<INITIAL>"is" => (T.IS (keyword (yytext, yypos, arg)));
-<INITIAL>"join" => (T.JOIN (keyword (yytext, yypos, arg)));
-<INITIAL>"let" => (T.LET (keyword (yytext, yypos, arg)));
-<INITIAL>"limit" => (T.LIMIT (keyword (yytext, yypos, arg)));
-<INITIAL>"local" => (T.LOCAL (keyword (yytext, yypos, arg)));
-<INITIAL>"natural" => (T.NATURAL (keyword (yytext, yypos, arg)));
-<INITIAL>"next" => (T.NEXT (keyword (yytext, yypos, arg)));
-<INITIAL>"nonfix" => (T.NONFIX (keyword (yytext, yypos, arg)));
-<INITIAL>"not" => (T.NOT (keyword (yytext, yypos, arg)));
-<INITIAL>"null" => (T.NULL (keyword (yytext, yypos, arg)));
-<INITIAL>"of" => (T.OF (keyword (yytext, yypos, arg)));
-<INITIAL>"offset" => (T.OFFSET (keyword (yytext, yypos, arg)));
-<INITIAL>"on" => (T.ON (keyword (yytext, yypos, arg)));
-<INITIAL>"only" => (T.ONLY (keyword (yytext, yypos, arg)));
-<INITIAL>"op" => (T.OP (keyword (yytext, yypos, arg)));
-<INITIAL>"open" => (T.OPEN(keyword (yytext, yypos, arg)));
-<INITIAL>"or" => (T.OR (keyword (yytext, yypos, arg)));
-<INITIAL>"order" => (T.ORDER (keyword (yytext, yypos, arg)));
-<INITIAL>"orelse" => (T.ORELSE (keyword (yytext, yypos, arg)));
-<INITIAL>"raise" => (T.RAISE (keyword (yytext, yypos, arg)));
-<INITIAL>"rec" => (T.REC (keyword (yytext, yypos, arg)));
-<INITIAL>"rollback" => (T.ROLLBACK (keyword (yytext, yypos, arg)));
-<INITIAL>"row" => (T.ROW (keyword (yytext, yypos, arg)));
-<INITIAL>"rows" => (T.ROWS (keyword (yytext, yypos, arg)));
-<INITIAL>"select" => (T.SELECT (keyword (yytext, yypos, arg)));
-<INITIAL>"set" => (T.SET (keyword (yytext, yypos, arg)));
-<INITIAL>"sharing" => (T.SHARING (keyword (yytext, yypos, arg)));
-<INITIAL>"sig"=> (T.SIG (keyword (yytext, yypos, arg)));
-<INITIAL>"signature" => (T.SIGNATURE (keyword (yytext, yypos, arg)));
-<INITIAL>"struct" => (T.STRUCT (keyword (yytext, yypos, arg)));
-<INITIAL>"structure" => (T.STRUCTURE (keyword (yytext, yypos, arg)));
-<INITIAL>"then" => (T.THEN (keyword (yytext, yypos, arg)));
-<INITIAL>"true" => (T.TRUE (keyword (yytext, yypos, arg)));
-<INITIAL>"type" => (T.TYPE (keyword (yytext, yypos, arg)));
-<INITIAL>"unknown" => (T.UNKNOWN (keyword (yytext, yypos, arg)));
-<INITIAL>"update" => (T.UPDATE (keyword (yytext, yypos, arg)));
-<INITIAL>"use" => (if #enableMeta arg
-                   then T.USE (keyword (yytext, yypos, arg))
-                   else T.ALPHABETICID (string (yytext, yypos, arg)));
-<INITIAL>"val" => (T.VAL (keyword (yytext, yypos, arg)));
-<INITIAL>"values" => (T.VALUES (keyword (yytext, yypos, arg)));
-<INITIAL>"where" => (T.WHERE (keyword (yytext, yypos, arg)));
-<INITIAL>"while" => (T.WHILE (keyword (yytext, yypos, arg)));
-<INITIAL>"with" => (T.WITH (keyword (yytext, yypos, arg)));
-<INITIAL>"withtype" => (T.WITHTYPE (keyword (yytext, yypos, arg)));
-<INITIAL>":>" => (T.OPAQUE (keyword (yytext, yypos, arg)));
-<INITIAL>"*" => (T.ASTERISK(keyword (yytext, yypos, arg)));
-<INITIAL>"#" => (T.HASH(keyword (yytext, yypos, arg)));
-<INITIAL>"(" => (T.LPAREN(keyword (yytext, yypos, arg)));
-<INITIAL>")" => (T.RPAREN(keyword (yytext, yypos, arg)));
-<INITIAL>"," => (T.COMMA(keyword (yytext, yypos, arg)));
-<INITIAL>"->" => (T.ARROW (keyword (yytext, yypos, arg)));
-<INITIAL>"." => (T.PERIOD (keyword (yytext, yypos, arg)));
-<INITIAL>"..." => (T.PERIODS (keyword (yytext, yypos, arg)));
-<INITIAL>":" => (T.COLON(keyword (yytext, yypos, arg)));
-<INITIAL>";" => (T.SEMICOLON(keyword (yytext, yypos, arg)));
-<INITIAL>"=" => (T.EQ(keyword (yytext, yypos, arg)));
-<INITIAL>"=>" => (T.DARROW (keyword (yytext, yypos, arg)));
-<INITIAL>"[" => (T.LBRACKET(keyword (yytext, yypos, arg)));
-<INITIAL>"]" => (T.RBRACKET(keyword (yytext, yypos, arg)));
-<INITIAL>"_" => (T.UNDERBAR(keyword (yytext, yypos, arg)));
-<INITIAL>"{" => (T.LBRACE(keyword (yytext, yypos, arg)));
-<INITIAL>"|" => (T.BAR(keyword (yytext, yypos, arg)));
-<INITIAL>"}" => (T.RBRACE(keyword (yytext, yypos, arg)));
-<INITIAL>"_''"({alnum}|"'")* => (T.FREE_EQTYVAR (string (yytext, yypos, arg)));
-<INITIAL>"_'"({alnum}|"'")* => (T.FREE_TYVAR (string (yytext, yypos, arg)));
-<INITIAL>{eqtyvar} => (T.EQTYVAR (string (yytext, yypos, arg)));
-<INITIAL>{tyvar} => (T.TYVAR (string (yytext, yypos, arg)));
-<INITIAL>{id} => (T.ALPHABETICID (string (yytext, yypos, arg)));
-<INITIAL>{symid} => (T.SYMBOLICID (string (yytext, yypos, arg)));
-<INITIAL>{prefixedlabel} => (T.PREFIXEDLABEL (string (yytext, yypos, arg)));
-<INITIAL>"0w"{num} =>
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.WORD ({radix = StringCvt.DEC,
-                      digits = String.extract (s, 2, NONE)},
-                     l, r)
-          end);
-<INITIAL>"~"?"0x"{xdigit}+ =>
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.INT ({radix = StringCvt.HEX, digits = s}, l, r)
-          end);
-<INITIAL>"0wx"{xdigit}+ =>
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.WORD ({radix = StringCvt.HEX,
-                      digits = String.extract (s, 3, NONE)},
-                     l, r)
-          end);
-<INITIAL>({int0}|~{num}) =>
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.INT ({radix = StringCvt.DEC, digits = s}, l, r)
-          end);
-<INITIAL>{int} => (T.INTLAB (string (yytext, yypos, arg)));
-<INITIAL>{real} => (T.REAL (string (yytext, yypos, arg)));
-<INITIAL>#\" => (startString (yypos, CHAR, arg); YYBEGIN STR; continue ());
-<INITIAL>\" => (startString (yypos, STRING, arg); YYBEGIN STR; continue ());
-<INITIAL>"(*" => (startComment (yypos, arg); YYBEGIN COMM; continue ()
+<INITIAL>{eol} => (newline yypos yytext arg; continue ());
+
+<INITIAL>"abstype" => ((T.ABSTYPE, loc yytext yypos arg));
+<INITIAL>"and" => ((T.AND, loc yytext yypos arg));
+<INITIAL>"andalso" => ((T.ANDALSO, loc yytext yypos arg));
+<INITIAL>"as" => ((T.AS, loc yytext yypos arg));
+<INITIAL>"case" => ((T.CASE, loc yytext yypos arg));
+<INITIAL>"datatype" => ((T.DATATYPE, loc yytext yypos arg));
+<INITIAL>"do" => ((T.DO, loc yytext yypos arg));
+<INITIAL>"else" => ((T.ELSE, loc yytext yypos arg));
+<INITIAL>"end" => ((T.END, loc yytext yypos arg));
+<INITIAL>"exception" => ((T.EXCEPTION, loc yytext yypos arg));
+<INITIAL>"fn" => ((T.FN, loc yytext yypos arg));
+<INITIAL>"fun" => ((T.FUN, loc yytext yypos arg));
+<INITIAL>"handle" => ((T.HANDLE, loc yytext yypos arg));
+<INITIAL>"if" => ((T.IF, loc yytext yypos arg));
+<INITIAL>"in" => ((T.IN, loc yytext yypos arg));
+<INITIAL>"infix" => ((T.INFIX, loc yytext yypos arg));
+<INITIAL>"infixr" => ((T.INFIXR, loc yytext yypos arg));
+<INITIAL>"let" => ((T.LET, loc yytext yypos arg));
+<INITIAL>"local" => ((T.LOCAL, loc yytext yypos arg));
+<INITIAL>"nonfix" => ((T.NONFIX, loc yytext yypos arg));
+<INITIAL>"of" => ((T.OF, loc yytext yypos arg));
+<INITIAL>"op" => ((T.OP, loc yytext yypos arg));
+<INITIAL>"open" => ((T.OPEN, loc yytext yypos arg));
+<INITIAL>"orelse" => ((T.ORELSE, loc yytext yypos arg));
+<INITIAL>"raise" => ((T.RAISE, loc yytext yypos arg));
+<INITIAL>"rec" => ((T.REC, loc yytext yypos arg));
+<INITIAL>"then" => ((T.THEN, loc yytext yypos arg));
+<INITIAL>"type" => ((T.TYPE, loc yytext yypos arg));
+<INITIAL>"val" => ((T.VAL, loc yytext yypos arg));
+<INITIAL>"with" => ((T.WITH, loc yytext yypos arg));
+<INITIAL>"withtype" => ((T.WITHTYPE, loc yytext yypos arg));
+<INITIAL>"while" => ((T.WHILE, loc yytext yypos arg));
+<INITIAL>"(" => ((T.LPAREN, loc yytext yypos arg));
+<INITIAL>")" => ((T.RPAREN, loc yytext yypos arg));
+<INITIAL>"[" => ((T.LBRACKET, loc yytext yypos arg));
+<INITIAL>"]" => ((T.RBRACKET, loc yytext yypos arg));
+<INITIAL>"{" => ((T.LBRACE, loc yytext yypos arg));
+<INITIAL>"}" => ((T.RBRACE, loc yytext yypos arg));
+<INITIAL>"," => ((T.COMMA, loc yytext yypos arg));
+<INITIAL>":" => ((T.COLON, loc yytext yypos arg));
+<INITIAL>";" => ((T.SEMICOLON, loc yytext yypos arg));
+<INITIAL>"..." => ((T.PERIODS, loc yytext yypos arg));
+<INITIAL>"_" => ((T.UNDERBAR, loc yytext yypos arg));
+<INITIAL>"|" => ((T.BAR, loc yytext yypos arg));
+<INITIAL>"=" => ((T.EQ, loc yytext yypos arg));
+<INITIAL>"=>" => ((T.DARROW, loc yytext yypos arg));
+<INITIAL>"->" => ((T.ARROW, loc yytext yypos arg));
+<INITIAL>"#" => ((T.HASH, loc yytext yypos arg));
+
+<INITIAL>"eqtype" => ((T.EQTYPE, loc yytext yypos arg));
+<INITIAL>"functor" => ((T.FUNCTOR, loc yytext yypos arg));
+<INITIAL>"include" => ((T.INCLUDE, loc yytext yypos arg));
+<INITIAL>"sharing" => ((T.SHARING, loc yytext yypos arg));
+<INITIAL>"sig"=> ((T.SIG, loc yytext yypos arg));
+<INITIAL>"signature" => ((T.SIGNATURE, loc yytext yypos arg));
+<INITIAL>"struct" => ((T.STRUCT, loc yytext yypos arg));
+<INITIAL>"structure" => ((T.STRUCTURE, loc yytext yypos arg));
+<INITIAL>"where" => ((T.WHERE, loc yytext yypos arg));
+<INITIAL>":>" => ((T.OPAQUE, loc yytext yypos arg));
+
+<INITIAL>"*" => ((T.ASTERISK, loc yytext yypos arg));
+<INITIAL>"." => ((T.PERIOD, loc yytext yypos arg));
+
+<INITIAL>"__attribute__" => ((T.U_ATTRIBUTE, loc yytext yypos arg));
+<INITIAL>"_builtin" => ((T.U_BUILTIN, loc yytext yypos arg));
+<INITIAL>"_foreach" => ((T.U_FOREACH, loc yytext yypos arg));
+<INITIAL>"_import" => ((T.U_IMPORT, loc yytext yypos arg));
+<INITIAL>"_interface" => ((T.U_INTERFACE, loc yytext yypos arg));
+<INITIAL>"_join" => ((T.U_JOIN, loc yytext yypos arg));
+<INITIAL>"_extend" => ((T.U_EXTEND, loc yytext yypos arg));
+<INITIAL>"_update" => ((T.U_UPDATE, loc yytext yypos arg));
+<INITIAL>"_dynamic" => ((T.U_DYNAMIC, loc yytext yypos arg));
+<INITIAL>"_dynamiccase" => ((T.U_DYNAMICCASE, loc yytext yypos arg));
+<INITIAL>"_dynamicnull" => ((T.U_DYNAMICNULL, loc yytext yypos arg));
+<INITIAL>"_dynamicview" => ((T.U_DYNAMICVIEW, loc yytext yypos arg));
+<INITIAL>"_dynamicvoid" => ((T.U_DYNAMICVOID, loc yytext yypos arg));
+<INITIAL>"_polyrec" => ((T.U_POLYREC, loc yytext yypos arg));
+<INITIAL>"_reifyTy" => ((T.U_REIFYTY, loc yytext yypos arg));
+<INITIAL>"_require" => ((T.U_REQUIRE, loc yytext yypos arg));
+<INITIAL>"_sizeof" => ((T.U_SIZEOF, loc yytext yypos arg));
+<INITIAL>"_sql" => ((T.U_SQL, loc yytext yypos arg));
+<INITIAL>"_sqleval" => ((T.U_SQLEVAL, loc yytext yypos arg));
+<INITIAL>"_sqlexec" => ((T.U_SQLEXEC, loc yytext yypos arg));
+<INITIAL>"_sqlserver" => ((T.U_SQLSERVER, loc yytext yypos arg));
+<INITIAL>"_use" => ((T.U_USE, loc yytext yypos arg));
+
+<INITIAL>"_''"({alnum}|"'")* => ((T.FREE_EQTYVAR yytext, loc yytext yypos arg));
+<INITIAL>"_'"({alnum}|"'")* => ((T.FREE_TYVAR yytext, loc yytext yypos arg));
+<INITIAL>{eqtyvar} => ((T.EQTYVAR yytext, loc yytext yypos arg));
+<INITIAL>{tyvar} => ((T.TYVAR yytext, loc yytext yypos arg));
+<INITIAL>{id} => (check8bit yytext yypos arg;
+                  (T.ALNUMID yytext, loc yytext yypos arg));
+<INITIAL>{symid} => ((T.SYMBOLID yytext, loc yytext yypos arg));
+<INITIAL>{prefixedlabel} => ((T.PREFIXEDLABEL yytext, loc yytext yypos arg));
+
+<INITIAL>"0w"{num} => ((T.WORD yytext, loc yytext yypos arg));
+<INITIAL>"~"?"0x"{xdigit}+ => ((T.INTX yytext, loc yytext yypos arg));
+<INITIAL>"0wx"{xdigit}+ => ((T.WORDX yytext, loc yytext yypos arg));
+<INITIAL>({int0}|~{num}) => ((T.INT yytext, loc yytext yypos arg));
+<INITIAL>{int} => ((T.INTLAB yytext, loc yytext yypos arg));
+<INITIAL>{real} => ((T.REAL yytext, loc yytext yypos arg));
+<INITIAL>#\" => (startString yypos CHAR arg; YYBEGIN STR; continue ());
+<INITIAL>\" => (startString yypos STRING arg; YYBEGIN STR; continue ());
+
+<INITIAL>"(*" => (startComment yypos arg; YYBEGIN COMM; continue ()
   (* Unlike "(*", unmatched "*)" should not cause parse error. It should
    * be regarded as two tokens "*" and ")". *)
 );
-<INITIAL>. => (T.SPECIAL (string (yytext, yypos, arg)));
+<INITIAL>. => ((T.INVALID yytext, loc yytext yypos arg));
 
-<COMM>{eol} => (newline (yypos, yytext, arg); continue ());
-<COMM>"(*"  => (startComment (yypos, arg); continue ());
-<COMM>"*)"  => (if closeComment arg then YYBEGIN INITIAL else (); continue ());
+<COMM>{eol} => (newline yypos yytext arg; continue ());
+<COMM>"(*"  => (startComment yypos arg; continue ());
+<COMM>"*)"  => (case closeComment arg of
+                  NONE => continue ()
+                | SOME left =>
+                  (YYBEGIN INITIAL;
+                   (T.COMMENT, (left, pos (yypos + 2) arg))));
 <COMM>.     => (continue ());
 
-<STR>{eol} => (let val (t, l, r) = closeString (yypos, arg)
-               in #error arg ("unclosed string", l, r);
-                  newline (yypos, yytext, arg);
+<STR>{eol} => (let val (tok, loc) = closeString yypos arg
+               in #error arg ("unclosed string", loc);
+                  newline yypos yytext arg;
                   YYBEGIN INITIAL;
-                  t
+                  (tok, loc)
                end);
-<STR>\" => (YYBEGIN INITIAL; #1 (closeString (yypos, arg)));
-<STR>\\{eol} => (newline (yypos, yytext, arg); YYBEGIN SKIP; continue ());
+<STR>\" => (YYBEGIN INITIAL; closeString yypos arg);
+<STR>\\{eol} => (newline yypos yytext arg; YYBEGIN SKIP; continue ());
 <STR>\\{ws} => (YYBEGIN SKIP; continue ());
-<STR>\\a => (addString ("\007", arg); continue());
-<STR>\\b => (addString ("\008", arg); continue());
-<STR>\\f => (addString ("\012", arg); continue());
-<STR>\\n => (addString ("\010", arg); continue());
-<STR>\\r => (addString ("\013", arg); continue());
-<STR>\\t => (addString ("\009", arg); continue());
-<STR>\\v => (addString ("\011", arg); continue());
-<STR>\\\\ => (addString ("\\", arg); continue());
-<STR>\\\" => (addString ("\"", arg); continue());
-<STR>\\\^[@-_] => (addString (str (chr (ord (String.sub (yytext, 2)) - 64)),
-                              arg);
+<STR>\\a => (addString "\007" arg; continue ());
+<STR>\\b => (addString "\008" arg; continue ());
+<STR>\\f => (addString "\012" arg; continue ());
+<STR>\\n => (addString "\010" arg; continue ());
+<STR>\\r => (addString "\013" arg; continue ());
+<STR>\\t => (addString "\009" arg; continue ());
+<STR>\\v => (addString "\011" arg; continue ());
+<STR>\\\\ => (addString "\\" arg; continue ());
+<STR>\\\" => (addString "\"" arg; continue ());
+<STR>\\\^[@-_] => (addString
+                     (str (chr (ord (String.sub (yytext, 2)) - 64)))
+                     arg;
                    continue ());
 <STR>\\\^. => (#error arg
                  ("illegal control escape; must be one of \
                   \@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_",
-                  left(yypos, arg),
-                  right(yypos, size yytext, arg));
+                  loc yytext yypos arg);
                continue ());
 <STR>\\[0-9]{3} =>
         (let
@@ -380,10 +320,9 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
                      (Int.scan StringCvt.DEC)
                      (String.substring (yytext, 1, 3))
          in
-           addString (str (chr (valOf c)), arg)
+           addString (str (chr (valOf c))) arg
            handle _ => #error arg ("illegal ascii escape",
-                                   left (yypos, arg),
-                                   right (yypos, size yytext, arg));
+                                   loc yytext yypos arg);
            continue ()
          end);
 <STR>\\u{xdigit}{4} =>
@@ -398,29 +337,26 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
          in
            (* UTF-8 encoding *)
            if x <= 0wx7f then
-             (addString (str (byte (x,  0w0, 0wx7f, 0wx00)), arg))
+             (addString (str (byte (x,  0w0, 0wx7f, 0wx00))) arg)
            else if x <= 0wx7ff then
-             (addString (str (byte (x,  0w6, 0wx1f, 0wxc0)), arg);
-              addString (str (byte (x,  0w0, 0wx3f, 0wx80)), arg))
+             (addString (str (byte (x,  0w6, 0wx1f, 0wxc0))) arg;
+              addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg)
            else
-             (addString (str (byte (x, 0w12, 0wx0f, 0wxe0)), arg);
-              addString (str (byte (x,  0w6, 0wx3f, 0wx80)), arg);
-              addString (str (byte (x,  0w0, 0wx3f, 0wx80)), arg));
+             (addString (str (byte (x, 0w12, 0wx0f, 0wxe0))) arg;
+              addString (str (byte (x,  0w6, 0wx3f, 0wx80))) arg;
+              addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg);
            continue()
         end);
-<STR>\\ => (#error arg ("illegal string escape",
-                        left(yypos, arg), right(yypos, 1, arg));
+<STR>\\ => (#error arg ("illegal string escape", loc yytext yypos arg);
             continue ());
-<STR>[^\000-\031\\\"\r\n]+ => (addString (yytext, arg); continue ());
-<STR>. => (#error arg
-             ("illegal non-printing character in string",
-              left(yypos, arg), right(yypos, 1, arg));
+<STR>[^\000-\031\\\"\r\n]+ => (addString yytext arg; continue ());
+<STR>. => (#error arg ("illegal non-printing character in string",
+                       loc yytext yypos arg);
            continue());
 
-<SKIP>{eol} => (newline (yypos, yytext, arg); continue());
+<SKIP>{eol} => (newline yypos yytext arg; continue());
 <SKIP>{ws} => (continue());
 <SKIP>\\ => (YYBEGIN STR; continue ());
-<SKIP>. => (#error arg
-              ("unclosed string", left(yypos, arg), right(yypos, 1, arg));
+<SKIP>. => (#error arg ("unclosed string", loc yytext yypos arg);
             YYBEGIN STR;
             continue ());

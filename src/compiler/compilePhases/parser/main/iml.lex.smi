@@ -1,24 +1,22 @@
 _require local "../../../../basis.smi"
+_require "../../../compilerIRs/absyn/main/Token.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
-
-_require "./iml.grm.smi"
 
 structure ImlLex =
 struct
   structure UserDeclarations =
   struct
-    type token = ImlGrm.Tokens.token
-    type pos = ImlGrm.Tokens.pos
     type arg (= {})
+    type lexresult = Token.token * Loc.loc
     val isINITIAL : arg -> bool
     val initArg : {source : Loc.source,
-                   enableMeta : bool,
-                   lexErrorFn : (string * pos * pos) -> unit,
+                   errorFn : string * Loc.pos * Loc.pos -> unit,
                    initialLineno : int,
                    allow8bitId : bool} -> arg
+    val setupLexer : (unit -> lexresult) -> unit -> lexresult
   end
   val makeLexer
       : (int -> string) -> UserDeclarations.arg -> unit
-        -> UserDeclarations.token
+        -> UserDeclarations.lexresult
 end
