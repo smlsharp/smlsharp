@@ -26,6 +26,17 @@
 structure A = Absyn
 structure S = AbsynSQL
 
+fun EXPAPP (NIL ::> exp, loc) = exp
+  | EXPAPP (exps, loc) = A.EXPAPP (Snoc.toList exps, loc)
+fun PATAPP (NIL ::> pat, loc) = pat
+  | PATAPP (pats, loc) = A.PATAPP (Snoc.toList pats, loc)
+fun S_APP (NIL ::> exp, loc) = exp
+  | S_APP (exps, loc) = S.APP (Snoc.toList exps, loc)
+fun PATID (id, loc) =
+    A.PATID (false, ([id], loc), loc)
+fun OP_PATID (id, pos1, loc as (_, pos3)) =
+    A.PATID (true, ([id], loc), (pos1, pos3))
+
 %%
 
 %name ImlGrm
@@ -209,10 +220,10 @@ structure S = AbsynSQL
   | atexp of A.exp
   | lab of A.lab
   | exprow_1 of A.exprow
-  | exprow of A.exprow list
-  | exps_comma of A.exp list
-  | exps_semicolon of A.exp list
-  | appexp of A.exp
+  | exprow of A.exprow snoc
+  | exps_comma of A.exp snoc
+  | exps_semicolon of A.exp snoc
+  | appexp of A.exp snoc
   | colonexp of A.exp
   | conjexp of A.exp
   | conjexp_r of A.exp
@@ -268,14 +279,14 @@ structure S = AbsynSQL
   | sqlDelete of A.exp S.sqlcon
   | sqlatexp of A.exp S.exp
   | sqlkwexp of A.exp S.kwexp
-  | sqlappexp of A.exp S.exp
+  | sqlappexp of A.exp S.exp snoc
   | sqlnotexp of A.exp S.exp
   | sqlconjexp of A.exp S.exp
   | sqlexp of A.exp S.exp
   | sqlexp_noAND of A.exp S.exp
   | sqlexps of A.exp S.exp list
   | sqlexps_noAND of A.exp S.exp list
-  | sqlapppat_noID of A.pat list
+  | sqlapppat_noID of A.pat snoc
   | sqlpat of A.pat
   | decs of A.dec list
   | dec of A.dec
@@ -303,15 +314,15 @@ structure S = AbsynSQL
   | atpat_noID_noPAREN of A.pat
   | atpat_noID of A.pat
   | atpat of A.pat
-  | apppat_noID of A.pat list
-  | apppat of A.pat list
-  | apppat_COLON_ty of A.pat list * A.loc * A.ty
+  | apppat_noID of A.pat snoc
+  | apppat of A.pat snoc
+  | apppat_COLON_ty of A.pat snoc * A.loc * A.ty
   | aspat of A.pat
   | pat of A.pat
   | colon_ty_opt of A.ty option
   | patrow_1 of A.patrow
   | patrow of A.patrow list * bool
-  | pats_comma of A.pat list
+  | pats_comma of A.pat snoc
   | tyrow_1 of A.tyrow
   | tyrow of A.tyrow list
   | tyrow_flex of A.tyrow list * bool
@@ -359,13 +370,13 @@ structure S = AbsynSQL
   | strbindseq of A.strbind list
   | sigexpbasic of A.sigexp
   | wheretype of A.wheretype
-  | sigexpwhere of A.sigexp * A.wheretype list
+  | sigexpwhere of A.sigexp * A.wheretype snoc
   | sigexp of A.sigexp
   | sigexp_AND of A.sigexp * A.pos
   | sigbind of A.sigbind list
   | longtycons_eq of A.longtycon list
   | longstrids_eq of A.longstrid list
-  | spec of A.spec list
+  | spec of A.spec snoc
   | atomicspec of A.spec
   | sigids of A.sigid list
   | valdesc_1 of A.valdesc
@@ -622,7 +633,7 @@ atexp_noID
         | U_SIZEOF LPAREN ty RPAREN
           (A.EXPSIZEOF (ty, (U_SIZEOFleft, RPARENright)))
         | LBRACE exprow RBRACE
-          (A.EXPRECORD (exprow, (LBRACEleft, RBRACEright)))
+          (A.EXPRECORD (Snoc.toList exprow, (LBRACEleft, RBRACEright)))
         | LBRACE RBRACE
           (A.EXPRECORD (nil, (LBRACEleft, RBRACEright)))
         | LPAREN RPAREN
@@ -638,17 +649,19 @@ atexp_noID
         | LBRACKET expOrSQL RBRACKET
           (A.EXPLIST ([expOrSQL], (LBRACKETleft, RBRACKETright)))
         | LBRACKET exps_comma RBRACKET
-          (A.EXPLIST (exps_comma, (LBRACKETleft, RBRACKETright)))
+          (A.EXPLIST (Snoc.toList exps_comma, (LBRACKETleft, RBRACKETright)))
         | LET decs IN exps_semicolon END
-          (A.EXPLET (decs, exps_semicolon, (LETleft, ENDright)))
+          (A.EXPLET (decs, Snoc.toList exps_semicolon, (LETleft, ENDright)))
         | U_REIFYTY LPAREN ty RPAREN
           (A.EXPREIFYTY (ty, (U_REIFYTYleft, RPARENright)))
         | U_SQL sqlparen
           (A.EXPSQL (S.SQL (sqlparen, (U_SQLleft, sqlparenright))))
         | LPAREN exps_comma RPAREN
-          (A.EXPTUPLE (exps_comma, (LPARENleft, RPARENright)))
+          (A.EXPTUPLE (Snoc.toList exps_comma, (LPARENleft, RPARENright)))
         | LPAREN expOrSQL SEMICOLON exps_semicolon RPAREN
-          (A.EXPSEQ (expOrSQL :: exps_semicolon, (LPARENleft, RPARENright)))
+          (A.EXPSEQ
+             (expOrSQL :: Snoc.toList exps_semicolon,
+              (LPARENleft, RPARENright)))
         | LPAREN expOrSQL RPAREN
           (A.EXPPAREN (expOrSQL, (LPARENleft, RPARENright)))
         | U_FOREACH id IN exp WHERE exp WITH pat DO exp WHILE exp END
@@ -681,44 +694,57 @@ exprow_1
 
 exprow
         : exprow_1
-          ([exprow_1])
+          (NIL ::> exprow_1)
         | exprow COMMA exprow_1
-          (exprow @ [exprow_1])
+          (exprow ::> exprow_1)
 
 (* equal or more than 2 exps *)
 exps_comma
         : exp COMMA exp
-          ([exp1, exp2])
+          (NIL ::> exp1 ::> exp2)
         | exps_comma COMMA exp
-          (exps_comma @ [exp])
+          (exps_comma ::> exp)
 
 (* equal or more than 1 exps *)
 exps_semicolon
         : expOrSQL
-          ([expOrSQL])
+          (NIL ::> expOrSQL)
         | exps_semicolon SEMICOLON expOrSQL
-          (exps_semicolon @ [expOrSQL])
+          (exps_semicolon ::> expOrSQL)
 
 appexp
         : atexp
-          (atexp)
+          (NIL ::> atexp)
         | appexp atexp
-          (case appexp of
-             A.EXPAPP (l, _) =>
-             A.EXPAPP (l @ [atexp], (appexpleft, atexpright))
-           | _ => A.EXPAPP ([appexp, atexp], (appexpleft, atexpright)))
+          (appexp ::> atexp)
         | appexp HASH LBRACE atexp RBRACE
-          (A.EXPUPDATE2 (appexp, atexp, (appexpleft, RBRACEright)))
+          (NIL
+           ::> A.EXPUPDATE2
+                 (EXPAPP (appexp, (appexpleft, appexpright)),
+                  atexp,
+                  (appexpleft, RBRACEright)))
         | appexp HASH LBRACE exprow RBRACE
-          (A.EXPRECORD_UPDATE (appexp, exprow, (appexpleft, RBRACEright)))
+          (NIL
+           ::> A.EXPRECORD_UPDATE
+                 (EXPAPP (appexp, (appexpleft, appexpright)),
+                  Snoc.toList exprow,
+                  (appexpleft, RBRACEright)))
         | appexp HASH LBRACE RBRACE
-          (A.EXPRECORD_UPDATE (appexp, nil, (appexpleft, RBRACEright)))
+          (NIL
+           ::> A.EXPRECORD_UPDATE
+                 (EXPAPP (appexp, (appexpleft, appexpright)),
+                  nil,
+                  (appexpleft, RBRACEright)))
         | appexp HASH LPAREN exps_comma RPAREN
-          (A.EXPTUPLE_UPDATE (appexp, exps_comma, (appexpleft, RPARENright)))
+          (NIL
+           ::> A.EXPTUPLE_UPDATE
+                 (EXPAPP (appexp, (appexpleft, appexpright)),
+                  Snoc.toList exps_comma,
+                  (appexpleft, RPARENright)))
 
 colonexp
         : appexp
-          (appexp)
+          (EXPAPP (appexp, (appexpleft, appexpright)))
         | colonexp COLON ty
           (A.EXPTYPED (colonexp, ty, (colonexpleft, tyright)))
         | colonexp COLON U_IMPORT ffity
@@ -1283,34 +1309,49 @@ sqlkwexp
 
 sqlappexp
         : sqlatexp
-          (sqlatexp)
+          (NIL ::> sqlatexp)
         | sqlappexp IS NULL
-          (S.OP1 (S.IS_NULL, sqlappexp, (sqlappexpleft, NULLright)))
+          (NIL ::> S.OP1 (S.IS_NULL,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, NULLright)))
         | sqlappexp IS NOT NULL
-          (S.OP1 (S.IS_NOT_NULL, sqlappexp, (sqlappexpleft, NULLright)))
+          (NIL ::> S.OP1 (S.IS_NOT_NULL,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, NULLright)))
         | sqlappexp IS TRUE
-          (S.OP1 (S.IS_TRUE, sqlappexp, (sqlappexpleft, TRUEright)))
+          (NIL ::> S.OP1 (S.IS_TRUE,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, TRUEright)))
         | sqlappexp IS NOT TRUE
-          (S.OP1 (S.IS_NOT_TRUE, sqlappexp, (sqlappexpleft, TRUEright)))
+          (NIL ::> S.OP1 (S.IS_NOT_TRUE,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, TRUEright)))
         | sqlappexp IS FALSE
-          (S.OP1 (S.IS_FALSE, sqlappexp, (sqlappexpleft, FALSEright)))
+          (NIL ::> S.OP1 (S.IS_FALSE,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, FALSEright)))
         | sqlappexp IS NOT FALSE
-          (S.OP1 (S.IS_NOT_FALSE, sqlappexp, (sqlappexpleft, FALSEright)))
+          (NIL ::> S.OP1 (S.IS_NOT_FALSE,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, FALSEright)))
         | sqlappexp IS UNKNOWN
-          (S.OP1 (S.IS_UNKNOWN, sqlappexp, (sqlappexpleft, UNKNOWNright)))
+          (NIL ::> S.OP1 (S.IS_UNKNOWN,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, UNKNOWNright)))
         | sqlappexp IS NOT UNKNOWN
-          (S.OP1 (S.IS_NOT_UNKNOWN, sqlappexp, (sqlappexpleft, UNKNOWNright)))
+          (NIL ::> S.OP1 (S.IS_NOT_UNKNOWN,
+                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                          (sqlappexpleft, UNKNOWNright)))
         | sqlappexp sqlatexp
-          (case sqlappexp of
-             S.APP (exps, loc) =>
-             S.APP (exps @ [sqlatexp], (sqlappexpleft, sqlatexpright))
-           | _ => S.APP ([sqlappexp, sqlatexp], (sqlappexpleft, sqlatexpright)))
+          (sqlappexp ::> sqlatexp)
 
 sqlnotexp
         : sqlappexp
-          (sqlappexp)
+          (S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)))
         | NOT sqlappexp
-          (S.OP1 (S.NOT, sqlappexp, (NOTleft, sqlappexpright)))
+          (S.OP1 (S.NOT,
+                  S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
+                  (NOTleft, sqlappexpright)))
 
 sqlconjexp
         : sqlnotexp
@@ -1347,60 +1388,43 @@ sqlexps_noAND
 
 sqlapppat_noID
         : atpat_noID_noPAREN
-          ([atpat_noID_noPAREN])
+          (NIL ::> atpat_noID_noPAREN)
         | LPAREN RPAREN
-          ([A.PATCONST (A.UNITCONST, (LPARENleft, RPARENright))])
+          (NIL ::> A.PATCONST (A.UNITCONST, (LPARENleft, RPARENright)))
         | id_noEQSQL atpat
-          ([A.PATID
-              (false,
-               ([id_noEQSQL], (id_noEQSQLleft, id_noEQSQLright)),
-               (id_noEQSQLleft, id_noEQSQLright)),
-            atpat])
+          (NIL
+           ::> PATID (id_noEQSQL, (id_noEQSQLleft, id_noEQSQLright))
+           ::> atpat)
         | OP id_noEQ atpat
-          ([A.PATID (true,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (OPleft, id_noEQright)),
-            atpat])
+          (NIL
+           ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright))
+           ::> atpat)
         | sqlapppat_noID atpat
-          (sqlapppat_noID @ [atpat])
+          (sqlapppat_noID ::> atpat)
 
 sqlpat
         : sqlapppat_noID
-          (case sqlapppat_noID of
-             [pat] => pat
-           | pats => A.PATAPP (pats, (sqlapppat_noIDleft, sqlapppat_noIDright)))
+          (PATAPP (sqlapppat_noID, (sqlapppat_noIDleft, sqlapppat_noIDright)))
         | sqlapppat_noID COLON ty
-          (case sqlapppat_noID of
-             [pat] =>
-             A.PATTYPED (pat, ty, (sqlapppat_noIDleft, tyright))
-           | pats =>
-             A.PATTYPED
-               (A.PATAPP (pats, (sqlapppat_noIDleft, sqlapppat_noIDright)),
-                ty,
-                (sqlapppat_noIDleft, tyright)))
+          (A.PATTYPED
+             (PATAPP (sqlapppat_noID,
+                      (sqlapppat_noIDleft, sqlapppat_noIDright)),
+              ty,
+              (sqlapppat_noIDleft, tyright)))
         | id_noEQ COLON ty
           (A.PATTYPED
-             (A.PATID (false,
-                       ([id_noEQ], (id_noEQleft, id_noEQright)),
-                       (id_noEQleft, id_noEQright)),
+             (PATID (id_noEQ, (id_noEQleft, id_noEQright)),
               ty,
               (id_noEQleft, tyright)))
         | OP id_noEQ COLON ty
           (A.PATTYPED
-             (A.PATID
-                (true,
-                 ([id_noEQ], (id_noEQleft, id_noEQright)),
-                 (OPleft, id_noEQright)),
+             (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)),
               ty,
               (OPleft, tyright)))
         | id_noEQSQL
-          (A.PATID (false,
-                    ([id_noEQSQL], (id_noEQSQLleft, id_noEQSQLright)),
-                    (id_noEQSQLleft, id_noEQSQLright)))
+          (PATID (id_noEQSQL, (id_noEQSQLleft, id_noEQSQLright)))
         | OP id_noEQ
-          (A.PATID (true,
-                    ([id_noEQ], (id_noEQleft, id_noEQright)),
-                    (OPleft, id_noEQright)))
+          (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)))
         | aspat
           (aspat)
 
@@ -1586,9 +1610,9 @@ pvalbind
 
 frule
         : apppat EQ expOrSQL
-          (apppat, NONE, expOrSQL, (apppatleft, expOrSQLright))
+          (Snoc.toList apppat, NONE, expOrSQL, (apppatleft, expOrSQLright))
         | apppat_COLON_ty EQ expOrSQL
-          (#1 apppat_COLON_ty,
+          (Snoc.toList (#1 apppat_COLON_ty),
            SOME (#3 apppat_COLON_ty),
            expOrSQL,
            (apppat_COLON_tyleft, expOrSQLright))
@@ -1625,7 +1649,7 @@ atpat_noID_noPAREN
         | LBRACKET pat RBRACKET
           (A.PATLIST ([pat], (LBRACKETleft, RBRACKETright)))
         | LBRACKET pats_comma RBRACKET
-          (A.PATLIST (pats_comma, (LBRACKETleft, RBRACKETright)))
+          (A.PATLIST (Snoc.toList pats_comma, (LBRACKETleft, RBRACKETright)))
 
 atpat_noID
         : atpat_noID_noPAREN
@@ -1633,7 +1657,7 @@ atpat_noID
         | LPAREN RPAREN
           (A.PATCONST (A.UNITCONST, (LPARENleft, RPARENright)))
         | LPAREN pats_comma RPAREN
-          (A.PATTUPLE (pats_comma, (LPARENleft, RPARENright)))
+          (A.PATTUPLE (Snoc.toList pats_comma, (LPARENleft, RPARENright)))
         | LPAREN pat RPAREN
           (A.PATPAREN (pat, (LPARENleft, RPARENright)))
 
@@ -1641,55 +1665,41 @@ atpat
         : atpat_noID
           (atpat_noID)
         | id_noEQ
-          (A.PATID (false,
-                    ([id_noEQ], (id_noEQleft, id_noEQright)),
-                    (id_noEQleft, id_noEQright)))
+          (PATID (id_noEQ, (id_noEQleft, id_noEQright)))
         | OP id_noEQ
-          (A.PATID (true,
-                    ([id_noEQ], (id_noEQleft, id_noEQright)),
-                    (OPleft, id_noEQright)))
+          (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)))
 
 apppat_noID
         : atpat_noID
-          ([atpat_noID])
+          (NIL ::> atpat_noID)
         | id_noEQ atpat
-          ([A.PATID (false,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (id_noEQleft, id_noEQright)),
-            atpat])
+          (NIL
+           ::> PATID (id_noEQ, (id_noEQleft, id_noEQright))
+           ::> atpat)
         | OP id_noEQ atpat
-          ([A.PATID (true,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (OPleft, id_noEQright)),
-            atpat])
+          (NIL
+           ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright))
+           ::> atpat)
         | apppat_noID atpat
-          (apppat_noID @ [atpat])
+          (apppat_noID ::> atpat)
 
 apppat
         : apppat_noID
           (apppat_noID)
         | id_noEQ
-          ([A.PATID (false,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (id_noEQleft, id_noEQright))])
+          (NIL ::> PATID (id_noEQ, (id_noEQleft, id_noEQright)))
         | OP id_noEQ
-          ([A.PATID (true,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (OPleft, id_noEQright))])
+          (NIL ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)))
 
 apppat_COLON_ty
         : apppat_noID COLON ty
           (apppat_noID, (apppat_noIDleft, apppat_noIDright), ty)
         | id_noEQ COLON ty
-          ([A.PATID (false,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (id_noEQleft, id_noEQright))],
+          (NIL ::> PATID (id_noEQ, (id_noEQleft, id_noEQright)),
            (id_noEQleft, id_noEQright),
            ty)
         | OP id_noEQ COLON ty
-          ([A.PATID (true,
-                     ([id_noEQ], (id_noEQleft, id_noEQright)),
-                     (OPleft, id_noEQright))],
+          (NIL ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)),
            (OPleft, id_noEQright),
            ty)
 
@@ -1709,16 +1719,12 @@ aspat
 
 pat
         : apppat
-          (case apppat of
-             [pat] => pat
-           | pats => A.PATAPP (pats, (apppatleft, apppatright)))
+          (PATAPP (apppat, (apppatleft, apppatright)))
         | apppat_COLON_ty
-          (case apppat_COLON_ty of
-             ([pat], _, ty) =>
-             A.PATTYPED (pat, ty, (apppat_COLON_tyleft, apppat_COLON_tyright))
-           | (pats, loc, ty) =>
-             A.PATTYPED (A.PATAPP (pats, loc), ty,
-                         (apppat_COLON_tyleft, apppat_COLON_tyright)))
+          (A.PATTYPED
+             (PATAPP (#1 apppat_COLON_ty, #2 apppat_COLON_ty),
+              #3 apppat_COLON_ty,
+              (apppat_COLON_tyleft, apppat_COLON_tyright)))
         | aspat
           (aspat)
 
@@ -1749,9 +1755,9 @@ patrow
 
 pats_comma
         : pat COMMA pat
-          ([pat1, pat2])
+          (NIL ::> pat1 ::> pat2)
         | pats_comma COMMA pat
-          (pats_comma @ [pat])
+          (pats_comma ::> pat)
 
 (****************  types *********************)
 
@@ -2143,7 +2149,7 @@ strbindseq
 
 sigexpbasic
         : SIG spec END
-          (A.SIGBASIC (spec, (SIGleft, ENDright)))
+          (A.SIGBASIC (Snoc.toList spec, (SIGleft, ENDright)))
         | alphabetic_id
           (A.SIGID alphabetic_id)
 
@@ -2155,9 +2161,9 @@ wheretype
 
 sigexpwhere
         : sigexp WHERE TYPE wheretype
-          (sigexp, [wheretype])
+          (sigexp, NIL ::> wheretype)
         | sigexpwhere AND TYPE wheretype
-          (#1 sigexpwhere, #2 sigexpwhere @ [wheretype])
+          (#1 sigexpwhere, #2 sigexpwhere ::> wheretype)
 
 sigexp
         : sigexpbasic
@@ -2165,7 +2171,7 @@ sigexp
         | sigexpwhere
           (A.SIGWHERE
              (#1 sigexpwhere,
-              #2 sigexpwhere,
+              Snoc.toList (#2 sigexpwhere),
               (sigexpwhereleft, sigexpwhereright)))
 
 sigexp_AND
@@ -2174,7 +2180,7 @@ sigexp_AND
         | sigexpwhere AND
           (A.SIGWHERE
              (#1 sigexpwhere,
-              #2 sigexpwhere,
+              Snoc.toList (#2 sigexpwhere),
               (sigexpwhereleft, sigexpwhereright)),
            sigexpwhereright)
 
@@ -2201,15 +2207,15 @@ longstrids_eq
 
 spec
         : (* none *)
-          (nil)
+          (NIL)
         | spec atomicspec
-          (spec @ [atomicspec])
+          (spec ::> atomicspec)
         | spec SHARING TYPE longtycons_eq
-          ([A.SPECSHARINGTYPE
-              (spec, longtycons_eq, (specleft, longtycons_eqright))])
+          (NIL ::> A.SPECSHARINGTYPE (Snoc.toList spec, longtycons_eq,
+                                      (specleft, longtycons_eqright)))
         | spec SHARING longstrids_eq
-          ([A.SPECSHARING
-              (spec, longstrids_eq, (specleft, longstrids_eqright))])
+          (NIL ::> A.SPECSHARING (Snoc.toList spec, longstrids_eq,
+                                  (specleft, longstrids_eqright)))
 
 atomicspec
         : VAL valdesc
@@ -2231,7 +2237,7 @@ atomicspec
           (A.SPECSTRUCTURE (strdesc, (STRUCTUREleft, strdescright)))
         | INCLUDE SIG spec END
           (A.SPECINCLUDE
-             (A.SIGBASIC (spec, (SIGleft, ENDright)),
+             (A.SIGBASIC (Snoc.toList spec, (SIGleft, ENDright)),
               (INCLUDEleft, ENDright)))
         | INCLUDE alphabetic_id
           (A.SPECINCLUDE
@@ -2240,7 +2246,7 @@ atomicspec
           (A.SPECINCLUDE
              (A.SIGWHERE
                 (#1 sigexpwhere,
-                 #2 sigexpwhere,
+                 Snoc.toList (#2 sigexpwhere),
                  (sigexpwhereleft, sigexpwhereright)),
               (INCLUDEleft, sigexpwhereright)))
         | INCLUDE sigids
@@ -2323,7 +2329,7 @@ funparam
         : alphabetic_id COLON sigexp
           (A.FUNPARAM (alphabetic_id, sigexp))
         | spec
-          (A.FUNPARAM_SPEC spec)
+          (A.FUNPARAM_SPEC (Snoc.toList spec))
 
 funsig
         : COLON sigexp

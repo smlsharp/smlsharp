@@ -227,12 +227,12 @@ structure I = AbsynInterface
   | kinded_tyvars of A.kinded_tyvar list
   | sigexpbasic of A.sigexp
   | wheretype of A.wheretype
-  | sigexpwhere of A.sigexp * A.wheretype list
+  | sigexpwhere of A.sigexp * A.wheretype snoc
   | sigexp of A.sigexp
   | sigexp_AND of A.sigexp * A.pos
   | longtycons_eq of A.longtycon list
   | longstrids_eq of A.longstrid list
-  | spec of A.spec list
+  | spec of A.spec snoc
   | atomicspec of A.spec
   | sigids of A.sigid list
   | valdesc_1 of A.valdesc
@@ -864,7 +864,7 @@ kinded_tyvars
 
 sigexpbasic
         : SIG spec END
-          (A.SIGBASIC (spec, (SIGleft, ENDright)))
+          (A.SIGBASIC (Snoc.toList spec, (SIGleft, ENDright)))
         | alphabetic_id
           (A.SIGID alphabetic_id)
 
@@ -876,9 +876,9 @@ wheretype
 
 sigexpwhere
         : sigexp WHERE TYPE wheretype
-          (sigexp, [wheretype])
+          (sigexp, NIL ::> wheretype)
         | sigexpwhere AND TYPE wheretype
-          (#1 sigexpwhere, #2 sigexpwhere @ [wheretype])
+          (#1 sigexpwhere, #2 sigexpwhere ::> wheretype)
 
 sigexp
         : sigexpbasic
@@ -886,7 +886,7 @@ sigexp
         | sigexpwhere
           (A.SIGWHERE
              (#1 sigexpwhere,
-              #2 sigexpwhere,
+              Snoc.toList (#2 sigexpwhere),
               (sigexpwhereleft, sigexpwhereright)))
 
 sigexp_AND
@@ -895,7 +895,7 @@ sigexp_AND
         | sigexpwhere AND
           (A.SIGWHERE
              (#1 sigexpwhere,
-              #2 sigexpwhere,
+              Snoc.toList (#2 sigexpwhere),
               (sigexpwhereleft, sigexpwhereright)),
            sigexpwhereright)
 
@@ -920,15 +920,15 @@ longstrids_eq
 
 spec
         : (* none *)
-          (nil)
+          (NIL)
         | spec atomicspec
-          (spec @ [atomicspec])
+          (spec ::> atomicspec)
         | spec SHARING TYPE longtycons_eq
-          ([A.SPECSHARINGTYPE
-              (spec, longtycons_eq, (specleft, longtycons_eqright))])
+          (NIL ::> A.SPECSHARINGTYPE (Snoc.toList spec, longtycons_eq,
+                                      (specleft, longtycons_eqright)))
         | spec SHARING longstrids_eq
-          ([A.SPECSHARING
-              (spec, longstrids_eq, (specleft, longstrids_eqright))])
+          (NIL ::> A.SPECSHARING (Snoc.toList spec, longstrids_eq,
+                                  (specleft, longstrids_eqright)))
 
 atomicspec
         : VAL valdesc
@@ -950,7 +950,7 @@ atomicspec
           (A.SPECSTRUCTURE (strdesc, (STRUCTUREleft, strdescright)))
         | INCLUDE SIG spec END
           (A.SPECINCLUDE
-             (A.SIGBASIC (spec, (SIGleft, ENDright)),
+             (A.SIGBASIC (Snoc.toList spec, (SIGleft, ENDright)),
               (INCLUDEleft, ENDright)))
         | INCLUDE alphabetic_id
           (A.SPECINCLUDE
@@ -959,7 +959,7 @@ atomicspec
           (A.SPECINCLUDE
              (A.SIGWHERE
                 (#1 sigexpwhere,
-                 #2 sigexpwhere,
+                 Snoc.toList (#2 sigexpwhere),
                  (sigexpwhereleft, sigexpwhereright)),
               (INCLUDEleft, sigexpwhereright)))
         | INCLUDE sigids
@@ -1038,4 +1038,4 @@ funparam
         : alphabetic_id COLON sigexp
           (A.FUNPARAM (alphabetic_id, sigexp))
         | spec
-          (A.FUNPARAM_SPEC spec)
+          (A.FUNPARAM_SPEC (Snoc.toList spec))
