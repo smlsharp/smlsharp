@@ -39,6 +39,7 @@ structure I = AbsynInterface
 %name InterfaceGrm
 %header (structure InterfaceGrm)
 %footer ()
+%pure
 %verbose
 
 %pos A.pos

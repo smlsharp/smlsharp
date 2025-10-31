@@ -42,6 +42,7 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
 %name ImlGrm
 %header (structure ImlGrm)
 %footer ()
+%pure
 %verbose
 
 %pos A.pos
