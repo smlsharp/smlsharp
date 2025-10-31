@@ -1559,10 +1559,9 @@ struct
       | _ =>
         embed (ty, elabAbsynExp exp, loc)
 
-  and elabApp env left nil = left
-    | elabApp env (ret1, q1) (arg :: args) =
+  and elabApp env (left, _) nil = left
+    | elabApp env ((ret1, q1), loc1) (arg :: args) =
       let
-        val loc1 = getLoc (case q1 of SQL q => q | ML q => q)
         val loc = Loc.mergeLocs (loc1, fexpToLoc arg)
         val (ret2, q2) = elabInfixExp env arg
         val left =
@@ -1577,16 +1576,21 @@ struct
                 (merge [ret1, ret3, ret2, ret4], SQL (APP (q1, q2, loc)))
               end
       in
-        elabApp env left args
+        elabApp env (left, loc) args
       end
 
   and elabSpine
         env
+        (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: nil) =
+      (emptyRet, ML (MLEXP ([toSymbol id], loc)))
+    | elabSpine
+        env
         (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: t) =
       let
+        val last = List.last t handle Empty => raise Bug.Bug "elabSpine"
+        val loc = Loc.mergeLocs (loc, fexpToLoc last)
         val (ret1, q1) = elabSpine env t
         val (ret2, q1) = toSQL q1
-        val loc = Loc.mergeLocs (loc, getLoc q1)
       in
         (merge [ret1, ret2], SQL (SQLAPP (true, toSymbol id, q1, loc)))
       end
@@ -1600,14 +1604,14 @@ struct
       in
         case q2 of
           ML q2 =>
-          elabApp env (ret2, ML (APP (MLEXP ([id], loc), q2, loc))) args
+          elabApp env ((ret2, ML (APP (MLEXP ([id], loc), q2, loc))), loc) args
         | SQL q2 =>
-          elabApp env (ret2, SQL (SQLAPP (false, id, q2, loc))) args
+          elabApp env ((ret2, SQL (SQLAPP (false, id, q2, loc))), loc) args
       end
     | elabSpine env (Fixity.TERM (S.ID (false, ([id], _), _), loc) :: nil) =
       (emptyRet, ML (MLEXP ([toSymbol id], loc)))
     | elabSpine env (exp :: exps) =
-      elabApp env (elabInfixExp env exp) exps
+      elabApp env (elabInfixExp env exp, fexpToLoc exp) exps
     | elabSpine env nil = raise Bug.Bug "elabSpine"
 
   and elabInfixExp env exp =
