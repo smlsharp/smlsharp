@@ -7,12 +7,6 @@
 structure A = Absyn
 structure I = AbsynInterface
 
-datatype 'a snoc = NIL | ::> of 'a snoc * 'a
-fun append NIL l = l
-  | append (::> (h, t)) l = append h (t :: l)
-fun mapAppend f NIL l = l
-  | mapAppend f (::> (h, t)) l = mapAppend f h (f t :: l)
-
 %%
 
 (*
@@ -402,11 +396,11 @@ itopdec
 
 itopdecs
         : itopdec
-          (::> (NIL, itopdec))
+          (NIL ::> itopdec)
         | itopdecs itopdec
-          (::> (itopdecs, itopdec))
+          (itopdecs ::> itopdec)
         | itopdecs SEMICOLON
-          (::> (itopdecs, I.DEC (I.SEMICOLON (SEMICOLONleft, SEMICOLONright))))
+          (itopdecs ::> I.DEC (I.SEMICOLON (SEMICOLONleft, SEMICOLONright)))
 
 isigdec
         : SIGNATURE sigbind
@@ -414,11 +408,11 @@ isigdec
 
 isigdecs
         : isigdec
-          (::> (NIL, isigdec))
+          (NIL ::> isigdec)
         | isigdecs isigdec
-          (::> (isigdecs, isigdec))
+          (isigdecs ::> isigdec)
         | isigdecs SEMICOLON
-          (::> (isigdecs, I.SIGSEMICOLON (SEMICOLONleft, SEMICOLONright)))
+          (isigdecs ::> I.SIGSEMICOLON (SEMICOLONleft, SEMICOLONright))
 
 irequireopts
         : alphabetic_id
@@ -454,11 +448,11 @@ irequire
 
 irequires
         : irequire
-          (::> (NIL, irequire))
+          (NIL ::> irequire)
         | irequires irequire
-          (::> (irequires, irequire))
+          (irequires ::> irequire)
         | irequires SEMICOLON
-          (::> (irequires, I.REQSEMICOLON (SEMICOLONleft, SEMICOLONright)))
+          (irequires ::> I.REQSEMICOLON (SEMICOLONleft, SEMICOLONright))
 
 iinclude
         : INCLUDE STRING
@@ -468,52 +462,60 @@ iinclude
 
 iincludes
         : iinclude
-          (::> (NIL, iinclude))
+          (NIL ::> iinclude)
         | iincludes iinclude
-          (::> (iincludes, iinclude))
+          (iincludes ::> iinclude)
         | iincludes SEMICOLON
-          (::> (iincludes, I.INCSEMICOLON (SEMICOLONleft, SEMICOLONright)))
+          (iincludes ::> I.INCSEMICOLON (SEMICOLONleft, SEMICOLONright))
 
 isemicolons
         : (* none *)
           (NIL)
         | isemicolons SEMICOLON
-          (::> (isemicolons, (SEMICOLONleft, SEMICOLONright)))
+          (isemicolons ::> (SEMICOLONleft, SEMICOLONright))
 
 itop
         : isemicolons irequires itopdecs
           (I.INTERFACE
-             (mapAppend I.REQSEMICOLON isemicolons (append irequires nil),
-              append itopdecs nil,
+             (Snoc.mapPrepend
+                I.REQSEMICOLON
+                (isemicolons, Snoc.toList irequires),
+              Snoc.toList itopdecs,
               (isemicolonsleft, itopdecsright)))
         | isemicolons irequires
           (I.INTERFACE
-             (mapAppend I.REQSEMICOLON isemicolons (append irequires nil),
+             (Snoc.mapPrepend
+                I.REQSEMICOLON
+                (isemicolons, Snoc.toList irequires),
               nil,
               (isemicolonsleft, irequiresright)))
         | isemicolons itopdecs
           (I.INTERFACE
-             (mapAppend I.REQSEMICOLON isemicolons nil,
-              append itopdecs nil,
+             (Snoc.map I.REQSEMICOLON isemicolons,
+              Snoc.toList itopdecs,
               (isemicolonsleft, itopdecsright)))
         | isemicolons iincludes isigdecs
           (I.INCLUDES
-             (mapAppend I.INCSEMICOLON isemicolons (append iincludes nil),
-              append isigdecs nil,
+             (Snoc.mapPrepend
+                I.INCSEMICOLON
+                (isemicolons, Snoc.toList iincludes),
+              Snoc.toList isigdecs,
               (isemicolonsleft, isigdecsright)))
         | isemicolons iincludes
           (I.INCLUDES
-             (mapAppend I.INCSEMICOLON isemicolons (append iincludes nil),
+             (Snoc.mapPrepend
+                I.INCSEMICOLON
+                (isemicolons, Snoc.toList iincludes),
               nil,
               (isemicolonsleft, iincludesright)))
         | isemicolons isigdecs
           (I.INCLUDES
-             (mapAppend I.INCSEMICOLON isemicolons nil,
-              append isigdecs nil,
+             (Snoc.map I.INCSEMICOLON isemicolons,
+              Snoc.toList isigdecs,
               (isemicolonsleft, isigdecsright)))
         | isemicolons
           (I.INTERFACE
-             (mapAppend I.REQSEMICOLON isemicolons nil,
+             (Snoc.map I.REQSEMICOLON isemicolons,
               nil,
               (isemicolonsleft, isemicolonsright)))
 

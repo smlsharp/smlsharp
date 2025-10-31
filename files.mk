@@ -615,6 +615,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -989,6 +990,7 @@ src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -1362,6 +1364,7 @@ src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -1866,6 +1869,7 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \
@@ -2415,6 +2419,7 @@ src/compiler/libs/env/main/SSet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/libs/toolchain/main/BinUtils.o \
 src/compiler/libs/toolchain/main/CoreUtils.o \
@@ -2839,6 +2844,7 @@ src/compiler/libs/env/main/SSet.smi \
 src/compiler/libs/ids/main/GenIDFun.smi \
 src/compiler/libs/ids/main/LocalID.smi \
 src/compiler/libs/list-utils/main/ListSorter.smi \
+src/compiler/libs/list-utils/main/Snoc.smi \
 src/compiler/libs/list-utils/main/utils.smi \
 src/compiler/libs/toolchain/main/BinUtils.smi \
 src/compiler/libs/toolchain/main/CoreUtils.smi \
@@ -3194,6 +3200,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
+src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/InterfaceParser.o \
 src/compiler/compilePhases/loadfile/main/InterfaceHash.o \

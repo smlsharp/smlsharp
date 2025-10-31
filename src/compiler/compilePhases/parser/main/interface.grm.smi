@@ -1,5 +1,6 @@
 _require "../../../../basis.smi"
 _require local "../../../../ml-yacc-lib.smi"
+_require local "../../../libs/list-utils/main/Snoc.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 

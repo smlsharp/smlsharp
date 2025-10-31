@@ -1,0 +1,30 @@
+_require "../../../../basis/main/List.smi"
+
+structure Snoc =
+struct
+  datatype 'a snoc = NIL | ::> of 'a snoc * 'a
+  exception Empty = List.Empty
+  val null : 'a snoc -> bool
+  val last : 'a snoc -> 'a
+  val length : 'a snoc -> int
+  val prepend : 'a snoc * 'a list -> 'a list
+  val append : 'a snoc * 'a list -> 'a snoc
+  val toList : 'a snoc -> 'a list
+  val fromList : 'a list -> 'a snoc
+  val concat : 'a snoc snoc -> 'a list
+  val app : ('a -> unit) -> 'a snoc -> unit
+  val mapPrepend : ('a -> 'b) -> 'a snoc * 'b list -> 'b list
+  val mapAppend : ('a -> 'b) -> 'b snoc * 'a list -> 'b snoc
+  val map : ('a -> 'b) -> 'a snoc -> 'b list
+  val mapList : ('a -> 'b) -> 'a list -> 'b snoc
+  val filterPrepend : ('a -> bool) -> 'a snoc * 'a list -> 'a list
+  val filterAppend : ('a -> bool) -> 'a snoc * 'a list -> 'a snoc
+  val filter : ('a -> bool) -> 'a snoc -> 'a list
+  val filterList : ('a -> bool) -> 'a list -> 'a snoc
+  val foldr : ('a * 'b -> 'b) -> 'b -> 'a snoc -> 'b
+  val exists : ('a -> bool) -> 'a snoc -> bool
+  val all : ('a -> bool) -> 'a snoc -> bool
+end
+
+datatype snoc = datatype Snoc.snoc
+infix 5 ::>

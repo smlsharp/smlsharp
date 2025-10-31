@@ -16968,6 +16968,12 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
  $(SMLSHARP_DEP)
+src/compiler/libs/list-utils/main/Snoc.o: \
+ src/compiler/libs/list-utils/main/Snoc.sml \
+ src/basis/main/General.smi \
+ src/basis/main/List.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/compiler/compilePhases/parser/main/interface.grm.sml \
  src/basis/main/General.smi \
@@ -17070,6 +17076,7 @@ src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/ml-yacc/lib/stream.smi \
  src/ml-yacc/lib/parser2.smi \
  src/ml-yacc-lib.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
