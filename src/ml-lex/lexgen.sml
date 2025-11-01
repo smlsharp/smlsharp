@@ -1,9 +1,8 @@
-(* Modified by Katsuhiro Ueno on 2011-Nov-25 to port ml-lex to SML#. *)
 (*  Lexical analyzer generator for Standard ML.
         Version 1.7.0, June 1998
 
 Copyright (c) 1989-1992 by Andrew W. Appel,
-   David R. Tarditi, James S. Mattson 
+   David R. Tarditi, James S. Mattson
 
 This software comes with ABSOLUTELY NO WARRANTY.
 This software is subject only to the PRINCETON STANDARD ML SOFTWARE LIBRARY
@@ -46,7 +45,10 @@ see the COPYRIGHT NOTICE for details and restrictions.
 		and characters.
 	02/08/95 (jhr) Modified to use new List module interface.
 	05/18/95 (jhr) changed Vector.vector to Vector.fromList
- 
+	04/07/20 (jhr) Switch to using RedBlackMapFn from SML/NJ Library
+	04/07/20 (jhr) Replaced uses of polymorphic equality with pattern
+		matching.
+
  * Revision 1.9  1998/01/06 19:23:53  appel
  *   added %posarg feature to permit position-within-file to be passed
  *   as a parameter to makeLexer
@@ -102,7 +104,7 @@ val eof = fn () => ()
 
 The ASU proposal works as follows. Suppose that we are
 using NFA's to represent our regular expressions.  Then to
-build an NFA for e1 / e2, we build an NFA n1 for e1 
+build an NFA for e1 / e2, we build an NFA n1 for e1
 and an NFA n2 for e2, and add an epsilon transition
 from e1 to e2.
 
@@ -132,16 +134,9 @@ If we chose the last state in which we made an epsilon transition,
 we'll chose the transition from 3 to 4, and end up with "ab"
 as our token, when we should have "a" as our token.
 
-2012-8-19 ohori:
-  a type annotation added to fun > 
-    fun > ((key,item:string),(key',item')) =
-->  fun > ((key,item:string),(key',item':string)) =
 *)
 
 (*
-functor RedBlack is inlined; no need to make this as
-a functor
-
 functor RedBlack(B : sig type key
 			 val > : key*key->bool
 		     end):
@@ -219,29 +214,21 @@ end
 
 signature LEXGEN =
   sig
-     val lexGen: string -> unit
+(* Ueno (2013-05-29): allow users to specify output file name *)
+     val lexGen: string option -> string -> unit
   end
 
-(****************************************
-  2015-09-26 ohori
-  2015-09-27 ohori
-  temoprary fix to speed up compilation
-  effectiveluy on change; signature constraint is
-  subsumed by interface specification.
-***************************************
 structure LexGen: LEXGEN =
-*)
-structure LexGen =
    struct
-   open Array List
+   val sub = Array.sub
    infix 9 sub
 
    datatype token = CHARS of bool array | QMARK | STAR | PLUS | BAR
 	  | LP | RP | CARAT | DOLLAR | SLASH | STATE of string list
 	  | REPS of int * int | ID of string | ACTION of string
-	  | BOF | EOF | ASSIGN | SEMI | ARROW | LEXMARK | LEXSTATES 
+	  | BOF | EOF | ASSIGN | SEMI | ARROW | LEXMARK | LEXSTATES
 	  | COUNT | REJECT | FULLCHARSET | STRUCT | HEADER | ARG | POSARG
-	
+
    datatype exp = EPS | CLASS of bool array * int | CLOSURE of exp
 		| ALT of exp * exp | CAT of exp * exp | TRAIL of int
 		| END of int
@@ -249,10 +236,10 @@ structure LexGen =
    (* flags describing input Lex spec. - unnecessary code is omitted *)
    (* if possible *)
 
-   val CharFormat = ref false;	
+   val CharFormat = ref false;
    val UsesTrailingContext = ref false;
    val UsesPrevNewLine = ref false;
-   
+
    (* flags for various bells & whistles that Lex has.  These slow the
       lexer down and should be omitted from production lexers (if you
       really want speed) *)
@@ -266,7 +253,7 @@ structure LexGen =
    val CharSetSize = ref 129;
 
    (* Can name structure or declare header code *)
- 
+
    val StrName = ref "Mlex"
    val HeaderCode = ref ""
    val HeaderDecl = ref false
@@ -278,7 +265,7 @@ structure LexGen =
 			      UsesTrailingContext := false;
 			       CharSetSize := 129; StrName := "Mlex";
 				HeaderCode := ""; HeaderDecl:= false;
-				ArgCode := NONE; 
+				ArgCode := NONE;
 				StrDecl := false)
 
    val LexOut = ref(TextIO.stdOut)
@@ -372,7 +359,7 @@ structure dict =
       end
 end
 
-open dict; 
+open dict;
 
 (* INPUT.ML : Input w/ one character push back capability *)
 
@@ -384,12 +371,12 @@ with
 	fun make_ibuf(s) = BUF (s, {b=ref"", p = ref 0})
 	fun close_ibuf (BUF (s,_)) = TextIO.closeIn(s)
 	exception eof
-	fun getch (a as (BUF(s,{b,p}))) = 
+	fun getch (a as (BUF(s,{b,p}))) =
 		 if (!p = (size (!b)))
 		   then (b := TextIO.inputN(s, 1024);
 			 p := 0;
 			 if (size (!b))=0
-			    then raise eof 
+			    then raise eof
 			    else getch a)
 		   else (let val ch = String.sub(!b,!p)
 			 in (if ch = #"\n"
@@ -450,8 +437,8 @@ fun AdvanceTok () : unit = let
 		then skipws()
 		else ch
 	    end
-		
-      and nextch () = getch(!LexBuf) 
+
+      and nextch () = getch(!LexBuf)
 
       and escaped () = (case nextch()
 	     of #"b" => #"\008"
@@ -476,16 +463,16 @@ fun AdvanceTok () : unit = let
 		    if isDigit x then f(cvt x, 1, [x]) else x
 		  end
 	    (* end case *))
-	
-      and onechar x = let val c = array(!CharSetSize, false)
+
+      and onechar x = let val c = Array.array(!CharSetSize, false)
 	      in
-		update(c, Char.ord(x), true); CHARS(c)
+		Array.update(c, Char.ord(x), true); CHARS(c)
 	      end
-		
+
       in case !LexState of 0 => let val makeTok = fn () =>
 		case skipws()
 			(* Lex % operators *)
-		 of #"%" => (case nextch() of 
+		 of #"%" => (case nextch() of
 		  	  #"%" => LEXMARK
 			| a => let fun f s =
 				    let val a = nextch()
@@ -497,15 +484,13 @@ fun AdvanceTok () : unit = let
 				 of "reject" => REJECT
 				  | "count"  => COUNT
 				  | "full"   => FULLCHARSET
-				  | "S"      => LEXSTATES
 				  | "s"      => LEXSTATES
+				  | "S"      => LEXSTATES
 				  | "structure" => STRUCT
 				  | "header" => HEADER
 				  | "arg"    => ARG
 				  | "posarg" => POSARG
-			          | s => (if s = "s" then print "ok\n" else print "ng\n";
-                                          prErr ("unknown % operator: " ^ s)
-                                         )
+			          | _ => prErr "unknown % operator "
 			       end
 			     )
 			(* semicolon (for end of LEXSTATES) *)
@@ -549,8 +534,8 @@ fun AdvanceTok () : unit = let
 		| #"$" => DOLLAR
 		| #"/" => SLASH
 		| #";" => SEMI
-		| #"." => let val c = array(!CharSetSize,true) in
-				update(c,10,false); CHARS(c)
+		| #"." => let val c = Array.array(!CharSetSize,true) in
+				Array.update(c,10,false); CHARS(c)
 			end
 			(* assign and arrow *)
 		| #"=" => let val c = nextch() in
@@ -562,9 +547,9 @@ fun AdvanceTok () : unit = let
 				end;
 			val first = classch();
 			val flag = (first <> #"^");
-			val c = array(!CharSetSize,not flag);
+			val c = Array.array(!CharSetSize,not flag);
 			fun add NONE = ()
-			  | add (SOME x) = update(c, Char.ord(x), flag)
+			  | add (SOME x) = Array.update(c, Char.ord(x), flag)
 			and range (x, y) = if x>y
 			      then (prErr "bad char. range")
 			      else let
@@ -667,7 +652,7 @@ fun AdvanceTok () : unit = let
 end
 handle eof => NextTok := EOF ;
 
-fun GetTok (_:unit) : token = 
+fun GetTok (_:unit) : token =
 	let val t = !NextTok in AdvanceTok(); t
 	end;
 val SymTab = ref (create String.<=) : (string,exp) dictionary ref
@@ -677,20 +662,20 @@ fun GetExp () : exp =
 	let val rec optional = fn e => ALT(EPS,e)
 
 	    and lookup' = fn name =>
-		lookup(!SymTab) name 
+		lookup(!SymTab) name
 		handle LOOKUP => prErr ("bad regular expression name: "^
 					    name)
 
-	and newline = fn () => let val c = array(!CharSetSize,false) in
-		update(c,10,true); c
+	and newline = fn () => let val c = Array.array(!CharSetSize,false) in
+		Array.update(c,10,true); c
 		end
-	
+
 	and endline = fn e => trail(e,CLASS(newline(),0))
-	
+
 	and trail = fn (e1,e2) => CAT(CAT(e1,TRAIL(0)),e2)
-	
+
 	and closure1 = fn e => CAT(e,CLOSURE(e))
-	
+
 	and repeat = fn (min,max,e) => let val rec rep = fn
 		  (0,0) => EPS
 		| (0,1) => ALT(e,EPS)
@@ -698,16 +683,19 @@ fun GetExp () : exp =
 		| (i,j) => CAT(e,rep(i-1,j-1))
 	in rep(min,max)
 	end
-	
-	and exp0 = fn () => case GetTok() of
-		  CHARS(c) => exp1(CLASS(c,0))
-		| LP => let val e = exp0() in
-		 if !NextTok = RP then
-		  (AdvanceTok(); exp1(e))
-		 else (prSynErr "missing ')'") end
+
+	and exp0 = fn () => case GetTok()
+	       of CHARS(c) => exp1(CLASS(c,0))
+		| LP => let
+		    val e = exp0()
+		    in
+		      case !NextTok
+		       of RP => (AdvanceTok(); exp1(e))
+			| _ => (prSynErr "missing ')'")
+		    end
 		| ID(name) => exp1(lookup' name)
 		| _ => raise SyntaxError
-		
+
 	and exp1 = fn (e) => case !NextTok of
 		  SEMI => e
 		| ARROW => e
@@ -726,7 +714,7 @@ fun GetExp () : exp =
 			| REPS(i,j) => exp1(repeat(i,j,e))
 			| ID(name) => exp2(e,lookup' name)
 			| _ => raise SyntaxError)
-			
+
 	and exp2 = fn (e1,e2) => case !NextTok of
 		  SEMI => CAT(e1,e2)
 		| ARROW => CAT(e1,e2)
@@ -748,7 +736,7 @@ fun GetExp () : exp =
 			| _ => raise SyntaxError)
 in exp0()
 end;
-val StateTab = ref(create(String.<=)) : (string,int) dictionary ref 
+val StateTab = ref(create(String.<=)) : (string,int) dictionary ref
 
 val StateNum = ref 0;
 
@@ -760,7 +748,7 @@ fun GetStates () : int list =
 					      prErr ("bad state name: "^x)
 					  ],sl))
 
-	fun addall i sl = 
+	fun addall i sl =
 	    if i <= !StateNum then addall (i+2) (union ([i],sl))
 	    else sl
 
@@ -771,10 +759,10 @@ fun GetStates () : int list =
   	  | addincs (x::y) = x::(x+1)::addincs y
 
 	val state_list =
-	   case !NextTok of 
+	   case !NextTok of
 	     STATE s => (AdvanceTok(); LexState := 1; add s nil)
 	     | _ => addall 1 nil
-		
+
       in case !NextTok
 	   of CARAT => (LexState := 1; AdvanceTok(); UsesPrevNewLine := true;
 			incall state_list)
@@ -797,8 +785,9 @@ end;
 
 exception ParseError;
 
-fun parse() : (string * (int list * exp) list * ((string,string) dictionary)) =
-	let val Accept = ref (create String.<=) : (string,string) dictionary ref
+fun parse() : (string * (int list * exp) list * ((string,string) dictionary)) = let
+	fun isSEMI SEMI = true | isSEMI _ = false
+	val Accept = ref (create String.<=) : (string,string) dictionary ref
 	val rec ParseRtns = fn l => case getch(!LexBuf) of
 		  #"%" => let val c = getch(!LexBuf) in
 		    	   if c = #"%" then (implode (rev l))
@@ -814,33 +803,36 @@ fun parse() : (string * (int list * exp) list * ((string,string) dictionary)) =
 				     ++StateNum; AdvanceTok(); f())
 					| _ => ())
 		   in AdvanceTok(); f ();
-		      if !NextTok=SEMI then ParseDefs() else 
+		      if isSEMI (!NextTok) then ParseDefs() else
 			(prSynErr "expected ';'")
 		   end
-		| ID x => (LexState:=1; AdvanceTok(); if GetTok() = ASSIGN
-			  then (SymTab := enter(!SymTab)(x,GetExp());
-			       if !NextTok = SEMI then ParseDefs()
-			       else (prSynErr "expected ';'"))
-			else raise SyntaxError)
+		| ID x => (
+		    LexState:=1; AdvanceTok();
+		    case GetTok()
+		     of ASSIGN => (
+			  SymTab := enter(!SymTab)(x,GetExp());
+			  if isSEMI (!NextTok) then ParseDefs()
+			  else (prSynErr "expected ';'"))
+		      | _ => raise SyntaxError)
 		| REJECT => (HaveReject := true; ParseDefs())
 		| COUNT => (CountNewLines := true; ParseDefs())
 		| FULLCHARSET => (CharSetSize := 256; ParseDefs())
 		| HEADER => (LexState := 2; AdvanceTok();
 			     case GetTok()
-			     of ACTION s => 
+			     of ACTION s =>
 				if (!StrDecl) then
 				   (prErr "cannot have both %structure and %header \
 				    \declarations")
 				else if (!HeaderDecl) then
 				   (prErr "duplicate %header declarations")
-				else 
+				else
 				    (HeaderCode := s; LexState := 0;
 				     HeaderDecl := true; ParseDefs())
 				| _ => raise SyntaxError)
 	        | POSARG => (PosArg := true; ParseDefs())
                 | ARG => (LexState := 2; AdvanceTok();
 			     case GetTok()
-			     of ACTION s => 
+			     of ACTION s =>
 				(case !ArgCode
 				   of SOME _ => prErr "duplicate %arg declarations"
 				    | NONE => ArgCode := SOME s;
@@ -866,15 +858,15 @@ fun parse() : (string * (int list * exp) list * ((string,string) dictionary)) =
 		 let val s = GetStates()
 		     val e = renum(CAT(GetExp(),END(0)))
 		 in
-		 if !NextTok = ARROW then 
-		   (LexState:=2; AdvanceTok();
-		    case GetTok() of ACTION(act) =>
-		      if !NextTok=SEMI then
-		        (Accept:=enter(!Accept) (Int.toString (!LeafNum),act);
-		         ParseRules((s,e)::rules))
-		      else (prSynErr "expected ';'")
-		    | _ => raise SyntaxError)
-		  else (prSynErr "expected '=>'")
+		   case !NextTok
+		    of ARROW => (LexState:=2; AdvanceTok();
+			 case GetTok() of ACTION(act) =>
+			   if isSEMI (!NextTok) then
+			     (Accept:=enter(!Accept) (Int.toString (!LeafNum),act);
+			      ParseRules((s,e)::rules))
+			   else (prSynErr "expected ';'")
+			 | _ => raise SyntaxError)
+		     | _ => (prSynErr "expected '=>'")
 		end)
 in let val usercode = ParseRtns nil
    in (ParseDefs(); (usercode,ParseRules(nil),!Accept))
@@ -888,13 +880,13 @@ fun makebegin () : unit =
 				say (Int.toString n); say ";\n"; make y)
    in say "\n(* start state definitions *)\n\n"; make(listofdict(!StateTab))
    end
-                       
+
 (*
-structure L = 
+structure L =
 	struct
 	  nonfix >
 	  type key = int list * string
-	  fun > ((key,item:string),(key',item':string)) =
+	  fun > ((key,item:string),(key',item')) =
 	    let fun f ((a:int)::a') (b::b') = if Int.> (a,b) then true
 					   else if a=b then f a' b'
 					   else false
@@ -902,95 +894,36 @@ structure L =
 	    in f key key'
 	    end
 	end
-*)
 
-(*
-functor RedBlack is inlined; no need to make this as
-a functor
 structure RB = RedBlack(L)
 *)
-structure RB :
-  sig type tree
-      type key
-      val empty : tree
-      val insert : key * tree -> tree
-      val lookup : key * tree -> key
-      exception notfound of key
-  end =
-struct
-(*
- open B
-*)
-     type key = int list * string
-     fun op > ((key,item:string),(key',item':string)) =
-	 let fun f ((a:int)::a') (b::b') = if Int.> (a,b) then true
-					   else if a=b then f a' b'
-					   else false
-	       | f _ _ = false
-	 in f key key'
-         end
 
- datatype color = RED | BLACK
- datatype tree = empty | tree of key * color * tree * tree
- exception notfound of key
-
- fun insert (key,t) =
-  let fun f empty = tree(key,RED,empty,empty)
-        | f (tree(k,BLACK,l,r)) =
-	    if key>k
-	    then case f r
-		 of r as tree(rk,RED, rl as tree(rlk,RED,rll,rlr),rr) =>
-			(case l
-			 of tree(lk,RED,ll,lr) =>
-				tree(k,RED,tree(lk,BLACK,ll,lr),
-					   tree(rk,BLACK,rl,rr))
-			  | _ => tree(rlk,BLACK,tree(k,RED,l,rll),
-						tree(rk,RED,rlr,rr)))
-		  | r as tree(rk,RED,rl, rr as tree(rrk,RED,rrl,rrr)) =>
-			(case l
-			 of tree(lk,RED,ll,lr) =>
-				tree(k,RED,tree(lk,BLACK,ll,lr),
-					   tree(rk,BLACK,rl,rr))
-			  | _ => tree(rk,BLACK,tree(k,RED,l,rl),rr))
-	          | r => tree(k,BLACK,l,r)
-	    else if k>key
-	    then case f l
-	         of l as tree(lk,RED,ll, lr as tree(lrk,RED,lrl,lrr)) =>
-			(case r
-			 of tree(rk,RED,rl,rr) =>
-				tree(k,RED,tree(lk,BLACK,ll,lr),
-					   tree(rk,BLACK,rl,rr))
-			  | _ => tree(lrk,BLACK,tree(lk,RED,ll,lrl),
-						tree(k,RED,lrr,r)))
-		  | l as tree(lk,RED, ll as tree(llk,RED,lll,llr), lr) =>
-			(case r
-			 of tree(rk,RED,rl,rr) =>
-				tree(k,RED,tree(lk,BLACK,ll,lr),
-					   tree(rk,BLACK,rl,rr))
-			  | _ => tree(lk,BLACK,ll,tree(k,RED,lr,r)))
-	          | l => tree(k,BLACK,l,r)
-	    else tree(key,BLACK,l,r)
-        | f (tree(k,RED,l,r)) =
-	    if key>k then tree(k,RED,l, f r)
-	    else if k>key then tree(k,RED, f l, r)
-	    else tree(key,RED,l,r)
-   in case f t
-      of tree(k,RED, l as tree(_,RED,_,_), r) => tree(k,BLACK,l,r)
-       | tree(k,RED, l, r as tree(_,RED,_,_)) => tree(k,BLACK,l,r)
-       | t => t
+(* a finite map implementation that replaces the original version, but
+ * keeps the same interface.
+ *)
+structure RB : sig
+    type tree
+    type key
+    val empty : tree
+    val insert : key * tree -> tree
+    val lookup : key * tree -> key
+    exception notfound of key
+  end =  struct
+    structure Map = RedBlackMapFn (
+	struct
+	  type ord_key = int list
+	  val compare = List.collate Int.compare
+	end)
+    type key = (int list * string)
+    type tree = string Map.map
+    val empty = Map.empty
+    val insert = Map.insert'
+    exception notfound of key
+    fun lookup (arg as (key, _), t) = (case Map.find(t, key)
+	   of SOME item => (key, item)
+	    | NONE => raise notfound arg
+	  (* end case *))
   end
-
-
- fun lookup (key,t) =
-  let fun look empty = raise (notfound key)
-	| look (tree(k,_,l,r)) =
-		if k>key then look l
-		else if key>k then look r
-		else k
-   in look t
-  end
-
-end
 
 fun maketable (fins:(int * (int list)) list,
 	     tcs :(int * (int list)) list,
@@ -1091,22 +1024,22 @@ fun maketable (fins:(int * (int list)) list,
 	          let val name = (Int.toString l)
 		  in let val (r,n) = lookup ((x,name),t)
 		      in makeEntry(y,(n::rs),t)
-		      end handle notfound _ => 
+		      end handle notfound _ =>
                         (count := !count+1;
                           say " ("; say name; say ",";
 		          makeItems x; say "),\n";
 		         makeEntry(y,(name::rs),(insert ((x,name),t))))
 	   	  end
 
-            val _ = say "val s = [ \n" 
+            val _ = say "val s = [ \n"
             val res =  makeEntry(trans,nil,empty)
-            val _ = 
-              case !CharFormat 
+            val _ =
+              case !CharFormat
                of true => (say "(0, \"\")]\n"; say "fun f x = x \n")
                 | false => (say "(0, 0, \"\")]\n";
                     say "fun f(n, i, x) = (n, Vector.tabulate(i, decode x)) \n")
 
-            val _ = say "val s = map f (rev (tl (rev s))) \n"
+            val _ = say "val s = List.map f (List.rev (tl (List.rev s))) \n"
             val _ = say "exception LexHackingError \n"
             val _ = say "fun look ((j,x)::r, i: int) = if i = j then x else look(r, i) \n"
             val _ = say "  | look ([], i) = raise LexHackingError\n"
@@ -1142,7 +1075,7 @@ fun maketable (fins:(int * (int list)) list,
 	in
 	    mt args
 	end
-			
+
 (*
 	fun makeTable(nil,nil) = ()
 	  | makeTable(a::a',b::b') =
@@ -1168,7 +1101,7 @@ fun maketable (fins:(int * (int list)) list,
 
 	fun msg x = TextIO.output(TextIO.stdOut, x)
 
-  in (say "in Vector.fromList(map g \n["; makeTable(rs,newfins); 
+  in (say "in Vector.fromList(List.map g \n["; makeTable(rs,newfins);
       say "])\nend\n";
     msg ("\nNumber of states = " ^ (Int.toString (length trans)));
     msg ("\nNumber of distinct rows = " ^ (Int.toString (!count)));
@@ -1193,15 +1126,15 @@ fun makeaccept ends =
                                 say "\n"; make(y,false))
     in make (listofdict(ends),true)
     end
-			
+
 fun leafdata(e:(int list * exp) list) =
-	let val fp = array(!LeafNum + 1,nil)
-	and leaf = array(!LeafNum + 1,EPS)
+	let val fp = Array.array(!LeafNum + 1,nil)
+	and leaf = Array.array(!LeafNum + 1,EPS)
 	and tcpairs = ref nil
 	and trailmark = ref ~1;
 	val rec add = fn
 		  (nil,x) => ()
-		| (hd::tl,x) => (update(fp,hd,union(fp sub hd,x));
+		| (hd::tl,x) => (Array.update(fp,hd,union(fp sub hd,x));
 			add(tl,x))
 	and moredata = fn
 		  CLOSURE(e1) =>
@@ -1209,10 +1142,10 @@ fun leafdata(e:(int list * exp) list) =
 		| ALT(e1,e2) => (moredata(e1); moredata(e2))
 		| CAT(e1,e2) => (moredata(e1); moredata(e2);
 			add(lastpos(e1),firstpos(e2)))
-		| CLASS(x,i) => update(leaf,i,CLASS(x,i))
-		| TRAIL(i) => (update(leaf,i,TRAIL(i)); if !trailmark = ~1
+		| CLASS(x,i) => Array.update(leaf,i,CLASS(x,i))
+		| TRAIL(i) => (Array.update(leaf,i,TRAIL(i)); if !trailmark = ~1
 			then trailmark := i else ())
-		| END(i) => (update(leaf,i,END(i)); if !trailmark <> ~1
+		| END(i) => (Array.update(leaf,i,END(i)); if !trailmark <> ~1
 			then (tcpairs := (!trailmark,i)::(!tcpairs);
 			trailmark := ~1) else ())
 		| _ => ()
@@ -1221,7 +1154,7 @@ fun leafdata(e:(int list * exp) list) =
 		| (_,x)::tl => (moredata(x);makedata(tl))
 	in trailmark := ~1; makedata(e); (fp,leaf,!tcpairs)
 	end;
-	
+
 fun makedfa(rules) =
 let val StateTab = ref (create(String.<=)) : (string,int) dictionary ref
     val fintab = ref (create(Int.<=)) : (int,(int list)) dictionary ref
@@ -1235,20 +1168,20 @@ fun visit (state,statenum) =
 	   tctab := enter(!tctab)(statenum,gettc(state));
 	   transtab := enter(!transtab)(statenum,transitions)
 	end
-	
+
 and visitstarts (states) =
 	let fun vs nil i = ()
 	      | vs (hd::tl) i = (visit (hd,i); vs tl (i+1))
 	in vs states 0
 	end
-	
+
 and hashstate(s: int list) =
 	let val rec hs =
 	        fn (nil,z) => z
 		 | ((x:int)::y,z) => hs(y,z ^ " " ^ (Int.toString x))
 	in hs(s,"")
 	end
-	
+
 and find(s) = lookup(!StateTab)(hashstate(s))
 
 and add(s,n) = StateTab := enter(!StateTab)(hashstate(s),n)
@@ -1258,11 +1191,11 @@ and getstate (state) =
 	handle LOOKUP => let val n = ++StateNum in
 		add(state,n); visit(state,n); n
 		end
-		
+
 and getfin state =
 	let fun f nil fins = fins
 	      | f (hd::tl) fins =
-	         case (leaf sub hd) 
+	         case (leaf sub hd)
 	            of END _ => f tl (hd::fins)
 	             | _ => f tl fins
 	in f state nil
@@ -1271,7 +1204,7 @@ and getfin state =
 and gettc state =
 	let fun f nil fins = fins
 	      | f (hd::tl) fins =
-	         case (leaf sub hd) 
+	         case (leaf sub hd)
 	            of TRAIL _ => f tl (hd::fins)
 	             | _ => f tl fins
 	in f state nil
@@ -1284,7 +1217,7 @@ and gettrans (state) =
 		  case (leaf sub hd) of
 	           CLASS(i,_)=>
 			(if (i sub c) then cktrans tl (union(r,fp sub hd))
-		         else cktrans tl r handle Subscript => 
+		         else cktrans tl r handle Subscript =>
 						cktrans tl r
 			)
 		   | _ => cktrans tl r
@@ -1296,9 +1229,9 @@ and gettrans (state) =
 	 end
      in loop ((!CharSetSize) - 1) nil
      end
-	
+
 and startstates() =
-	let val startarray = array(!StateNum + 1, nil);
+	let val startarray = Array.array(!StateNum + 1, nil);
             fun listofarray(a,n) =
   		let fun f i l = if i >= 0 then  f (i-1) ((a sub i)::l) else l
  		in f (n-1) nil end
@@ -1307,17 +1240,17 @@ and startstates() =
 		| (startlist,e)::tl => (fix(startlist,firstpos(e));makess(tl))
 	and fix = fn
 		  (nil,_) => ()
-		| (s::tl,firsts) => (update(startarray,s,
+		| (s::tl,firsts) => (Array.update(startarray,s,
 			union(firsts,startarray sub s));
 			fix(tl,firsts))
 	in makess(rules);listofarray(startarray, !StateNum + 1)
 	end
-	
+
 in visitstarts(startstates());
 (listofdict(!fintab),listofdict(!transtab),listofdict(!tctab),tcpairs)
 end
 
-val skel_hd = 
+val skel_hd =
 "   struct\n\
 \    structure UserDeclarations =\n\
 \      struct\n\
@@ -1335,15 +1268,12 @@ val skel_mid2 =
 \                          end\n\
 \"
 
-(* Ueno (2013-05-29): user can specify output file by environment variable
-fun lexGen(infile) =
-    let val outfile = infile ^ ".sml"
-*)
+(* Ueno (2013-05-29): allow users to specify output file name *)
 fun lexGen outfile infile =
     let val outfile = getOpt (outfile, infile ^ ".sml")
       fun PrintLexer (ends) =
     let val sayln = fn x => (say x; say "\n")
-     in case !ArgCode 
+     in case !ArgCode
 	 of NONE => (sayln "fun lex () : Internal.result =";
 		     sayln "let fun continue() = lex() in")
 	  | SOME s => (say "fun lex "; say "(yyarg as ("; say s; sayln ")) =";
@@ -1362,9 +1292,9 @@ fun lexGen outfile infile =
 	     else sayln "\t| action (i,(node::acts)::l) =";
 	 sayln "\t\tcase node of";
 	 sayln "\t\t    Internal.N yyk => ";
-	 sayln "\t\t\t(let fun yymktext() = substring(!yyb,i0,i-i0)\n\
+	 sayln "\t\t\t(let fun yymktext() = String.substring(!yyb,i0,i-i0)\n\
 	       \\t\t\t     val yypos = i0+ !yygone";
-	 if !CountNewLines 
+	 if !CountNewLines
 	    then (sayln "\t\t\tval _ = yylineno := CharVectorSlice.foldli";
 	  	  sayln "\t\t\t\t(fn (_,#\"\\n\", n) => n+1 | (_,_, n) => n) (!yylineno) (CharVectorSlice.slice (!yyb,i0,SOME(i-i0)))")
 	    else ();
@@ -1372,7 +1302,7 @@ fun lexGen outfile infile =
 	     then (say "\t\t\tfun REJECT() = action(i,acts::l";
 		   if !UsesTrailingContext
 		       then sayln ",rs)" else sayln ")")
-	     else ();	 
+	     else ();
 	 sayln "\t\t\topen UserDeclarations Internal.StartStates";
 	 sayln " in (yybufpos := i; case yyk of ";
 	 sayln "";
@@ -1381,10 +1311,7 @@ fun lexGen outfile infile =
 	 say "\n\t\t) end ";
 	 say ")\n\n";
 	 if (!UsesTrailingContext) then say skel_mid2 else ();
-(*
 (* Ueno (2011-11-25): SML# does not have Unsafe. *)
-	 sayln "\tval {fin,trans} = Unsafe.Vector.sub(Internal.tab, s)";
-*)
 	 sayln "\tval {fin,trans} = Vector.sub(Internal.tab, s)";
 	 sayln "\tval NewAcceptingLeaves = fin::AcceptingLeaves";
 	 sayln "\tin if l = !yybl then";
@@ -1393,7 +1320,7 @@ fun lexGen outfile infile =
 	 if !UsesTrailingContext then say ",nil" else ();
          say ") else";
 	 sayln "\t    let val newchars= if !yydone then \"\" else yyinput 1024";
-	 sayln "\t    in if (size newchars)=0";
+	 sayln "\t    in if (String.size newchars)=0";
 	 sayln "\t\t  then (yydone := true;";
 	 say "\t\t        if (l=i0) then UserDeclarations.eof ";
 	 sayln (case !ArgCode of NONE => "()" | SOME _ => "yyarg");
@@ -1401,27 +1328,19 @@ fun lexGen outfile infile =
 	 if !UsesTrailingContext then
 	    sayln ",nil))" else sayln "))";
 	 sayln "\t\t  else (if i0=l then yyb := newchars";
-	 sayln "\t\t     else yyb := substring(!yyb,i0,l-i0)^newchars;";
+	 sayln "\t\t     else yyb := String.substring(!yyb,i0,l-i0)^newchars;";
 	 sayln "\t\t     yygone := !yygone+i0;";
-	 sayln "\t\t     yybl := size (!yyb);";
+	 sayln "\t\t     yybl := String.size (!yyb);";
 	 sayln "\t\t     scan (s,AcceptingLeaves,l-i0,0))";
 	 sayln "\t    end";
-(*
 (* Ueno (2011-11-25): SML# does not have Unsafe. *)
-	 sayln "\t  else let val NewChar = Char.ord(Unsafe.CharVector.sub(!yyb,l))";
-*)
 	 sayln "\t  else let val NewChar = Char.ord(CharVector.sub(!yyb,l))";
          if !CharSetSize=129
-           then sayln "\t\tval NewChar = if NewChar<128 then NewChar else 128" 
+           then sayln "\t\tval NewChar = if NewChar<128 then NewChar else 128"
            else ();
 	 say "\t\tval NewState = ";
-(*
+	 sayln (if !CharFormat
 (* Ueno (2011-11-25): SML# does not have Unsafe. *)
-	 sayln (if !CharFormat 
-                then "Char.ord(Unsafe.CharVector.sub(trans,NewChar))"
-                else "Unsafe.Vector.sub(trans, NewChar)");
-*)
-	 sayln (if !CharFormat 
                 then "Char.ord(CharVector.sub(trans,NewChar))"
                 else "Vector.sub(trans, NewChar)");
 	 say "\t\tin if NewState=0 then action(l,NewAcceptingLeaves";
@@ -1430,11 +1349,11 @@ fun lexGen outfile infile =
 	 sayln "\tend";
 	 sayln "\tend";
 	 if !UsesPrevNewLine then () else sayln "(*";
-	 sayln "\tval start= if substring(!yyb,!yybufpos-1,1)=\"\\n\"";
+	 sayln "\tval start= if String.substring(!yyb,!yybufpos-1,1)=\"\\n\"";
 	 sayln "then !yybegin+1 else !yybegin";
 	 if !UsesPrevNewLine then () else sayln "*)";
 	 say "\tin scan(";
-	 if !UsesPrevNewLine then say "start" 
+	 if !UsesPrevNewLine then say "start"
 	 else say "!yybegin (* start *)";
 	 sayln ",nil,!yybufpos,!yybufpos)";
 	 sayln "    end";
@@ -1489,10 +1408,7 @@ fun lexGen outfile infile =
 	  say "action tried *)\n";
 	  say "end\n\n";
 	  say (if (!PosArg) then "fun makeLexer (yyinput,yygone0:int) =\nlet\n"
-(*
 (* Ueno (2011-11-25): fix of the first-character-position bug. *)
-		else "fun makeLexer yyinput =\nlet\tval yygone0=1\n");
-*)
 		else "fun makeLexer yyinput =\nlet\tval yygone0= ~1\n");
 	  if !CountNewLines then say "\tval yylineno = ref 0\n\n" else ();
 	  say "\tval yyb = ref \"\\n\" \t\t(* buffer *)\n\

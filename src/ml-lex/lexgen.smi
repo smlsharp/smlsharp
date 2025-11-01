@@ -1,4 +1,5 @@
 _require local "../basis.smi"
+_require local "../smlnj-lib/Util/redblack-map-fn.smi"
 structure LexGen =
 struct
   val lexGen : string option -> string -> unit
