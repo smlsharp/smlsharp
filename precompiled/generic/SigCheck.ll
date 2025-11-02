@@ -265,11 +265,11 @@ declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp
 declare void@_SML_main8a8dbcb270d3a574_TvarMap()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main29883837b3db2401_NameEvalError_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainc11d308d47afe714_NameEvalError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main38282eca92373ff5_TfunVars()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb370edab64b2932f_NormalizeTy()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main74f8fcf2aa95d944_Subst()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loaddaa180c1799f3810_Bool(i8*)local_unnamed_addr
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
@@ -286,11 +286,11 @@ declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load8a8dbcb270d3a574_TvarMap(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
-declare void@_SML_load29883837b3db2401_NameEvalError_ppg(i8*)local_unnamed_addr
+declare void@_SML_loadc11d308d47afe714_NameEvalError_ppg(i8*)local_unnamed_addr
 declare void@_SML_load38282eca92373ff5_TfunVars(i8*)local_unnamed_addr
-declare void@_SML_load988b411893ed23b3_NameEvalUtils(i8*)local_unnamed_addr
+declare void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*)local_unnamed_addr
 declare void@_SML_loadb370edab64b2932f_NormalizeTy(i8*)local_unnamed_addr
-declare void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*)local_unnamed_addr
+declare void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*)local_unnamed_addr
 declare void@_SML_load74f8fcf2aa95d944_Subst(i8*)local_unnamed_addr
 define private void@_SML_tabbad338b336056ed71_SigCheck()#3{
 unreachable
@@ -318,11 +318,11 @@ tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load8a8dbcb270d3a574_TvarMap(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
-tail call void@_SML_load29883837b3db2401_NameEvalError_ppg(i8*%a)#0
+tail call void@_SML_loadc11d308d47afe714_NameEvalError_ppg(i8*%a)#0
 tail call void@_SML_load38282eca92373ff5_TfunVars(i8*%a)#0
-tail call void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)#0
+tail call void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)#0
 tail call void@_SML_loadb370edab64b2932f_NormalizeTy(i8*%a)#0
-tail call void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*%a)#0
+tail call void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*%a)#0
 tail call void@_SML_load74f8fcf2aa95d944_Subst(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbad338b336056ed71_SigCheck,i8*@_SML_ftabad338b336056ed71_SigCheck,i8*null)#0
 ret void
@@ -351,11 +351,11 @@ tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main8a8dbcb270d3a574_TvarMap()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
 tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#2
-tail call void@_SML_main29883837b3db2401_NameEvalError_ppg()#2
+tail call void@_SML_mainc11d308d47afe714_NameEvalError_ppg()#2
 tail call void@_SML_main38282eca92373ff5_TfunVars()#2
-tail call void@_SML_main988b411893ed23b3_NameEvalUtils()#2
+tail call void@_SML_main619d2077b5e00b1b_NameEvalUtils()#2
 tail call void@_SML_mainb370edab64b2932f_NormalizeTy()#2
-tail call void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()#2
+tail call void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()#2
 tail call void@_SML_main74f8fcf2aa95d944_Subst()#2
 br label%d
 }

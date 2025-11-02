@@ -478,7 +478,7 @@ declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp
 declare void@_SML_main272769c068a0d80e_UnionFind()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc88dec21a8800496_RuntimeTypes_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainf05fe994141c896f_DummyTyID()local_unnamed_addr#2 gc"smlsharp"
@@ -502,7 +502,7 @@ declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load272769c068a0d80e_UnionFind(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loadc88dec21a8800496_RuntimeTypes_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadf05fe994141c896f_DummyTyID(i8*)local_unnamed_addr
@@ -537,7 +537,7 @@ tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load272769c068a0d80e_UnionFind(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loadc88dec21a8800496_RuntimeTypes_ppg(i8*%a)#0
 tail call void@_SML_loadf05fe994141c896f_DummyTyID(i8*%a)#0
@@ -573,7 +573,7 @@ tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main272769c068a0d80e_UnionFind()#2
 tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_mainc88dec21a8800496_RuntimeTypes_ppg()#2
 tail call void@_SML_mainf05fe994141c896f_DummyTyID()#2

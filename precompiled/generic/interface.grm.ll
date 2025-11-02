@@ -403,19 +403,19 @@
 @_SMLZN9Interface6Tokens3ANDE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cR,i64 0,i32 2)to i8*)
 @_SMLZN9Interface6Tokens7ABSTYPEE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cP,i64 0,i32 2)to i8*)
 @_SMLZN9Interface6Tokens3EOFE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cN,i64 0,i32 2)to i8*)
-@_SML_gvarfc945e814b73aec9_interface_grm=private global<{[4x i8],i32,[6x i8*]}><{[4x i8]zeroinitializer,i32 -1342177232,[6x i8*]zeroinitializer}>,align 8
-@eM=private unnamed_addr global[3x i64][i64 2,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([3x i64]*@eM to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL467,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([3x i64]*@eM to i64))]
-@_SML_ftabfc945e814b73aec9_interface_grm=external global i8
+@_SML_gvar6aa5512c10d61eeb_interface_grm=private global<{[4x i8],i32,[6x i8*]}><{[4x i8]zeroinitializer,i32 -1342177232,[6x i8*]zeroinitializer}>,align 8
+@eM=private unnamed_addr global[3x i64][i64 2,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([3x i64]*@eM to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL467,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([3x i64]*@eM to i64))]
+@_SML_ftab6aa5512c10d61eeb_interface_grm=external global i8
 @eN=private unnamed_addr global i8 0
 @eO=internal unnamed_addr global i32 0,align 8
 @eP=private unnamed_addr constant[59x i32][i32 1,i32 0,i32 0,i32 1,i32 0,i32 0,i32 0,i32 1,i32 1,i32 0,i32 0,i32 0,i32 0,i32 1,i32 1,i32 0,i32 1,i32 0,i32 1,i32 0,i32 0,i32 1,i32 0,i32 0,i32 0,i32 1,i32 0,i32 1,i32 1,i32 0,i32 0,i32 0,i32 0,i32 0,i32 0,i32 0,i32 1,i32 1,i32 1,i32 1,i32 0,i32 0,i32 1,i32 0,i32 0,i32 0,i32 0,i32 1,i32 1,i32 1,i32 0,i32 0,i32 1,i32 1,i32 1,i32 0,i32 0,i32 1,i32 1]
 @eQ=private unnamed_addr constant[62x i8*][i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@z,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@A,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@B,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@C,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@D,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@E,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[9x i8]}>,<{[4x i8],i32,[9x i8]}>*@F,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@G,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@H,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@I,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@J,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@K,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@L,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@M,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@N,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[9x i8]}>,<{[4x i8],i32,[9x i8]}>*@O,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@P,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@Q,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@R,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@S,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[10x i8]}>,<{[4x i8],i32,[10x i8]}>*@T,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@U,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@V,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@W,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@X,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[11x i8]}>,<{[4x i8],i32,[11x i8]}>*@Y,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[13x i8]}>,<{[4x i8],i32,[13x i8]}>*@Z,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@aa,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@ab,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@ac,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@ad,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@ae,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@af,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[14x i8]}>,<{[4x i8],i32,[14x i8]}>*@ag,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@ah,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[9x i8]}>,<{[4x i8],i32,[9x i8]}>*@ai,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@aj,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@ak,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@al,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@am,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@an,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@ao,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@ap,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@aq,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@ar,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@as,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[9x i8]}>,<{[4x i8],i32,[9x i8]}>*@at,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@au,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[10x i8]}>,<{[4x i8],i32,[10x i8]}>*@av,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@aw,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@ax,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[10x i8]}>,<{[4x i8],i32,[10x i8]}>*@ay,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@az,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@aA,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[7x i8]}>,<{[4x i8],i32,[7x i8]}>*@aB,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[10x i8]}>,<{[4x i8],i32,[10x i8]}>*@aC,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@aD,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@aE,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@aF,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@aG,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@aH,i64 0,i32 2,i64 0),i8*getelementptr inbounds(<{[4x i8],i32,[9x i8]}>,<{[4x i8],i32,[9x i8]}>*@aI,i64 0,i32 2,i64 0)]
-@_SMLZN9Interface6Parser10ParseErrorE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 0)
-@_SMLZN9Interface6Parser10makeStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 1)
-@_SMLZN9Interface6Parser10consStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 2)
-@_SMLZN9Interface6Parser9getStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 3)
-@_SMLZN9Interface6Parser9sameTokenE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 4)
-@_SMLZN9Interface6Parser5parseE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i32 0,i32 2,i32 5)
+@_SMLZN9Interface6Parser10ParseErrorE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 0)
+@_SMLZN9Interface6Parser10makeStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 1)
+@_SMLZN9Interface6Parser10consStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 2)
+@_SMLZN9Interface6Parser9getStreamE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 3)
+@_SMLZN9Interface6Parser9sameTokenE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 4)
+@_SMLZN9Interface6Parser5parseE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i32 0,i32 2,i32 5)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -446,10 +446,10 @@ declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_load97ec6533be83b3ae_RequirePath(i8*)local_unnamed_addr
-define private void@_SML_tabbfc945e814b73aec9_interface_grm()#3{
+define private void@_SML_tabb6aa5512c10d61eeb_interface_grm()#3{
 unreachable
 }
-define void@_SML_loadfc945e814b73aec9_interface_grm(i8*%a)local_unnamed_addr#0{
+define void@_SML_load6aa5512c10d61eeb_interface_grm(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@eN,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -463,10 +463,10 @@ tail call void@_SML_load03d87556ec7f64b2_List(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_load97ec6533be83b3ae_RequirePath(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbfc945e814b73aec9_interface_grm,i8*@_SML_ftabfc945e814b73aec9_interface_grm,i8*bitcast([3x i64]*@eM to i8*))#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb6aa5512c10d61eeb_interface_grm,i8*@_SML_ftab6aa5512c10d61eeb_interface_grm,i8*bitcast([3x i64]*@eM to i8*))#0
 ret void
 }
-define void@_SML_mainfc945e814b73aec9_interface_grm()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_main6aa5512c10d61eeb_interface_grm()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -1176,16 +1176,16 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9Interface6Parser5parseE_1204 to vo
 %gz=bitcast i8*%gy to i32*
 store i32 -2147483647,i32*%gz,align 4
 %gA=load i8*,i8**%g,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0),i8*inreg%gA)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0),i8*inreg%gA)#0
 %gB=load i8*,i8**%e,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 1),i8*inreg%gB)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 1),i8*inreg%gB)#0
 %gC=load i8*,i8**%c,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 2),i8*inreg%gC)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 2),i8*inreg%gC)#0
 %gD=load i8*,i8**%d,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 3),i8*inreg%gD)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 3),i8*inreg%gD)#0
 %gE=load i8*,i8**%f,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 4),i8*inreg%gE)#0
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 5),i8*inreg%gp)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 4),i8*inreg%gE)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 5),i8*inreg%gp)#0
 call void@sml_end()#0
 ret void
 gF:
@@ -12071,7 +12071,7 @@ store i32 1342177296,i32*%at,align 4
 %au=getelementptr inbounds i8,i8*%aq,i64 4
 %av=bitcast i8*%au to i32*
 store i32 0,i32*%av,align 1
-store i32 1,i32*%ar,align 4
+store i32 2,i32*%ar,align 4
 %aw=load i8*,i8**%d,align 8
 %ax=getelementptr inbounds i8,i8*%aq,i64 8
 %ay=bitcast i8*%ax to i8**
@@ -58133,7 +58133,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 1)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 1)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN9Interface6Parser10makeStreamE_1200(i8*inreg%k,i8*inreg%h)
 ret i8*%l
@@ -58152,7 +58152,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 2),align 8
+%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 2),align 8
 %k=getelementptr inbounds i8,i8*%j,i64 16
 %l=bitcast i8*%k to i8*(i8*,i8*)**
 %m=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l,align 8
@@ -58175,7 +58175,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 3),align 8
+%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 3),align 8
 %k=getelementptr inbounds i8,i8*%j,i64 16
 %l=bitcast i8*%k to i8*(i8*,i8*)**
 %m=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l,align 8
@@ -58199,7 +58199,7 @@ br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
 store i8*null,i8**%b,align 8
-%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 4),align 8
+%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 4),align 8
 %k=getelementptr inbounds i8,i8*%j,i64 16
 %l=bitcast i8*%k to i8*(i8*,i8*)**
 %m=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l,align 8
@@ -58224,7 +58224,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvarfc945e814b73aec9_interface_grm,i64 0,i32 2,i64 5)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[6x i8*]}>,<{[4x i8],i32,[6x i8*]}>*@_SML_gvar6aa5512c10d61eeb_interface_grm,i64 0,i32 2,i64 5)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN9Interface6Parser5parseE_1204(i8*inreg%k,i8*inreg%h)
 ret i8*%l

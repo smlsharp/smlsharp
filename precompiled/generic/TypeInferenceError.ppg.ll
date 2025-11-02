@@ -1285,7 +1285,7 @@ declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#1 gc"smlsharp"
-declare void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#1 gc"smlsharp"
+declare void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_mainccac1cb21f7132a8_TypedCalc_ppg()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*)local_unnamed_addr
@@ -1293,7 +1293,7 @@ declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
-declare void@_SML_load988b411893ed23b3_NameEvalUtils(i8*)local_unnamed_addr
+declare void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadccac1cb21f7132a8_TypedCalc_ppg(i8*)local_unnamed_addr
 define private void@_SML_tabbd79ede3b7201e6d8_TypeInferenceError_ppg()#2{
@@ -1312,7 +1312,7 @@ tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
-tail call void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)#0
+tail call void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
 tail call void@_SML_loadccac1cb21f7132a8_TypedCalc_ppg(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbd79ede3b7201e6d8_TypeInferenceError_ppg,i8*@_SML_ftabd79ede3b7201e6d8_TypeInferenceError_ppg,i8*bitcast([2x i64]*@p7 to i8*))#0
@@ -1341,7 +1341,7 @@ tail call void@_SML_main89b8631430c545af_Symbol()#1
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#1
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#1
 tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#1
-tail call void@_SML_main988b411893ed23b3_NameEvalUtils()#1
+tail call void@_SML_main619d2077b5e00b1b_NameEvalUtils()#1
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#1
 tail call void@_SML_mainccac1cb21f7132a8_TypedCalc_ppg()#1
 call void@llvm.gcroot(i8**%b,i8*null)#0

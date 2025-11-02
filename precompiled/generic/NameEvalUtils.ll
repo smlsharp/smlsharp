@@ -182,7 +182,7 @@
 @_SMLZN13NameEvalUtils20SymbolEnvToSymbolSetE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@be,i64 0,i32 2)to i8*)
 @_SMLZN13NameEvalUtils14staticTfunNameE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@aM,i64 0,i32 2)to i8*)
 @_SMLZN13NameEvalUtils15staticTyConNameE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@aQ,i64 0,i32 2)to i8*)
-@_SML_ftab988b411893ed23b3_NameEvalUtils=external global i8
+@_SML_ftab619d2077b5e00b1b_NameEvalUtils=external global i8
 @bf=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -277,8 +277,8 @@ declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#2 gc"smlsh
 declare void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main38282eca92373ff5_TfunVars()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main92a9fd50084b022c_ListSorter()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maincc650a08b2c92234_PatternCalcInterface_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_maineeaf50b1027fe148_PatternCalcInterface_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainf5e91d3050f53d4b_AbsynTyFormatter()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5148a836b3728be9_Int32(i8*)local_unnamed_addr
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
@@ -295,13 +295,13 @@ declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
 declare void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*)local_unnamed_addr
 declare void@_SML_load38282eca92373ff5_TfunVars(i8*)local_unnamed_addr
 declare void@_SML_load92a9fd50084b022c_ListSorter(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
-declare void@_SML_loadcc650a08b2c92234_PatternCalcInterface_ppg(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
+declare void@_SML_loadeeaf50b1027fe148_PatternCalcInterface_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadf5e91d3050f53d4b_AbsynTyFormatter(i8*)local_unnamed_addr
-define private void@_SML_tabb988b411893ed23b3_NameEvalUtils()#3{
+define private void@_SML_tabb619d2077b5e00b1b_NameEvalUtils()#3{
 unreachable
 }
-define void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)local_unnamed_addr#0{
+define void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@bf,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -324,13 +324,13 @@ tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
 tail call void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*%a)#0
 tail call void@_SML_load38282eca92373ff5_TfunVars(i8*%a)#0
 tail call void@_SML_load92a9fd50084b022c_ListSorter(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
-tail call void@_SML_loadcc650a08b2c92234_PatternCalcInterface_ppg(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
+tail call void@_SML_loadeeaf50b1027fe148_PatternCalcInterface_ppg(i8*%a)#0
 tail call void@_SML_loadf5e91d3050f53d4b_AbsynTyFormatter(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb988b411893ed23b3_NameEvalUtils,i8*@_SML_ftab988b411893ed23b3_NameEvalUtils,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb619d2077b5e00b1b_NameEvalUtils,i8*@_SML_ftab619d2077b5e00b1b_NameEvalUtils,i8*null)#0
 ret void
 }
-define void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@bf,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0
@@ -354,8 +354,8 @@ tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#2
 tail call void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()#2
 tail call void@_SML_main38282eca92373ff5_TfunVars()#2
 tail call void@_SML_main92a9fd50084b022c_ListSorter()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
-tail call void@_SML_maincc650a08b2c92234_PatternCalcInterface_ppg()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
+tail call void@_SML_maineeaf50b1027fe148_PatternCalcInterface_ppg()#2
 tail call void@_SML_mainf5e91d3050f53d4b_AbsynTyFormatter()#2
 br label%d
 }

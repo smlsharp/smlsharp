@@ -1024,11 +1024,11 @@
 @pH=private unnamed_addr constant<{[4x i8],i32,[16x i8]}><{[4x i8]zeroinitializer,i32 -2147483632,[16x i8]c"unclosed string\00"}>,align 8
 @pI=private unnamed_addr constant<{[4x i8],i32,[17x i8]}><{[4x i8]zeroinitializer,i32 -2147483631,[17x i8]c"unclosed comment\00"}>,align 8
 @_SMLZN12InterfaceLex16UserDeclarations7initArgE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*)
-@_SML_gvar76e66750c46dd9d2_interface_lex=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
-@pJ=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar76e66750c46dd9d2_interface_lex,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@pJ to i64))]
-@_SML_ftab76e66750c46dd9d2_interface_lex=external global i8
+@_SML_gvare0066906b720739f_interface_lex=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
+@pJ=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvare0066906b720739f_interface_lex,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@pJ to i64))]
+@_SML_ftabe0066906b720739f_interface_lex=external global i8
 @pK=private unnamed_addr global i8 0
-@_SMLZN12InterfaceLex9makeLexerE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar76e66750c46dd9d2_interface_lex,i32 0,i32 2,i32 0)
+@_SMLZN12InterfaceLex9makeLexerE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvare0066906b720739f_interface_lex,i32 0,i32 2,i32 0)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -1115,7 +1115,7 @@ declare void@_SML_maincbf81bea2bc04eab_Vector()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainf19563e8df97169c_Word32()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main67a5b28ff146c353_Loc()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_mainfc945e814b73aec9_interface_grm()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main6aa5512c10d61eeb_interface_grm()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5c37eb24573fc5f9_StringCvt(i8*)local_unnamed_addr
 declare void@_SML_load5148a836b3728be9_Int32(i8*)local_unnamed_addr
 declare void@_SML_loadadbb5309e852b68c_CharVector(i8*)local_unnamed_addr
@@ -1126,11 +1126,11 @@ declare void@_SML_loadcbf81bea2bc04eab_Vector(i8*)local_unnamed_addr
 declare void@_SML_loadf19563e8df97169c_Word32(i8*)local_unnamed_addr
 declare void@_SML_load67a5b28ff146c353_Loc(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
-declare void@_SML_loadfc945e814b73aec9_interface_grm(i8*)local_unnamed_addr
-define private void@_SML_tabb76e66750c46dd9d2_interface_lex()#3{
+declare void@_SML_load6aa5512c10d61eeb_interface_grm(i8*)local_unnamed_addr
+define private void@_SML_tabbe0066906b720739f_interface_lex()#3{
 unreachable
 }
-define void@_SML_load76e66750c46dd9d2_interface_lex(i8*%a)local_unnamed_addr#0{
+define void@_SML_loade0066906b720739f_interface_lex(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@pK,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -1148,11 +1148,11 @@ tail call void@_SML_loadcbf81bea2bc04eab_Vector(i8*%a)#0
 tail call void@_SML_loadf19563e8df97169c_Word32(i8*%a)#0
 tail call void@_SML_load67a5b28ff146c353_Loc(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
-tail call void@_SML_loadfc945e814b73aec9_interface_grm(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb76e66750c46dd9d2_interface_lex,i8*@_SML_ftab76e66750c46dd9d2_interface_lex,i8*bitcast([2x i64]*@pJ to i8*))#0
+tail call void@_SML_load6aa5512c10d61eeb_interface_grm(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbe0066906b720739f_interface_lex,i8*@_SML_ftabe0066906b720739f_interface_lex,i8*bitcast([2x i64]*@pJ to i8*))#0
 ret void
 }
-define void@_SML_main76e66750c46dd9d2_interface_lex()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_maine0066906b720739f_interface_lex()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -1175,7 +1175,7 @@ tail call void@_SML_maincbf81bea2bc04eab_Vector()#2
 tail call void@_SML_mainf19563e8df97169c_Word32()#2
 tail call void@_SML_main67a5b28ff146c353_Loc()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
-tail call void@_SML_mainfc945e814b73aec9_interface_grm()#2
+tail call void@_SML_main6aa5512c10d61eeb_interface_grm()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
@@ -1344,7 +1344,7 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN12InterfaceLex9makeLexerE_1552 to v
 %bh=getelementptr inbounds i8,i8*%a8,i64 24
 %bi=bitcast i8*%bh to i32*
 store i32 -2147483647,i32*%bi,align 4
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar76e66750c46dd9d2_interface_lex,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar76e66750c46dd9d2_interface_lex,i64 0,i32 2,i64 0),i8*inreg%a8)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvare0066906b720739f_interface_lex,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvare0066906b720739f_interface_lex,i64 0,i32 2,i64 0),i8*inreg%a8)#0
 call void@sml_end()#0
 ret void
 bj:
@@ -8637,7 +8637,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar76e66750c46dd9d2_interface_lex,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvare0066906b720739f_interface_lex,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN12InterfaceLex9makeLexerE_1552(i8*inreg%k,i8*inreg%h)
 ret i8*%l

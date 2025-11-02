@@ -461,7 +461,7 @@ declare void@_SML_main3a60343781315c1e_Option()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main1ef93e13728790b1_String()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main6ad4d8e473c26a9c_BasicFormatters()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main92a9fd50084b022c_ListSorter()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
@@ -478,7 +478,7 @@ declare void@_SML_load3a60343781315c1e_Option(i8*)local_unnamed_addr
 declare void@_SML_load1ef93e13728790b1_String(i8*)local_unnamed_addr
 declare void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*)local_unnamed_addr
 declare void@_SML_load92a9fd50084b022c_ListSorter(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
@@ -506,7 +506,7 @@ tail call void@_SML_load3a60343781315c1e_Option(i8*%a)#0
 tail call void@_SML_load1ef93e13728790b1_String(i8*%a)#0
 tail call void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*%a)#0
 tail call void@_SML_load92a9fd50084b022c_ListSorter(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
@@ -539,7 +539,7 @@ tail call void@_SML_main3a60343781315c1e_Option()#2
 tail call void@_SML_main1ef93e13728790b1_String()#2
 tail call void@_SML_main6ad4d8e473c26a9c_BasicFormatters()#2
 tail call void@_SML_main92a9fd50084b022c_ListSorter()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#2

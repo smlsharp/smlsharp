@@ -77,7 +77,7 @@ declare void@_SML_main00d884c96265bfea_SMLSharp_Runtime()local_unnamed_addr#2 gc
 declare void@_SML_main21c7617ebc9dc739_bin_io()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main1ef93e13728790b1_String()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3446b7b079949ccf_text_io()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maine29d9c3af819282f_Filename()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loade08a2a3237fbaf1b_Word8Vector(i8*)local_unnamed_addr
 declare void@_SML_loadb802741546ad758e_SMLSharp_OSFileSys(i8*)local_unnamed_addr
@@ -85,7 +85,7 @@ declare void@_SML_load00d884c96265bfea_SMLSharp_Runtime(i8*)local_unnamed_addr
 declare void@_SML_load21c7617ebc9dc739_bin_io(i8*)local_unnamed_addr
 declare void@_SML_load1ef93e13728790b1_String(i8*)local_unnamed_addr
 declare void@_SML_load3446b7b079949ccf_text_io(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_loade29d9c3af819282f_Filename(i8*)local_unnamed_addr
 define private void@_SML_tabbbda7a2fa42fa5d88_CoreUtils()#3{
 unreachable
@@ -104,7 +104,7 @@ tail call void@_SML_load00d884c96265bfea_SMLSharp_Runtime(i8*%a)#0
 tail call void@_SML_load21c7617ebc9dc739_bin_io(i8*%a)#0
 tail call void@_SML_load1ef93e13728790b1_String(i8*%a)#0
 tail call void@_SML_load3446b7b079949ccf_text_io(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_loade29d9c3af819282f_Filename(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbbda7a2fa42fa5d88_CoreUtils,i8*@_SML_ftabbda7a2fa42fa5d88_CoreUtils,i8*null)#0
 ret void
@@ -124,7 +124,7 @@ tail call void@_SML_main00d884c96265bfea_SMLSharp_Runtime()#2
 tail call void@_SML_main21c7617ebc9dc739_bin_io()#2
 tail call void@_SML_main1ef93e13728790b1_String()#2
 tail call void@_SML_main3446b7b079949ccf_text_io()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_maine29d9c3af819282f_Filename()#2
 br label%d
 }

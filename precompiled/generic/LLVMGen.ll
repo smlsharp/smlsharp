@@ -664,7 +664,7 @@ declare void@_SML_maina7f442620a6cc9c4_ExternSymbol()local_unnamed_addr#2 gc"sml
 declare void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main4af09b680202f40d_MachineCode_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main0a912fe1d4e49644_LLVMIR_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineab60a0317e30181_MachineCodeRename()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main0a35b828830f444e_ToplevelSymbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5d4c3ea7bd6f9540_IntInf(i8*)local_unnamed_addr
@@ -690,7 +690,7 @@ declare void@_SML_loada7f442620a6cc9c4_ExternSymbol(i8*)local_unnamed_addr
 declare void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*)local_unnamed_addr
 declare void@_SML_load4af09b680202f40d_MachineCode_ppg(i8*)local_unnamed_addr
 declare void@_SML_load0a912fe1d4e49644_LLVMIR_ppg(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_loadeab60a0317e30181_MachineCodeRename(i8*)local_unnamed_addr
 declare void@_SML_load0a35b828830f444e_ToplevelSymbol(i8*)local_unnamed_addr
 define private void@_SML_tabb5a8000e913577fc8_LLVMGen()#3{
@@ -727,7 +727,7 @@ tail call void@_SML_loada7f442620a6cc9c4_ExternSymbol(i8*%a)#0
 tail call void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*%a)#0
 tail call void@_SML_load4af09b680202f40d_MachineCode_ppg(i8*%a)#0
 tail call void@_SML_load0a912fe1d4e49644_LLVMIR_ppg(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_loadeab60a0317e30181_MachineCodeRename(i8*%a)#0
 tail call void@_SML_load0a35b828830f444e_ToplevelSymbol(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb5a8000e913577fc8_LLVMGen,i8*@_SML_ftab5a8000e913577fc8_LLVMGen,i8*bitcast([2x i64]*@hT to i8*))#0
@@ -778,7 +778,7 @@ tail call void@_SML_maina7f442620a6cc9c4_ExternSymbol()#2
 tail call void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()#2
 tail call void@_SML_main4af09b680202f40d_MachineCode_ppg()#2
 tail call void@_SML_main0a912fe1d4e49644_LLVMIR_ppg()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_maineab60a0317e30181_MachineCodeRename()#2
 tail call void@_SML_main0a35b828830f444e_ToplevelSymbol()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0

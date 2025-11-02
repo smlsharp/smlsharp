@@ -9,7 +9,7 @@
 @g=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateForeach.sml:51.6(1201)\00"}>,align 8
 @h=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN16ElaborateForeach12elaborateExpE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN16ElaborateForeach12elaborateExpE_63 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN16ElaborateForeach12elaborateExpE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@h,i64 0,i32 2)to i8*)
-@_SML_ftab540ed99f009ba890_ElaborateForeach=external global i8
+@_SML_ftabde0add08ce5a1174_ElaborateForeach=external global i8
 @i=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -26,10 +26,10 @@ declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smls
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
-define private void@_SML_tabb540ed99f009ba890_ElaborateForeach()#3{
+define private void@_SML_tabbde0add08ce5a1174_ElaborateForeach()#3{
 unreachable
 }
-define void@_SML_load540ed99f009ba890_ElaborateForeach(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadde0add08ce5a1174_ElaborateForeach(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@i,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -40,10 +40,10 @@ store i8 1,i8*@i,align 1
 tail call void@_SML_load03d87556ec7f64b2_List(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb540ed99f009ba890_ElaborateForeach,i8*@_SML_ftab540ed99f009ba890_ElaborateForeach,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbde0add08ce5a1174_ElaborateForeach,i8*@_SML_ftabde0add08ce5a1174_ElaborateForeach,i8*null)#0
 ret void
 }
-define void@_SML_main540ed99f009ba890_ElaborateForeach()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_mainde0add08ce5a1174_ElaborateForeach()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@i,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0

@@ -225,12 +225,12 @@ declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"sml
 declare void@_SML_main90c0803643f1cb28_DatatypeLayout()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main38282eca92373ff5_TfunVars()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main7e3960b246d85223_EvalSig()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainb45c772a30313e5d_EvalSig()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maind71ddcc18897b6d8_EvalTy()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb370edab64b2932f_NormalizeTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindb38d38304c882ce_SetLiftedTys()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5148a836b3728be9_Int32(i8*)local_unnamed_addr
 declare void@_SML_loaddaa180c1799f3810_Bool(i8*)local_unnamed_addr
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
@@ -247,12 +247,12 @@ declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
 declare void@_SML_load90c0803643f1cb28_DatatypeLayout(i8*)local_unnamed_addr
 declare void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*)local_unnamed_addr
 declare void@_SML_load38282eca92373ff5_TfunVars(i8*)local_unnamed_addr
-declare void@_SML_load7e3960b246d85223_EvalSig(i8*)local_unnamed_addr
+declare void@_SML_loadb45c772a30313e5d_EvalSig(i8*)local_unnamed_addr
 declare void@_SML_loadd71ddcc18897b6d8_EvalTy(i8*)local_unnamed_addr
-declare void@_SML_load988b411893ed23b3_NameEvalUtils(i8*)local_unnamed_addr
+declare void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*)local_unnamed_addr
 declare void@_SML_loadb370edab64b2932f_NormalizeTy(i8*)local_unnamed_addr
 declare void@_SML_loaddb38d38304c882ce_SetLiftedTys(i8*)local_unnamed_addr
-declare void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*)local_unnamed_addr
+declare void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*)local_unnamed_addr
 define private void@_SML_tabba69a1a117d65d5d0_FunctorUtils()#3{
 unreachable
 }
@@ -280,12 +280,12 @@ tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
 tail call void@_SML_load90c0803643f1cb28_DatatypeLayout(i8*%a)#0
 tail call void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*%a)#0
 tail call void@_SML_load38282eca92373ff5_TfunVars(i8*%a)#0
-tail call void@_SML_load7e3960b246d85223_EvalSig(i8*%a)#0
+tail call void@_SML_loadb45c772a30313e5d_EvalSig(i8*%a)#0
 tail call void@_SML_loadd71ddcc18897b6d8_EvalTy(i8*%a)#0
-tail call void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)#0
+tail call void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)#0
 tail call void@_SML_loadb370edab64b2932f_NormalizeTy(i8*%a)#0
 tail call void@_SML_loaddb38d38304c882ce_SetLiftedTys(i8*%a)#0
-tail call void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*%a)#0
+tail call void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabba69a1a117d65d5d0_FunctorUtils,i8*@_SML_ftaba69a1a117d65d5d0_FunctorUtils,i8*null)#0
 ret void
 }
@@ -314,12 +314,12 @@ tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
 tail call void@_SML_main90c0803643f1cb28_DatatypeLayout()#2
 tail call void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()#2
 tail call void@_SML_main38282eca92373ff5_TfunVars()#2
-tail call void@_SML_main7e3960b246d85223_EvalSig()#2
+tail call void@_SML_mainb45c772a30313e5d_EvalSig()#2
 tail call void@_SML_maind71ddcc18897b6d8_EvalTy()#2
-tail call void@_SML_main988b411893ed23b3_NameEvalUtils()#2
+tail call void@_SML_main619d2077b5e00b1b_NameEvalUtils()#2
 tail call void@_SML_mainb370edab64b2932f_NormalizeTy()#2
 tail call void@_SML_maindb38d38304c882ce_SetLiftedTys()#2
-tail call void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()#2
+tail call void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()#2
 br label%d
 }
 define internal fastcc i8*@_SMLLL8icdecls1_392(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{

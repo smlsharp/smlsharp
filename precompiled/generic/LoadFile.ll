@@ -40,31 +40,31 @@
 @n=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:187.30(7023)\00"}>,align 8
 @o=private unnamed_addr constant<{[4x i8],i32,[66x i8]}><{[4x i8]zeroinitializer,i32 -2147483582,[66x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:165.6(5957)\00"}>,align 8
 @p=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:196.12(7264)\00"}>,align 8
-@q=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:305.44(11494)\00"}>,align 8
-@r=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:306.42(11570)\00"}>,align 8
-@s=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:303.9(11365)\00"}>,align 8
+@q=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:305.44(11484)\00"}>,align 8
+@r=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:306.42(11560)\00"}>,align 8
+@s=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:303.9(11355)\00"}>,align 8
 @t=private unnamed_addr constant<{[4x i8],i32,[6x i8]}><{[4x i8]zeroinitializer,i32 -2147483642,[6x i8]c"sml: \00"}>,align 8
-@u=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:358.33(13552)\00"}>,align 8
+@u=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:358.33(13542)\00"}>,align 8
 @v=private unnamed_addr constant<{[4x i8],i32,i32,[4x i8],i32}><{[4x i8]zeroinitializer,i32 -805306360,i32 2,[4x i8]zeroinitializer,i32 0}>,align 8
-@w=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:349.6(13077)\00"}>,align 8
-@x=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:332.34(12499)\00"}>,align 8
-@y=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:320.6(12046)\00"}>,align 8
-@z=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:389.37(14777)\00"}>,align 8
+@w=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:349.6(13067)\00"}>,align 8
+@x=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:332.34(12489)\00"}>,align 8
+@y=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:320.6(12036)\00"}>,align 8
+@z=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:389.37(14767)\00"}>,align 8
 @A=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL4init_378 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL4init_659 to void(...)*),i32 -2147483647}>,align 8
 @B=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL5inits_381 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5inits_660 to void(...)*),i32 -2147483647}>,align 8
-@C=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:290.44(10814)\00"}>,align 8
-@D=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:291.42(10890)\00"}>,align 8
-@E=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:288.9(10685)\00"}>,align 8
+@C=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:290.44(10804)\00"}>,align 8
+@D=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:291.42(10880)\00"}>,align 8
+@E=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:288.9(10675)\00"}>,align 8
 @F=private unnamed_addr constant<{[4x i8],i32,[6x i8]}><{[4x i8]zeroinitializer,i32 -2147483642,[6x i8]c"smi: \00"}>,align 8
 @G=private unnamed_addr constant<{[4x i8],i32,[2x i8]}><{[4x i8]zeroinitializer,i32 -2147483646,[2x i8]c"\0A\00"}>,align 8
 @H=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL5edges_469 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5edges_663 to void(...)*),i32 -2147483647}>,align 8
 @I=private unnamed_addr constant<{[4x i8],i32,i32,[4x i8],i32}><{[4x i8]zeroinitializer,i32 -805306360,i32 0,[4x i8]zeroinitializer,i32 0}>,align 8
-@J=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:483.6(18430)\00"}>,align 8
-@K=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:312.2(11777)\00"}>,align 8
-@L=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:416.11(15708)\00"}>,align 8
+@J=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:483.6(18420)\00"}>,align 8
+@K=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:312.2(11767)\00"}>,align 8
+@L=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:416.11(15698)\00"}>,align 8
 @M=private unnamed_addr constant<{[4x i8],i32,[66x i8]}><{[4x i8]zeroinitializer,i32 -2147483582,[66x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:118.2(4319)\00"}>,align 8
-@N=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:438.11(16566)\00"}>,align 8
-@O=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:401.6(15095)\00"}>,align 8
+@N=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:438.11(16556)\00"}>,align 8
+@O=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:401.6(15085)\00"}>,align 8
 @P=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile16evalIrequireListE_483 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile16evalIrequireListE_664 to void(...)*),i32 -2147483647}>,align 8
 @Q=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile16evalIrequireListE_485 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile16evalIrequireListE_665 to void(...)*),i32 -2147483647}>,align 8
 @R=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile16evalIrequireListE_487 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile16evalIrequireListE_666 to void(...)*),i32 -2147483647}>,align 8
@@ -79,15 +79,15 @@
 @aa=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile15loadRequireListE_505 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile15loadRequireListE_675 to void(...)*),i32 -2147483647}>,align 8
 @ab=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile15loadRequireListE_507 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile15loadRequireListE_676 to void(...)*),i32 -2147483647}>,align 8
 @ac=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile15loadRequireListE_509 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile15loadRequireListE_677 to void(...)*),i32 -2147483647}>,align 8
-@ad=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:580.39(22587)\00"}>,align 8
+@ad=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:580.39(22577)\00"}>,align 8
 @ae=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8LoadFile20checkHashDuplicationE_514 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8LoadFile20checkHashDuplicationE_681 to void(...)*),i32 -2147483647}>,align 8
-@af=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:648.27(25509)\00"}>,align 8
+@af=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:648.27(25499)\00"}>,align 8
 @ag=private unnamed_addr constant<{[4x i8],i32,[17x i8]}><{[4x i8]zeroinitializer,i32 -2147483631,[17x i8]c"listNodes: CYCLE\00"}>,align 8
-@ah=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:646.9(25419)\00"}>,align 8
+@ah=private unnamed_addr constant<{[4x i8],i32,[67x i8]}><{[4x i8]zeroinitializer,i32 -2147483581,[67x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:646.9(25409)\00"}>,align 8
 @ai=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:671.41(26408)\00"}>,align 8
 @aj=private unnamed_addr constant<{[4x i8],i32,[4x i8]}><{[4x i8]zeroinitializer,i32 -2147483644,[4x i8]c"smi\00"}>,align 8
 @ak=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL8requires_542 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL8requires_685 to void(...)*),i32 -2147483647}>,align 8
-@al=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:593.36(23135)\00"}>,align 8
+@al=private unnamed_addr constant<{[4x i8],i32,[68x i8]}><{[4x i8]zeroinitializer,i32 -2147483580,[68x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:593.36(23125)\00"}>,align 8
 @am=private unnamed_addr constant<{[4x i8],i32,[65x i8]}><{[4x i8]zeroinitializer,i32 -2147483583,[65x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:27.12(595)\00"}>,align 8
 @an=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*null,i8*null,i32 3}>,align 8
 @ao=private unnamed_addr constant<{[4x i8],i32,[66x i8]}><{[4x i8]zeroinitializer,i32 -2147483582,[66x i8]c"src/compiler/compilePhases/loadfile/main/LoadFile.sml:82.42(2986)\00"}>,align 8
@@ -116,7 +116,7 @@
 @_SMLZN8LoadFile4loadE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@as,i64 0,i32 2)to i8*)
 @_SMLZN8LoadFile18loadInterfaceFilesE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@aD,i64 0,i32 2)to i8*)
 @_SMLZN8LoadFile7revisitE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@aK,i64 0,i32 2)to i8*)
-@_SML_ftab493523a471376133_LoadFile=external global i8
+@_SML_ftab05048557a7f985bd_LoadFile=external global i8
 @aL=private unnamed_addr global i8 0
 @aM=private unnamed_addr constant[6x i32][i32 0,i32 1,i32 5,i32 4,i32 4,i32 5]
 declare void@llvm.gcroot(i8**,i8*)#0
@@ -192,12 +192,12 @@ declare void@_SML_maind12f270a309dc7dd_SEnv()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainbda7a2fa42fa5d88_CoreUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main97ec6533be83b3ae_RequirePath()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main9db546dabe6ca85c_Parser()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main968c9f4aee12cc9e_Parser()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_mainaba4fad986a277bc_InterfaceParser()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main63e9bb734a35efba_InterfaceHash()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainf9cca1d00519fee2_InterfaceParser()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main65908cf160b27f6e_InterfaceHash()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maind58a6bde06859847_LoadFileError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loadfe9066b69eea2866_IO(i8*)local_unnamed_addr
 declare void@_SML_load00d884c96265bfea_SMLSharp_Runtime(i8*)local_unnamed_addr
@@ -216,17 +216,17 @@ declare void@_SML_loadd12f270a309dc7dd_SEnv(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loadbda7a2fa42fa5d88_CoreUtils(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_load97ec6533be83b3ae_RequirePath(i8*)local_unnamed_addr
-declare void@_SML_load9db546dabe6ca85c_Parser(i8*)local_unnamed_addr
+declare void@_SML_load968c9f4aee12cc9e_Parser(i8*)local_unnamed_addr
 declare void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*)local_unnamed_addr
-declare void@_SML_loadaba4fad986a277bc_InterfaceParser(i8*)local_unnamed_addr
-declare void@_SML_load63e9bb734a35efba_InterfaceHash(i8*)local_unnamed_addr
+declare void@_SML_loadf9cca1d00519fee2_InterfaceParser(i8*)local_unnamed_addr
+declare void@_SML_load65908cf160b27f6e_InterfaceHash(i8*)local_unnamed_addr
 declare void@_SML_loadd58a6bde06859847_LoadFileError_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabb493523a471376133_LoadFile()#3{
+define private void@_SML_tabb05048557a7f985bd_LoadFile()#3{
 unreachable
 }
-define void@_SML_load493523a471376133_LoadFile(i8*%a)local_unnamed_addr#0{
+define void@_SML_load05048557a7f985bd_LoadFile(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@aL,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -251,17 +251,17 @@ tail call void@_SML_loadd12f270a309dc7dd_SEnv(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loadbda7a2fa42fa5d88_CoreUtils(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_load97ec6533be83b3ae_RequirePath(i8*%a)#0
-tail call void@_SML_load9db546dabe6ca85c_Parser(i8*%a)#0
+tail call void@_SML_load968c9f4aee12cc9e_Parser(i8*%a)#0
 tail call void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*%a)#0
-tail call void@_SML_loadaba4fad986a277bc_InterfaceParser(i8*%a)#0
-tail call void@_SML_load63e9bb734a35efba_InterfaceHash(i8*%a)#0
+tail call void@_SML_loadf9cca1d00519fee2_InterfaceParser(i8*%a)#0
+tail call void@_SML_load65908cf160b27f6e_InterfaceHash(i8*%a)#0
 tail call void@_SML_loadd58a6bde06859847_LoadFileError_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb493523a471376133_LoadFile,i8*@_SML_ftab493523a471376133_LoadFile,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb05048557a7f985bd_LoadFile,i8*@_SML_ftab05048557a7f985bd_LoadFile,i8*null)#0
 ret void
 }
-define void@_SML_main493523a471376133_LoadFile()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main05048557a7f985bd_LoadFile()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@aL,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0
@@ -287,12 +287,12 @@ tail call void@_SML_maind12f270a309dc7dd_SEnv()#2
 tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_mainbda7a2fa42fa5d88_CoreUtils()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_main97ec6533be83b3ae_RequirePath()#2
-tail call void@_SML_main9db546dabe6ca85c_Parser()#2
+tail call void@_SML_main968c9f4aee12cc9e_Parser()#2
 tail call void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()#2
-tail call void@_SML_mainaba4fad986a277bc_InterfaceParser()#2
-tail call void@_SML_main63e9bb734a35efba_InterfaceHash()#2
+tail call void@_SML_mainf9cca1d00519fee2_InterfaceParser()#2
+tail call void@_SML_main65908cf160b27f6e_InterfaceHash()#2
 tail call void@_SML_maind58a6bde06859847_LoadFileError_ppg()#2
 br label%d
 }

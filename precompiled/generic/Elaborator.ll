@@ -19,7 +19,7 @@
 @_SMLZN10Elaborator12extendFixEnvE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
 @_SMLZN10Elaborator9elaborateE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@j,i64 0,i32 2)to i8*)
 @_SMLZN10Elaborator18elaborateInterfaceE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@n,i64 0,i32 2)to i8*)
-@_SML_ftabfb2a477b084f159d_Elaborator=external global i8
+@_SML_ftabb3c73023939d67fb_Elaborator=external global i8
 @o=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -45,22 +45,22 @@ declare void@_SML_main3a60343781315c1e_Option()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_mainc1a1cd5431cf96e9_ElaborateInterface()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main2d75301891d3037b_ElaborateModule()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main2e68cae8d34e5d95_UserTvarScope()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_maineb1959b19e81185b_ElaborateInterface()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main1616f63cf79ce00f_ElaborateModule()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main21db92ab252accb8_UserTvarScope()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load3a60343781315c1e_Option(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
-declare void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*)local_unnamed_addr
-declare void@_SML_loadc1a1cd5431cf96e9_ElaborateInterface(i8*)local_unnamed_addr
-declare void@_SML_load2d75301891d3037b_ElaborateModule(i8*)local_unnamed_addr
-declare void@_SML_load2e68cae8d34e5d95_UserTvarScope(i8*)local_unnamed_addr
-define private void@_SML_tabbfb2a477b084f159d_Elaborator()#3{
+declare void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*)local_unnamed_addr
+declare void@_SML_loadeb1959b19e81185b_ElaborateInterface(i8*)local_unnamed_addr
+declare void@_SML_load1616f63cf79ce00f_ElaborateModule(i8*)local_unnamed_addr
+declare void@_SML_load21db92ab252accb8_UserTvarScope(i8*)local_unnamed_addr
+define private void@_SML_tabbb3c73023939d67fb_Elaborator()#3{
 unreachable
 }
-define void@_SML_loadfb2a477b084f159d_Elaborator(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadb3c73023939d67fb_Elaborator(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@o,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -72,14 +72,14 @@ tail call void@_SML_load3a60343781315c1e_Option(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
-tail call void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*%a)#0
-tail call void@_SML_loadc1a1cd5431cf96e9_ElaborateInterface(i8*%a)#0
-tail call void@_SML_load2d75301891d3037b_ElaborateModule(i8*%a)#0
-tail call void@_SML_load2e68cae8d34e5d95_UserTvarScope(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbfb2a477b084f159d_Elaborator,i8*@_SML_ftabfb2a477b084f159d_Elaborator,i8*null)#0
+tail call void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*%a)#0
+tail call void@_SML_loadeb1959b19e81185b_ElaborateInterface(i8*%a)#0
+tail call void@_SML_load1616f63cf79ce00f_ElaborateModule(i8*%a)#0
+tail call void@_SML_load21db92ab252accb8_UserTvarScope(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbb3c73023939d67fb_Elaborator,i8*@_SML_ftabb3c73023939d67fb_Elaborator,i8*null)#0
 ret void
 }
-define void@_SML_mainfb2a477b084f159d_Elaborator()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_mainb3c73023939d67fb_Elaborator()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@o,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0
@@ -92,10 +92,10 @@ tail call void@_SML_main3a60343781315c1e_Option()#2
 tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
 tail call void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()#2
-tail call void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()#2
-tail call void@_SML_mainc1a1cd5431cf96e9_ElaborateInterface()#2
-tail call void@_SML_main2d75301891d3037b_ElaborateModule()#2
-tail call void@_SML_main2e68cae8d34e5d95_UserTvarScope()#2
+tail call void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()#2
+tail call void@_SML_maineb1959b19e81185b_ElaborateInterface()#2
+tail call void@_SML_main1616f63cf79ce00f_ElaborateModule()#2
+tail call void@_SML_main21db92ab252accb8_UserTvarScope()#2
 br label%d
 }
 define internal fastcc i8*@_SMLLLN10Elaborator12extendFixEnvE_40(i8*inreg%a)#4 gc"smlsharp"{

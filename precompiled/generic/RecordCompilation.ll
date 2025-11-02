@@ -52,13 +52,13 @@
 @T=private unnamed_addr constant<{[4x i8],i32,[84x i8]}><{[4x i8]zeroinitializer,i32 -2147483564,[84x i8]c"src/compiler/compilePhases/recordcompilation/main/RecordCompilation.sml:235.6(8285)\00"}>,align 8
 @U=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLLL10instTyList_284 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL10instTyList_309 to void(...)*),i32 -2147483647}>,align 8
 @V=private unnamed_addr constant<{[4x i8],i32,[85x i8]}><{[4x i8]zeroinitializer,i32 -2147483563,[85x i8]c"src/compiler/compilePhases/recordcompilation/main/RecordCompilation.sml:536.6(20887)\00"}>,align 8
-@_SML_gvar97c8a06c0f03ae9d_RecordCompilation=private global<{[4x i8],i32,[2x i8*]}><{[4x i8]zeroinitializer,i32 -1342177264,[2x i8*]zeroinitializer}>,align 8
-@W=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@W to i64))]
-@_SML_ftab97c8a06c0f03ae9d_RecordCompilation=external global i8
+@_SML_gvarb610ddab7fd78f51_RecordCompilation=private global<{[4x i8],i32,[2x i8*]}><{[4x i8]zeroinitializer,i32 -1342177264,[2x i8*]zeroinitializer}>,align 8
+@W=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@W to i64))]
+@_SML_ftabb610ddab7fd78f51_RecordCompilation=external global i8
 @X=private unnamed_addr global i8 0
 @Y=private unnamed_addr constant[5x i32][i32 2,i32 3,i32 5,i32 1,i32 0]
-@_SMLZN17RecordCompilation33makeUerlelvelPrimitiveExternDeclsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i32 0,i32 2,i32 0)
-@_SMLZN17RecordCompilation7compileE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i32 0,i32 2,i32 1)
+@_SMLZN17RecordCompilation33makeUerlelvelPrimitiveExternDeclsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i32 0,i32 2,i32 0)
+@_SMLZN17RecordCompilation7compileE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i32 0,i32 2,i32 1)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -154,10 +154,10 @@ declare void@_SML_loadff64188d21513a09_ReifyKind(i8*)local_unnamed_addr
 declare void@_SML_load067cdb384e02b11a_TagKind(i8*)local_unnamed_addr
 declare void@_SML_load5f06875d9506acc7_SizeKind(i8*)local_unnamed_addr
 declare void@_SML_load169d2fa3426ad727_DynamicExistInstance(i8*)local_unnamed_addr
-define private void@_SML_tabb97c8a06c0f03ae9d_RecordCompilation()#3{
+define private void@_SML_tabbb610ddab7fd78f51_RecordCompilation()#3{
 unreachable
 }
-define void@_SML_load97c8a06c0f03ae9d_RecordCompilation(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadb610ddab7fd78f51_RecordCompilation(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@X,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -185,10 +185,10 @@ tail call void@_SML_loadff64188d21513a09_ReifyKind(i8*%a)#0
 tail call void@_SML_load067cdb384e02b11a_TagKind(i8*%a)#0
 tail call void@_SML_load5f06875d9506acc7_SizeKind(i8*%a)#0
 tail call void@_SML_load169d2fa3426ad727_DynamicExistInstance(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb97c8a06c0f03ae9d_RecordCompilation,i8*@_SML_ftab97c8a06c0f03ae9d_RecordCompilation,i8*bitcast([2x i64]*@W to i8*))#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbb610ddab7fd78f51_RecordCompilation,i8*@_SML_ftabb610ddab7fd78f51_RecordCompilation,i8*bitcast([2x i64]*@W to i8*))#0
 ret void
 }
-define void@_SML_main97c8a06c0f03ae9d_RecordCompilation()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_mainb610ddab7fd78f51_RecordCompilation()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -644,8 +644,8 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17RecordCompilation7compileE_293 to
 %dV=bitcast i8*%dU to i32*
 store i32 -2147483647,i32*%dV,align 4
 %dW=load i8*,i8**%e,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 0),i8*inreg%dW)#0
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 1),i8*inreg%dL)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 0),i8*inreg%dW)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 1),i8*inreg%dL)#0
 call void@sml_end()#0
 ret void
 dX:
@@ -11962,7 +11962,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN17RecordCompilation33makeUerlelvelPrimitiveExternDeclsE_291(i8*inreg%k,i8*inreg%h)
 ret i8*%l
@@ -11981,7 +11981,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar97c8a06c0f03ae9d_RecordCompilation,i64 0,i32 2,i64 1)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvarb610ddab7fd78f51_RecordCompilation,i64 0,i32 2,i64 1)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN17RecordCompilation7compileE_293(i8*inreg%k,i8*inreg%h)
 ret i8*%l

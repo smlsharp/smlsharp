@@ -61,11 +61,11 @@
 @X=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL13requireFixEnv_265 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL13requireFixEnv_300 to void(...)*),i32 -2147483647}>,align 8
 @Y=private unnamed_addr constant<{[4x i8],i32,[79x i8]}><{[4x i8]zeroinitializer,i32 -2147483569,[79x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateInterface.sml:399.34(14220)\00"}>,align 8
 @Z=private unnamed_addr constant<{[4x i8],i32,[24x i8]}><{[4x i8]zeroinitializer,i32 -2147483624,[24x i8]c"elaborate: id not found\00"}>,align 8
-@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
-@aa=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@aa to i64))]
-@_SML_ftabc1a1cd5431cf96e9_ElaborateInterface=external global i8
+@_SML_gvareb1959b19e81185b_ElaborateInterface=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
+@aa=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvareb1959b19e81185b_ElaborateInterface,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@aa to i64))]
+@_SML_ftabeb1959b19e81185b_ElaborateInterface=external global i8
 @ab=private unnamed_addr global i8 0
-@_SMLZN18ElaborateInterface9elaborateE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface,i32 0,i32 2,i32 0)
+@_SMLZN18ElaborateInterface9elaborateE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvareb1959b19e81185b_ElaborateInterface,i32 0,i32 2,i32 0)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -111,22 +111,22 @@ declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1066718a9c78fedc_ElaborateCore()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main2d75301891d3037b_ElaborateModule()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main61bd6e2d3d521aa5_ElaborateCore()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main1616f63cf79ce00f_ElaborateModule()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load7aa263535439ee1c_ListPair(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
-declare void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*)local_unnamed_addr
-declare void@_SML_load1066718a9c78fedc_ElaborateCore(i8*)local_unnamed_addr
-declare void@_SML_load2d75301891d3037b_ElaborateModule(i8*)local_unnamed_addr
-define private void@_SML_tabbc1a1cd5431cf96e9_ElaborateInterface()#3{
+declare void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*)local_unnamed_addr
+declare void@_SML_load61bd6e2d3d521aa5_ElaborateCore(i8*)local_unnamed_addr
+declare void@_SML_load1616f63cf79ce00f_ElaborateModule(i8*)local_unnamed_addr
+define private void@_SML_tabbeb1959b19e81185b_ElaborateInterface()#3{
 unreachable
 }
-define void@_SML_loadc1a1cd5431cf96e9_ElaborateInterface(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadeb1959b19e81185b_ElaborateInterface(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@ab,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -140,13 +140,13 @@ tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
-tail call void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*%a)#0
-tail call void@_SML_load1066718a9c78fedc_ElaborateCore(i8*%a)#0
-tail call void@_SML_load2d75301891d3037b_ElaborateModule(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbc1a1cd5431cf96e9_ElaborateInterface,i8*@_SML_ftabc1a1cd5431cf96e9_ElaborateInterface,i8*bitcast([2x i64]*@aa to i8*))#0
+tail call void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*%a)#0
+tail call void@_SML_load61bd6e2d3d521aa5_ElaborateCore(i8*%a)#0
+tail call void@_SML_load1616f63cf79ce00f_ElaborateModule(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbeb1959b19e81185b_ElaborateInterface,i8*@_SML_ftabeb1959b19e81185b_ElaborateInterface,i8*bitcast([2x i64]*@aa to i8*))#0
 ret void
 }
-define void@_SML_mainc1a1cd5431cf96e9_ElaborateInterface()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_maineb1959b19e81185b_ElaborateInterface()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -166,9 +166,9 @@ tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()#2
-tail call void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()#2
-tail call void@_SML_main1066718a9c78fedc_ElaborateCore()#2
-tail call void@_SML_main2d75301891d3037b_ElaborateModule()#2
+tail call void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()#2
+tail call void@_SML_main61bd6e2d3d521aa5_ElaborateCore()#2
+tail call void@_SML_main1616f63cf79ce00f_ElaborateModule()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
@@ -282,7 +282,7 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18ElaborateInterface9elaborateE_270
 %aA=getelementptr inbounds i8,i8*%ar,i64 24
 %aB=bitcast i8*%aA to i32*
 store i32 -2147483647,i32*%aB,align 4
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface,i64 0,i32 2,i64 0),i8*inreg%ar)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvareb1959b19e81185b_ElaborateInterface,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvareb1959b19e81185b_ElaborateInterface,i64 0,i32 2,i64 0),i8*inreg%ar)#0
 call void@sml_end()#0
 ret void
 aC:
@@ -6100,7 +6100,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvarc1a1cd5431cf96e9_ElaborateInterface,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvareb1959b19e81185b_ElaborateInterface,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN18ElaborateInterface9elaborateE_270(i8*inreg%k,i8*inreg%h)
 ret i8*%l

@@ -34,9 +34,11 @@
 @_SMLZN5Types15emptyPropertiesE=external local_unnamed_addr global i8*
 @_SMLZN6EvalTy12emptyTvarEnvE=external local_unnamed_addr global i8*
 @_SMLZN6EvalTy16emptyScopedTvarsE=external local_unnamed_addr global i8*
-@_SMLZN7Control15interactiveModeE=external local_unnamed_addr global i8*
 @_SMLZN7Control19importAllExceptionsE=external local_unnamed_addr global i8*
 @_SMLZN8SigCheck8SIGCHECKE=external local_unnamed_addr global i8*
+@_SMLZN9Analyzers15stopBindTracingE=external local_unnamed_addr global i8*
+@_SMLZN9Analyzers18stopNameRefTracingE=external local_unnamed_addr global i8*
+@_SMLZN9Analyzers19startNameRefTracingE=external local_unnamed_addr global i8*
 @_SMLZN9UserError10UserErrorsE=external local_unnamed_addr global i8*
 @_SMLZ5Match=external unnamed_addr constant i8*
 @a=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"id\00"}>,align 8
@@ -278,27 +280,27 @@
 @c7=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8NameEval8nameEvalE_1222 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1332 to void(...)*),i32 -2147483647}>,align 8
 @c8=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL14externVarDecls_1227 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL14externVarDecls_1333 to void(...)*),i32 -2147483647}>,align 8
 @c9=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL4SigE_1229 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL4SigE_1334 to void(...)*),i32 -2147483647}>,align 8
-@da=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2915.26(114937)\00"}>,align 8
-@db=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2926.31(115334)\00"}>,align 8
+@da=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2916.26(115014)\00"}>,align 8
+@db=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2927.31(115411)\00"}>,align 8
 @dc=private unnamed_addr constant<{[4x i8],i32,[32x i8]}><{[4x i8]zeroinitializer,i32 -2147483616,[32x i8]c"non sig entry in topdecsInclude\00"}>,align 8
 @dd=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL14topdecsInclude_1237 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL14topdecsInclude_1335 to void(...)*),i32 -2147483647}>,align 8
 @de=private unnamed_addr constant<{[4x i8],i32,[4x i8]}><{[4x i8]zeroinitializer,i32 -2147483644,[4x i8]c"207\00"}>,align 8
 @df=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN8NameEval17nameEvalInterfaceE_1240 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval17nameEvalInterfaceE_1336 to void(...)*),i32 -2147483647}>,align 8
 @dg=private unnamed_addr constant<{[4x i8],i32,[4x i8]}><{[4x i8]zeroinitializer,i32 -2147483644,[4x i8]c"208\00"}>,align 8
-@dh=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2947.28(116186)\00"}>,align 8
+@dh=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2948.28(116263)\00"}>,align 8
 @di=private unnamed_addr constant<{[4x i8],i32,[26x i8]}><{[4x i8]zeroinitializer,i32 -2147483622,[26x i8]c"non empty itopdecsInclude\00"}>,align 8
 @dj=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL4SigE_1245 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL4SigE_1337 to void(...)*),i32 -2147483647}>,align 8
-@dk=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2956.24(116609)\00"}>,align 8
+@dk=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2957.24(116686)\00"}>,align 8
 @dl=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL7icdecls_1250 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL7icdecls_1338 to void(...)*),i32 -2147483647}>,align 8
-@dm=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2972.24(117183)\00"}>,align 8
+@dm=private unnamed_addr constant<{[4x i8],i32,[76x i8]}><{[4x i8]zeroinitializer,i32 -2147483572,[76x i8]c"src/compiler/compilePhases/nameevaluation/main/NameEval.sml:2973.24(117260)\00"}>,align 8
 @dn=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN8NameEval11evalBuiltinE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval11evalBuiltinE_1339 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN8NameEval11evalBuiltinE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@dn,i64 0,i32 2)to i8*)
-@_SML_gvar380f9d662328e5c6_NameEval=private global<{[4x i8],i32,[2x i8*]}><{[4x i8]zeroinitializer,i32 -1342177264,[2x i8*]zeroinitializer}>,align 8
-@do=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@do to i64))]
-@_SML_ftab380f9d662328e5c6_NameEval=external global i8
+@_SML_gvare693f766e08e5c56_NameEval=private global<{[4x i8],i32,[2x i8*]}><{[4x i8]zeroinitializer,i32 -1342177264,[2x i8*]zeroinitializer}>,align 8
+@do=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@do to i64))]
+@_SML_ftabe693f766e08e5c56_NameEval=external global i8
 @dp=private unnamed_addr global i8 0
-@_SMLZN8NameEval8nameEvalE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i32 0,i32 2,i32 0)
-@_SMLZN8NameEval17nameEvalInterfaceE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i32 0,i32 2,i32 1)
+@_SMLZN8NameEval8nameEvalE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i32 0,i32 2,i32 0)
+@_SMLZN8NameEval17nameEvalInterfaceE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i32 0,i32 2,i32 1)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -436,9 +438,6 @@ declare i32@_SMLFN8RevealID8generateE(i32 inreg)local_unnamed_addr#2 gc"smlsharp
 declare i8*@_SMLFN8SigCheck10refreshEnvE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN8SigCheck8sigCheckE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN8SigCheck9removeEnvE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
-declare void@_SMLFN9Analyzers15stopBindTracingE(i32 inreg)local_unnamed_addr#2 gc"smlsharp"
-declare void@_SMLFN9Analyzers18stopNameRefTracingE(i32 inreg)local_unnamed_addr#2 gc"smlsharp"
-declare void@_SMLFN9Analyzers19startNameRefTracingE(i32 inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i32@_SMLFN9FunctorID8generateE(i32 inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN9SymbolEnv3appE(i32 inreg,i32 inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN9SymbolEnv3mapE(i32 inreg,i32 inreg,i32 inreg,i32 inreg)local_unnamed_addr#2 gc"smlsharp"
@@ -458,30 +457,30 @@ declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main8a8dbcb270d3a574_TvarMap()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main2215934488f09a1f_Analyzers()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main126e4d81b5995a7c_CheckProvide()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_maine90fd00246ed50d4_CheckProvide()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main38282eca92373ff5_TfunVars()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main74f8fcf2aa95d944_Subst()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main7e3960b246d85223_EvalSig()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainb45c772a30313e5d_EvalSig()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maind71ddcc18897b6d8_EvalTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina69a1a117d65d5d0_FunctorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main29883837b3db2401_NameEvalError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3ad55444e4134d1a_NameEvalInterface()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainc11d308d47afe714_NameEvalError_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main162ad8a84394dd47_NameEvalInterface()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb370edab64b2932f_NormalizeTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindb38d38304c882ce_SetLiftedTys()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainad338b336056ed71_SigCheck()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main8b244c3ce5454dd2_SpliceFunProvide()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main62ff5e093c5ad21f_SpliceFunProvide()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main9918cd83f5a5b719_RenameLongsymbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_mainf86929f5a3760388_Analyzers()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load3a60343781315c1e_Option(i8*)local_unnamed_addr
 declare void@_SML_load1ef93e13728790b1_String(i8*)local_unnamed_addr
@@ -490,34 +489,34 @@ declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_load8a8dbcb270d3a574_TvarMap(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
 declare void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*)local_unnamed_addr
-declare void@_SML_load2215934488f09a1f_Analyzers(i8*)local_unnamed_addr
-declare void@_SML_load126e4d81b5995a7c_CheckProvide(i8*)local_unnamed_addr
+declare void@_SML_loade90fd00246ed50d4_CheckProvide(i8*)local_unnamed_addr
 declare void@_SML_load38282eca92373ff5_TfunVars(i8*)local_unnamed_addr
 declare void@_SML_load74f8fcf2aa95d944_Subst(i8*)local_unnamed_addr
-declare void@_SML_load7e3960b246d85223_EvalSig(i8*)local_unnamed_addr
+declare void@_SML_loadb45c772a30313e5d_EvalSig(i8*)local_unnamed_addr
 declare void@_SML_loadd71ddcc18897b6d8_EvalTy(i8*)local_unnamed_addr
 declare void@_SML_loada69a1a117d65d5d0_FunctorUtils(i8*)local_unnamed_addr
-declare void@_SML_load29883837b3db2401_NameEvalError_ppg(i8*)local_unnamed_addr
-declare void@_SML_load3ad55444e4134d1a_NameEvalInterface(i8*)local_unnamed_addr
-declare void@_SML_load988b411893ed23b3_NameEvalUtils(i8*)local_unnamed_addr
+declare void@_SML_loadc11d308d47afe714_NameEvalError_ppg(i8*)local_unnamed_addr
+declare void@_SML_load162ad8a84394dd47_NameEvalInterface(i8*)local_unnamed_addr
+declare void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*)local_unnamed_addr
 declare void@_SML_loadb370edab64b2932f_NormalizeTy(i8*)local_unnamed_addr
 declare void@_SML_loaddb38d38304c882ce_SetLiftedTys(i8*)local_unnamed_addr
 declare void@_SML_loadad338b336056ed71_SigCheck(i8*)local_unnamed_addr
-declare void@_SML_load8b244c3ce5454dd2_SpliceFunProvide(i8*)local_unnamed_addr
+declare void@_SML_load62ff5e093c5ad21f_SpliceFunProvide(i8*)local_unnamed_addr
 declare void@_SML_load9918cd83f5a5b719_RenameLongsymbol(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
-declare void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*)local_unnamed_addr
-define private void@_SML_tabb380f9d662328e5c6_NameEval()#3{
+declare void@_SML_loadf86929f5a3760388_Analyzers(i8*)local_unnamed_addr
+declare void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*)local_unnamed_addr
+define private void@_SML_tabbe693f766e08e5c56_NameEval()#3{
 unreachable
 }
-define void@_SML_load380f9d662328e5c6_NameEval(i8*%a)local_unnamed_addr#0{
+define void@_SML_loade693f766e08e5c56_NameEval(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@dp,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -533,34 +532,34 @@ tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_load8a8dbcb270d3a574_TvarMap(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
 tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
 tail call void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*%a)#0
-tail call void@_SML_load2215934488f09a1f_Analyzers(i8*%a)#0
-tail call void@_SML_load126e4d81b5995a7c_CheckProvide(i8*%a)#0
+tail call void@_SML_loade90fd00246ed50d4_CheckProvide(i8*%a)#0
 tail call void@_SML_load38282eca92373ff5_TfunVars(i8*%a)#0
 tail call void@_SML_load74f8fcf2aa95d944_Subst(i8*%a)#0
-tail call void@_SML_load7e3960b246d85223_EvalSig(i8*%a)#0
+tail call void@_SML_loadb45c772a30313e5d_EvalSig(i8*%a)#0
 tail call void@_SML_loadd71ddcc18897b6d8_EvalTy(i8*%a)#0
 tail call void@_SML_loada69a1a117d65d5d0_FunctorUtils(i8*%a)#0
-tail call void@_SML_load29883837b3db2401_NameEvalError_ppg(i8*%a)#0
-tail call void@_SML_load3ad55444e4134d1a_NameEvalInterface(i8*%a)#0
-tail call void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)#0
+tail call void@_SML_loadc11d308d47afe714_NameEvalError_ppg(i8*%a)#0
+tail call void@_SML_load162ad8a84394dd47_NameEvalInterface(i8*%a)#0
+tail call void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)#0
 tail call void@_SML_loadb370edab64b2932f_NormalizeTy(i8*%a)#0
 tail call void@_SML_loaddb38d38304c882ce_SetLiftedTys(i8*%a)#0
 tail call void@_SML_loadad338b336056ed71_SigCheck(i8*%a)#0
-tail call void@_SML_load8b244c3ce5454dd2_SpliceFunProvide(i8*%a)#0
+tail call void@_SML_load62ff5e093c5ad21f_SpliceFunProvide(i8*%a)#0
 tail call void@_SML_load9918cd83f5a5b719_RenameLongsymbol(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
-tail call void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb380f9d662328e5c6_NameEval,i8*@_SML_ftab380f9d662328e5c6_NameEval,i8*bitcast([2x i64]*@do to i8*))#0
+tail call void@_SML_loadf86929f5a3760388_Analyzers(i8*%a)#0
+tail call void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbe693f766e08e5c56_NameEval,i8*@_SML_ftabe693f766e08e5c56_NameEval,i8*bitcast([2x i64]*@do to i8*))#0
 ret void
 }
-define void@_SML_main380f9d662328e5c6_NameEval()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_maine693f766e08e5c56_NameEval()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -584,30 +583,30 @@ tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_main8a8dbcb270d3a574_TvarMap()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
 tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#2
 tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
 tail call void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()#2
-tail call void@_SML_main2215934488f09a1f_Analyzers()#2
-tail call void@_SML_main126e4d81b5995a7c_CheckProvide()#2
+tail call void@_SML_maine90fd00246ed50d4_CheckProvide()#2
 tail call void@_SML_main38282eca92373ff5_TfunVars()#2
 tail call void@_SML_main74f8fcf2aa95d944_Subst()#2
-tail call void@_SML_main7e3960b246d85223_EvalSig()#2
+tail call void@_SML_mainb45c772a30313e5d_EvalSig()#2
 tail call void@_SML_maind71ddcc18897b6d8_EvalTy()#2
 tail call void@_SML_maina69a1a117d65d5d0_FunctorUtils()#2
-tail call void@_SML_main29883837b3db2401_NameEvalError_ppg()#2
-tail call void@_SML_main3ad55444e4134d1a_NameEvalInterface()#2
-tail call void@_SML_main988b411893ed23b3_NameEvalUtils()#2
+tail call void@_SML_mainc11d308d47afe714_NameEvalError_ppg()#2
+tail call void@_SML_main162ad8a84394dd47_NameEvalInterface()#2
+tail call void@_SML_main619d2077b5e00b1b_NameEvalUtils()#2
 tail call void@_SML_mainb370edab64b2932f_NormalizeTy()#2
 tail call void@_SML_maindb38d38304c882ce_SetLiftedTys()#2
 tail call void@_SML_mainad338b336056ed71_SigCheck()#2
-tail call void@_SML_main8b244c3ce5454dd2_SpliceFunProvide()#2
+tail call void@_SML_main62ff5e093c5ad21f_SpliceFunProvide()#2
 tail call void@_SML_main9918cd83f5a5b719_RenameLongsymbol()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
 tail call void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()#2
-tail call void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()#2
+tail call void@_SML_mainf86929f5a3760388_Analyzers()#2
+tail call void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
@@ -886,8 +885,8 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval17nameEvalInterfaceE_1249 
 %cn=bitcast i8*%cm to i32*
 store i32 -2147483647,i32*%cn,align 4
 %co=load i8*,i8**%c,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 0),i8*inreg%co)#0
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 1),i8*inreg%cd)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 0),i8*inreg%co)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 1),i8*inreg%cd)#0
 call void@sml_end()#0
 ret void
 cp:
@@ -36535,15 +36534,15 @@ call void@sml_check(i32 inreg%n)
 br label%q
 q:
 invoke fastcc void@_SMLFN14UserErrorUtils20initializeErrorQueueE(i32 inreg 0)
-to label%r unwind label%mG
+to label%r unwind label%nk
 r:
 invoke fastcc void@_SMLFN6EvalTy16resetFreeTvarEnvE(i32 inreg 0)
-to label%s unwind label%mG
+to label%s unwind label%nk
 s:
 %t=load i8*,i8**%c,align 8
 store i8*null,i8**%c,align 8
 %u=invoke fastcc i8*@_SMLFN21SpliceProvicdeFundecl20spliceProvideFundeclE(i8*inreg%t)
-to label%v unwind label%mG
+to label%v unwind label%nk
 v:
 %w=bitcast i8*%u to i8**
 %x=load i8*,i8**%w,align 8
@@ -36580,11 +36579,11 @@ store i8*%S,i8**%g,align 8
 %V=load i8*,i8**%U,align 8
 store i8*%V,i8**%h,align 8
 %W=load i8*,i8**%k,align 8
-%X=getelementptr inbounds i8,i8*%W,i64 24
+%X=getelementptr inbounds i8,i8*%W,i64 32
 %Y=bitcast i8*%X to i8**
 %Z=load i8*,i8**%Y,align 8
 %aa=invoke fastcc i8*@_SMLFN17NameEvalInterface14evalInterfacesE(i8*inreg%Z)
-to label%ab unwind label%mG
+to label%ab unwind label%nk
 ab:
 %ac=getelementptr inbounds i8,i8*%aa,i64 16
 %ad=bitcast i8*%ac to i8*(i8*,i8*)**
@@ -36594,11 +36593,11 @@ ab:
 %ah=load i8*,i8**%e,align 8
 store i8*null,i8**%e,align 8
 %ai=invoke fastcc i8*%ae(i8*inreg%ag,i8*inreg%ah)
-to label%aj unwind label%mG
+to label%aj unwind label%nk
 aj:
 store i8*%ai,i8**%e,align 8
 %ak=invoke fastcc i8*@_SMLFN11InterfaceID3Map5foldlE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
-to label%al unwind label%mG
+to label%al unwind label%nk
 al:
 %am=getelementptr inbounds i8,i8*%ak,i64 16
 %an=bitcast i8*%am to i8*(i8*,i8*)**
@@ -36606,7 +36605,7 @@ al:
 %ap=bitcast i8*%ak to i8**
 %aq=load i8*,i8**%ap,align 8
 %ar=invoke fastcc i8*%ao(i8*inreg%aq,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cN,i64 0,i32 2)to i8*))
-to label%as unwind label%mG
+to label%as unwind label%nk
 as:
 %at=getelementptr inbounds i8,i8*%ar,i64 16
 %au=bitcast i8*%at to i8*(i8*,i8*)**
@@ -36615,7 +36614,7 @@ as:
 %ax=load i8*,i8**%aw,align 8
 %ay=load i8*,i8**@_SMLZN11NameEvalEnv11emptyTopEnvE,align 8
 %az=invoke fastcc i8*%av(i8*inreg%ax,i8*inreg%ay)
-to label%aA unwind label%mG
+to label%aA unwind label%nk
 aA:
 %aB=getelementptr inbounds i8,i8*%az,i64 16
 %aC=bitcast i8*%aB to i8*(i8*,i8*)**
@@ -36624,18 +36623,18 @@ aA:
 %aF=load i8*,i8**%aE,align 8
 %aG=load i8*,i8**%e,align 8
 %aH=invoke fastcc i8*%aD(i8*inreg%aF,i8*inreg%aG)
-to label%aI unwind label%mG
+to label%aI unwind label%nk
 aI:
 store i8*%aH,i8**%i,align 8
 %aJ=load i8*,i8**%k,align 8
-%aK=getelementptr inbounds i8,i8*%aJ,i64 24
+%aK=getelementptr inbounds i8,i8*%aJ,i64 32
 %aL=bitcast i8*%aK to i8**
 %aM=load i8*,i8**%aL,align 8
 %aN=load i8*,i8**%f,align 8
 %aO=load i8*,i8**%e,align 8
 store i8*null,i8**%f,align 8
 %aP=invoke fastcc i8*@_SMLLLN8NameEval19unionRequiredTopEnvE_1158(i8*inreg%aO,i8*inreg%aM,i8*inreg%aN)
-to label%aQ unwind label%mG
+to label%aQ unwind label%nk
 aQ:
 store i8*%aP,i8**%f,align 8
 %aR=load i8*,i8**%g,align 8
@@ -36643,11 +36642,11 @@ store i8*%aP,i8**%f,align 8
 store i8*null,i8**%g,align 8
 store i8*null,i8**%e,align 8
 %aT=invoke fastcc i8*@_SMLLLN8NameEval19unionRequiredTopEnvE_1158(i8*inreg%aS,i8*inreg%aP,i8*inreg%aR)
-to label%aU unwind label%mG
+to label%aU unwind label%nk
 aU:
 store i8*%aT,i8**%e,align 8
 %aV=invoke fastcc i8*@_SMLFN17NameEvalInterface16evalPitopdecListE(i8*inreg null)
-to label%aW unwind label%mG
+to label%aW unwind label%nk
 aW:
 %aX=getelementptr inbounds i8,i8*%aV,i64 16
 %aY=bitcast i8*%aX to i8*(i8*,i8*)**
@@ -36656,7 +36655,7 @@ aW:
 %a1=load i8*,i8**%a0,align 8
 %a2=load i8*,i8**%f,align 8
 %a3=invoke fastcc i8*%aZ(i8*inreg%a1,i8*inreg%a2)
-to label%a4 unwind label%mG
+to label%a4 unwind label%nk
 a4:
 %a5=getelementptr inbounds i8,i8*%a3,i64 16
 %a6=bitcast i8*%a5 to i8*(i8*,i8*)**
@@ -36684,14 +36683,14 @@ store i32 3,i32*%bk,align 4
 %bl=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
 %bm=invoke fastcc i8*%a7(i8*inreg%bl,i8*inreg%bb)
-to label%bn unwind label%mG
+to label%bn unwind label%nk
 bn:
 %bo=getelementptr inbounds i8,i8*%bm,i64 8
 %bp=bitcast i8*%bo to i8**
 %bq=load i8*,i8**%bp,align 8
 store i8*%bq,i8**%g,align 8
 %br=invoke fastcc i8*@_SMLFN16NameEvalEnvPrims11unionTopEnvE(i8*inreg getelementptr inbounds(<{[4x i8],i32,[4x i8]}>,<{[4x i8],i32,[4x i8]}>*@cO,i64 0,i32 2,i64 0))
-to label%bs unwind label%mG
+to label%bs unwind label%nk
 bs:
 %bt=getelementptr inbounds i8,i8*%br,i64 16
 %bu=bitcast i8*%bt to i8*(i8*,i8*)**
@@ -36718,23 +36717,23 @@ store i32 3,i32*%bH,align 4
 %bI=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
 %bJ=invoke fastcc i8*%bv(i8*inreg%bI,i8*inreg%by)
-to label%bK unwind label%mG
+to label%bK unwind label%nk
 bK:
 %bL=bitcast i8**%e to i8***
 %bM=load i8**,i8***%bL,align 8
 %bN=load i8*,i8**%bM,align 8
 invoke fastcc void@_SMLLLN8NameEval16clearUsedflagEnvE_1048(i8*inreg%bN)
-to label%bO unwind label%mG
+to label%bO unwind label%nk
 bO:
 %bP=load i8*,i8**%k,align 8
-%bQ=getelementptr inbounds i8,i8*%bP,i64 40
+%bQ=getelementptr inbounds i8,i8*%bP,i64 48
 %bR=bitcast i8*%bQ to i8**
 %bS=load i8*,i8**%bR,align 8
 store i8*%bS,i8**%i,align 8
 %bT=bitcast i8*%bP to i8**
 %bU=load i8*,i8**%bT,align 8
 store i8*%bU,i8**%j,align 8
-%bV=getelementptr inbounds i8,i8*%bP,i64 32
+%bV=getelementptr inbounds i8,i8*%bP,i64 40
 %bW=bitcast i8*%bV to i8**
 %bX=load i8*,i8**%bW,align 8
 store i8*%bX,i8**%g,align 8
@@ -36779,7 +36778,7 @@ store i8*null,i8**%f,align 8
 store i8*null,i8**%e,align 8
 store i8*null,i8**%k,align 8
 store i8*%cm,i8**%c,align 8
-br label%mL
+br label%np
 cn:
 %co=bitcast i8*%ch to i8**
 %cp=load i8*,i8**%co,align 8
@@ -36808,56 +36807,72 @@ store i8*%cB,i8**%cD,align 8
 %cF=bitcast i8*%cE to i32*
 store i32 3,i32*%cF,align 4
 %cG=invoke fastcc i8*@_SMLFN16NameEvalEnvPrims16topEnvWithTopEnvE(i8*inreg%cw)
-to label%cH unwind label%mG
+to label%cH unwind label%nk
 cH:
 store i8*%cG,i8**%e,align 8
-invoke fastcc void@_SMLFN9Analyzers19startNameRefTracingE(i32 inreg 0)
-to label%cI unwind label%mG
-cI:
-%cJ=load i8*,i8**%k,align 8
-%cK=getelementptr inbounds i8,i8*%cJ,i64 40
-%cL=bitcast i8*%cK to i8**
-%cM=load i8*,i8**%cL,align 8
-store i8*%cM,i8**%l,align 8
-%cN=getelementptr inbounds i8,i8*%cJ,i64 32
-%cO=bitcast i8*%cN to i8**
-%cP=load i8*,i8**%cO,align 8
-store i8*%cP,i8**%j,align 8
-%cQ=call i8*@sml_alloc(i32 inreg 20)#0
-%cR=getelementptr inbounds i8,i8*%cQ,i64 -4
+%cI=load i8**,i8***bitcast(i8**@_SMLZN9Analyzers19startNameRefTracingE to i8***),align 8
+%cJ=load i8*,i8**%cI,align 8
+%cK=getelementptr inbounds i8,i8*%cJ,i64 16
+%cL=bitcast i8*%cK to i8*(i8*,i8*)**
+%cM=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%cL,align 8
+%cN=bitcast i8*%cJ to i8**
+%cO=load i8*,i8**%cN,align 8
+store i8*%cO,i8**%j,align 8
+%cP=call i8*@sml_alloc(i32 inreg 4)#0
+%cQ=bitcast i8*%cP to i32*
+%cR=getelementptr inbounds i8,i8*%cP,i64 -4
 %cS=bitcast i8*%cR to i32*
-store i32 1342177296,i32*%cS,align 4
-%cT=load i8*,i8**%e,align 8
-%cU=bitcast i8*%cQ to i8**
-store i8*%cT,i8**%cU,align 8
-%cV=load i8*,i8**%j,align 8
+store i32 4,i32*%cS,align 4
+store i32 0,i32*%cQ,align 4
+%cT=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
-%cW=getelementptr inbounds i8,i8*%cQ,i64 8
-%cX=bitcast i8*%cW to i8**
-store i8*%cV,i8**%cX,align 8
-%cY=getelementptr inbounds i8,i8*%cQ,i64 16
-%cZ=bitcast i8*%cY to i32*
-store i32 3,i32*%cZ,align 4
-%c0=load i8*,i8**%c,align 8
-%c1=load i8*,i8**%l,align 8
+%cU=invoke fastcc i8*%cM(i8*inreg%cT,i8*inreg%cP)
+to label%cV unwind label%nk
+cV:
+%cW=load i8*,i8**%k,align 8
+%cX=getelementptr inbounds i8,i8*%cW,i64 48
+%cY=bitcast i8*%cX to i8**
+%cZ=load i8*,i8**%cY,align 8
+store i8*%cZ,i8**%l,align 8
+%c0=getelementptr inbounds i8,i8*%cW,i64 40
+%c1=bitcast i8*%c0 to i8**
+%c2=load i8*,i8**%c1,align 8
+store i8*%c2,i8**%j,align 8
+%c3=call i8*@sml_alloc(i32 inreg 20)#0
+%c4=getelementptr inbounds i8,i8*%c3,i64 -4
+%c5=bitcast i8*%c4 to i32*
+store i32 1342177296,i32*%c5,align 4
+%c6=load i8*,i8**%e,align 8
+%c7=bitcast i8*%c3 to i8**
+store i8*%c6,i8**%c7,align 8
+%c8=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
+%c9=getelementptr inbounds i8,i8*%c3,i64 8
+%da=bitcast i8*%c9 to i8**
+store i8*%c8,i8**%da,align 8
+%db=getelementptr inbounds i8,i8*%c3,i64 16
+%dc=bitcast i8*%db to i32*
+store i32 3,i32*%dc,align 4
+%dd=load i8*,i8**%c,align 8
+%de=load i8*,i8**%l,align 8
 store i8*null,i8**%c,align 8
 store i8*null,i8**%l,align 8
-%c2=call fastcc i8*@_SMLLLN8NameEval16evalPltopdecListE_1045(i8*inreg%c1,i8*inreg%c0,i8*inreg%cQ)
-%c3=getelementptr inbounds i8,i8*%c2,i64 16
-%c4=bitcast i8*%c3 to i8*(i8*,i8*)**
-%c5=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%c4,align 8
-%c6=bitcast i8*%c2 to i8**
-%c7=load i8*,i8**%c6,align 8
-%c8=load i8*,i8**%d,align 8
+%df=call fastcc i8*@_SMLLLN8NameEval16evalPltopdecListE_1045(i8*inreg%de,i8*inreg%dd,i8*inreg%c3)
+%dg=getelementptr inbounds i8,i8*%df,i64 16
+%dh=bitcast i8*%dg to i8*(i8*,i8*)**
+%di=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%dh,align 8
+%dj=bitcast i8*%df to i8**
+%dk=load i8*,i8**%dj,align 8
+%dl=load i8*,i8**%d,align 8
 store i8*null,i8**%d,align 8
-%c9=invoke fastcc i8*%c5(i8*inreg%c7,i8*inreg%c8)
-to label%df unwind label%da
-da:
-%db=landingpad{i8*,i8*}
+%dm=invoke fastcc i8*%di(i8*inreg%dk,i8*inreg%dl)
+to label%ds unwind label%dn
+dn:
+%do=landingpad{i8*,i8*}
 catch i8*null
-%dc=extractvalue{i8*,i8*}%db,1
-%dd=bitcast i8*%dc to i8**
-%de=load i8*,i8**%dd,align 8
+%dp=extractvalue{i8*,i8*}%do,1
+%dq=bitcast i8*%dp to i8**
+%dr=load i8*,i8**%dq,align 8
 store i8*null,i8**%d,align 8
 store i8*null,i8**%h,align 8
 store i8*null,i8**%f,align 8
@@ -36865,312 +36880,329 @@ store i8*null,i8**%g,align 8
 store i8*null,i8**%i,align 8
 store i8*null,i8**%e,align 8
 store i8*null,i8**%k,align 8
-store i8*%de,i8**%c,align 8
-br label%mL
-df:
-%dg=getelementptr inbounds i8,i8*%c9,i64 8
-%dh=bitcast i8*%dg to i8**
-%di=load i8*,i8**%dh,align 8
-store i8*%di,i8**%c,align 8
-%dj=getelementptr inbounds i8,i8*%c9,i64 16
-%dk=bitcast i8*%dj to i8**
-%dl=load i8*,i8**%dk,align 8
-store i8*%dl,i8**%d,align 8
-%dm=call i8*@sml_alloc(i32 inreg 20)#0
-%dn=getelementptr inbounds i8,i8*%dm,i64 -4
-%do=bitcast i8*%dn to i32*
-store i32 1342177296,i32*%do,align 4
-%dp=load i8*,i8**%g,align 8
+store i8*%dr,i8**%c,align 8
+br label%np
+ds:
+%dt=getelementptr inbounds i8,i8*%dm,i64 8
+%du=bitcast i8*%dt to i8**
+%dv=load i8*,i8**%du,align 8
+store i8*%dv,i8**%c,align 8
+%dw=getelementptr inbounds i8,i8*%dm,i64 16
+%dx=bitcast i8*%dw to i8**
+%dy=load i8*,i8**%dx,align 8
+store i8*%dy,i8**%d,align 8
+%dz=call i8*@sml_alloc(i32 inreg 20)#0
+%dA=getelementptr inbounds i8,i8*%dz,i64 -4
+%dB=bitcast i8*%dA to i32*
+store i32 1342177296,i32*%dB,align 4
+%dC=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%dq=bitcast i8*%dm to i8**
-store i8*%dp,i8**%dq,align 8
-%dr=load i8*,i8**%c,align 8
+%dD=bitcast i8*%dz to i8**
+store i8*%dC,i8**%dD,align 8
+%dE=load i8*,i8**%c,align 8
 store i8*null,i8**%c,align 8
-%ds=getelementptr inbounds i8,i8*%dm,i64 8
-%dt=bitcast i8*%ds to i8**
-store i8*%dr,i8**%dt,align 8
-%du=getelementptr inbounds i8,i8*%dm,i64 16
-%dv=bitcast i8*%du to i32*
-store i32 3,i32*%dv,align 4
-%dw=invoke fastcc i8*@_SMLFN16NameEvalEnvPrims16topEnvWithTopEnvE(i8*inreg%dm)
-to label%dx unwind label%mG
-dx:
-store i8*%dw,i8**%c,align 8
-invoke fastcc void@_SMLFN9Analyzers15stopBindTracingE(i32 inreg 0)
-to label%dy unwind label%mG
-dy:
-%dz=load i32*,i32**bitcast(i8**@_SMLZN7Control15interactiveModeE to i32**),align 8
-%dA=load i32,i32*%dz,align 4
-%dB=icmp eq i32%dA,0
-br i1%dB,label%fk,label%dC
-dC:
-%dD=bitcast i8**%c to i8***
-%dE=load i8**,i8***%dD,align 8
-%dF=load i8*,i8**%dE,align 8
-store i8*%dF,i8**%f,align 8
-%dG=getelementptr inbounds i8*,i8**%dE,i64 1
-%dH=load i8*,i8**%dG,align 8
-store i8*%dH,i8**%g,align 8
-%dI=getelementptr inbounds i8*,i8**%dE,i64 2
-%dJ=load i8*,i8**%dI,align 8
+%dF=getelementptr inbounds i8,i8*%dz,i64 8
+%dG=bitcast i8*%dF to i8**
+store i8*%dE,i8**%dG,align 8
+%dH=getelementptr inbounds i8,i8*%dz,i64 16
+%dI=bitcast i8*%dH to i32*
+store i32 3,i32*%dI,align 4
+%dJ=invoke fastcc i8*@_SMLFN16NameEvalEnvPrims16topEnvWithTopEnvE(i8*inreg%dz)
+to label%dK unwind label%nk
+dK:
 store i8*%dJ,i8**%c,align 8
-%dK=load i8*,i8**%k,align 8
-%dL=getelementptr inbounds i8,i8*%dK,i64 32
-%dM=bitcast i8*%dL to i8**
-%dN=load i8*,i8**%dM,align 8
-store i8*%dN,i8**%h,align 8
-%dO=call i8*@sml_alloc(i32 inreg 20)#0
-%dP=getelementptr inbounds i8,i8*%dO,i64 -4
-%dQ=bitcast i8*%dP to i32*
-store i32 1342177296,i32*%dQ,align 4
-store i8*%dO,i8**%j,align 8
-%dR=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
-%dS=bitcast i8*%dO to i8**
-store i8*%dR,i8**%dS,align 8
-%dT=load i8*,i8**%g,align 8
+%dL=load i8**,i8***bitcast(i8**@_SMLZN9Analyzers15stopBindTracingE to i8***),align 8
+%dM=load i8*,i8**%dL,align 8
+%dN=getelementptr inbounds i8,i8*%dM,i64 16
+%dO=bitcast i8*%dN to i8*(i8*,i8*)**
+%dP=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%dO,align 8
+%dQ=bitcast i8*%dM to i8**
+%dR=load i8*,i8**%dQ,align 8
+store i8*%dR,i8**%g,align 8
+%dS=call i8*@sml_alloc(i32 inreg 4)#0
+%dT=bitcast i8*%dS to i32*
+%dU=getelementptr inbounds i8,i8*%dS,i64 -4
+%dV=bitcast i8*%dU to i32*
+store i32 4,i32*%dV,align 4
+store i32 0,i32*%dT,align 4
+%dW=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%dU=getelementptr inbounds i8,i8*%dO,i64 8
-%dV=bitcast i8*%dU to i8**
-store i8*%dT,i8**%dV,align 8
-%dW=getelementptr inbounds i8,i8*%dO,i64 16
-%dX=bitcast i8*%dW to i32*
-store i32 3,i32*%dX,align 4
-%dY=call i8*@sml_alloc(i32 inreg 28)#0
-%dZ=getelementptr inbounds i8,i8*%dY,i64 -4
-%d0=bitcast i8*%dZ to i32*
-store i32 1342177304,i32*%d0,align 4
-%d1=load i8*,i8**%j,align 8
-store i8*null,i8**%j,align 8
-%d2=bitcast i8*%dY to i8**
-store i8*%d1,i8**%d2,align 8
-%d3=getelementptr inbounds i8,i8*%dY,i64 8
-%d4=bitcast i8*%d3 to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1209 to void(...)*),void(...)**%d4,align 8
-%d5=getelementptr inbounds i8,i8*%dY,i64 16
-%d6=bitcast i8*%d5 to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1209 to void(...)*),void(...)**%d6,align 8
-%d7=getelementptr inbounds i8,i8*%dY,i64 24
-%d8=bitcast i8*%d7 to i32*
-store i32 -2147483647,i32*%d8,align 4
-%d9=invoke fastcc i8*@_SMLLLN8NameEval8nameEvalE_1209(i8*inreg%d1,i8*inreg null)
-to label%ea unwind label%mG
-ea:
-%eb=bitcast i8*%d9 to i8**
-%ec=load i8*,i8**%eb,align 8
-store i8*%ec,i8**%g,align 8
-%ed=getelementptr inbounds i8,i8*%d9,i64 8
-%ee=bitcast i8*%ed to i8**
-%ef=load i8*,i8**%ee,align 8
-store i8*%ef,i8**%h,align 8
-%eg=invoke fastcc i8*@_SMLFN5ExnID3Map5emptyE(i32 inreg 1,i32 inreg 8)
-to label%eh unwind label%mG
-eh:
-store i8*%eg,i8**%l,align 8
-%ei=load i8*,i8**%k,align 8
-%ej=getelementptr inbounds i8,i8*%ei,i64 32
-%ek=bitcast i8*%ej to i8**
-%el=load i8*,i8**%ek,align 8
-store i8*%el,i8**%j,align 8
-%em=call i8*@sml_alloc(i32 inreg 20)#0
-%en=getelementptr inbounds i8,i8*%em,i64 -4
+%dX=invoke fastcc i8*%dP(i8*inreg%dW,i8*inreg%dS)
+to label%dY unwind label%nk
+dY:
+%dZ=load i8*,i8**%k,align 8
+%d0=getelementptr inbounds i8,i8*%dZ,i64 16
+%d1=bitcast i8*%d0 to i8**
+%d2=load i8*,i8**%d1,align 8
+%d3=icmp eq i8*%d2,null
+br i1%d3,label%d4,label%fL
+d4:
+%d5=bitcast i8**%c to i8***
+%d6=load i8**,i8***%d5,align 8
+%d7=load i8*,i8**%d6,align 8
+store i8*%d7,i8**%f,align 8
+%d8=getelementptr inbounds i8*,i8**%d6,i64 1
+%d9=load i8*,i8**%d8,align 8
+store i8*%d9,i8**%g,align 8
+%ea=getelementptr inbounds i8*,i8**%d6,i64 2
+%eb=load i8*,i8**%ea,align 8
+store i8*%eb,i8**%c,align 8
+%ec=getelementptr inbounds i8,i8*%dZ,i64 40
+%ed=bitcast i8*%ec to i8**
+%ee=load i8*,i8**%ed,align 8
+store i8*%ee,i8**%h,align 8
+%ef=call i8*@sml_alloc(i32 inreg 20)#0
+%eg=getelementptr inbounds i8,i8*%ef,i64 -4
+%eh=bitcast i8*%eg to i32*
+store i32 1342177296,i32*%eh,align 4
+store i8*%ef,i8**%j,align 8
+%ei=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%ej=bitcast i8*%ef to i8**
+store i8*%ei,i8**%ej,align 8
+%ek=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%el=getelementptr inbounds i8,i8*%ef,i64 8
+%em=bitcast i8*%el to i8**
+store i8*%ek,i8**%em,align 8
+%en=getelementptr inbounds i8,i8*%ef,i64 16
 %eo=bitcast i8*%en to i32*
-store i32 1342177296,i32*%eo,align 4
-%ep=load i8*,i8**%j,align 8
+store i32 3,i32*%eo,align 4
+%ep=call i8*@sml_alloc(i32 inreg 28)#0
+%eq=getelementptr inbounds i8,i8*%ep,i64 -4
+%er=bitcast i8*%eq to i32*
+store i32 1342177304,i32*%er,align 4
+%es=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
-%eq=bitcast i8*%em to i8**
-store i8*%ep,i8**%eq,align 8
-%er=load i8*,i8**%f,align 8
+%et=bitcast i8*%ep to i8**
+store i8*%es,i8**%et,align 8
+%eu=getelementptr inbounds i8,i8*%ep,i64 8
+%ev=bitcast i8*%eu to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1209 to void(...)*),void(...)**%ev,align 8
+%ew=getelementptr inbounds i8,i8*%ep,i64 16
+%ex=bitcast i8*%ew to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1209 to void(...)*),void(...)**%ex,align 8
+%ey=getelementptr inbounds i8,i8*%ep,i64 24
+%ez=bitcast i8*%ey to i32*
+store i32 -2147483647,i32*%ez,align 4
+%eA=invoke fastcc i8*@_SMLLLN8NameEval8nameEvalE_1209(i8*inreg%es,i8*inreg null)
+to label%eB unwind label%nk
+eB:
+%eC=bitcast i8*%eA to i8**
+%eD=load i8*,i8**%eC,align 8
+store i8*%eD,i8**%g,align 8
+%eE=getelementptr inbounds i8,i8*%eA,i64 8
+%eF=bitcast i8*%eE to i8**
+%eG=load i8*,i8**%eF,align 8
+store i8*%eG,i8**%h,align 8
+%eH=invoke fastcc i8*@_SMLFN5ExnID3Map5emptyE(i32 inreg 1,i32 inreg 8)
+to label%eI unwind label%nk
+eI:
+store i8*%eH,i8**%l,align 8
+%eJ=load i8*,i8**%k,align 8
+%eK=getelementptr inbounds i8,i8*%eJ,i64 40
+%eL=bitcast i8*%eK to i8**
+%eM=load i8*,i8**%eL,align 8
+store i8*%eM,i8**%j,align 8
+%eN=call i8*@sml_alloc(i32 inreg 20)#0
+%eO=getelementptr inbounds i8,i8*%eN,i64 -4
+%eP=bitcast i8*%eO to i32*
+store i32 1342177296,i32*%eP,align 4
+%eQ=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
+%eR=bitcast i8*%eN to i8**
+store i8*%eQ,i8**%eR,align 8
+%eS=load i8*,i8**%f,align 8
 store i8*null,i8**%f,align 8
-%es=getelementptr inbounds i8,i8*%em,i64 8
-%et=bitcast i8*%es to i8**
-store i8*%er,i8**%et,align 8
-%eu=getelementptr inbounds i8,i8*%em,i64 16
-%ev=bitcast i8*%eu to i32*
-store i32 3,i32*%ev,align 4
-%ew=load i8*,i8**%l,align 8
+%eT=getelementptr inbounds i8,i8*%eN,i64 8
+%eU=bitcast i8*%eT to i8**
+store i8*%eS,i8**%eU,align 8
+%eV=getelementptr inbounds i8,i8*%eN,i64 16
+%eW=bitcast i8*%eV to i32*
+store i32 3,i32*%eW,align 4
+%eX=load i8*,i8**%l,align 8
 store i8*null,i8**%l,align 8
-%ex=call fastcc i8*@_SMLLL12genExportEnv_1165(i8*inreg null,i8*inreg%ew,i8*inreg null,i8*inreg%em)
-%ey=getelementptr inbounds i8,i8*%ex,i64 16
-%ez=bitcast i8*%ey to i8*(i8*,i8*)**
-%eA=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ez,align 8
-%eB=bitcast i8*%ex to i8**
-%eC=load i8*,i8**%eB,align 8
-%eD=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
-%eE=invoke fastcc i8*%eA(i8*inreg%eC,i8*inreg%eD)
-to label%eF unwind label%mG
-eF:
-%eG=bitcast i8*%eE to i8**
-%eH=load i8*,i8**%eG,align 8
-store i8*%eH,i8**%f,align 8
-%eI=getelementptr inbounds i8,i8*%eE,i64 16
-%eJ=bitcast i8*%eI to i8**
-%eK=load i8*,i8**%eJ,align 8
-store i8*%eK,i8**%h,align 8
-%eL=getelementptr inbounds i8,i8*%eE,i64 24
-%eM=bitcast i8*%eL to i8**
-%eN=load i8*,i8**%eM,align 8
-store i8*%eN,i8**%j,align 8
-%eO=invoke fastcc i8*@_SMLFN4List3revE(i32 inreg 1,i32 inreg 8)
-to label%eP unwind label%mG
-eP:
-%eQ=getelementptr inbounds i8,i8*%eO,i64 16
-%eR=bitcast i8*%eQ to i8*(i8*,i8*)**
-%eS=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%eR,align 8
-%eT=bitcast i8*%eO to i8**
-%eU=load i8*,i8**%eT,align 8
-%eV=load i8*,i8**%j,align 8
-store i8*null,i8**%j,align 8
-%eW=invoke fastcc i8*%eS(i8*inreg%eU,i8*inreg%eV)
-to label%eX unwind label%mG
-eX:
-store i8*%eW,i8**%j,align 8
-%eY=call i8*@sml_alloc(i32 inreg 28)#0
-%eZ=getelementptr inbounds i8,i8*%eY,i64 -4
-%e0=bitcast i8*%eZ to i32*
-store i32 1342177304,i32*%e0,align 4
-store i8*%eY,i8**%l,align 8
-%e1=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
+%eY=call fastcc i8*@_SMLLL12genExportEnv_1165(i8*inreg null,i8*inreg%eX,i8*inreg null,i8*inreg%eN)
+%eZ=getelementptr inbounds i8,i8*%eY,i64 16
+%e0=bitcast i8*%eZ to i8*(i8*,i8*)**
+%e1=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%e0,align 8
 %e2=bitcast i8*%eY to i8**
-store i8*%e1,i8**%e2,align 8
-%e3=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
-%e4=getelementptr inbounds i8,i8*%eY,i64 8
-%e5=bitcast i8*%e4 to i8**
-store i8*%e3,i8**%e5,align 8
-%e6=load i8*,i8**%c,align 8
-store i8*null,i8**%c,align 8
-%e7=getelementptr inbounds i8,i8*%eY,i64 16
-%e8=bitcast i8*%e7 to i8**
-store i8*%e6,i8**%e8,align 8
-%e9=getelementptr inbounds i8,i8*%eY,i64 24
-%fa=bitcast i8*%e9 to i32*
-store i32 7,i32*%fa,align 4
-%fb=call i8*@sml_alloc(i32 inreg 28)#0
-%fc=getelementptr inbounds i8,i8*%fb,i64 -4
-%fd=bitcast i8*%fc to i32*
-store i32 1342177304,i32*%fd,align 4
-%fe=load i8*,i8**%f,align 8
-%ff=bitcast i8*%fb to i8**
-store i8*%fe,i8**%ff,align 8
-%fg=load i8*,i8**%l,align 8
-store i8*null,i8**%l,align 8
-%fh=getelementptr inbounds i8,i8*%fb,i64 8
-%fi=bitcast i8*%fh to i8**
-store i8*%fg,i8**%fi,align 8
-%fj=load i8*,i8**%j,align 8
-store i8*null,i8**%j,align 8
-br label%gu
-fk:
-%fl=invoke fastcc i32@_SMLFN14UserErrorUtils10isAnyErrorE(i32 inreg 0)
-to label%fm unwind label%mG
-fm:
-%fn=icmp eq i32%fl,0
-br i1%fn,label%fw,label%fo
-fo:
+%e3=load i8*,i8**%e2,align 8
+%e4=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-store i8*null,i8**%f,align 8
+%e5=invoke fastcc i8*%e1(i8*inreg%e3,i8*inreg%e4)
+to label%e6 unwind label%nk
+e6:
+%e7=bitcast i8*%e5 to i8**
+%e8=load i8*,i8**%e7,align 8
+store i8*%e8,i8**%f,align 8
+%e9=getelementptr inbounds i8,i8*%e5,i64 16
+%fa=bitcast i8*%e9 to i8**
+%fb=load i8*,i8**%fa,align 8
+store i8*%fb,i8**%h,align 8
+%fc=getelementptr inbounds i8,i8*%e5,i64 24
+%fd=bitcast i8*%fc to i8**
+%fe=load i8*,i8**%fd,align 8
+store i8*%fe,i8**%j,align 8
+%ff=invoke fastcc i8*@_SMLFN4List3revE(i32 inreg 1,i32 inreg 8)
+to label%fg unwind label%nk
+fg:
+%fh=getelementptr inbounds i8,i8*%ff,i64 16
+%fi=bitcast i8*%fh to i8*(i8*,i8*)**
+%fj=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%fi,align 8
+%fk=bitcast i8*%ff to i8**
+%fl=load i8*,i8**%fk,align 8
+%fm=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
+%fn=invoke fastcc i8*%fj(i8*inreg%fl,i8*inreg%fm)
+to label%fo unwind label%nk
+fo:
+store i8*%fn,i8**%j,align 8
 %fp=call i8*@sml_alloc(i32 inreg 28)#0
 %fq=getelementptr inbounds i8,i8*%fp,i64 -4
 %fr=bitcast i8*%fq to i32*
 store i32 1342177304,i32*%fr,align 4
-%fs=bitcast i8*%fp to i8**
-store i8*null,i8**%fs,align 8
-%ft=load i8*,i8**%c,align 8
-%fu=getelementptr inbounds i8,i8*%fp,i64 8
-%fv=bitcast i8*%fu to i8**
-store i8*%ft,i8**%fv,align 8
-br label%gu
-fw:
-%fx=load i8*,i8**%f,align 8
-store i8*null,i8**%f,align 8
-%fy=invoke fastcc i8*@_SMLFN12CheckProvide17checkPitopdecListE(i8*inreg%fx)
-to label%fz unwind label%gp
-fz:
-%fA=getelementptr inbounds i8,i8*%fy,i64 16
-%fB=bitcast i8*%fA to i8*(i8*,i8*)**
-%fC=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%fB,align 8
-%fD=bitcast i8*%fy to i8**
-%fE=load i8*,i8**%fD,align 8
-store i8*%fE,i8**%f,align 8
-%fF=call i8*@sml_alloc(i32 inreg 20)#0
-%fG=getelementptr inbounds i8,i8*%fF,i64 -4
-%fH=bitcast i8*%fG to i32*
-store i32 1342177296,i32*%fH,align 4
-%fI=load i8*,i8**%c,align 8
-%fJ=bitcast i8*%fF to i8**
-store i8*%fI,i8**%fJ,align 8
-%fK=load i8*,i8**%h,align 8
+store i8*%fp,i8**%l,align 8
+%fs=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%fL=getelementptr inbounds i8,i8*%fF,i64 8
-%fM=bitcast i8*%fL to i8**
-store i8*%fK,i8**%fM,align 8
-%fN=getelementptr inbounds i8,i8*%fF,i64 16
-%fO=bitcast i8*%fN to i32*
-store i32 3,i32*%fO,align 4
-%fP=load i8*,i8**%f,align 8
-store i8*null,i8**%f,align 8
-%fQ=invoke fastcc i8*%fC(i8*inreg%fP,i8*inreg%fF)
-to label%fR unwind label%gp
-fR:
-%fS=getelementptr inbounds i8,i8*%fQ,i64 8
-%fT=bitcast i8*%fS to i8**
-%fU=load i8*,i8**%fT,align 8
-store i8*%fU,i8**%f,align 8
-%fV=bitcast i8*%fQ to i8**
-%fW=load i8*,i8**%fV,align 8
-store i8*%fW,i8**%g,align 8
-%fX=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%fY unwind label%gp
-fY:
-%fZ=getelementptr inbounds i8,i8*%fX,i64 16
-%f0=bitcast i8*%fZ to i8*(i8*,i8*)**
-%f1=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%f0,align 8
-%f2=bitcast i8*%fX to i8**
-%f3=load i8*,i8**%f2,align 8
-store i8*%f3,i8**%h,align 8
-%f4=call i8*@sml_alloc(i32 inreg 20)#0
-%f5=getelementptr inbounds i8,i8*%f4,i64 -4
-%f6=bitcast i8*%f5 to i32*
-store i32 1342177296,i32*%f6,align 4
-%f7=load i8*,i8**%g,align 8
+%ft=bitcast i8*%fp to i8**
+store i8*%fs,i8**%ft,align 8
+%fu=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%f8=bitcast i8*%f4 to i8**
-store i8*%f7,i8**%f8,align 8
-%f9=load i8*,i8**%f,align 8
-store i8*null,i8**%f,align 8
-%ga=getelementptr inbounds i8,i8*%f4,i64 8
-%gb=bitcast i8*%ga to i8**
-store i8*%f9,i8**%gb,align 8
-%gc=getelementptr inbounds i8,i8*%f4,i64 16
-%gd=bitcast i8*%gc to i32*
-store i32 3,i32*%gd,align 4
-%ge=load i8*,i8**%h,align 8
+%fv=getelementptr inbounds i8,i8*%fp,i64 8
+%fw=bitcast i8*%fv to i8**
+store i8*%fu,i8**%fw,align 8
+%fx=load i8*,i8**%c,align 8
+store i8*null,i8**%c,align 8
+%fy=getelementptr inbounds i8,i8*%fp,i64 16
+%fz=bitcast i8*%fy to i8**
+store i8*%fx,i8**%fz,align 8
+%fA=getelementptr inbounds i8,i8*%fp,i64 24
+%fB=bitcast i8*%fA to i32*
+store i32 7,i32*%fB,align 4
+%fC=call i8*@sml_alloc(i32 inreg 28)#0
+%fD=getelementptr inbounds i8,i8*%fC,i64 -4
+%fE=bitcast i8*%fD to i32*
+store i32 1342177304,i32*%fE,align 4
+%fF=load i8*,i8**%f,align 8
+%fG=bitcast i8*%fC to i8**
+store i8*%fF,i8**%fG,align 8
+%fH=load i8*,i8**%l,align 8
+store i8*null,i8**%l,align 8
+%fI=getelementptr inbounds i8,i8*%fC,i64 8
+%fJ=bitcast i8*%fI to i8**
+store i8*%fH,i8**%fJ,align 8
+%fK=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
+br label%gV
+fL:
+%fM=invoke fastcc i32@_SMLFN14UserErrorUtils10isAnyErrorE(i32 inreg 0)
+to label%fN unwind label%nk
+fN:
+%fO=icmp eq i32%fM,0
+br i1%fO,label%fX,label%fP
+fP:
 store i8*null,i8**%h,align 8
-%gf=invoke fastcc i8*%f1(i8*inreg%ge,i8*inreg%f4)
-to label%gg unwind label%gp
-gg:
-store i8*%gf,i8**%f,align 8
-%gh=call i8*@sml_alloc(i32 inreg 28)#0
-%gi=getelementptr inbounds i8,i8*%gh,i64 -4
-%gj=bitcast i8*%gi to i32*
-store i32 1342177304,i32*%gj,align 4
-%gk=bitcast i8*%gh to i8**
-store i8*null,i8**%gk,align 8
-%gl=load i8*,i8**%c,align 8
-%gm=getelementptr inbounds i8,i8*%gh,i64 8
-%gn=bitcast i8*%gm to i8**
-store i8*%gl,i8**%gn,align 8
-%go=load i8*,i8**%f,align 8
-br label%gu
+store i8*null,i8**%f,align 8
+%fQ=call i8*@sml_alloc(i32 inreg 28)#0
+%fR=getelementptr inbounds i8,i8*%fQ,i64 -4
+%fS=bitcast i8*%fR to i32*
+store i32 1342177304,i32*%fS,align 4
+%fT=bitcast i8*%fQ to i8**
+store i8*null,i8**%fT,align 8
+%fU=load i8*,i8**%c,align 8
+%fV=getelementptr inbounds i8,i8*%fQ,i64 8
+%fW=bitcast i8*%fV to i8**
+store i8*%fU,i8**%fW,align 8
+br label%gV
+fX:
+%fY=load i8*,i8**%f,align 8
+store i8*null,i8**%f,align 8
+%fZ=invoke fastcc i8*@_SMLFN12CheckProvide17checkPitopdecListE(i8*inreg%fY)
+to label%f0 unwind label%gQ
+f0:
+%f1=getelementptr inbounds i8,i8*%fZ,i64 16
+%f2=bitcast i8*%f1 to i8*(i8*,i8*)**
+%f3=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%f2,align 8
+%f4=bitcast i8*%fZ to i8**
+%f5=load i8*,i8**%f4,align 8
+store i8*%f5,i8**%f,align 8
+%f6=call i8*@sml_alloc(i32 inreg 20)#0
+%f7=getelementptr inbounds i8,i8*%f6,i64 -4
+%f8=bitcast i8*%f7 to i32*
+store i32 1342177296,i32*%f8,align 4
+%f9=load i8*,i8**%c,align 8
+%ga=bitcast i8*%f6 to i8**
+store i8*%f9,i8**%ga,align 8
+%gb=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%gc=getelementptr inbounds i8,i8*%f6,i64 8
+%gd=bitcast i8*%gc to i8**
+store i8*%gb,i8**%gd,align 8
+%ge=getelementptr inbounds i8,i8*%f6,i64 16
+%gf=bitcast i8*%ge to i32*
+store i32 3,i32*%gf,align 4
+%gg=load i8*,i8**%f,align 8
+store i8*null,i8**%f,align 8
+%gh=invoke fastcc i8*%f3(i8*inreg%gg,i8*inreg%f6)
+to label%gi unwind label%gQ
+gi:
+%gj=getelementptr inbounds i8,i8*%gh,i64 8
+%gk=bitcast i8*%gj to i8**
+%gl=load i8*,i8**%gk,align 8
+store i8*%gl,i8**%f,align 8
+%gm=bitcast i8*%gh to i8**
+%gn=load i8*,i8**%gm,align 8
+store i8*%gn,i8**%g,align 8
+%go=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%gp unwind label%gQ
 gp:
-%gq=landingpad{i8*,i8*}
+%gq=getelementptr inbounds i8,i8*%go,i64 16
+%gr=bitcast i8*%gq to i8*(i8*,i8*)**
+%gs=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%gr,align 8
+%gt=bitcast i8*%go to i8**
+%gu=load i8*,i8**%gt,align 8
+store i8*%gu,i8**%h,align 8
+%gv=call i8*@sml_alloc(i32 inreg 20)#0
+%gw=getelementptr inbounds i8,i8*%gv,i64 -4
+%gx=bitcast i8*%gw to i32*
+store i32 1342177296,i32*%gx,align 4
+%gy=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%gz=bitcast i8*%gv to i8**
+store i8*%gy,i8**%gz,align 8
+%gA=load i8*,i8**%f,align 8
+store i8*null,i8**%f,align 8
+%gB=getelementptr inbounds i8,i8*%gv,i64 8
+%gC=bitcast i8*%gB to i8**
+store i8*%gA,i8**%gC,align 8
+%gD=getelementptr inbounds i8,i8*%gv,i64 16
+%gE=bitcast i8*%gD to i32*
+store i32 3,i32*%gE,align 4
+%gF=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%gG=invoke fastcc i8*%gs(i8*inreg%gF,i8*inreg%gv)
+to label%gH unwind label%gQ
+gH:
+store i8*%gG,i8**%f,align 8
+%gI=call i8*@sml_alloc(i32 inreg 28)#0
+%gJ=getelementptr inbounds i8,i8*%gI,i64 -4
+%gK=bitcast i8*%gJ to i32*
+store i32 1342177304,i32*%gK,align 4
+%gL=bitcast i8*%gI to i8**
+store i8*null,i8**%gL,align 8
+%gM=load i8*,i8**%c,align 8
+%gN=getelementptr inbounds i8,i8*%gI,i64 8
+%gO=bitcast i8*%gN to i8**
+store i8*%gM,i8**%gO,align 8
+%gP=load i8*,i8**%f,align 8
+br label%gV
+gQ:
+%gR=landingpad{i8*,i8*}
 catch i8*null
-%gr=extractvalue{i8*,i8*}%gq,1
-%gs=bitcast i8*%gr to i8**
-%gt=load i8*,i8**%gs,align 8
+%gS=extractvalue{i8*,i8*}%gR,1
+%gT=bitcast i8*%gS to i8**
+%gU=load i8*,i8**%gT,align 8
 store i8*null,i8**%h,align 8
 store i8*null,i8**%i,align 8
 store i8*null,i8**%e,align 8
@@ -37178,579 +37210,595 @@ store i8*null,i8**%d,align 8
 store i8*null,i8**%g,align 8
 store i8*null,i8**%f,align 8
 store i8*null,i8**%k,align 8
-store i8*%gt,i8**%c,align 8
-br label%mL
-gu:
-%gv=phi i8*[%fp,%fo],[%gh,%gg],[%fb,%eX]
-%gw=phi i8*[null,%fo],[%go,%gg],[%fj,%eX]
-%gx=phi i8*[%ft,%fo],[%gl,%gg],[%fg,%eX]
-%gy=getelementptr inbounds i8,i8*%gv,i64 16
-%gz=bitcast i8*%gy to i8**
-store i8*%gw,i8**%gz,align 8
-%gA=getelementptr inbounds i8,i8*%gv,i64 24
-%gB=bitcast i8*%gA to i32*
-store i32 7,i32*%gB,align 4
-store i8*%gx,i8**%c,align 8
-store i8*%gw,i8**%f,align 8
-invoke fastcc void@_SMLFN9Analyzers18stopNameRefTracingE(i32 inreg 0)
-to label%gC unwind label%mG
-gC:
-%gD=load i8*,i8**%e,align 8
-%gE=bitcast i8*%gD to i8**
-%gF=load i8*,i8**%gE,align 8
-%gG=getelementptr inbounds i8,i8*%gD,i64 8
-%gH=bitcast i8*%gG to i8**
-%gI=load i8*,i8**%gH,align 8
-store i8*%gI,i8**%g,align 8
-invoke fastcc void@_SMLLLN8NameEval15setUsedflagsEnvE_1111(i8*inreg%gD,i8*inreg%gF)
-to label%gJ unwind label%mG
-gJ:
-%gK=invoke fastcc i8*@_SMLFN9SymbolEnv3appE(i32 inreg 1,i32 inreg 8)
-to label%gL unwind label%mG
-gL:
-%gM=getelementptr inbounds i8,i8*%gK,i64 16
-%gN=bitcast i8*%gM to i8*(i8*,i8*)**
-%gO=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%gN,align 8
-%gP=bitcast i8*%gK to i8**
-%gQ=load i8*,i8**%gP,align 8
-store i8*%gQ,i8**%h,align 8
-%gR=call i8*@sml_alloc(i32 inreg 12)#0
-%gS=getelementptr inbounds i8,i8*%gR,i64 -4
-%gT=bitcast i8*%gS to i32*
-store i32 1342177288,i32*%gT,align 4
-store i8*%gR,i8**%j,align 8
-%gU=load i8*,i8**%e,align 8
-%gV=bitcast i8*%gR to i8**
-store i8*%gU,i8**%gV,align 8
-%gW=getelementptr inbounds i8,i8*%gR,i64 8
-%gX=bitcast i8*%gW to i32*
-store i32 1,i32*%gX,align 4
-%gY=call i8*@sml_alloc(i32 inreg 28)#0
-%gZ=getelementptr inbounds i8,i8*%gY,i64 -4
-%g0=bitcast i8*%gZ to i32*
-store i32 1342177304,i32*%g0,align 4
-%g1=load i8*,i8**%j,align 8
-store i8*null,i8**%j,align 8
-%g2=bitcast i8*%gY to i8**
-store i8*%g1,i8**%g2,align 8
-%g3=getelementptr inbounds i8,i8*%gY,i64 8
-%g4=bitcast i8*%g3 to void(...)**
-store void(...)*bitcast(void(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1210 to void(...)*),void(...)**%g4,align 8
-%g5=getelementptr inbounds i8,i8*%gY,i64 16
-%g6=bitcast i8*%g5 to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1329 to void(...)*),void(...)**%g6,align 8
-%g7=getelementptr inbounds i8,i8*%gY,i64 24
-%g8=bitcast i8*%g7 to i32*
-store i32 -2147483647,i32*%g8,align 4
-%g9=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
-%ha=invoke fastcc i8*%gO(i8*inreg%g9,i8*inreg%gY)
-to label%hb unwind label%mG
-hb:
-%hc=getelementptr inbounds i8,i8*%ha,i64 16
-%hd=bitcast i8*%hc to i8*(i8*,i8*)**
-%he=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%hd,align 8
-%hf=bitcast i8*%ha to i8**
-%hg=load i8*,i8**%hf,align 8
-%hh=load i8*,i8**%g,align 8
+store i8*%gU,i8**%c,align 8
+br label%np
+gV:
+%gW=phi i8*[%fQ,%fP],[%gI,%gH],[%fC,%fo]
+%gX=phi i8*[null,%fP],[%gP,%gH],[%fK,%fo]
+%gY=phi i8*[%fU,%fP],[%gM,%gH],[%fH,%fo]
+%gZ=getelementptr inbounds i8,i8*%gW,i64 16
+%g0=bitcast i8*%gZ to i8**
+store i8*%gX,i8**%g0,align 8
+%g1=getelementptr inbounds i8,i8*%gW,i64 24
+%g2=bitcast i8*%g1 to i32*
+store i32 7,i32*%g2,align 4
+store i8*%gY,i8**%c,align 8
+store i8*%gX,i8**%f,align 8
+%g3=load i8**,i8***bitcast(i8**@_SMLZN9Analyzers18stopNameRefTracingE to i8***),align 8
+%g4=load i8*,i8**%g3,align 8
+%g5=getelementptr inbounds i8,i8*%g4,i64 16
+%g6=bitcast i8*%g5 to i8*(i8*,i8*)**
+%g7=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%g6,align 8
+%g8=bitcast i8*%g4 to i8**
+%g9=load i8*,i8**%g8,align 8
+store i8*%g9,i8**%g,align 8
+%ha=call i8*@sml_alloc(i32 inreg 4)#0
+%hb=bitcast i8*%ha to i32*
+%hc=getelementptr inbounds i8,i8*%ha,i64 -4
+%hd=bitcast i8*%hc to i32*
+store i32 4,i32*%hd,align 4
+store i32 0,i32*%hb,align 4
+%he=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%hi=invoke fastcc i8*%he(i8*inreg%hg,i8*inreg%hh)
-to label%hj unwind label%mG
-hj:
-%hk=invoke fastcc i8*@_SMLFN4List3appE(i32 inreg 1,i32 inreg 8)
-to label%hl unwind label%mG
-hl:
-%hm=load i8**,i8***%bL,align 8
-%hn=load i8*,i8**%hm,align 8
-store i8*%hn,i8**%g,align 8
-%ho=getelementptr inbounds i8,i8*%hk,i64 16
-%hp=bitcast i8*%ho to i8*(i8*,i8*)**
-%hq=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%hp,align 8
-%hr=bitcast i8*%hk to i8**
-%hs=load i8*,i8**%hr,align 8
-store i8*%hs,i8**%h,align 8
-%ht=call i8*@sml_alloc(i32 inreg 12)#0
-%hu=getelementptr inbounds i8,i8*%ht,i64 -4
-%hv=bitcast i8*%hu to i32*
-store i32 1342177288,i32*%hv,align 4
-store i8*%ht,i8**%j,align 8
-%hw=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
-%hx=bitcast i8*%ht to i8**
-store i8*%hw,i8**%hx,align 8
-%hy=getelementptr inbounds i8,i8*%ht,i64 8
-%hz=bitcast i8*%hy to i32*
-store i32 1,i32*%hz,align 4
-%hA=call i8*@sml_alloc(i32 inreg 28)#0
-%hB=getelementptr inbounds i8,i8*%hA,i64 -4
-%hC=bitcast i8*%hB to i32*
-store i32 1342177304,i32*%hC,align 4
-%hD=load i8*,i8**%j,align 8
+%hf=invoke fastcc i8*%g7(i8*inreg%he,i8*inreg%ha)
+to label%hg unwind label%nk
+hg:
+%hh=load i8*,i8**%e,align 8
+%hi=bitcast i8*%hh to i8**
+%hj=load i8*,i8**%hi,align 8
+%hk=getelementptr inbounds i8,i8*%hh,i64 8
+%hl=bitcast i8*%hk to i8**
+%hm=load i8*,i8**%hl,align 8
+store i8*%hm,i8**%g,align 8
+invoke fastcc void@_SMLLLN8NameEval15setUsedflagsEnvE_1111(i8*inreg%hh,i8*inreg%hj)
+to label%hn unwind label%nk
+hn:
+%ho=invoke fastcc i8*@_SMLFN9SymbolEnv3appE(i32 inreg 1,i32 inreg 8)
+to label%hp unwind label%nk
+hp:
+%hq=getelementptr inbounds i8,i8*%ho,i64 16
+%hr=bitcast i8*%hq to i8*(i8*,i8*)**
+%hs=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%hr,align 8
+%ht=bitcast i8*%ho to i8**
+%hu=load i8*,i8**%ht,align 8
+store i8*%hu,i8**%h,align 8
+%hv=call i8*@sml_alloc(i32 inreg 12)#0
+%hw=getelementptr inbounds i8,i8*%hv,i64 -4
+%hx=bitcast i8*%hw to i32*
+store i32 1342177288,i32*%hx,align 4
+store i8*%hv,i8**%j,align 8
+%hy=load i8*,i8**%e,align 8
+%hz=bitcast i8*%hv to i8**
+store i8*%hy,i8**%hz,align 8
+%hA=getelementptr inbounds i8,i8*%hv,i64 8
+%hB=bitcast i8*%hA to i32*
+store i32 1,i32*%hB,align 4
+%hC=call i8*@sml_alloc(i32 inreg 28)#0
+%hD=getelementptr inbounds i8,i8*%hC,i64 -4
+%hE=bitcast i8*%hD to i32*
+store i32 1342177304,i32*%hE,align 4
+%hF=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
-%hE=bitcast i8*%hA to i8**
-store i8*%hD,i8**%hE,align 8
-%hF=getelementptr inbounds i8,i8*%hA,i64 8
-%hG=bitcast i8*%hF to void(...)**
-store void(...)*bitcast(void(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1216 to void(...)*),void(...)**%hG,align 8
-%hH=getelementptr inbounds i8,i8*%hA,i64 16
+%hG=bitcast i8*%hC to i8**
+store i8*%hF,i8**%hG,align 8
+%hH=getelementptr inbounds i8,i8*%hC,i64 8
 %hI=bitcast i8*%hH to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1330 to void(...)*),void(...)**%hI,align 8
-%hJ=getelementptr inbounds i8,i8*%hA,i64 24
-%hK=bitcast i8*%hJ to i32*
-store i32 -2147483647,i32*%hK,align 4
-%hL=load i8*,i8**%h,align 8
+store void(...)*bitcast(void(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1210 to void(...)*),void(...)**%hI,align 8
+%hJ=getelementptr inbounds i8,i8*%hC,i64 16
+%hK=bitcast i8*%hJ to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1329 to void(...)*),void(...)**%hK,align 8
+%hL=getelementptr inbounds i8,i8*%hC,i64 24
+%hM=bitcast i8*%hL to i32*
+store i32 -2147483647,i32*%hM,align 4
+%hN=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%hM=invoke fastcc i8*%hq(i8*inreg%hL,i8*inreg%hA)
-to label%hN unwind label%mG
-hN:
-%hO=getelementptr inbounds i8,i8*%hM,i64 16
-%hP=bitcast i8*%hO to i8*(i8*,i8*)**
-%hQ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%hP,align 8
-%hR=bitcast i8*%hM to i8**
-%hS=load i8*,i8**%hR,align 8
-%hT=load i8*,i8**%k,align 8
-%hU=getelementptr inbounds i8,i8*%hT,i64 16
-%hV=bitcast i8*%hU to i8**
-%hW=load i8*,i8**%hV,align 8
-%hX=invoke fastcc i8*%hQ(i8*inreg%hS,i8*inreg%hW)
-to label%hY unwind label%mG
-hY:
-%hZ=invoke fastcc i8*@_SMLFN13LongsymbolEnv5emptyE(i32 inreg 1,i32 inreg 8)
-to label%h0 unwind label%mG
-h0:
-store i8*%hZ,i8**%g,align 8
-%h1=invoke fastcc i8*@_SMLFN4List5foldlE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
-to label%h2 unwind label%mG
-h2:
-%h3=getelementptr inbounds i8,i8*%h1,i64 16
-%h4=bitcast i8*%h3 to i8*(i8*,i8*)**
-%h5=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%h4,align 8
-%h6=bitcast i8*%h1 to i8**
-%h7=load i8*,i8**%h6,align 8
-%h8=invoke fastcc i8*%h5(i8*inreg%h7,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c5,i64 0,i32 2)to i8*))
-to label%h9 unwind label%mG
-h9:
-%ia=getelementptr inbounds i8,i8*%h8,i64 16
-%ib=bitcast i8*%ia to i8*(i8*,i8*)**
-%ic=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ib,align 8
-%id=bitcast i8*%h8 to i8**
-%ie=load i8*,i8**%id,align 8
-%if=load i8*,i8**%g,align 8
+%hO=invoke fastcc i8*%hs(i8*inreg%hN,i8*inreg%hC)
+to label%hP unwind label%nk
+hP:
+%hQ=getelementptr inbounds i8,i8*%hO,i64 16
+%hR=bitcast i8*%hQ to i8*(i8*,i8*)**
+%hS=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%hR,align 8
+%hT=bitcast i8*%hO to i8**
+%hU=load i8*,i8**%hT,align 8
+%hV=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%ig=invoke fastcc i8*%ic(i8*inreg%ie,i8*inreg%if)
-to label%ih unwind label%mG
-ih:
-%ii=getelementptr inbounds i8,i8*%ig,i64 16
-%ij=bitcast i8*%ii to i8*(i8*,i8*)**
-%ik=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ij,align 8
-%il=bitcast i8*%ig to i8**
-%im=load i8*,i8**%il,align 8
-%in=load i8*,i8**%k,align 8
-%io=getelementptr inbounds i8,i8*%in,i64 16
-%ip=bitcast i8*%io to i8**
-%iq=load i8*,i8**%ip,align 8
-%ir=invoke fastcc i8*%ik(i8*inreg%im,i8*inreg%iq)
-to label%is unwind label%mG
-is:
-store i8*%ir,i8**%g,align 8
-%it=load i8*,i8**%k,align 8
-%iu=getelementptr inbounds i8,i8*%it,i64 8
-%iv=bitcast i8*%iu to i8**
+%hW=invoke fastcc i8*%hS(i8*inreg%hU,i8*inreg%hV)
+to label%hX unwind label%nk
+hX:
+%hY=invoke fastcc i8*@_SMLFN4List3appE(i32 inreg 1,i32 inreg 8)
+to label%hZ unwind label%nk
+hZ:
+%h0=load i8**,i8***%bL,align 8
+%h1=load i8*,i8**%h0,align 8
+store i8*%h1,i8**%g,align 8
+%h2=getelementptr inbounds i8,i8*%hY,i64 16
+%h3=bitcast i8*%h2 to i8*(i8*,i8*)**
+%h4=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%h3,align 8
+%h5=bitcast i8*%hY to i8**
+%h6=load i8*,i8**%h5,align 8
+store i8*%h6,i8**%h,align 8
+%h7=call i8*@sml_alloc(i32 inreg 12)#0
+%h8=getelementptr inbounds i8,i8*%h7,i64 -4
+%h9=bitcast i8*%h8 to i32*
+store i32 1342177288,i32*%h9,align 4
+store i8*%h7,i8**%j,align 8
+%ia=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%ib=bitcast i8*%h7 to i8**
+store i8*%ia,i8**%ib,align 8
+%ic=getelementptr inbounds i8,i8*%h7,i64 8
+%id=bitcast i8*%ic to i32*
+store i32 1,i32*%id,align 4
+%ie=call i8*@sml_alloc(i32 inreg 28)#0
+%if=getelementptr inbounds i8,i8*%ie,i64 -4
+%ig=bitcast i8*%if to i32*
+store i32 1342177304,i32*%ig,align 4
+%ih=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
+%ii=bitcast i8*%ie to i8**
+store i8*%ih,i8**%ii,align 8
+%ij=getelementptr inbounds i8,i8*%ie,i64 8
+%ik=bitcast i8*%ij to void(...)**
+store void(...)*bitcast(void(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1216 to void(...)*),void(...)**%ik,align 8
+%il=getelementptr inbounds i8,i8*%ie,i64 16
+%im=bitcast i8*%il to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1330 to void(...)*),void(...)**%im,align 8
+%in=getelementptr inbounds i8,i8*%ie,i64 24
+%io=bitcast i8*%in to i32*
+store i32 -2147483647,i32*%io,align 4
+%ip=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%iq=invoke fastcc i8*%h4(i8*inreg%ip,i8*inreg%ie)
+to label%ir unwind label%nk
+ir:
+%is=getelementptr inbounds i8,i8*%iq,i64 16
+%it=bitcast i8*%is to i8*(i8*,i8*)**
+%iu=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%it,align 8
+%iv=bitcast i8*%iq to i8**
 %iw=load i8*,i8**%iv,align 8
-store i8*%iw,i8**%h,align 8
-%ix=call i8*@sml_alloc(i32 inreg 20)#0
-%iy=getelementptr inbounds i8,i8*%ix,i64 -4
-%iz=bitcast i8*%iy to i32*
-store i32 1342177296,i32*%iz,align 4
-store i8*%ix,i8**%j,align 8
-%iA=load i8*,i8**%h,align 8
+%ix=load i8*,i8**%k,align 8
+%iy=getelementptr inbounds i8,i8*%ix,i64 24
+%iz=bitcast i8*%iy to i8**
+%iA=load i8*,i8**%iz,align 8
+%iB=invoke fastcc i8*%iu(i8*inreg%iw,i8*inreg%iA)
+to label%iC unwind label%nk
+iC:
+%iD=invoke fastcc i8*@_SMLFN13LongsymbolEnv5emptyE(i32 inreg 1,i32 inreg 8)
+to label%iE unwind label%nk
+iE:
+store i8*%iD,i8**%g,align 8
+%iF=invoke fastcc i8*@_SMLFN4List5foldlE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
+to label%iG unwind label%nk
+iG:
+%iH=getelementptr inbounds i8,i8*%iF,i64 16
+%iI=bitcast i8*%iH to i8*(i8*,i8*)**
+%iJ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%iI,align 8
+%iK=bitcast i8*%iF to i8**
+%iL=load i8*,i8**%iK,align 8
+%iM=invoke fastcc i8*%iJ(i8*inreg%iL,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c5,i64 0,i32 2)to i8*))
+to label%iN unwind label%nk
+iN:
+%iO=getelementptr inbounds i8,i8*%iM,i64 16
+%iP=bitcast i8*%iO to i8*(i8*,i8*)**
+%iQ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%iP,align 8
+%iR=bitcast i8*%iM to i8**
+%iS=load i8*,i8**%iR,align 8
+%iT=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%iU=invoke fastcc i8*%iQ(i8*inreg%iS,i8*inreg%iT)
+to label%iV unwind label%nk
+iV:
+%iW=getelementptr inbounds i8,i8*%iU,i64 16
+%iX=bitcast i8*%iW to i8*(i8*,i8*)**
+%iY=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%iX,align 8
+%iZ=bitcast i8*%iU to i8**
+%i0=load i8*,i8**%iZ,align 8
+%i1=load i8*,i8**%k,align 8
+%i2=getelementptr inbounds i8,i8*%i1,i64 24
+%i3=bitcast i8*%i2 to i8**
+%i4=load i8*,i8**%i3,align 8
+%i5=invoke fastcc i8*%iY(i8*inreg%i0,i8*inreg%i4)
+to label%i6 unwind label%nk
+i6:
+store i8*%i5,i8**%g,align 8
+%i7=load i8*,i8**%k,align 8
+%i8=getelementptr inbounds i8,i8*%i7,i64 8
+%i9=bitcast i8*%i8 to i8**
+%ja=load i8*,i8**%i9,align 8
+store i8*%ja,i8**%h,align 8
+%jb=call i8*@sml_alloc(i32 inreg 20)#0
+%jc=getelementptr inbounds i8,i8*%jb,i64 -4
+%jd=bitcast i8*%jc to i32*
+store i32 1342177296,i32*%jd,align 4
+store i8*%jb,i8**%j,align 8
+%je=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%iB=bitcast i8*%ix to i8**
-store i8*%iA,i8**%iB,align 8
-%iC=load i8*,i8**%g,align 8
+%jf=bitcast i8*%jb to i8**
+store i8*%je,i8**%jf,align 8
+%jg=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%iD=getelementptr inbounds i8,i8*%ix,i64 8
-%iE=bitcast i8*%iD to i8**
-store i8*%iC,i8**%iE,align 8
-%iF=getelementptr inbounds i8,i8*%ix,i64 16
-%iG=bitcast i8*%iF to i32*
-store i32 3,i32*%iG,align 4
-%iH=call i8*@sml_alloc(i32 inreg 28)#0
-%iI=getelementptr inbounds i8,i8*%iH,i64 -4
-%iJ=bitcast i8*%iI to i32*
-store i32 1342177304,i32*%iJ,align 4
-%iK=load i8*,i8**%j,align 8
+%jh=getelementptr inbounds i8,i8*%jb,i64 8
+%ji=bitcast i8*%jh to i8**
+store i8*%jg,i8**%ji,align 8
+%jj=getelementptr inbounds i8,i8*%jb,i64 16
+%jk=bitcast i8*%jj to i32*
+store i32 3,i32*%jk,align 4
+%jl=call i8*@sml_alloc(i32 inreg 28)#0
+%jm=getelementptr inbounds i8,i8*%jl,i64 -4
+%jn=bitcast i8*%jm to i32*
+store i32 1342177304,i32*%jn,align 4
+%jo=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
-%iL=bitcast i8*%iH to i8**
-store i8*%iK,i8**%iL,align 8
-%iM=getelementptr inbounds i8,i8*%iH,i64 8
-%iN=bitcast i8*%iM to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1226 to void(...)*),void(...)**%iN,align 8
-%iO=getelementptr inbounds i8,i8*%iH,i64 16
-%iP=bitcast i8*%iO to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1226 to void(...)*),void(...)**%iP,align 8
-%iQ=getelementptr inbounds i8,i8*%iH,i64 24
-%iR=bitcast i8*%iQ to i32*
-store i32 -2147483647,i32*%iR,align 4
-%iS=load i8*,i8**%e,align 8
-%iT=invoke fastcc i8*@_SMLLLN8NameEval8nameEvalE_1226(i8*inreg%iK,i8*inreg%iS)
-to label%iU unwind label%mG
-iU:
-%iV=bitcast i8*%iT to i8**
-%iW=load i8*,i8**%iV,align 8
-%iX=getelementptr inbounds i8,i8*%iW,i64 8
-%iY=bitcast i8*%iX to i8**
-%iZ=load i8*,i8**%iY,align 8
-store i8*%iZ,i8**%g,align 8
-%i0=getelementptr inbounds i8,i8*%iT,i64 8
-%i1=bitcast i8*%i0 to i8**
-%i2=load i8*,i8**%i1,align 8
-store i8*%i2,i8**%h,align 8
-%i3=invoke fastcc i8*@_SMLFN4List3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
-to label%i4 unwind label%mG
-i4:
-%i5=getelementptr inbounds i8,i8*%i3,i64 16
-%i6=bitcast i8*%i5 to i8*(i8*,i8*)**
-%i7=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%i6,align 8
-%i8=bitcast i8*%i3 to i8**
-%i9=load i8*,i8**%i8,align 8
-%ja=invoke fastcc i8*%i7(i8*inreg%i9,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c8,i64 0,i32 2)to i8*))
-to label%jb unwind label%mG
-jb:
-%jc=getelementptr inbounds i8,i8*%ja,i64 16
-%jd=bitcast i8*%jc to i8*(i8*,i8*)**
-%je=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jd,align 8
-%jf=bitcast i8*%ja to i8**
-%jg=load i8*,i8**%jf,align 8
-store i8*%jg,i8**%j,align 8
-%jh=invoke fastcc i8*@_SMLFN13LongsymbolEnv9listItemsE(i32 inreg 1,i32 inreg 8)
-to label%ji unwind label%mG
-ji:
-%jj=getelementptr inbounds i8,i8*%jh,i64 16
-%jk=bitcast i8*%jj to i8*(i8*,i8*)**
-%jl=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jk,align 8
-%jm=bitcast i8*%jh to i8**
-%jn=load i8*,i8**%jm,align 8
-%jo=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
-%jp=invoke fastcc i8*%jl(i8*inreg%jn,i8*inreg%jo)
-to label%jq unwind label%mG
-jq:
-%jr=load i8*,i8**%j,align 8
-store i8*null,i8**%j,align 8
-%js=invoke fastcc i8*%je(i8*inreg%jr,i8*inreg%jp)
-to label%jt unwind label%mG
-jt:
-store i8*%js,i8**%g,align 8
-%ju=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%jv unwind label%mG
-jv:
-%jw=getelementptr inbounds i8,i8*%ju,i64 16
-%jx=bitcast i8*%jw to i8*(i8*,i8*)**
-%jy=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jx,align 8
-%jz=bitcast i8*%ju to i8**
+%jp=bitcast i8*%jl to i8**
+store i8*%jo,i8**%jp,align 8
+%jq=getelementptr inbounds i8,i8*%jl,i64 8
+%jr=bitcast i8*%jq to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1226 to void(...)*),void(...)**%jr,align 8
+%js=getelementptr inbounds i8,i8*%jl,i64 16
+%jt=bitcast i8*%js to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1226 to void(...)*),void(...)**%jt,align 8
+%ju=getelementptr inbounds i8,i8*%jl,i64 24
+%jv=bitcast i8*%ju to i32*
+store i32 -2147483647,i32*%jv,align 4
+%jw=load i8*,i8**%e,align 8
+%jx=invoke fastcc i8*@_SMLLLN8NameEval8nameEvalE_1226(i8*inreg%jo,i8*inreg%jw)
+to label%jy unwind label%nk
+jy:
+%jz=bitcast i8*%jx to i8**
 %jA=load i8*,i8**%jz,align 8
-store i8*%jA,i8**%m,align 8
-%jB=load i8*,i8**%k,align 8
-store i8*null,i8**%k,align 8
-%jC=getelementptr inbounds i8,i8*%jB,i64 16
-%jD=bitcast i8*%jC to i8**
-%jE=load i8*,i8**%jD,align 8
-store i8*%jE,i8**%j,align 8
-%jF=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%jG unwind label%mG
-jG:
-%jH=getelementptr inbounds i8,i8*%jF,i64 16
-%jI=bitcast i8*%jH to i8*(i8*,i8*)**
-%jJ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jI,align 8
-%jK=bitcast i8*%jF to i8**
-%jL=load i8*,i8**%jK,align 8
-store i8*%jL,i8**%l,align 8
-%jM=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%jN unwind label%mG
-jN:
-%jO=getelementptr inbounds i8,i8*%jM,i64 16
-%jP=bitcast i8*%jO to i8*(i8*,i8*)**
-%jQ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jP,align 8
-%jR=bitcast i8*%jM to i8**
-%jS=load i8*,i8**%jR,align 8
-store i8*%jS,i8**%k,align 8
-%jT=call i8*@sml_alloc(i32 inreg 20)#0
-%jU=getelementptr inbounds i8,i8*%jT,i64 -4
-%jV=bitcast i8*%jU to i32*
-store i32 1342177296,i32*%jV,align 4
-%jW=load i8*,i8**%i,align 8
-store i8*null,i8**%i,align 8
-%jX=bitcast i8*%jT to i8**
-store i8*%jW,i8**%jX,align 8
-%jY=load i8*,i8**%g,align 8
+%jB=getelementptr inbounds i8,i8*%jA,i64 8
+%jC=bitcast i8*%jB to i8**
+%jD=load i8*,i8**%jC,align 8
+store i8*%jD,i8**%g,align 8
+%jE=getelementptr inbounds i8,i8*%jx,i64 8
+%jF=bitcast i8*%jE to i8**
+%jG=load i8*,i8**%jF,align 8
+store i8*%jG,i8**%h,align 8
+%jH=invoke fastcc i8*@_SMLFN4List3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
+to label%jI unwind label%nk
+jI:
+%jJ=getelementptr inbounds i8,i8*%jH,i64 16
+%jK=bitcast i8*%jJ to i8*(i8*,i8*)**
+%jL=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jK,align 8
+%jM=bitcast i8*%jH to i8**
+%jN=load i8*,i8**%jM,align 8
+%jO=invoke fastcc i8*%jL(i8*inreg%jN,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c8,i64 0,i32 2)to i8*))
+to label%jP unwind label%nk
+jP:
+%jQ=getelementptr inbounds i8,i8*%jO,i64 16
+%jR=bitcast i8*%jQ to i8*(i8*,i8*)**
+%jS=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jR,align 8
+%jT=bitcast i8*%jO to i8**
+%jU=load i8*,i8**%jT,align 8
+store i8*%jU,i8**%j,align 8
+%jV=invoke fastcc i8*@_SMLFN13LongsymbolEnv9listItemsE(i32 inreg 1,i32 inreg 8)
+to label%jW unwind label%nk
+jW:
+%jX=getelementptr inbounds i8,i8*%jV,i64 16
+%jY=bitcast i8*%jX to i8*(i8*,i8*)**
+%jZ=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%jY,align 8
+%j0=bitcast i8*%jV to i8**
+%j1=load i8*,i8**%j0,align 8
+%j2=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%jZ=getelementptr inbounds i8,i8*%jT,i64 8
-%j0=bitcast i8*%jZ to i8**
-store i8*%jY,i8**%j0,align 8
-%j1=getelementptr inbounds i8,i8*%jT,i64 16
-%j2=bitcast i8*%j1 to i32*
-store i32 3,i32*%j2,align 4
-%j3=load i8*,i8**%k,align 8
-store i8*null,i8**%k,align 8
-%j4=invoke fastcc i8*%jQ(i8*inreg%j3,i8*inreg%jT)
-to label%j5 unwind label%mG
-j5:
-store i8*%j4,i8**%g,align 8
-%j6=call i8*@sml_alloc(i32 inreg 20)#0
-%j7=getelementptr inbounds i8,i8*%j6,i64 -4
-%j8=bitcast i8*%j7 to i32*
-store i32 1342177296,i32*%j8,align 4
-%j9=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
-%ka=bitcast i8*%j6 to i8**
-store i8*%j9,i8**%ka,align 8
-%kb=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
-%kc=getelementptr inbounds i8,i8*%j6,i64 8
-%kd=bitcast i8*%kc to i8**
-store i8*%kb,i8**%kd,align 8
-%ke=getelementptr inbounds i8,i8*%j6,i64 16
-%kf=bitcast i8*%ke to i32*
-store i32 3,i32*%kf,align 4
-%kg=load i8*,i8**%l,align 8
-store i8*null,i8**%l,align 8
-%kh=invoke fastcc i8*%jJ(i8*inreg%kg,i8*inreg%j6)
-to label%ki unwind label%mG
-ki:
-store i8*%kh,i8**%g,align 8
-%kj=call i8*@sml_alloc(i32 inreg 20)#0
-%kk=getelementptr inbounds i8,i8*%kj,i64 -4
-%kl=bitcast i8*%kk to i32*
-store i32 1342177296,i32*%kl,align 4
-%km=load i8*,i8**%j,align 8
+%j3=invoke fastcc i8*%jZ(i8*inreg%j1,i8*inreg%j2)
+to label%j4 unwind label%nk
+j4:
+%j5=load i8*,i8**%j,align 8
 store i8*null,i8**%j,align 8
-%kn=bitcast i8*%kj to i8**
-store i8*%km,i8**%kn,align 8
-%ko=load i8*,i8**%g,align 8
+%j6=invoke fastcc i8*%jS(i8*inreg%j5,i8*inreg%j3)
+to label%j7 unwind label%nk
+j7:
+store i8*%j6,i8**%g,align 8
+%j8=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%j9 unwind label%nk
+j9:
+%ka=getelementptr inbounds i8,i8*%j8,i64 16
+%kb=bitcast i8*%ka to i8*(i8*,i8*)**
+%kc=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%kb,align 8
+%kd=bitcast i8*%j8 to i8**
+%ke=load i8*,i8**%kd,align 8
+store i8*%ke,i8**%m,align 8
+%kf=load i8*,i8**%k,align 8
+store i8*null,i8**%k,align 8
+%kg=getelementptr inbounds i8,i8*%kf,i64 24
+%kh=bitcast i8*%kg to i8**
+%ki=load i8*,i8**%kh,align 8
+store i8*%ki,i8**%j,align 8
+%kj=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%kk unwind label%nk
+kk:
+%kl=getelementptr inbounds i8,i8*%kj,i64 16
+%km=bitcast i8*%kl to i8*(i8*,i8*)**
+%kn=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%km,align 8
+%ko=bitcast i8*%kj to i8**
+%kp=load i8*,i8**%ko,align 8
+store i8*%kp,i8**%l,align 8
+%kq=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%kr unwind label%nk
+kr:
+%ks=getelementptr inbounds i8,i8*%kq,i64 16
+%kt=bitcast i8*%ks to i8*(i8*,i8*)**
+%ku=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%kt,align 8
+%kv=bitcast i8*%kq to i8**
+%kw=load i8*,i8**%kv,align 8
+store i8*%kw,i8**%k,align 8
+%kx=call i8*@sml_alloc(i32 inreg 20)#0
+%ky=getelementptr inbounds i8,i8*%kx,i64 -4
+%kz=bitcast i8*%ky to i32*
+store i32 1342177296,i32*%kz,align 4
+%kA=load i8*,i8**%i,align 8
+store i8*null,i8**%i,align 8
+%kB=bitcast i8*%kx to i8**
+store i8*%kA,i8**%kB,align 8
+%kC=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%kp=getelementptr inbounds i8,i8*%kj,i64 8
-%kq=bitcast i8*%kp to i8**
-store i8*%ko,i8**%kq,align 8
-%kr=getelementptr inbounds i8,i8*%kj,i64 16
-%ks=bitcast i8*%kr to i32*
-store i32 3,i32*%ks,align 4
-%kt=load i8*,i8**%m,align 8
-store i8*null,i8**%m,align 8
-%ku=invoke fastcc i8*%jy(i8*inreg%kt,i8*inreg%kj)
-to label%kv unwind label%mG
-kv:
-store i8*%ku,i8**%g,align 8
-%kw=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%kx unwind label%mG
-kx:
-%ky=getelementptr inbounds i8,i8*%kw,i64 16
-%kz=bitcast i8*%ky to i8*(i8*,i8*)**
-%kA=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%kz,align 8
-%kB=bitcast i8*%kw to i8**
-%kC=load i8*,i8**%kB,align 8
-store i8*%kC,i8**%i,align 8
-%kD=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-to label%kE unwind label%mG
-kE:
-%kF=getelementptr inbounds i8,i8*%kD,i64 16
-%kG=bitcast i8*%kF to i8*(i8*,i8*)**
-%kH=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%kG,align 8
-%kI=bitcast i8*%kD to i8**
-%kJ=load i8*,i8**%kI,align 8
-store i8*%kJ,i8**%h,align 8
+%kD=getelementptr inbounds i8,i8*%kx,i64 8
+%kE=bitcast i8*%kD to i8**
+store i8*%kC,i8**%kE,align 8
+%kF=getelementptr inbounds i8,i8*%kx,i64 16
+%kG=bitcast i8*%kF to i32*
+store i32 3,i32*%kG,align 4
+%kH=load i8*,i8**%k,align 8
+store i8*null,i8**%k,align 8
+%kI=invoke fastcc i8*%ku(i8*inreg%kH,i8*inreg%kx)
+to label%kJ unwind label%nk
+kJ:
+store i8*%kI,i8**%g,align 8
 %kK=call i8*@sml_alloc(i32 inreg 20)#0
 %kL=getelementptr inbounds i8,i8*%kK,i64 -4
 %kM=bitcast i8*%kL to i32*
 store i32 1342177296,i32*%kM,align 4
-%kN=load i8*,i8**%d,align 8
-store i8*null,i8**%d,align 8
+%kN=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
 %kO=bitcast i8*%kK to i8**
 store i8*%kN,i8**%kO,align 8
-%kP=load i8*,i8**%f,align 8
-store i8*null,i8**%f,align 8
+%kP=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
 %kQ=getelementptr inbounds i8,i8*%kK,i64 8
 %kR=bitcast i8*%kQ to i8**
 store i8*%kP,i8**%kR,align 8
 %kS=getelementptr inbounds i8,i8*%kK,i64 16
 %kT=bitcast i8*%kS to i32*
 store i32 3,i32*%kT,align 4
-%kU=load i8*,i8**%h,align 8
-store i8*null,i8**%h,align 8
-%kV=invoke fastcc i8*%kH(i8*inreg%kU,i8*inreg%kK)
-to label%kW unwind label%mG
+%kU=load i8*,i8**%l,align 8
+store i8*null,i8**%l,align 8
+%kV=invoke fastcc i8*%kn(i8*inreg%kU,i8*inreg%kK)
+to label%kW unwind label%nk
 kW:
-store i8*%kV,i8**%d,align 8
+store i8*%kV,i8**%g,align 8
 %kX=call i8*@sml_alloc(i32 inreg 20)#0
 %kY=getelementptr inbounds i8,i8*%kX,i64 -4
 %kZ=bitcast i8*%kY to i32*
 store i32 1342177296,i32*%kZ,align 4
-%k0=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
+%k0=load i8*,i8**%j,align 8
+store i8*null,i8**%j,align 8
 %k1=bitcast i8*%kX to i8**
 store i8*%k0,i8**%k1,align 8
-%k2=load i8*,i8**%d,align 8
-store i8*null,i8**%d,align 8
+%k2=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
 %k3=getelementptr inbounds i8,i8*%kX,i64 8
 %k4=bitcast i8*%k3 to i8**
 store i8*%k2,i8**%k4,align 8
 %k5=getelementptr inbounds i8,i8*%kX,i64 16
 %k6=bitcast i8*%k5 to i32*
 store i32 3,i32*%k6,align 4
-%k7=load i8*,i8**%i,align 8
-store i8*null,i8**%i,align 8
-%k8=invoke fastcc i8*%kA(i8*inreg%k7,i8*inreg%kX)
-to label%k9 unwind label%mG
+%k7=load i8*,i8**%m,align 8
+store i8*null,i8**%m,align 8
+%k8=invoke fastcc i8*%kc(i8*inreg%k7,i8*inreg%kX)
+to label%k9 unwind label%nk
 k9:
-store i8*%k8,i8**%d,align 8
-%la=bitcast i8**%c to i8***
-%lb=load i8**,i8***%la,align 8
-%lc=load i8*,i8**%lb,align 8
-store i8*%lc,i8**%f,align 8
-%ld=getelementptr inbounds i8*,i8**%lb,i64 1
-%le=load i8*,i8**%ld,align 8
-store i8*%le,i8**%g,align 8
-%lf=getelementptr inbounds i8*,i8**%lb,i64 2
+store i8*%k8,i8**%g,align 8
+%la=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%lb unwind label%nk
+lb:
+%lc=getelementptr inbounds i8,i8*%la,i64 16
+%ld=bitcast i8*%lc to i8*(i8*,i8*)**
+%le=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ld,align 8
+%lf=bitcast i8*%la to i8**
 %lg=load i8*,i8**%lf,align 8
-store i8*%lg,i8**%c,align 8
-%lh=invoke fastcc i8*@_SMLFN11NormalizeTy9reduceEnvE(i8*inreg%lc)
-to label%li unwind label%mG
+store i8*%lg,i8**%i,align 8
+%lh=invoke fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+to label%li unwind label%nk
 li:
-%lj=invoke fastcc i8*@_SMLFN9SymbolEnv3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
-to label%lk unwind label%mG
-lk:
-%ll=getelementptr inbounds i8,i8*%lj,i64 16
-%lm=bitcast i8*%ll to i8*(i8*,i8*)**
-%ln=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%lm,align 8
-%lo=bitcast i8*%lj to i8**
-%lp=load i8*,i8**%lo,align 8
-%lq=invoke fastcc i8*%ln(i8*inreg%lp,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cH,i64 0,i32 2)to i8*))
-to label%lr unwind label%mG
-lr:
-%ls=getelementptr inbounds i8,i8*%lq,i64 16
-%lt=bitcast i8*%ls to i8*(i8*,i8*)**
-%lu=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%lt,align 8
-%lv=bitcast i8*%lq to i8**
-%lw=load i8*,i8**%lv,align 8
-%lx=load i8*,i8**%g,align 8
-store i8*null,i8**%g,align 8
-%ly=invoke fastcc i8*%lu(i8*inreg%lw,i8*inreg%lx)
-to label%lz unwind label%mG
-lz:
-store i8*%ly,i8**%g,align 8
-%lA=invoke fastcc i8*@_SMLFN9SymbolEnv3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
-to label%lB unwind label%mG
-lB:
-%lC=getelementptr inbounds i8,i8*%lA,i64 16
-%lD=bitcast i8*%lC to i8*(i8*,i8*)**
-%lE=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%lD,align 8
-%lF=bitcast i8*%lA to i8**
-%lG=load i8*,i8**%lF,align 8
-%lH=invoke fastcc i8*%lE(i8*inreg%lG,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c9,i64 0,i32 2)to i8*))
-to label%lI unwind label%mG
-lI:
-%lJ=getelementptr inbounds i8,i8*%lH,i64 16
-%lK=bitcast i8*%lJ to i8*(i8*,i8*)**
-%lL=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%lK,align 8
-%lM=bitcast i8*%lH to i8**
-%lN=load i8*,i8**%lM,align 8
-%lO=load i8*,i8**%c,align 8
-store i8*null,i8**%c,align 8
-%lP=invoke fastcc i8*%lL(i8*inreg%lN,i8*inreg%lO)
-to label%lQ unwind label%mG
-lQ:
-store i8*%lP,i8**%c,align 8
-%lR=call i8*@sml_alloc(i32 inreg 28)#0
-%lS=getelementptr inbounds i8,i8*%lR,i64 -4
-%lT=bitcast i8*%lS to i32*
-store i32 1342177304,i32*%lT,align 4
-store i8*%lR,i8**%h,align 8
-%lU=load i8*,i8**%f,align 8
+%lj=getelementptr inbounds i8,i8*%lh,i64 16
+%lk=bitcast i8*%lj to i8*(i8*,i8*)**
+%ll=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%lk,align 8
+%lm=bitcast i8*%lh to i8**
+%ln=load i8*,i8**%lm,align 8
+store i8*%ln,i8**%h,align 8
+%lo=call i8*@sml_alloc(i32 inreg 20)#0
+%lp=getelementptr inbounds i8,i8*%lo,i64 -4
+%lq=bitcast i8*%lp to i32*
+store i32 1342177296,i32*%lq,align 4
+%lr=load i8*,i8**%d,align 8
+store i8*null,i8**%d,align 8
+%ls=bitcast i8*%lo to i8**
+store i8*%lr,i8**%ls,align 8
+%lt=load i8*,i8**%f,align 8
 store i8*null,i8**%f,align 8
-%lV=bitcast i8*%lR to i8**
-store i8*%lU,i8**%lV,align 8
-%lW=load i8*,i8**%g,align 8
+%lu=getelementptr inbounds i8,i8*%lo,i64 8
+%lv=bitcast i8*%lu to i8**
+store i8*%lt,i8**%lv,align 8
+%lw=getelementptr inbounds i8,i8*%lo,i64 16
+%lx=bitcast i8*%lw to i32*
+store i32 3,i32*%lx,align 4
+%ly=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%lz=invoke fastcc i8*%ll(i8*inreg%ly,i8*inreg%lo)
+to label%lA unwind label%nk
+lA:
+store i8*%lz,i8**%d,align 8
+%lB=call i8*@sml_alloc(i32 inreg 20)#0
+%lC=getelementptr inbounds i8,i8*%lB,i64 -4
+%lD=bitcast i8*%lC to i32*
+store i32 1342177296,i32*%lD,align 4
+%lE=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%lX=getelementptr inbounds i8,i8*%lR,i64 8
-%lY=bitcast i8*%lX to i8**
-store i8*%lW,i8**%lY,align 8
-%lZ=load i8*,i8**%c,align 8
-store i8*null,i8**%c,align 8
-%l0=getelementptr inbounds i8,i8*%lR,i64 16
-%l1=bitcast i8*%l0 to i8**
-store i8*%lZ,i8**%l1,align 8
-%l2=getelementptr inbounds i8,i8*%lR,i64 24
-%l3=bitcast i8*%l2 to i32*
-store i32 7,i32*%l3,align 4
-%l4=invoke fastcc i8*@_SMLFN14UserErrorUtils9getErrorsE(i32 inreg 0)
-to label%l5 unwind label%mG
+%lF=bitcast i8*%lB to i8**
+store i8*%lE,i8**%lF,align 8
+%lG=load i8*,i8**%d,align 8
+store i8*null,i8**%d,align 8
+%lH=getelementptr inbounds i8,i8*%lB,i64 8
+%lI=bitcast i8*%lH to i8**
+store i8*%lG,i8**%lI,align 8
+%lJ=getelementptr inbounds i8,i8*%lB,i64 16
+%lK=bitcast i8*%lJ to i32*
+store i32 3,i32*%lK,align 4
+%lL=load i8*,i8**%i,align 8
+store i8*null,i8**%i,align 8
+%lM=invoke fastcc i8*%le(i8*inreg%lL,i8*inreg%lB)
+to label%lN unwind label%nk
+lN:
+store i8*%lM,i8**%d,align 8
+%lO=bitcast i8**%c to i8***
+%lP=load i8**,i8***%lO,align 8
+%lQ=load i8*,i8**%lP,align 8
+store i8*%lQ,i8**%f,align 8
+%lR=getelementptr inbounds i8*,i8**%lP,i64 1
+%lS=load i8*,i8**%lR,align 8
+store i8*%lS,i8**%g,align 8
+%lT=getelementptr inbounds i8*,i8**%lP,i64 2
+%lU=load i8*,i8**%lT,align 8
+store i8*%lU,i8**%c,align 8
+%lV=invoke fastcc i8*@_SMLFN11NormalizeTy9reduceEnvE(i8*inreg%lQ)
+to label%lW unwind label%nk
+lW:
+%lX=invoke fastcc i8*@_SMLFN9SymbolEnv3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
+to label%lY unwind label%nk
+lY:
+%lZ=getelementptr inbounds i8,i8*%lX,i64 16
+%l0=bitcast i8*%lZ to i8*(i8*,i8*)**
+%l1=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l0,align 8
+%l2=bitcast i8*%lX to i8**
+%l3=load i8*,i8**%l2,align 8
+%l4=invoke fastcc i8*%l1(i8*inreg%l3,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cH,i64 0,i32 2)to i8*))
+to label%l5 unwind label%nk
 l5:
-%l6=icmp eq i8*%l4,null
-br i1%l6,label%l7,label%mq
-l7:
-%l8=invoke fastcc i8*@_SMLFN14UserErrorUtils11getWarningsE(i32 inreg 0)
-to label%l9 unwind label%mG
-l9:
-store i8*%l8,i8**%c,align 8
-%ma=call i8*@sml_alloc(i32 inreg 36)#0
-%mb=getelementptr inbounds i8,i8*%ma,i64 -4
-%mc=bitcast i8*%mb to i32*
-store i32 1342177312,i32*%mc,align 4
-%md=load i8*,i8**%d,align 8
-%me=bitcast i8*%ma to i8**
-store i8*%md,i8**%me,align 8
-%mf=load i8*,i8**%e,align 8
-%mg=getelementptr inbounds i8,i8*%ma,i64 8
-%mh=bitcast i8*%mg to i8**
-store i8*%mf,i8**%mh,align 8
-%mi=load i8*,i8**%h,align 8
-%mj=getelementptr inbounds i8,i8*%ma,i64 16
-%mk=bitcast i8*%mj to i8**
-store i8*%mi,i8**%mk,align 8
-%ml=load i8*,i8**%c,align 8
-%mm=getelementptr inbounds i8,i8*%ma,i64 24
-%mn=bitcast i8*%mm to i8**
-store i8*%ml,i8**%mn,align 8
-%mo=getelementptr inbounds i8,i8*%ma,i64 32
-%mp=bitcast i8*%mo to i32*
-store i32 15,i32*%mp,align 4
-ret i8*%ma
-mq:
+%l6=getelementptr inbounds i8,i8*%l4,i64 16
+%l7=bitcast i8*%l6 to i8*(i8*,i8*)**
+%l8=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l7,align 8
+%l9=bitcast i8*%l4 to i8**
+%ma=load i8*,i8**%l9,align 8
+%mb=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%mc=invoke fastcc i8*%l8(i8*inreg%ma,i8*inreg%mb)
+to label%md unwind label%nk
+md:
+store i8*%mc,i8**%g,align 8
+%me=invoke fastcc i8*@_SMLFN9SymbolEnv3mapE(i32 inreg 1,i32 inreg 8,i32 inreg 1,i32 inreg 8)
+to label%mf unwind label%nk
+mf:
+%mg=getelementptr inbounds i8,i8*%me,i64 16
+%mh=bitcast i8*%mg to i8*(i8*,i8*)**
+%mi=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%mh,align 8
+%mj=bitcast i8*%me to i8**
+%mk=load i8*,i8**%mj,align 8
+%ml=invoke fastcc i8*%mi(i8*inreg%mk,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c9,i64 0,i32 2)to i8*))
+to label%mm unwind label%nk
+mm:
+%mn=getelementptr inbounds i8,i8*%ml,i64 16
+%mo=bitcast i8*%mn to i8*(i8*,i8*)**
+%mp=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%mo,align 8
+%mq=bitcast i8*%ml to i8**
+%mr=load i8*,i8**%mq,align 8
+%ms=load i8*,i8**%c,align 8
+store i8*null,i8**%c,align 8
+%mt=invoke fastcc i8*%mp(i8*inreg%mr,i8*inreg%ms)
+to label%mu unwind label%nk
+mu:
+store i8*%mt,i8**%c,align 8
+%mv=call i8*@sml_alloc(i32 inreg 28)#0
+%mw=getelementptr inbounds i8,i8*%mv,i64 -4
+%mx=bitcast i8*%mw to i32*
+store i32 1342177304,i32*%mx,align 4
+store i8*%mv,i8**%h,align 8
+%my=load i8*,i8**%f,align 8
+store i8*null,i8**%f,align 8
+%mz=bitcast i8*%mv to i8**
+store i8*%my,i8**%mz,align 8
+%mA=load i8*,i8**%g,align 8
+store i8*null,i8**%g,align 8
+%mB=getelementptr inbounds i8,i8*%mv,i64 8
+%mC=bitcast i8*%mB to i8**
+store i8*%mA,i8**%mC,align 8
+%mD=load i8*,i8**%c,align 8
+store i8*null,i8**%c,align 8
+%mE=getelementptr inbounds i8,i8*%mv,i64 16
+%mF=bitcast i8*%mE to i8**
+store i8*%mD,i8**%mF,align 8
+%mG=getelementptr inbounds i8,i8*%mv,i64 24
+%mH=bitcast i8*%mG to i32*
+store i32 7,i32*%mH,align 4
+%mI=invoke fastcc i8*@_SMLFN14UserErrorUtils9getErrorsE(i32 inreg 0)
+to label%mJ unwind label%nk
+mJ:
+%mK=icmp eq i8*%mI,null
+br i1%mK,label%mL,label%m4
+mL:
+%mM=invoke fastcc i8*@_SMLFN14UserErrorUtils11getWarningsE(i32 inreg 0)
+to label%mN unwind label%nk
+mN:
+store i8*%mM,i8**%c,align 8
+%mO=call i8*@sml_alloc(i32 inreg 36)#0
+%mP=getelementptr inbounds i8,i8*%mO,i64 -4
+%mQ=bitcast i8*%mP to i32*
+store i32 1342177312,i32*%mQ,align 4
+%mR=load i8*,i8**%d,align 8
+%mS=bitcast i8*%mO to i8**
+store i8*%mR,i8**%mS,align 8
+%mT=load i8*,i8**%e,align 8
+%mU=getelementptr inbounds i8,i8*%mO,i64 8
+%mV=bitcast i8*%mU to i8**
+store i8*%mT,i8**%mV,align 8
+%mW=load i8*,i8**%h,align 8
+%mX=getelementptr inbounds i8,i8*%mO,i64 16
+%mY=bitcast i8*%mX to i8**
+store i8*%mW,i8**%mY,align 8
+%mZ=load i8*,i8**%c,align 8
+%m0=getelementptr inbounds i8,i8*%mO,i64 24
+%m1=bitcast i8*%m0 to i8**
+store i8*%mZ,i8**%m1,align 8
+%m2=getelementptr inbounds i8,i8*%mO,i64 32
+%m3=bitcast i8*%m2 to i32*
+store i32 15,i32*%m3,align 4
+ret i8*%mO
+m4:
 store i8*null,i8**%e,align 8
 store i8*null,i8**%d,align 8
 store i8*null,i8**%h,align 8
-%mr=load i8*,i8**@_SMLZN9UserError10UserErrorsE,align 8
-store i8*%mr,i8**%c,align 8
-%ms=invoke fastcc i8*@_SMLFN14UserErrorUtils20getErrorsAndWarningsE(i32 inreg 0)
-to label%mt unwind label%mG
-mt:
-store i8*%ms,i8**%d,align 8
-%mu=call i8*@sml_alloc(i32 inreg 28)#0
-%mv=getelementptr inbounds i8,i8*%mu,i64 -4
-%mw=bitcast i8*%mv to i32*
-store i32 1342177304,i32*%mw,align 4
-%mx=load i8*,i8**%c,align 8
-%my=bitcast i8*%mu to i8**
-store i8*%mx,i8**%my,align 8
-%mz=getelementptr inbounds i8,i8*%mu,i64 8
-%mA=bitcast i8*%mz to i8**
-store i8*getelementptr inbounds(<{[4x i8],i32,[76x i8]}>,<{[4x i8],i32,[76x i8]}>*@da,i64 0,i32 2,i64 0),i8**%mA,align 8
-%mB=load i8*,i8**%d,align 8
+%m5=load i8*,i8**@_SMLZN9UserError10UserErrorsE,align 8
+store i8*%m5,i8**%c,align 8
+%m6=invoke fastcc i8*@_SMLFN14UserErrorUtils20getErrorsAndWarningsE(i32 inreg 0)
+to label%m7 unwind label%nk
+m7:
+store i8*%m6,i8**%d,align 8
+%m8=call i8*@sml_alloc(i32 inreg 28)#0
+%m9=getelementptr inbounds i8,i8*%m8,i64 -4
+%na=bitcast i8*%m9 to i32*
+store i32 1342177304,i32*%na,align 4
+%nb=load i8*,i8**%c,align 8
+%nc=bitcast i8*%m8 to i8**
+store i8*%nb,i8**%nc,align 8
+%nd=getelementptr inbounds i8,i8*%m8,i64 8
+%ne=bitcast i8*%nd to i8**
+store i8*getelementptr inbounds(<{[4x i8],i32,[76x i8]}>,<{[4x i8],i32,[76x i8]}>*@da,i64 0,i32 2,i64 0),i8**%ne,align 8
+%nf=load i8*,i8**%d,align 8
 store i8*null,i8**%d,align 8
-%mC=getelementptr inbounds i8,i8*%mu,i64 16
-%mD=bitcast i8*%mC to i8**
-store i8*%mB,i8**%mD,align 8
-%mE=getelementptr inbounds i8,i8*%mu,i64 24
-%mF=bitcast i8*%mE to i32*
-store i32 7,i32*%mF,align 4
-store i8*%mu,i8**%c,align 8
-br label%mL
-mG:
-%mH=landingpad{i8*,i8*}
+%ng=getelementptr inbounds i8,i8*%m8,i64 16
+%nh=bitcast i8*%ng to i8**
+store i8*%nf,i8**%nh,align 8
+%ni=getelementptr inbounds i8,i8*%m8,i64 24
+%nj=bitcast i8*%ni to i32*
+store i32 7,i32*%nj,align 4
+store i8*%m8,i8**%c,align 8
+br label%np
+nk:
+%nl=landingpad{i8*,i8*}
 catch i8*null
-%mI=extractvalue{i8*,i8*}%mH,1
-%mJ=bitcast i8*%mI to i8**
-%mK=load i8*,i8**%mJ,align 8
+%nm=extractvalue{i8*,i8*}%nl,1
+%nn=bitcast i8*%nm to i8**
+%no=load i8*,i8**%nn,align 8
 store i8*null,i8**%e,align 8
 store i8*null,i8**%f,align 8
 store i8*null,i8**%h,align 8
@@ -37761,20 +37809,20 @@ store i8*null,i8**%m,align 8
 store i8*null,i8**%i,align 8
 store i8*null,i8**%d,align 8
 store i8*null,i8**%l,align 8
-store i8*%mK,i8**%c,align 8
-br label%mL
-mL:
-%mM=call i8*@sml_alloc(i32 inreg 60)#0
-%mN=getelementptr inbounds i8,i8*%mM,i64 -4
-%mO=bitcast i8*%mN to i32*
-store i32 1342177336,i32*%mO,align 4
-%mP=getelementptr inbounds i8,i8*%mM,i64 56
-%mQ=bitcast i8*%mP to i32*
-store i32 1,i32*%mQ,align 4
-%mR=load i8*,i8**%c,align 8
-%mS=bitcast i8*%mM to i8**
-store i8*%mR,i8**%mS,align 8
-call void@sml_raise(i8*inreg%mM)#1
+store i8*%no,i8**%c,align 8
+br label%np
+np:
+%nq=call i8*@sml_alloc(i32 inreg 60)#0
+%nr=getelementptr inbounds i8,i8*%nq,i64 -4
+%ns=bitcast i8*%nr to i32*
+store i32 1342177336,i32*%ns,align 4
+%nt=getelementptr inbounds i8,i8*%nq,i64 56
+%nu=bitcast i8*%nt to i32*
+store i32 1,i32*%nu,align 4
+%nv=load i8*,i8**%c,align 8
+%nw=bitcast i8*%nq to i8**
+store i8*%nv,i8**%nw,align 8
+call void@sml_raise(i8*inreg%nq)#1
 unreachable
 }
 define internal fastcc i8*@_SMLLLN8NameEval8nameEvalE_1233(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
@@ -37785,6 +37833,7 @@ define internal fastcc i8*@_SMLLLN8NameEval8nameEvalE_1233(i8*inreg%a,i8*inreg%b
 %g=alloca i8*,align 8
 %h=alloca i8*,align 8
 %i=alloca i8*,align 8
+%j=alloca i8*,align 8
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
 call void@llvm.gcroot(i8**%e,i8*null)#0
@@ -37792,142 +37841,160 @@ call void@llvm.gcroot(i8**%f,i8*null)#0
 call void@llvm.gcroot(i8**%g,i8*null)#0
 call void@llvm.gcroot(i8**%h,i8*null)#0
 call void@llvm.gcroot(i8**%i,i8*null)#0
-%j=bitcast i8*%b to i8**
-%k=load i8*,i8**%j,align 8
-store i8*%k,i8**%c,align 8
-%l=getelementptr inbounds i8,i8*%b,i64 8
-%m=bitcast i8*%l to i8**
-%n=load i8*,i8**%m,align 8
-store i8*%n,i8**%d,align 8
-%o=getelementptr inbounds i8,i8*%b,i64 16
-%p=bitcast i8*%o to i8**
-%q=load i8*,i8**%p,align 8
-store i8*%q,i8**%e,align 8
-%r=bitcast i8*%a to i8**
-%s=load i8*,i8**%r,align 8
-store i8*%s,i8**%f,align 8
-%t=getelementptr inbounds i8,i8*%a,i64 8
-%u=bitcast i8*%t to i8**
-%v=load i8*,i8**%u,align 8
-store i8*%v,i8**%g,align 8
-%w=getelementptr inbounds i8,i8*%a,i64 16
-%x=bitcast i8*%w to i8**
-%y=load i8*,i8**%x,align 8
-store i8*%y,i8**%h,align 8
-%z=call i8*@sml_alloc(i32 inreg 52)#0
-%A=getelementptr inbounds i8,i8*%z,i64 -4
-%B=bitcast i8*%A to i32*
-store i32 1342177328,i32*%B,align 4
-store i8*%z,i8**%i,align 8
-%C=load i8*,i8**%f,align 8
+call void@llvm.gcroot(i8**%j,i8*null)#0
+%k=bitcast i8*%b to i8**
+%l=load i8*,i8**%k,align 8
+store i8*%l,i8**%c,align 8
+%m=getelementptr inbounds i8,i8*%b,i64 8
+%n=bitcast i8*%m to i8**
+%o=load i8*,i8**%n,align 8
+store i8*%o,i8**%d,align 8
+%p=getelementptr inbounds i8,i8*%b,i64 16
+%q=bitcast i8*%p to i8**
+%r=load i8*,i8**%q,align 8
+store i8*%r,i8**%e,align 8
+%s=bitcast i8*%a to i8**
+%t=load i8*,i8**%s,align 8
+store i8*%t,i8**%f,align 8
+%u=getelementptr inbounds i8,i8*%a,i64 8
+%v=bitcast i8*%u to i8**
+%w=load i8*,i8**%v,align 8
+store i8*%w,i8**%g,align 8
+%x=getelementptr inbounds i8,i8*%a,i64 16
+%y=bitcast i8*%x to i8**
+%z=load i8*,i8**%y,align 8
+store i8*%z,i8**%h,align 8
+%A=getelementptr inbounds i8,i8*%a,i64 24
+%B=bitcast i8*%A to i8**
+%C=load i8*,i8**%B,align 8
+store i8*%C,i8**%i,align 8
+%D=call i8*@sml_alloc(i32 inreg 60)#0
+%E=getelementptr inbounds i8,i8*%D,i64 -4
+%F=bitcast i8*%E to i32*
+store i32 1342177336,i32*%F,align 4
+store i8*%D,i8**%j,align 8
+%G=load i8*,i8**%f,align 8
 store i8*null,i8**%f,align 8
-%D=bitcast i8*%z to i8**
-store i8*%C,i8**%D,align 8
-%E=load i8*,i8**%g,align 8
+%H=bitcast i8*%D to i8**
+store i8*%G,i8**%H,align 8
+%I=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%F=getelementptr inbounds i8,i8*%z,i64 8
-%G=bitcast i8*%F to i8**
-store i8*%E,i8**%G,align 8
-%H=load i8*,i8**%c,align 8
-store i8*null,i8**%c,align 8
-%I=getelementptr inbounds i8,i8*%z,i64 16
-%J=bitcast i8*%I to i8**
-store i8*%H,i8**%J,align 8
-%K=load i8*,i8**%d,align 8
-store i8*null,i8**%d,align 8
-%L=getelementptr inbounds i8,i8*%z,i64 24
-%M=bitcast i8*%L to i8**
-store i8*%K,i8**%M,align 8
-%N=load i8*,i8**%e,align 8
-store i8*null,i8**%e,align 8
-%O=getelementptr inbounds i8,i8*%z,i64 32
-%P=bitcast i8*%O to i8**
-store i8*%N,i8**%P,align 8
-%Q=load i8*,i8**%h,align 8
+%J=getelementptr inbounds i8,i8*%D,i64 8
+%K=bitcast i8*%J to i8**
+store i8*%I,i8**%K,align 8
+%L=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%R=getelementptr inbounds i8,i8*%z,i64 40
-%S=bitcast i8*%R to i8**
-store i8*%Q,i8**%S,align 8
-%T=getelementptr inbounds i8,i8*%z,i64 48
-%U=bitcast i8*%T to i32*
-store i32 63,i32*%U,align 4
-%V=call i8*@sml_alloc(i32 inreg 28)#0
-%W=getelementptr inbounds i8,i8*%V,i64 -4
-%X=bitcast i8*%W to i32*
-store i32 1342177304,i32*%X,align 4
-%Y=load i8*,i8**%i,align 8
-%Z=bitcast i8*%V to i8**
-store i8*%Y,i8**%Z,align 8
-%aa=getelementptr inbounds i8,i8*%V,i64 8
-%ab=bitcast i8*%aa to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1232 to void(...)*),void(...)**%ab,align 8
-%ac=getelementptr inbounds i8,i8*%V,i64 16
-%ad=bitcast i8*%ac to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1232 to void(...)*),void(...)**%ad,align 8
-%ae=getelementptr inbounds i8,i8*%V,i64 24
-%af=bitcast i8*%ae to i32*
-store i32 -2147483647,i32*%af,align 4
-ret i8*%V
+%M=getelementptr inbounds i8,i8*%D,i64 16
+%N=bitcast i8*%M to i8**
+store i8*%L,i8**%N,align 8
+%O=load i8*,i8**%c,align 8
+store i8*null,i8**%c,align 8
+%P=getelementptr inbounds i8,i8*%D,i64 24
+%Q=bitcast i8*%P to i8**
+store i8*%O,i8**%Q,align 8
+%R=load i8*,i8**%d,align 8
+store i8*null,i8**%d,align 8
+%S=getelementptr inbounds i8,i8*%D,i64 32
+%T=bitcast i8*%S to i8**
+store i8*%R,i8**%T,align 8
+%U=load i8*,i8**%e,align 8
+store i8*null,i8**%e,align 8
+%V=getelementptr inbounds i8,i8*%D,i64 40
+%W=bitcast i8*%V to i8**
+store i8*%U,i8**%W,align 8
+%X=load i8*,i8**%i,align 8
+store i8*null,i8**%i,align 8
+%Y=getelementptr inbounds i8,i8*%D,i64 48
+%Z=bitcast i8*%Y to i8**
+store i8*%X,i8**%Z,align 8
+%aa=getelementptr inbounds i8,i8*%D,i64 56
+%ab=bitcast i8*%aa to i32*
+store i32 127,i32*%ab,align 4
+%ac=call i8*@sml_alloc(i32 inreg 28)#0
+%ad=getelementptr inbounds i8,i8*%ac,i64 -4
+%ae=bitcast i8*%ad to i32*
+store i32 1342177304,i32*%ae,align 4
+%af=load i8*,i8**%j,align 8
+%ag=bitcast i8*%ac to i8**
+store i8*%af,i8**%ag,align 8
+%ah=getelementptr inbounds i8,i8*%ac,i64 8
+%ai=bitcast i8*%ah to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1232 to void(...)*),void(...)**%ai,align 8
+%aj=getelementptr inbounds i8,i8*%ac,i64 16
+%ak=bitcast i8*%aj to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1232 to void(...)*),void(...)**%ak,align 8
+%al=getelementptr inbounds i8,i8*%ac,i64 24
+%am=bitcast i8*%al to i32*
+store i32 -2147483647,i32*%am,align 4
+ret i8*%ac
 }
 define internal fastcc i8*@_SMLLLN8NameEval8nameEvalE_1234(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
 %e=alloca i8*,align 8
 %f=alloca i8*,align 8
+%g=alloca i8*,align 8
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
 call void@llvm.gcroot(i8**%e,i8*null)#0
 call void@llvm.gcroot(i8**%f,i8*null)#0
-%g=bitcast i8*%a to i8**
-%h=load i8*,i8**%g,align 8
-store i8*%h,i8**%c,align 8
-%i=getelementptr inbounds i8,i8*%a,i64 8
-%j=bitcast i8*%i to i8**
-%k=load i8*,i8**%j,align 8
-store i8*%k,i8**%d,align 8
-%l=getelementptr inbounds i8,i8*%a,i64 16
-%m=bitcast i8*%l to i8**
-%n=load i8*,i8**%m,align 8
-store i8*%n,i8**%e,align 8
-%o=call i8*@sml_alloc(i32 inreg 28)#0
-%p=getelementptr inbounds i8,i8*%o,i64 -4
-%q=bitcast i8*%p to i32*
-store i32 1342177304,i32*%q,align 4
+call void@llvm.gcroot(i8**%g,i8*null)#0
+store i8*%b,i8**%c,align 8
+%h=bitcast i8*%a to i8**
+%i=load i8*,i8**%h,align 8
+store i8*%i,i8**%d,align 8
+%j=getelementptr inbounds i8,i8*%a,i64 8
+%k=bitcast i8*%j to i8**
+%l=load i8*,i8**%k,align 8
+store i8*%l,i8**%e,align 8
+%m=getelementptr inbounds i8,i8*%a,i64 16
+%n=bitcast i8*%m to i8**
+%o=load i8*,i8**%n,align 8
 store i8*%o,i8**%f,align 8
-%r=load i8*,i8**%c,align 8
-store i8*null,i8**%c,align 8
-%s=bitcast i8*%o to i8**
-store i8*%r,i8**%s,align 8
-%t=load i8*,i8**%d,align 8
+%p=call i8*@sml_alloc(i32 inreg 36)#0
+%q=getelementptr inbounds i8,i8*%p,i64 -4
+%r=bitcast i8*%q to i32*
+store i32 1342177312,i32*%r,align 4
+store i8*%p,i8**%g,align 8
+%s=load i8*,i8**%d,align 8
 store i8*null,i8**%d,align 8
-%u=getelementptr inbounds i8,i8*%o,i64 8
-%v=bitcast i8*%u to i8**
-store i8*%t,i8**%v,align 8
-%w=load i8*,i8**%e,align 8
+%t=bitcast i8*%p to i8**
+store i8*%s,i8**%t,align 8
+%u=load i8*,i8**%e,align 8
 store i8*null,i8**%e,align 8
-%x=getelementptr inbounds i8,i8*%o,i64 16
-%y=bitcast i8*%x to i8**
-store i8*%w,i8**%y,align 8
-%z=getelementptr inbounds i8,i8*%o,i64 24
-%A=bitcast i8*%z to i32*
-store i32 7,i32*%A,align 4
-%B=call i8*@sml_alloc(i32 inreg 28)#0
-%C=getelementptr inbounds i8,i8*%B,i64 -4
-%D=bitcast i8*%C to i32*
-store i32 1342177304,i32*%D,align 4
-%E=load i8*,i8**%f,align 8
-%F=bitcast i8*%B to i8**
-store i8*%E,i8**%F,align 8
-%G=getelementptr inbounds i8,i8*%B,i64 8
-%H=bitcast i8*%G to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1233 to void(...)*),void(...)**%H,align 8
-%I=getelementptr inbounds i8,i8*%B,i64 16
-%J=bitcast i8*%I to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1233 to void(...)*),void(...)**%J,align 8
-%K=getelementptr inbounds i8,i8*%B,i64 24
-%L=bitcast i8*%K to i32*
-store i32 -2147483647,i32*%L,align 4
-ret i8*%B
+%v=getelementptr inbounds i8,i8*%p,i64 8
+%w=bitcast i8*%v to i8**
+store i8*%u,i8**%w,align 8
+%x=load i8*,i8**%c,align 8
+store i8*null,i8**%c,align 8
+%y=getelementptr inbounds i8,i8*%p,i64 16
+%z=bitcast i8*%y to i8**
+store i8*%x,i8**%z,align 8
+%A=load i8*,i8**%f,align 8
+store i8*null,i8**%f,align 8
+%B=getelementptr inbounds i8,i8*%p,i64 24
+%C=bitcast i8*%B to i8**
+store i8*%A,i8**%C,align 8
+%D=getelementptr inbounds i8,i8*%p,i64 32
+%E=bitcast i8*%D to i32*
+store i32 15,i32*%E,align 4
+%F=call i8*@sml_alloc(i32 inreg 28)#0
+%G=getelementptr inbounds i8,i8*%F,i64 -4
+%H=bitcast i8*%G to i32*
+store i32 1342177304,i32*%H,align 4
+%I=load i8*,i8**%g,align 8
+%J=bitcast i8*%F to i8**
+store i8*%I,i8**%J,align 8
+%K=getelementptr inbounds i8,i8*%F,i64 8
+%L=bitcast i8*%K to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1233 to void(...)*),void(...)**%L,align 8
+%M=getelementptr inbounds i8,i8*%F,i64 16
+%N=bitcast i8*%M to void(...)**
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8NameEval8nameEvalE_1233 to void(...)*),void(...)**%N,align 8
+%O=getelementptr inbounds i8,i8*%F,i64 24
+%P=bitcast i8*%O to i32*
+store i32 -2147483647,i32*%P,align 4
+ret i8*%F
 }
 define internal fastcc i8*@_SMLLL14topdecsInclude_1237(i8*inreg%a)#2 gc"smlsharp"{
 %b=alloca i8*,align 8
@@ -38728,7 +38795,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN8NameEval8nameEvalE_1234(i8*inreg%k,i8*inreg%h)
 ret i8*%l
@@ -38747,7 +38814,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvar380f9d662328e5c6_NameEval,i64 0,i32 2,i64 1)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[2x i8*]}>,<{[4x i8],i32,[2x i8*]}>*@_SML_gvare693f766e08e5c56_NameEval,i64 0,i32 2,i64 1)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN8NameEval17nameEvalInterfaceE_1249(i8*inreg%k,i8*inreg%h)
 ret i8*%l

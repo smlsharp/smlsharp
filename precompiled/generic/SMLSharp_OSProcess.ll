@@ -7,13 +7,13 @@
 @_SMLDL57=private global<{[4x i8],i32,i8*}><{[4x i8]zeroinitializer,i32 -1342177272,i8*null}>,align 8
 @e=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN18SMLSharp__OSProcess6atExitE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess6atExitE_89 to void(...)*),i32 -2147483647}>,align 8
 @f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN18SMLSharp__OSProcess7atExit_GE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess7atExit_GE_90 to void(...)*),i32 -2147483647}>,align 8
-@g=private unnamed_addr constant<{[4x i8],i32,[51x i8]}><{[4x i8]zeroinitializer,i32 -2147483597,[51x i8]c"src/basis/main/SMLSharp_OSProcess.sml:102.18(2298)\00"}>,align 8
+@g=private unnamed_addr constant<{[4x i8],i32,[51x i8]}><{[4x i8]zeroinitializer,i32 -2147483597,[51x i8]c"src/basis/main/SMLSharp_OSProcess.sml:102.18(2313)\00"}>,align 8
 @h=private unnamed_addr constant<{[4x i8],i32,[28x i8]}><{[4x i8]zeroinitializer,i32 -2147483620,[28x i8]c"cancelAtExit: tag not found\00"}>,align 8
 @i=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN18SMLSharp__OSProcess12cancelAtExitE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess12cancelAtExitE_91 to void(...)*),i32 -2147483647}>,align 8
 @j=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN18SMLSharp__OSProcess12rebindAtExitE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess12rebindAtExitE_92 to void(...)*),i32 -2147483647}>,align 8
 @k=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLLLN18SMLSharp__OSProcess4exitE_75 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess4exitE_93 to void(...)*),i32 1}>,align 8
 @l=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32,i32)*@_SMLFN18SMLSharp__OSProcess4exitE to void(...)*),void(...)*bitcast(i8*(i8*,i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess4exitE_94 to void(...)*),i32 -2147483647}>,align 8
-@m=private unnamed_addr constant<{[4x i8],i32,[49x i8]}><{[4x i8]zeroinitializer,i32 -2147483599,[49x i8]c"src/basis/main/SMLSharp_OSProcess.sml:48.13(970)\00"}>,align 8
+@m=private unnamed_addr constant<{[4x i8],i32,[49x i8]}><{[4x i8]zeroinitializer,i32 -2147483599,[49x i8]c"src/basis/main/SMLSharp_OSProcess.sml:48.13(985)\00"}>,align 8
 @n=private unnamed_addr constant<{[4x i8],i32,[21x i8]}><{[4x i8]zeroinitializer,i32 -2147483627,[21x i8]c"OS.Process.terminate\00"}>,align 8
 @o=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLLLN18SMLSharp__OSProcess9terminateE_81 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess9terminateE_95 to void(...)*),i32 1}>,align 8
 @p=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32,i32)*@_SMLFN18SMLSharp__OSProcess9terminateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*,i8*)*@_SMLLLN18SMLSharp__OSProcess9terminateE_96 to void(...)*),i32 -2147483647}>,align 8
@@ -35,6 +35,7 @@
 declare i8*@getenv(i8*)local_unnamed_addr#0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare void@prim_GenericOS_exit(i32)local_unnamed_addr
+declare i32@prim_GenericOS_system(i8*)local_unnamed_addr
 declare i32@sleep(i32)local_unnamed_addr
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -46,7 +47,6 @@ declare i32@sml_personality(...)#0
 declare void@sml_raise(i8*inreg)local_unnamed_addr#1
 declare i8*@sml_unsave_exn(i8*inreg)local_unnamed_addr#0
 declare void@sml_write(i8*inreg,i8**inreg,i8*inreg)local_unnamed_addr#0
-declare i32@system(i8*)local_unnamed_addr
 declare i8*@_SMLFN16SMLSharp__Runtime14str__new__optionE(i64 inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN16SMLSharp__Runtime9OS__SysErrE(i32 inreg)local_unnamed_addr#2 gc"smlsharp"
 declare i8*@_SMLFN4Time9toSecondsE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
@@ -113,7 +113,7 @@ br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
 call void@sml_leave()#0
-%j=invoke i32@system(i8*%h)
+%j=invoke i32@prim_GenericOS_system(i8*%h)
 to label%k unwind label%w
 k:
 call void@sml_enter()#0

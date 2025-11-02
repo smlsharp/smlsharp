@@ -102,14 +102,14 @@ declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#2 gc"smlsh
 declare void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb370edab64b2932f_NormalizeTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3acd53cad8d59eda_PrintControl()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main988b411893ed23b3_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main619d2077b5e00b1b_NameEvalUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindd2219ad180c9f83_TypedCalcUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainf69fe0bba23af74b_EvalIty()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maine50ffc2eeb7ed881_SmlppgUtil_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maine545d96575812f41_ReifiedTyData()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main9698ee3d6ec0ab2b_ReifyUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load1ef93e13728790b1_String(i8*)local_unnamed_addr
 declare void@_SML_loaddcdf3bbf6cbeefdd_SMLFormat(i8*)local_unnamed_addr
@@ -121,14 +121,14 @@ declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
 declare void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadb370edab64b2932f_NormalizeTy(i8*)local_unnamed_addr
 declare void@_SML_load3acd53cad8d59eda_PrintControl(i8*)local_unnamed_addr
-declare void@_SML_load988b411893ed23b3_NameEvalUtils(i8*)local_unnamed_addr
+declare void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*)local_unnamed_addr
 declare void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*)local_unnamed_addr
 declare void@_SML_loadf69fe0bba23af74b_EvalIty(i8*)local_unnamed_addr
 declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_loade50ffc2eeb7ed881_SmlppgUtil_ppg(i8*)local_unnamed_addr
 declare void@_SML_loade545d96575812f41_ReifiedTyData(i8*)local_unnamed_addr
 declare void@_SML_load9698ee3d6ec0ab2b_ReifyUtils(i8*)local_unnamed_addr
-declare void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*)local_unnamed_addr
+declare void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*)local_unnamed_addr
 define private void@_SML_tabbd9aa9cad8bccc45c_ReifyTopEnv()#3{
 unreachable
 }
@@ -151,14 +151,14 @@ tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
 tail call void@_SML_load3c026346e362bac5_NameEvalEnv_ppg(i8*%a)#0
 tail call void@_SML_loadb370edab64b2932f_NormalizeTy(i8*%a)#0
 tail call void@_SML_load3acd53cad8d59eda_PrintControl(i8*%a)#0
-tail call void@_SML_load988b411893ed23b3_NameEvalUtils(i8*%a)#0
+tail call void@_SML_load619d2077b5e00b1b_NameEvalUtils(i8*%a)#0
 tail call void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*%a)#0
 tail call void@_SML_loadf69fe0bba23af74b_EvalIty(i8*%a)#0
 tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_loade50ffc2eeb7ed881_SmlppgUtil_ppg(i8*%a)#0
 tail call void@_SML_loade545d96575812f41_ReifiedTyData(i8*%a)#0
 tail call void@_SML_load9698ee3d6ec0ab2b_ReifyUtils(i8*%a)#0
-tail call void@_SML_load858de1f0994f0ce6_NameEvalEnvPrims(i8*%a)#0
+tail call void@_SML_load8d228fa3ae36a949_NameEvalEnvPrims(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbd9aa9cad8bccc45c_ReifyTopEnv,i8*@_SML_ftabd9aa9cad8bccc45c_ReifyTopEnv,i8*null)#0
 ret void
 }
@@ -182,14 +182,14 @@ tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#2
 tail call void@_SML_main3c026346e362bac5_NameEvalEnv_ppg()#2
 tail call void@_SML_mainb370edab64b2932f_NormalizeTy()#2
 tail call void@_SML_main3acd53cad8d59eda_PrintControl()#2
-tail call void@_SML_main988b411893ed23b3_NameEvalUtils()#2
+tail call void@_SML_main619d2077b5e00b1b_NameEvalUtils()#2
 tail call void@_SML_maindd2219ad180c9f83_TypedCalcUtils()#2
 tail call void@_SML_mainf69fe0bba23af74b_EvalIty()#2
 tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
 tail call void@_SML_maine50ffc2eeb7ed881_SmlppgUtil_ppg()#2
 tail call void@_SML_maine545d96575812f41_ReifiedTyData()#2
 tail call void@_SML_main9698ee3d6ec0ab2b_ReifyUtils()#2
-tail call void@_SML_main858de1f0994f0ce6_NameEvalEnvPrims()#2
+tail call void@_SML_main8d228fa3ae36a949_NameEvalEnvPrims()#2
 br label%d
 }
 define internal fastcc i8*@_SMLLL3tyE_141(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{

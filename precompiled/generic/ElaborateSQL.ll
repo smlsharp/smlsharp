@@ -665,11 +665,11 @@
 @jL=private unnamed_addr constant<{[4x i8],i32,i32,[4x i8],i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i32 3,[4x i8]zeroinitializer,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[1x i8]}>,<{[4x i8],i32,[1x i8]}>*@jK,i32 0,i32 0,i32 0),i32 8),i32 2}>,align 8
 @jM=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN12ElaborateSQL12elaborateExpE_2616 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN12ElaborateSQL12elaborateExpE_2814 to void(...)*),i32 -2147483647}>,align 8
 @jN=private unnamed_addr constant<{[4x i8],i32,[73x i8]}><{[4x i8]zeroinitializer,i32 -2147483575,[73x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateSQL.sml:2125.6(72291)\00"}>,align 8
-@_SML_gvar836bb75000f35849_ElaborateSQL=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
-@jO=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar836bb75000f35849_ElaborateSQL,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@jO to i64))]
-@_SML_ftab836bb75000f35849_ElaborateSQL=external global i8
+@_SML_gvar96617dab657dbc4c_ElaborateSQL=private global<{[4x i8],i32,[1x i8*]}><{[4x i8]zeroinitializer,i32 -1342177272,[1x i8*]zeroinitializer}>,align 8
+@jO=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar96617dab657dbc4c_ElaborateSQL,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@jO to i64))]
+@_SML_ftab96617dab657dbc4c_ElaborateSQL=external global i8
 @jP=private unnamed_addr global i8 0
-@_SMLZN12ElaborateSQL12elaborateExpE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar836bb75000f35849_ElaborateSQL,i32 0,i32 2,i32 0)
+@_SMLZN12ElaborateSQL12elaborateExpE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar96617dab657dbc4c_ElaborateSQL,i32 0,i32 2,i32 0)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -737,7 +737,7 @@ declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindb294f1d9e8d1d62_ElaborateErrorSQL_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main66e345b3e3a504aa_Fixity()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5d4c3ea7bd6f9540_IntInf(i8*)local_unnamed_addr
@@ -752,13 +752,13 @@ declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
-declare void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*)local_unnamed_addr
+declare void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddb294f1d9e8d1d62_ElaborateErrorSQL_ppg(i8*)local_unnamed_addr
 declare void@_SML_load66e345b3e3a504aa_Fixity(i8*)local_unnamed_addr
-define private void@_SML_tabb836bb75000f35849_ElaborateSQL()#3{
+define private void@_SML_tabb96617dab657dbc4c_ElaborateSQL()#3{
 unreachable
 }
-define void@_SML_load836bb75000f35849_ElaborateSQL(i8*%a)local_unnamed_addr#0{
+define void@_SML_load96617dab657dbc4c_ElaborateSQL(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@jP,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -778,13 +778,13 @@ tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
-tail call void@_SML_loadd0c024bd2a6395e7_ElaborateError_ppg(i8*%a)#0
+tail call void@_SML_load6199b7c8920aa67e_ElaborateError_ppg(i8*%a)#0
 tail call void@_SML_loaddb294f1d9e8d1d62_ElaborateErrorSQL_ppg(i8*%a)#0
 tail call void@_SML_load66e345b3e3a504aa_Fixity(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb836bb75000f35849_ElaborateSQL,i8*@_SML_ftab836bb75000f35849_ElaborateSQL,i8*bitcast([2x i64]*@jO to i8*))#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb96617dab657dbc4c_ElaborateSQL,i8*@_SML_ftab96617dab657dbc4c_ElaborateSQL,i8*bitcast([2x i64]*@jO to i8*))#0
 ret void
 }
-define void@_SML_main836bb75000f35849_ElaborateSQL()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_main96617dab657dbc4c_ElaborateSQL()local_unnamed_addr#2 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -811,7 +811,7 @@ tail call void@_SML_main89b8631430c545af_Symbol()#2
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()#2
-tail call void@_SML_maind0c024bd2a6395e7_ElaborateError_ppg()#2
+tail call void@_SML_main6199b7c8920aa67e_ElaborateError_ppg()#2
 tail call void@_SML_maindb294f1d9e8d1d62_ElaborateErrorSQL_ppg()#2
 tail call void@_SML_main66e345b3e3a504aa_Fixity()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0
@@ -1183,7 +1183,7 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN12ElaborateSQL12elaborateExpE_2639 
 %do=getelementptr inbounds i8,i8*%df,i64 24
 %dp=bitcast i8*%do to i32*
 store i32 -2147483647,i32*%dp,align 4
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar836bb75000f35849_ElaborateSQL,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar836bb75000f35849_ElaborateSQL,i64 0,i32 2,i64 0),i8*inreg%df)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar96617dab657dbc4c_ElaborateSQL,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar96617dab657dbc4c_ElaborateSQL,i64 0,i32 2,i64 0),i8*inreg%df)#0
 call void@sml_end()#0
 ret void
 dq:
@@ -82987,7 +82987,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar836bb75000f35849_ElaborateSQL,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[1x i8*]}>,<{[4x i8],i32,[1x i8*]}>*@_SML_gvar96617dab657dbc4c_ElaborateSQL,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN12ElaborateSQL12elaborateExpE_2639(i8*inreg%k,i8*inreg%h)
 ret i8*%l

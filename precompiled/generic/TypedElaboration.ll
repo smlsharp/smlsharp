@@ -38,7 +38,7 @@
 @A=private unnamed_addr constant<{[4x i8],i32,[83x i8]}><{[4x i8]zeroinitializer,i32 -2147483565,[83x i8]c"src/compiler/compilePhases/typedelaboration/main/TypedElaboration.sml:252.26(9240)\00"}>,align 8
 @B=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN16TypedElaboration9elaborateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN16TypedElaboration9elaborateE_225 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN16TypedElaboration9elaborateE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@B,i64 0,i32 2)to i8*)
-@_SML_ftabbf3e25289f93b16e_TypedElaboration=external global i8
+@_SML_ftab7fd4df22d713a048_TypedElaboration=external global i8
 @C=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -79,10 +79,10 @@ declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
 declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_loadb6dd219206362ccf_TypedElaborationError_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabbbf3e25289f93b16e_TypedElaboration()#3{
+define private void@_SML_tabb7fd4df22d713a048_TypedElaboration()#3{
 unreachable
 }
-define void@_SML_loadbf3e25289f93b16e_TypedElaboration(i8*%a)local_unnamed_addr#0{
+define void@_SML_load7fd4df22d713a048_TypedElaboration(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@C,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -99,10 +99,10 @@ tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
 tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_loadb6dd219206362ccf_TypedElaborationError_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbbf3e25289f93b16e_TypedElaboration,i8*@_SML_ftabbf3e25289f93b16e_TypedElaboration,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb7fd4df22d713a048_TypedElaboration,i8*@_SML_ftab7fd4df22d713a048_TypedElaboration,i8*null)#0
 ret void
 }
-define void@_SML_mainbf3e25289f93b16e_TypedElaboration()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main7fd4df22d713a048_TypedElaboration()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@C,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0

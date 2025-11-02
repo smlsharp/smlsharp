@@ -757,14 +757,14 @@
 @kd=private unnamed_addr constant<{[4x i8],i32,[78x i8]}><{[4x i8]zeroinitializer,i32 -2147483570,[78x i8]c"src/compiler/compilePhases/typeinference/main/InferTypes2.sml:6423.36(259278)\00"}>,align 8
 @ke=private unnamed_addr constant<{[4x i8],i32,[4x i8]}><{[4x i8]zeroinitializer,i32 -2147483644,[4x i8]c"065\00"}>,align 8
 @kf=private unnamed_addr constant<{[4x i8],i32,[78x i8]}><{[4x i8]zeroinitializer,i32 -2147483570,[78x i8]c"src/compiler/compilePhases/typeinference/main/InferTypes2.sml:6444.18(260015)\00"}>,align 8
-@_SML_gvar1c0c6fd94420f6da_InferTypes2=private global<{[4x i8],i32,[3x i8*]}><{[4x i8]zeroinitializer,i32 -1342177256,[3x i8*]zeroinitializer}>,align 8
-@kg=private unnamed_addr global[4x i64][i64 3,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([4x i64]*@kg to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL1214,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([4x i64]*@kg to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL1215,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([4x i64]*@kg to i64))]
-@_SML_ftab1c0c6fd94420f6da_InferTypes2=external global i8
+@_SML_gvar01038ae35077caae_InferTypes2=private global<{[4x i8],i32,[3x i8*]}><{[4x i8]zeroinitializer,i32 -1342177256,[3x i8*]zeroinitializer}>,align 8
+@kg=private unnamed_addr global[4x i64][i64 3,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([4x i64]*@kg to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL1214,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([4x i64]*@kg to i64)),i64 sub(i64 ptrtoint(i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL1215,i32 0,i32 0,i32 0),i32 8)to i64),i64 ptrtoint([4x i64]*@kg to i64))]
+@_SML_ftab01038ae35077caae_InferTypes2=external global i8
 @kh=private unnamed_addr global i8 0
 @ki=internal unnamed_addr global i32 0,align 8
-@_SMLZN10InferTypes12typeinfDeclsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i32 0,i32 2,i32 0)
-@_SMLZN10InferTypes7typeinfE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i32 0,i32 2,i32 1)
-@_SMLZN10InferTypes11typeinfBodyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i32 0,i32 2,i32 2)
+@_SMLZN10InferTypes12typeinfDeclsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i32 0,i32 2,i32 0)
+@_SMLZN10InferTypes7typeinfE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i32 0,i32 2,i32 1)
+@_SMLZN10InferTypes11typeinfBodyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i32 0,i32 2,i32 2)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -998,10 +998,10 @@ declare void@_SML_load26c42bd4692c6153_TypeInferenceUtils(i8*)local_unnamed_addr
 declare void@_SML_load9a7bdc217e1faf83_Printers(i8*)local_unnamed_addr
 declare void@_SML_load12115ed0686506e2_CompileDynamicCase(i8*)local_unnamed_addr
 declare void@_SML_loadae6cb4c6f80c47b4_CoerceRank1(i8*)local_unnamed_addr
-define private void@_SML_tabb1c0c6fd94420f6da_InferTypes2()#3{
+define private void@_SML_tabb01038ae35077caae_InferTypes2()#3{
 unreachable
 }
-define void@_SML_load1c0c6fd94420f6da_InferTypes2(i8*%a)local_unnamed_addr#0{
+define void@_SML_load01038ae35077caae_InferTypes2(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@kh,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -1046,10 +1046,10 @@ tail call void@_SML_load26c42bd4692c6153_TypeInferenceUtils(i8*%a)#0
 tail call void@_SML_load9a7bdc217e1faf83_Printers(i8*%a)#0
 tail call void@_SML_load12115ed0686506e2_CompileDynamicCase(i8*%a)#0
 tail call void@_SML_loadae6cb4c6f80c47b4_CoerceRank1(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb1c0c6fd94420f6da_InferTypes2,i8*@_SML_ftab1c0c6fd94420f6da_InferTypes2,i8*bitcast([4x i64]*@kg to i8*))#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb01038ae35077caae_InferTypes2,i8*@_SML_ftab01038ae35077caae_InferTypes2,i8*bitcast([4x i64]*@kg to i8*))#0
 ret void
 }
-define void@_SML_main1c0c6fd94420f6da_InferTypes2()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main01038ae35077caae_InferTypes2()local_unnamed_addr#2 gc"smlsharp"{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -1420,10 +1420,10 @@ store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN10InferTypes11typeinfBodyE_2763 to 
 %cJ=bitcast i8*%cI to i32*
 store i32 -2147483647,i32*%cJ,align 4
 %cK=load i8*,i8**%c,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 0),i8*inreg%cK)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 0),i8*inreg%cK)#0
 %cL=load i8*,i8**%e,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 1),i8*inreg%cL)#0
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 2),i8*inreg%cz)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 1),i8*inreg%cL)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 2),i8*inreg%cz)#0
 call void@sml_end()#0
 ret void
 }
@@ -79111,7 +79111,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 0)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 0)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN10InferTypes12typeinfDeclsE_2760(i8*inreg%k,i8*inreg%h)
 ret i8*%l
@@ -79130,7 +79130,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 1)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 1)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN10InferTypes7typeinfE_2762(i8*inreg%k,i8*inreg%h)
 ret i8*%l
@@ -79149,7 +79149,7 @@ call void@sml_check(i32 inreg%c)
 br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
-%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar1c0c6fd94420f6da_InferTypes2,i64 0,i32 2,i64 2)to i8***),align 8
+%j=load i8**,i8***bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvar01038ae35077caae_InferTypes2,i64 0,i32 2,i64 2)to i8***),align 8
 %k=load i8*,i8**%j,align 8
 %l=tail call fastcc i8*@_SMLLLN10InferTypes11typeinfBodyE_2763(i8*inreg%k,i8*inreg%h)
 ret i8*%l

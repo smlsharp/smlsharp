@@ -273,7 +273,7 @@
 @_SMLZN14AbsynInterface16format__interfaceE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cC,i64 0,i32 2)to i8*)
 @_SMLZN14AbsynInterface19format__compile__unitE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@cJ,i64 0,i32 2)to i8*)
 @_SMLZN14AbsynInterface21format__interface__unitE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@dh,i64 0,i32 2)to i8*)
-@_SML_ftabef1f86c7cf76d13d_AbsynInterface_ppg=external global i8
+@_SML_ftabd1ec26aac545e947_AbsynInterface_ppg=external global i8
 @di=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -307,7 +307,7 @@ declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp
 declare void@_SML_main3a6a3f6785231de5_TermFormat()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maine50ffc2eeb7ed881_SmlppgUtil_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main97ec6533be83b3ae_RequirePath()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main21654607a9df0bc5_AbsynFormatter()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main01a95bc3c1817707_AbsynFormatter()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainf5e91d3050f53d4b_AbsynTyFormatter()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*)local_unnamed_addr
@@ -317,13 +317,13 @@ declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load3a6a3f6785231de5_TermFormat(i8*)local_unnamed_addr
 declare void@_SML_loade50ffc2eeb7ed881_SmlppgUtil_ppg(i8*)local_unnamed_addr
 declare void@_SML_load97ec6533be83b3ae_RequirePath(i8*)local_unnamed_addr
-declare void@_SML_load21654607a9df0bc5_AbsynFormatter(i8*)local_unnamed_addr
+declare void@_SML_load01a95bc3c1817707_AbsynFormatter(i8*)local_unnamed_addr
 declare void@_SML_loadf5e91d3050f53d4b_AbsynTyFormatter(i8*)local_unnamed_addr
 declare void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabbef1f86c7cf76d13d_AbsynInterface_ppg()#3{
+define private void@_SML_tabbd1ec26aac545e947_AbsynInterface_ppg()#3{
 unreachable
 }
-define void@_SML_loadef1f86c7cf76d13d_AbsynInterface_ppg(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadd1ec26aac545e947_AbsynInterface_ppg(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@di,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -338,13 +338,13 @@ tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load3a6a3f6785231de5_TermFormat(i8*%a)#0
 tail call void@_SML_loade50ffc2eeb7ed881_SmlppgUtil_ppg(i8*%a)#0
 tail call void@_SML_load97ec6533be83b3ae_RequirePath(i8*%a)#0
-tail call void@_SML_load21654607a9df0bc5_AbsynFormatter(i8*%a)#0
+tail call void@_SML_load01a95bc3c1817707_AbsynFormatter(i8*%a)#0
 tail call void@_SML_loadf5e91d3050f53d4b_AbsynTyFormatter(i8*%a)#0
 tail call void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbef1f86c7cf76d13d_AbsynInterface_ppg,i8*@_SML_ftabef1f86c7cf76d13d_AbsynInterface_ppg,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbd1ec26aac545e947_AbsynInterface_ppg,i8*@_SML_ftabd1ec26aac545e947_AbsynInterface_ppg,i8*null)#0
 ret void
 }
-define void@_SML_mainef1f86c7cf76d13d_AbsynInterface_ppg()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_maind1ec26aac545e947_AbsynInterface_ppg()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@di,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0
@@ -360,7 +360,7 @@ tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main3a6a3f6785231de5_TermFormat()#2
 tail call void@_SML_maine50ffc2eeb7ed881_SmlppgUtil_ppg()#2
 tail call void@_SML_main97ec6533be83b3ae_RequirePath()#2
-tail call void@_SML_main21654607a9df0bc5_AbsynFormatter()#2
+tail call void@_SML_main01a95bc3c1817707_AbsynFormatter()#2
 tail call void@_SML_mainf5e91d3050f53d4b_AbsynTyFormatter()#2
 tail call void@_SML_mainb4dea6a4db82451c_InterfaceName_ppg()#2
 br label%d

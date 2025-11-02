@@ -112,7 +112,7 @@
 @_SMLZN7TopData12printOptionsE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@au,i64 0,i32 2)to i8*)
 @_SMLZN7TopData22UnsupportedPointerSizeE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL179,i64 0,i32 2)to i8*)
 @_SMLZN7TopData14IllegalBuiltinE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL182,i64 0,i32 2)to i8*)
-@_SML_ftab7949eded8c9f4edc_TopData_ppg=external global i8
+@_SML_ftab8c1c05374b665b7e_TopData_ppg=external global i8
 @aV=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -142,10 +142,10 @@ declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loade29d9c3af819282f_Filename(i8*)local_unnamed_addr
 declare void@_SML_load3a6a3f6785231de5_TermFormat(i8*)local_unnamed_addr
 declare void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabb7949eded8c9f4edc_TopData_ppg()#3{
+define private void@_SML_tabb8c1c05374b665b7e_TopData_ppg()#3{
 unreachable
 }
-define void@_SML_load7949eded8c9f4edc_TopData_ppg(i8*%a)local_unnamed_addr#0{
+define void@_SML_load8c1c05374b665b7e_TopData_ppg(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@aV,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -159,10 +159,10 @@ tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loade29d9c3af819282f_Filename(i8*%a)#0
 tail call void@_SML_load3a6a3f6785231de5_TermFormat(i8*%a)#0
 tail call void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb7949eded8c9f4edc_TopData_ppg,i8*@_SML_ftab7949eded8c9f4edc_TopData_ppg,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb8c1c05374b665b7e_TopData_ppg,i8*@_SML_ftab8c1c05374b665b7e_TopData_ppg,i8*null)#0
 ret void
 }
-define void@_SML_main7949eded8c9f4edc_TopData_ppg()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main8c1c05374b665b7e_TopData_ppg()local_unnamed_addr#2 gc"smlsharp"{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8

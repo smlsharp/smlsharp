@@ -1082,7 +1082,7 @@
 @_SMLZN13NameEvalError15InvalidKindNameE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL856,i64 0,i32 2)to i8*)
 @_SMLZN13NameEvalError20FlexRecordNotAllowedE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL862,i64 0,i32 2)to i8*)
 @_SMLZN13NameEvalError37LIFTEDPropNotAllowedInOpaqueInterfaceE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL865,i64 0,i32 2)to i8*)
-@_SML_ftab29883837b3db2401_NameEvalError_ppg=external global i8
+@_SML_ftabc11d308d47afe714_NameEvalError_ppg=external global i8
 @mh=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -1103,19 +1103,19 @@ declare i8*@_SMLFN6Symbol17format__longsymbolE(i8*inreg)local_unnamed_addr#1 gc"
 declare void@_SML_main6ad4d8e473c26a9c_BasicFormatters()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#1 gc"smlsharp"
-declare void@_SML_main21654607a9df0bc5_AbsynFormatter()local_unnamed_addr#1 gc"smlsharp"
+declare void@_SML_main01a95bc3c1817707_AbsynFormatter()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_mainf8ed1283b35dea30_PatternCalc_ppg()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
-declare void@_SML_load21654607a9df0bc5_AbsynFormatter(i8*)local_unnamed_addr
+declare void@_SML_load01a95bc3c1817707_AbsynFormatter(i8*)local_unnamed_addr
 declare void@_SML_loadf8ed1283b35dea30_PatternCalc_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabb29883837b3db2401_NameEvalError_ppg()#2{
+define private void@_SML_tabbc11d308d47afe714_NameEvalError_ppg()#2{
 unreachable
 }
-define void@_SML_load29883837b3db2401_NameEvalError_ppg(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadc11d308d47afe714_NameEvalError_ppg(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@mh,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -1126,13 +1126,13 @@ store i8 1,i8*@mh,align 1
 tail call void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
-tail call void@_SML_load21654607a9df0bc5_AbsynFormatter(i8*%a)#0
+tail call void@_SML_load01a95bc3c1817707_AbsynFormatter(i8*%a)#0
 tail call void@_SML_loadf8ed1283b35dea30_PatternCalc_ppg(i8*%a)#0
 tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb29883837b3db2401_NameEvalError_ppg,i8*@_SML_ftab29883837b3db2401_NameEvalError_ppg,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbc11d308d47afe714_NameEvalError_ppg,i8*@_SML_ftabc11d308d47afe714_NameEvalError_ppg,i8*null)#0
 ret void
 }
-define void@_SML_main29883837b3db2401_NameEvalError_ppg()local_unnamed_addr#1 gc"smlsharp"{
+define void@_SML_mainc11d308d47afe714_NameEvalError_ppg()local_unnamed_addr#1 gc"smlsharp"{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -1147,7 +1147,7 @@ store i8 3,i8*@mh,align 1
 tail call void@_SML_main6ad4d8e473c26a9c_BasicFormatters()#1
 tail call void@_SML_main89b8631430c545af_Symbol()#1
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#1
-tail call void@_SML_main21654607a9df0bc5_AbsynFormatter()#1
+tail call void@_SML_main01a95bc3c1817707_AbsynFormatter()#1
 tail call void@_SML_mainf8ed1283b35dea30_PatternCalc_ppg()#1
 tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#1
 call void@llvm.gcroot(i8**%b,i8*null)#0

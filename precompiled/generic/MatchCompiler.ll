@@ -247,7 +247,7 @@ declare void@_SML_maine7eca9e7f5c591d9_CodeLabel()local_unnamed_addr#2 gc"smlsha
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc5cea417ede7da8a_IEnv()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main74af8aadffed1774_VarInfoEnv()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main7833b15b41d4b824_TypesBasics()local_unnamed_addr#2 gc"smlsharp"
@@ -267,7 +267,7 @@ declare void@_SML_loade7eca9e7f5c591d9_CodeLabel(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_loadc5cea417ede7da8a_IEnv(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_load74af8aadffed1774_VarInfoEnv(i8*)local_unnamed_addr
 declare void@_SML_load7833b15b41d4b824_TypesBasics(i8*)local_unnamed_addr
@@ -298,7 +298,7 @@ tail call void@_SML_loade7eca9e7f5c591d9_CodeLabel(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_loadc5cea417ede7da8a_IEnv(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_load74af8aadffed1774_VarInfoEnv(i8*%a)#0
 tail call void@_SML_load7833b15b41d4b824_TypesBasics(i8*%a)#0
@@ -330,7 +330,7 @@ tail call void@_SML_maine7eca9e7f5c591d9_CodeLabel()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_mainc5cea417ede7da8a_IEnv()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
 tail call void@_SML_main74af8aadffed1774_VarInfoEnv()#2
 tail call void@_SML_main7833b15b41d4b824_TypesBasics()#2

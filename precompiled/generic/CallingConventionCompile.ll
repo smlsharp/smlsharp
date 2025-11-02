@@ -140,7 +140,7 @@ declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maine7eca9e7f5c591d9_CodeLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc330b05c37e9b696_TypeLayout2()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main7833b15b41d4b824_TypesBasics()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loaddaa180c1799f3810_Bool(i8*)local_unnamed_addr
@@ -154,7 +154,7 @@ declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_loade7eca9e7f5c591d9_CodeLabel(i8*)local_unnamed_addr
 declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_loadc330b05c37e9b696_TypeLayout2(i8*)local_unnamed_addr
 declare void@_SML_load7833b15b41d4b824_TypesBasics(i8*)local_unnamed_addr
 define private void@_SML_tabb81cb7d931a2a376f_CallingConventionCompile()#3{
@@ -179,7 +179,7 @@ tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_loade7eca9e7f5c591d9_CodeLabel(i8*%a)#0
 tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_loadc330b05c37e9b696_TypeLayout2(i8*%a)#0
 tail call void@_SML_load7833b15b41d4b824_TypesBasics(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb81cb7d931a2a376f_CallingConventionCompile,i8*@_SML_ftab81cb7d931a2a376f_CallingConventionCompile,i8*bitcast([2x i64]*@as to i8*))#0
@@ -209,7 +209,7 @@ tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
 tail call void@_SML_maine7eca9e7f5c591d9_CodeLabel()#2
 tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_mainc330b05c37e9b696_TypeLayout2()#2
 tail call void@_SML_main7833b15b41d4b824_TypesBasics()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0

@@ -13,7 +13,7 @@
 @g=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN15InterfaceParser5parseE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15InterfaceParser5parseE_47 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN15InterfaceParser5setupE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
 @_SMLZN15InterfaceParser5parseE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@g,i64 0,i32 2)to i8*)
-@_SML_ftababa4fad986a277bc_InterfaceParser=external global i8
+@_SML_ftabf9cca1d00519fee2_InterfaceParser=external global i8
 @h=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -32,20 +32,20 @@ declare i32@_SMLFN9UserError17isEmptyErrorQueueE(i8*inreg)local_unnamed_addr#2 g
 declare i8*@_SMLFN9UserError9getErrorsE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_mainfc945e814b73aec9_interface_grm()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main76e66750c46dd9d2_interface_lex()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main6aa5512c10d61eeb_interface_grm()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_maine0066906b720739f_interface_lex()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main40724fe7152bd191_ParserError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
-declare void@_SML_loadfc945e814b73aec9_interface_grm(i8*)local_unnamed_addr
-declare void@_SML_load76e66750c46dd9d2_interface_lex(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
+declare void@_SML_load6aa5512c10d61eeb_interface_grm(i8*)local_unnamed_addr
+declare void@_SML_loade0066906b720739f_interface_lex(i8*)local_unnamed_addr
 declare void@_SML_load40724fe7152bd191_ParserError_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabbaba4fad986a277bc_InterfaceParser()#3{
+define private void@_SML_tabbf9cca1d00519fee2_InterfaceParser()#3{
 unreachable
 }
-define void@_SML_loadaba4fad986a277bc_InterfaceParser(i8*%a)local_unnamed_addr#0{
+define void@_SML_loadf9cca1d00519fee2_InterfaceParser(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@h,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -55,14 +55,14 @@ e:
 store i8 1,i8*@h,align 1
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
-tail call void@_SML_loadfc945e814b73aec9_interface_grm(i8*%a)#0
-tail call void@_SML_load76e66750c46dd9d2_interface_lex(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
+tail call void@_SML_load6aa5512c10d61eeb_interface_grm(i8*%a)#0
+tail call void@_SML_loade0066906b720739f_interface_lex(i8*%a)#0
 tail call void@_SML_load40724fe7152bd191_ParserError_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbaba4fad986a277bc_InterfaceParser,i8*@_SML_ftababa4fad986a277bc_InterfaceParser,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbf9cca1d00519fee2_InterfaceParser,i8*@_SML_ftabf9cca1d00519fee2_InterfaceParser,i8*null)#0
 ret void
 }
-define void@_SML_mainaba4fad986a277bc_InterfaceParser()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_mainf9cca1d00519fee2_InterfaceParser()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@h,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0
@@ -73,9 +73,9 @@ e:
 store i8 3,i8*@h,align 1
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
-tail call void@_SML_mainfc945e814b73aec9_interface_grm()#2
-tail call void@_SML_main76e66750c46dd9d2_interface_lex()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
+tail call void@_SML_main6aa5512c10d61eeb_interface_grm()#2
+tail call void@_SML_maine0066906b720739f_interface_lex()#2
 tail call void@_SML_main40724fe7152bd191_ParserError_ppg()#2
 br label%d
 }

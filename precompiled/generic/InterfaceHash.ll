@@ -26,7 +26,7 @@
 @w=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLFN13InterfaceHash9emptyHashE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN13InterfaceHash9emptyHashE_130 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN13InterfaceHash8generateE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@u,i64 0,i32 2)to i8*)
 @_SMLZN13InterfaceHash9emptyHashE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@w,i64 0,i32 2)to i8*)
-@_SML_ftab63e9bb734a35efba_InterfaceHash=external global i8
+@_SML_ftab65908cf160b27f6e_InterfaceHash=external global i8
 @x=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -57,10 +57,10 @@ declare void@_SML_loade29d9c3af819282f_Filename(i8*)local_unnamed_addr
 declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
 declare void@_SML_load92a9fd50084b022c_ListSorter(i8*)local_unnamed_addr
 declare void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*)local_unnamed_addr
-define private void@_SML_tabb63e9bb734a35efba_InterfaceHash()#3{
+define private void@_SML_tabb65908cf160b27f6e_InterfaceHash()#3{
 unreachable
 }
-define void@_SML_load63e9bb734a35efba_InterfaceHash(i8*%a)local_unnamed_addr#0{
+define void@_SML_load65908cf160b27f6e_InterfaceHash(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@x,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -74,10 +74,10 @@ tail call void@_SML_loade29d9c3af819282f_Filename(i8*%a)#0
 tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
 tail call void@_SML_load92a9fd50084b022c_ListSorter(i8*%a)#0
 tail call void@_SML_loadb4dea6a4db82451c_InterfaceName_ppg(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb63e9bb734a35efba_InterfaceHash,i8*@_SML_ftab63e9bb734a35efba_InterfaceHash,i8*null)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb65908cf160b27f6e_InterfaceHash,i8*@_SML_ftab65908cf160b27f6e_InterfaceHash,i8*null)#0
 ret void
 }
-define void@_SML_main63e9bb734a35efba_InterfaceHash()local_unnamed_addr#2 gc"smlsharp"{
+define void@_SML_main65908cf160b27f6e_InterfaceHash()local_unnamed_addr#2 gc"smlsharp"{
 %a=load i8,i8*@x,align 1
 %b=and i8%a,2
 %c=icmp eq i8%b,0

@@ -324,100 +324,8 @@ $(PRECOMPILED_DIR)/ReifiedTyData.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTyD
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTyData.ll
 $(PRECOMPILED_DIR)/ReifyUtils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifyUtils.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifyUtils.ll
-$(PRECOMPILED_DIR)/TermPrintUtils.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TermPrintUtils.ppg.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TermPrintUtils.ppg.ll
-$(PRECOMPILED_DIR)/ReifiedTy.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTy.ppg.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTy.ppg.ll
-$(PRECOMPILED_DIR)/ReifiedTerm.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTerm.ppg.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTerm.ppg.ll
-$(PRECOMPILED_DIR)/ReifiedTermToML.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTermToML.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTermToML.ll
-$(PRECOMPILED_DIR)/PartialDynamic.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PartialDynamic.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PartialDynamic.ll
-$(PRECOMPILED_DIR)/NaturalJoin.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/NaturalJoin.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/NaturalJoin.ll
-$(PRECOMPILED_DIR)/Pointer.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Pointer.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Pointer.ll
-$(PRECOMPILED_DIR)/ReifyTerm.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifyTerm.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifyTerm.ll
-$(PRECOMPILED_DIR)/RecordUtils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordUtils.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordUtils.ll
-$(PRECOMPILED_DIR)/json.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json.ll
-$(PRECOMPILED_DIR)/antlr-stream-pos.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/antlr-stream-pos.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/antlr-stream-pos.ll
-$(PRECOMPILED_DIR)/utf8.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/utf8.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/utf8.ll
-$(PRECOMPILED_DIR)/json-tokens.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-tokens.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-tokens.ll
-$(PRECOMPILED_DIR)/ulex-buffer.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ulex-buffer.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ulex-buffer.ll
-$(PRECOMPILED_DIR)/json.lex.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json.lex.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json.lex.ll
-$(PRECOMPILED_DIR)/json-source.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-source.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-source.ll
-$(PRECOMPILED_DIR)/json-parser.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-parser.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-parser.ll
-$(PRECOMPILED_DIR)/Dynamic.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Dynamic.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Dynamic.ll
 $(PRECOMPILED_DIR)/DBSchema.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/DBSchema.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/DBSchema.ll
-$(PRECOMPILED_DIR)/FileIDIntMap.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FileIDIntMap.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FileIDIntMap.ll
-$(PRECOMPILED_DIR)/FileIDIntStringMap.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FileIDIntStringMap.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FileIDIntStringMap.ll
-$(PRECOMPILED_DIR)/FileIDFileIDMap.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FileIDFileIDMap.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FileIDFileIDMap.ll
-$(PRECOMPILED_DIR)/FileIDMap.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FileIDMap.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FileIDMap.ll
-$(PRECOMPILED_DIR)/SourceMap.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SourceMap.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SourceMap.ll
-$(PRECOMPILED_DIR)/AnalyzerTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/AnalyzerTy.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/AnalyzerTy.ll
-$(PRECOMPILED_DIR)/DynamicLink.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/DynamicLink.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/DynamicLink.ll
-$(PRECOMPILED_DIR)/PGSQL.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PGSQL.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PGSQL.ll
-$(PRECOMPILED_DIR)/SQLErrors.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLErrors.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLErrors.ll
-$(PRECOMPILED_DIR)/SQLBackendTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLBackendTy.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLBackendTy.ll
-$(PRECOMPILED_DIR)/Numeric.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Numeric.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Numeric.ll
-$(PRECOMPILED_DIR)/TimeStamp.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TimeStamp.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TimeStamp.ll
-$(PRECOMPILED_DIR)/PGSQLBackend.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PGSQLBackend.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PGSQLBackend.ll
-$(PRECOMPILED_DIR)/MySQL.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/MySQL.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/MySQL.ll
-$(PRECOMPILED_DIR)/KeyValuePair.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/KeyValuePair.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/KeyValuePair.ll
-$(PRECOMPILED_DIR)/MySQLBackend.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/MySQLBackend.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/MySQLBackend.ll
-$(PRECOMPILED_DIR)/UNIXODBC.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/UNIXODBC.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/UNIXODBC.ll
-$(PRECOMPILED_DIR)/ODBCBackend.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ODBCBackend.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ODBCBackend.ll
-$(PRECOMPILED_DIR)/SQLite3.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLite3.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLite3.ll
-$(PRECOMPILED_DIR)/SQLite3Backend.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLite3Backend.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLite3Backend.ll
-$(PRECOMPILED_DIR)/Backend.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Backend.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Backend.ll
-$(PRECOMPILED_DIR)/SQLQuery.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLQuery.ppg.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLQuery.ppg.ll
-$(PRECOMPILED_DIR)/SQLPrim.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SQLPrim.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SQLPrim.ll
-$(PRECOMPILED_DIR)/PGSQLDynamic.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PGSQLDynamic.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PGSQLDynamic.ll
-$(PRECOMPILED_DIR)/AnalyzerDB.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/AnalyzerDB.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/AnalyzerDB.ll
-$(PRECOMPILED_DIR)/AnalyzerUtils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/AnalyzerUtils.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/AnalyzerUtils.ll
-$(PRECOMPILED_DIR)/InfoMaps.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/InfoMaps.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/InfoMaps.ll
-$(PRECOMPILED_DIR)/PrintUtils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PrintUtils.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PrintUtils.ll
 $(PRECOMPILED_DIR)/Analyzers.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Analyzers.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Analyzers.ll
 $(PRECOMPILED_DIR)/NameEvalEnvPrims.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/NameEvalEnvPrims.ll
@@ -476,10 +384,6 @@ $(PRECOMPILED_DIR)/SigCheck.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SigCheck.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SigCheck.ll
 $(PRECOMPILED_DIR)/RenameLongsymbol.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RenameLongsymbol.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RenameLongsymbol.ll
-$(PRECOMPILED_DIR)/AnalyzeTopEnv.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/AnalyzeTopEnv.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/AnalyzeTopEnv.ll
-$(PRECOMPILED_DIR)/AnalyzeSource.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/AnalyzeSource.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/AnalyzeSource.ll
 $(PRECOMPILED_DIR)/NameEvalInterface.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/NameEvalInterface.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/NameEvalInterface.ll
 $(PRECOMPILED_DIR)/CheckProvide.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/CheckProvide.ll
@@ -578,6 +482,42 @@ $(PRECOMPILED_DIR)/utils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/utils.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/utils.ll
 $(PRECOMPILED_DIR)/FFICompilation.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FFICompilation.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FFICompilation.ll
+$(PRECOMPILED_DIR)/TermPrintUtils.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TermPrintUtils.ppg.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TermPrintUtils.ppg.ll
+$(PRECOMPILED_DIR)/ReifiedTy.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTy.ppg.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTy.ppg.ll
+$(PRECOMPILED_DIR)/ReifiedTerm.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTerm.ppg.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTerm.ppg.ll
+$(PRECOMPILED_DIR)/ReifiedTermToML.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifiedTermToML.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifiedTermToML.ll
+$(PRECOMPILED_DIR)/PartialDynamic.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PartialDynamic.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PartialDynamic.ll
+$(PRECOMPILED_DIR)/NaturalJoin.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/NaturalJoin.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/NaturalJoin.ll
+$(PRECOMPILED_DIR)/Pointer.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Pointer.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Pointer.ll
+$(PRECOMPILED_DIR)/ReifyTerm.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifyTerm.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifyTerm.ll
+$(PRECOMPILED_DIR)/RecordUtils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordUtils.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordUtils.ll
+$(PRECOMPILED_DIR)/json.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json.ll
+$(PRECOMPILED_DIR)/antlr-stream-pos.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/antlr-stream-pos.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/antlr-stream-pos.ll
+$(PRECOMPILED_DIR)/utf8.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/utf8.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/utf8.ll
+$(PRECOMPILED_DIR)/json-tokens.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-tokens.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-tokens.ll
+$(PRECOMPILED_DIR)/ulex-buffer.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ulex-buffer.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ulex-buffer.ll
+$(PRECOMPILED_DIR)/json.lex.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json.lex.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json.lex.ll
+$(PRECOMPILED_DIR)/json-source.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-source.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-source.ll
+$(PRECOMPILED_DIR)/json-parser.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/json-parser.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/json-parser.ll
+$(PRECOMPILED_DIR)/Dynamic.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Dynamic.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/Dynamic.ll
 $(PRECOMPILED_DIR)/TypedLambdaSubst.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TypedLambdaSubst.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TypedLambdaSubst.ll
 $(PRECOMPILED_DIR)/EmitTypedLambda.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/EmitTypedLambda.ll
@@ -708,6 +648,24 @@ $(PRECOMPILED_DIR)/OverloadKind.o \
 $(PRECOMPILED_DIR)/PrimitiveTypedLambda.o \
 $(PRECOMPILED_DIR)/EmitTypedLambda.o \
 $(PRECOMPILED_DIR)/TypedLambdaSubst.o \
+$(PRECOMPILED_DIR)/Dynamic.o \
+$(PRECOMPILED_DIR)/json-parser.o \
+$(PRECOMPILED_DIR)/json-source.o \
+$(PRECOMPILED_DIR)/json.lex.o \
+$(PRECOMPILED_DIR)/ulex-buffer.o \
+$(PRECOMPILED_DIR)/json-tokens.o \
+$(PRECOMPILED_DIR)/utf8.o \
+$(PRECOMPILED_DIR)/antlr-stream-pos.o \
+$(PRECOMPILED_DIR)/json.o \
+$(PRECOMPILED_DIR)/RecordUtils.o \
+$(PRECOMPILED_DIR)/ReifyTerm.o \
+$(PRECOMPILED_DIR)/Pointer.o \
+$(PRECOMPILED_DIR)/NaturalJoin.o \
+$(PRECOMPILED_DIR)/PartialDynamic.o \
+$(PRECOMPILED_DIR)/ReifiedTermToML.o \
+$(PRECOMPILED_DIR)/ReifiedTerm.ppg.o \
+$(PRECOMPILED_DIR)/ReifiedTy.ppg.o \
+$(PRECOMPILED_DIR)/TermPrintUtils.ppg.o \
 $(PRECOMPILED_DIR)/FFICompilation.o \
 $(PRECOMPILED_DIR)/utils.o \
 $(PRECOMPILED_DIR)/PartialEvaluation.o \
@@ -757,8 +715,6 @@ $(PRECOMPILED_DIR)/NameEval.o \
 $(PRECOMPILED_DIR)/SpliceFunProvide.o \
 $(PRECOMPILED_DIR)/CheckProvide.o \
 $(PRECOMPILED_DIR)/NameEvalInterface.o \
-$(PRECOMPILED_DIR)/AnalyzeSource.o \
-$(PRECOMPILED_DIR)/AnalyzeTopEnv.o \
 $(PRECOMPILED_DIR)/RenameLongsymbol.o \
 $(PRECOMPILED_DIR)/SigCheck.o \
 $(PRECOMPILED_DIR)/FunctorUtils.o \
@@ -788,53 +744,7 @@ $(PRECOMPILED_DIR)/TopEnvUtils.ppg.o \
 $(PRECOMPILED_DIR)/ReifyTopEnv.o \
 $(PRECOMPILED_DIR)/NameEvalEnvPrims.o \
 $(PRECOMPILED_DIR)/Analyzers.o \
-$(PRECOMPILED_DIR)/PrintUtils.o \
-$(PRECOMPILED_DIR)/InfoMaps.o \
-$(PRECOMPILED_DIR)/AnalyzerUtils.o \
-$(PRECOMPILED_DIR)/AnalyzerDB.o \
-$(PRECOMPILED_DIR)/PGSQLDynamic.o \
-$(PRECOMPILED_DIR)/SQLPrim.o \
-$(PRECOMPILED_DIR)/SQLQuery.ppg.o \
-$(PRECOMPILED_DIR)/Backend.o \
-$(PRECOMPILED_DIR)/SQLite3Backend.o \
-$(PRECOMPILED_DIR)/SQLite3.o \
-$(PRECOMPILED_DIR)/ODBCBackend.o \
-$(PRECOMPILED_DIR)/UNIXODBC.o \
-$(PRECOMPILED_DIR)/MySQLBackend.o \
-$(PRECOMPILED_DIR)/KeyValuePair.o \
-$(PRECOMPILED_DIR)/MySQL.o \
-$(PRECOMPILED_DIR)/PGSQLBackend.o \
-$(PRECOMPILED_DIR)/TimeStamp.o \
-$(PRECOMPILED_DIR)/Numeric.o \
-$(PRECOMPILED_DIR)/SQLBackendTy.o \
-$(PRECOMPILED_DIR)/SQLErrors.o \
-$(PRECOMPILED_DIR)/PGSQL.o \
-$(PRECOMPILED_DIR)/DynamicLink.o \
-$(PRECOMPILED_DIR)/AnalyzerTy.o \
-$(PRECOMPILED_DIR)/SourceMap.o \
-$(PRECOMPILED_DIR)/FileIDMap.o \
-$(PRECOMPILED_DIR)/FileIDFileIDMap.o \
-$(PRECOMPILED_DIR)/FileIDIntStringMap.o \
-$(PRECOMPILED_DIR)/FileIDIntMap.o \
 $(PRECOMPILED_DIR)/DBSchema.o \
-$(PRECOMPILED_DIR)/Dynamic.o \
-$(PRECOMPILED_DIR)/json-parser.o \
-$(PRECOMPILED_DIR)/json-source.o \
-$(PRECOMPILED_DIR)/json.lex.o \
-$(PRECOMPILED_DIR)/ulex-buffer.o \
-$(PRECOMPILED_DIR)/json-tokens.o \
-$(PRECOMPILED_DIR)/utf8.o \
-$(PRECOMPILED_DIR)/antlr-stream-pos.o \
-$(PRECOMPILED_DIR)/json.o \
-$(PRECOMPILED_DIR)/RecordUtils.o \
-$(PRECOMPILED_DIR)/ReifyTerm.o \
-$(PRECOMPILED_DIR)/Pointer.o \
-$(PRECOMPILED_DIR)/NaturalJoin.o \
-$(PRECOMPILED_DIR)/PartialDynamic.o \
-$(PRECOMPILED_DIR)/ReifiedTermToML.o \
-$(PRECOMPILED_DIR)/ReifiedTerm.ppg.o \
-$(PRECOMPILED_DIR)/ReifiedTy.ppg.o \
-$(PRECOMPILED_DIR)/TermPrintUtils.ppg.o \
 $(PRECOMPILED_DIR)/ReifyUtils.o \
 $(PRECOMPILED_DIR)/ReifiedTyData.o \
 $(PRECOMPILED_DIR)/TypedCalcUtils.o \

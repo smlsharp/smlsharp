@@ -223,7 +223,7 @@ declare void@_SML_main3446b7b079949ccf_text_io()local_unnamed_addr#2 gc"smlsharp
 declare void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc5cea417ede7da8a_IEnv()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maind12f270a309dc7dd_SEnv()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main1a3c7df0529f4f3d_Control()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load5c37eb24573fc5f9_StringCvt(i8*)local_unnamed_addr
 declare void@_SML_load5d4c3ea7bd6f9540_IntInf(i8*)local_unnamed_addr
 declare void@_SML_load23870d5de35409ab_Time(i8*)local_unnamed_addr
@@ -236,7 +236,7 @@ declare void@_SML_load3446b7b079949ccf_text_io(i8*)local_unnamed_addr
 declare void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*)local_unnamed_addr
 declare void@_SML_loadc5cea417ede7da8a_IEnv(i8*)local_unnamed_addr
 declare void@_SML_loadd12f270a309dc7dd_SEnv(i8*)local_unnamed_addr
-declare void@_SML_load1a3c7df0529f4f3d_Control(i8*)local_unnamed_addr
+declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 define private void@_SML_tabb9819e87a662a442e_Counter()#3{
 unreachable
 }
@@ -260,7 +260,7 @@ tail call void@_SML_load3446b7b079949ccf_text_io(i8*%a)#0
 tail call void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*%a)#0
 tail call void@_SML_loadc5cea417ede7da8a_IEnv(i8*%a)#0
 tail call void@_SML_loadd12f270a309dc7dd_SEnv(i8*%a)#0
-tail call void@_SML_load1a3c7df0529f4f3d_Control(i8*%a)#0
+tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb9819e87a662a442e_Counter,i8*@_SML_ftab9819e87a662a442e_Counter,i8*bitcast([2x i64]*@aO to i8*))#0
 ret void
 }
@@ -349,7 +349,7 @@ tail call void@_SML_main3446b7b079949ccf_text_io()#2
 tail call void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()#2
 tail call void@_SML_mainc5cea417ede7da8a_IEnv()#2
 tail call void@_SML_maind12f270a309dc7dd_SEnv()#2
-tail call void@_SML_main1a3c7df0529f4f3d_Control()#2
+tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
