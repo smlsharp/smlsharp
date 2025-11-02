@@ -1,0 +1,16 @@
+_require "../../../../basis.smi"
+_require "../../../libs/list-utils/main/Snoc.smi"
+_require "./Absyn.smi"
+_require "./AbsynNode.smi"
+_require "./Token.smi"
+_require "../../../data/symbols/main/Loc.smi"
+
+structure TransposeAbsyn =
+struct
+  type node = {id : int, node : AbsynNode.node}
+  type ancestors = node list
+  type leaf = Token.token * (Loc.at * Loc.at) * ancestors
+
+  val generate
+      : (Token.token * (Loc.at * Loc.at)) snoc * Absyn.absyn -> leaf list
+end

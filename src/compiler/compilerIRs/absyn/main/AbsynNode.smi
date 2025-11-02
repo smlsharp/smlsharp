@@ -1,0 +1,128 @@
+_require "../../../../basis.smi"
+_require "./Absyn.smi"
+_require "./AbsynTy.smi"
+_require "./AbsynSQL.smi"
+_require "./AbsynInterface.ppg.smi"
+
+structure AbsynNode =
+struct
+
+  datatype node =
+      (* AbsynTy *)
+      ID of AbsynTy.id
+    | VID of AbsynTy.vid
+    | LONGVID of AbsynTy.longvid
+    | TYCON of AbsynTy.tycon
+    | LONGTYCON of AbsynTy.longtycon
+    | LAB of AbsynTy.lab
+    | TYVAR of AbsynTy.tyvar
+    | TYVARSEQ of AbsynTy.tyvarseq
+    | OP_LONGVID of Absyn.op_longvid
+    | TY of AbsynTy.ty
+    | KIND of AbsynTy.kind
+    | KINDED_TYVAR of AbsynTy.kinded_tyvar
+    | TYROW of AbsynTy.tyrow
+    | TYSEQ of AbsynTy.tyseq
+    | KINDED_TYVARSEQ of AbsynTy.kinded_tyvarseq
+    | FFI_ATTR of AbsynTy.ffi_attr
+    | FFI_TY of AbsynTy.ffi_ty
+    | FFI_TYROW of AbsynTy.ffi_tyrow
+    | FFI_TYSEQ of AbsynTy.ffi_tyseq
+    | FFI_ARG of AbsynTy.ffi_arg
+    | FFI_RET of AbsynTy.ffi_ret
+      (* Absyn *)
+    | STRID of Absyn.strid
+    | SIGID of Absyn.sigid
+    | FUNID of Absyn.funid
+    | LONGSTRID of Absyn.longstrid
+    | OP_VID of Absyn.op_vid
+    | REQUIRE_PATH of Absyn.require_path
+    | EXTERN_NAME of Absyn.extern_name
+    | EXIST_QUANT of Absyn.exist_quant
+    | PAT of Absyn.pat
+    | PATROW of Absyn.patrow
+    | EXBIND of Absyn.exbind
+    | TYPBIND of Absyn.typbind
+    | CONBIND of Absyn.conbind
+    | DATBIND of Absyn.datbind
+    | EXP of Absyn.exp
+    | VALBIND of Absyn.valbind
+    | DEC of Absyn.dec
+    | EXPROW of Absyn.exprow
+    | MRULE of Absyn.mrule
+    | DYNAMIC_MRULE of Absyn.dynamic_mrule
+    | FRULE of Absyn.frule
+    | FVALBIND of Absyn.fvalbind
+    | PVALBIND of Absyn.pvalbind
+    | VALDESC of Absyn.valdesc
+    | TYPDESC of Absyn.typdesc
+    | CONDESC of Absyn.condesc
+    | DATDESC of Absyn.datdesc
+    | EXDESC of Absyn.exdesc
+    | WHERETYPE of Absyn.wheretype
+    | SPEC of Absyn.spec
+    | SIGEXP of Absyn.sigexp
+    | STRDESC of Absyn.strdesc
+    | SIGBIND of Absyn.sigbind
+    | SIGCONSTRAINT of Absyn.sigconstraint
+    | STREXP of Absyn.strexp
+    | STRDEC of Absyn.strdec
+    | STRBIND of Absyn.strbind
+    | FUNBIND of Absyn.funbind
+    | TOPDEC of Absyn.topdec
+    | TOP of Absyn.top
+    | INTERFACE of Absyn.interface
+    | COMPILE_UNIT of Absyn.compile_unit
+      (* AbsynSQL *)
+    | SQL_TABLE_SELECTOR of AbsynSQL.table_selector
+    | SQL_EXP of Absyn.exp AbsynSQL.exp
+    | SQL_KWEXP of Absyn.exp AbsynSQL.kwexp
+    | SQL_TABLE of Absyn.exp AbsynSQL.table
+    | SQL_FROM of Absyn.exp AbsynSQL.from
+    | SQL_WHR of Absyn.exp AbsynSQL.whr
+    | SQL_GROUPBY of Absyn.exp AbsynSQL.groupby
+    | SQL_ORDERBY of Absyn.exp AbsynSQL.orderby
+    | SQL_LIMIT of Absyn.exp AbsynSQL.limit
+    | SQL_OFFSET of Absyn.exp AbsynSQL.offset
+    | SQL_SELECT of Absyn.exp AbsynSQL.select
+    | SQL_QUERY of Absyn.exp AbsynSQL.query
+    | SQL_ORDER_KEY of Absyn.exp AbsynSQL.order_key
+    | SQL_SELECT_ROW of Absyn.exp AbsynSQL.select_row
+    | SQL_GROUPBY_CLAUSE of Absyn.exp AbsynSQL.groupby_clause
+    | SQL_HAVING_CLAUSE of Absyn.exp AbsynSQL.having_clause
+    | SQL_LIMIT_CLAUSE of Absyn.exp AbsynSQL.limit_clause
+    | SQL_LIMIT_OFFSET_CLAUSE of Absyn.exp AbsynSQL.limit_offset_clause
+    | SQL_OFFSET_CLAUSE of Absyn.exp AbsynSQL.offset_clause
+    | SQL_FETCH_CLAUSE of Absyn.exp AbsynSQL.fetch_clause
+    | SQL_INSERT_VALUE of Absyn.exp AbsynSQL.insert_value
+    | SQL_INSERT_ROW of Absyn.exp AbsynSQL.insert_row
+    | SQL_INSERT_VALUES of Absyn.exp AbsynSQL.insert_values
+    | SQL_INSERT_LABELS of AbsynSQL.insert_labels
+    | SQL_SET_ROW of Absyn.exp AbsynSQL.set_row
+    | SQL_SET of Absyn.exp AbsynSQL.set
+    | SQL_SQLCON of Absyn.exp AbsynSQL.sqlcon
+    | SQL_STEP of Absyn.exp AbsynSQL.step
+    | SQL_SQL of Absyn.exp AbsynSQL.sql
+    | SQL_SQLEXP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp
+      (*% AbsynInterface *)
+    | OPAQUE_IMPL of AbsynInterface.opaque_impl
+    | OVERLOAD_INSTANCE of AbsynInterface.overload_instance
+    | OVERLOAD_MRULE of AbsynInterface.overload_mrule
+    | OVERLOAD_CASE of AbsynInterface.overload_case
+    | IVALBIND of AbsynInterface.valbind
+    | ITYPDESC of AbsynInterface.typdesc
+    | IDEC of AbsynInterface.dec
+    | ISTREXP of AbsynInterface.strexp
+    | ISTRBIND of AbsynInterface.strbind
+    | IFUNBIND of AbsynInterface.funbind
+    | ITOPDEC of AbsynInterface.topdec
+    | IREQUIRE of AbsynInterface.require
+    | IINCLUDE of AbsynInterface.include_dec
+    | ISIGDEC of AbsynInterface.sigdec
+    | ITOP of AbsynInterface.top
+
+  val getName : node -> string
+  val getLoc : node -> Absyn.loc
+  val getChildren : node -> node list
+
+end

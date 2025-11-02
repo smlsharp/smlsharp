@@ -380,6 +380,7 @@ depend: PHONY minismlsharp
 	  SMLFORMAT      src/smlformat/generator/main/call-main.smi \
 	  MINISMLSHARP   src/compiler/minismlsharp.smi \
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
+	  PARSER_LIB     src/parser.smi \
 	  PRELUDE_LIB    src/prelude.smi \
 	  THREAD_LIB     src/thread.smi \
           SMLNJ_LIB      src/smlnj-lib/Util/smlnj-lib.smi \
