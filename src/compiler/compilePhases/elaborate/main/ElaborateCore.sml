@@ -284,7 +284,7 @@ struct
              val defSym = 
                  Symbol.mkSymbol (Symbol.symbolToString symbol) loc
              val _ = 
-                 Analyzers.insertUPRefMap (symbol, defSym)
+                 !Analyzers.insertUPRefMap (symbol, defSym)
            in
              v
            end

@@ -20,14 +20,14 @@ in
       | symbol :: nil => 
         (case SymbolEnv.findi(varE, symbol) of
            SOME (sym, idstatus) => 
-           (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+           (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
             SOME (sym, idstatus))
          | NONE => NONE)
       | strsymbol :: path =>
         (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
          | SOME (sym, strEntry as {env,...}) => 
-           (Analyzers.analyzeStrRef ([strsymbol], (sym, strEntry));
+           (!Analyzers.analyzeStrRef ([strsymbol], (sym, strEntry));
             findId (env, path))
         )
 
@@ -41,19 +41,19 @@ in
         in
           case idstatusOpt of
             (SOME (sym, idstatus as I.IDCON _)) => 
-            (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXN _)) => 
-            (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXNREP _)) =>
-            (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXEXN _)) =>
-            (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXEXNREP _)) =>
-            (Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, I.IDVAR _)) => NONE
           | (SOME (sym, I.IDVAR_TYPED _)) => NONE
@@ -70,7 +70,7 @@ in
         (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
          | SOME (smbolInEnv, strEntry as {env,...}) => 
-           (Analyzers.analyzeStrRef ([strsymbol], (smbolInEnv, strEntry));
+           (!Analyzers.analyzeStrRef ([strsymbol], (smbolInEnv, strEntry));
             findCon (env, path))
         )
 
@@ -90,7 +90,7 @@ in
       case SymbolEnv.findi(varE, symbol) of
         NONE => NONE
       | SOME (sym, idstatus) => 
-        (Analyzers.provideId (symbol, (sym, idstatus));
+        (!Analyzers.provideId (symbol, (sym, idstatus));
          SOME idstatus)
 
  (* check function *)
@@ -106,7 +106,7 @@ in
 
   (* bind function *)
   fun rebindId context (V.ENV{varE, tyE, strE}, symbol, idstatus) =
-      (Analyzers.rebindId context (symbol, idstatus);
+      (!Analyzers.rebindId context (symbol, idstatus);
        V.ENV
          {varE = SymbolEnv.insert(varE, symbol, idstatus),
           tyE = tyE,
@@ -120,7 +120,7 @@ in
     case path of
       nil => raise bug "nil to rebindTypLongid"
     | symbol::nil =>
-      (Analyzers.rebindId context (symbol, idstatus);
+      (!Analyzers.rebindId context (symbol, idstatus);
       V.ENV
         {
          varE = SymbolEnv.insert(varE, symbol, idstatus),
@@ -153,14 +153,14 @@ in
       | symbol :: nil => 
         (case SymbolEnv.findi(tyE, symbol) of
            SOME (sym, tstr) =>
-           (Analyzers.analyzeTstrRef ([symbol], (sym, tstr));
+           (!Analyzers.analyzeTstrRef ([symbol], (sym, tstr));
             SOME (sym, tstr))
          | NONE => NONE)
       | strsymbol :: path =>
         (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
          | SOME (symbolInEnv, strEntry as {env,...}) => 
-           (Analyzers.analyzeStrRef ([strsymbol], (symbolInEnv, strEntry));
+           (!Analyzers.analyzeStrRef ([strsymbol], (symbolInEnv, strEntry));
             findTstr (env, path))
         )
 
@@ -178,11 +178,11 @@ in
       case SymbolEnv.findi(tyE, symbol) of
         NONE => NONE
       | SOME (sym, tstr) => 
-        (Analyzers.provideTstr (symbol, (sym, tstr));
+        (!Analyzers.provideTstr (symbol, (sym, tstr));
          SOME tstr)
 
   fun rebindTstr context (V.ENV{varE,tyE,strE}, symbol, tstr) =
-      (Analyzers.rebindTstr context (symbol, tstr);
+      (!Analyzers.rebindTstr context (symbol, tstr);
        V.ENV
          {
           varE = varE,
@@ -197,7 +197,7 @@ in
       case path of
         nil => raise bug "nil to rebindTypLongid"
       | symbol::nil =>
-        (Analyzers.rebindTstr context (symbol, tstr);
+        (!Analyzers.rebindTstr context (symbol, tstr);
         V.ENV
           {
            varE = varE,
@@ -231,14 +231,14 @@ in
         (case SymbolEnv.findi(strMap, symbol) of
            NONE => NONE
          | SOME (sym, strEntry) => 
-           (Analyzers.analyzeStrRef ([symbol], (sym, strEntry));
+           (!Analyzers.analyzeStrRef ([symbol], (sym, strEntry));
             SOME strEntry)
         )
       | strsymbol :: path =>
         (case SymbolEnv.findi(strMap, strsymbol) of
            NONE => NONE
          | SOME (symbolInEnv, strEntry as {env,...}) => 
-           (Analyzers.analyzeStrRef ([strsymbol], (symbolInEnv, strEntry));
+           (!Analyzers.analyzeStrRef ([strsymbol], (symbolInEnv, strEntry));
             findStr (env, path))
         )
 
@@ -258,11 +258,11 @@ in
       case SymbolEnv.findi(strMap, symbol) of
         NONE => NONE
       | SOME (defSymbol, strEntry) => 
-        (Analyzers.provideStr (symbol, (defSymbol, strEntry));
+        (!Analyzers.provideStr (symbol, (defSymbol, strEntry));
          SOME strEntry)
 
   fun rebindStr context (V.ENV{varE,tyE,strE=V.STR envMap}, symbol, strEntry) =
-      (Analyzers.rebindStr context (symbol, strEntry);
+      (!Analyzers.rebindStr context (symbol, strEntry);
       V.ENV {varE = varE,
              tyE = tyE,
              strE = V.STR (SymbolEnv.insert(envMap, symbol, strEntry))
@@ -293,7 +293,7 @@ in
   fun findFunETopEnv ({Env, FunE, SigE}, symbol) =
       case SymbolEnv.findi(FunE, symbol) of
         SOME (sym, funEEntry) =>
-        (Analyzers.analyzeFunRef (symbol, (sym, funEEntry));
+        (!Analyzers.analyzeFunRef (symbol, (sym, funEEntry));
          SOME funEEntry)
       | NONE => NONE
 
@@ -305,13 +305,13 @@ in
   fun checkProvideFunETopEnv ({Env, FunE, SigE}, symbol) =
       case SymbolEnv.findi(FunE, symbol) of
         SOME (sym, funEEntry) =>
-        (Analyzers.provideFun (symbol, (sym, funEEntry));
+        (!Analyzers.provideFun (symbol, (sym, funEEntry));
          SOME funEEntry)
       | NONE => NONE
 
   (* bind function *)
   fun rebindFunE context (FunE, symbol, funEEntry) =
-      (Analyzers.rebindFun context (symbol, funEEntry);
+      (!Analyzers.rebindFun context (symbol, funEEntry);
        SymbolEnv.insert(FunE, symbol, funEEntry))
 
 
@@ -323,7 +323,7 @@ in
         val sigEntryOpt = 
             case sigEntrySymOpt of
               SOME (sym, sigEntry) =>
-              (Analyzers.analyzeSigRef (symbol, (sym, sigEntry));
+              (!Analyzers.analyzeSigRef (symbol, (sym, sigEntry));
                SOME (sym, sigEntry))
             | NONE => NONE
       in
@@ -336,7 +336,7 @@ in
 
   (* bind function *)
   fun rebindSigE context (SigE, symbol, sigEntry) =
-      (Analyzers.rebindSig context (symbol, sigEntry);
+      (!Analyzers.rebindSig context (symbol, sigEntry);
        SymbolEnv.insert(SigE, symbol, sigEntry))
 
   fun preferSecond arg =

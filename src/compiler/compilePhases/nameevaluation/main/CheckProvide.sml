@@ -221,7 +221,7 @@ local
                            raiseFail 4
                           )
                         | SOME (sym, tyOpt) => 
-                          (Analyzers.provideCon (vid, sym, path@[sym]);
+                          (!Analyzers.provideCon (vid, sym, path@[sym]);
                            (tyOpt, #1 (SymbolEnv.remove(conSpec, vid))
                                    handle LibBase.NotFound => raise bug "SymbolEnv.remove"
                            )

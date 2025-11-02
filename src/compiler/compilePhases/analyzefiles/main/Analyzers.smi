@@ -1,0 +1,37 @@
+_require local "../../../../basis.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "./DBSchema.smi"
+
+structure Analyzers =
+struct
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+  type idstatus = IDCalc.idstatus
+
+  val startNameRefTracing : (unit -> unit) ref
+  val stopNameRefTracing : (unit -> unit) ref
+  val stopBindTracing : (unit -> unit) ref
+  val pushInterfaceTracer : (InterfaceName.source -> unit) ref
+  val popInterfaceTracer : (InterfaceName.source -> unit) ref
+  val analyzeFunRef : (symbol * (symbol * NameEvalEnv.funEEntry)-> unit) ref
+  val analyzeIdRef : (longsymbol * (symbol * idstatus) -> unit) ref
+  val analyzeIdRefForUP : (longsymbol * (symbol * idstatus) -> unit) ref
+  val analyzeSigRef : (symbol * (symbol * NameEvalEnv.sigEntry) -> unit) ref
+  val analyzeStrRef : (longsymbol * (symbol * NameEvalEnv.strEntry) -> unit) ref
+  val analyzeTstrRef : (longsymbol * (symbol * NameEvalEnv.tstr) -> unit) ref
+  val analyzeTstrRefForUP : (longsymbol * (symbol * NameEvalEnv.tstr) -> unit) ref
+  val insertUPRefMap : (symbol * symbol -> unit) ref
+  val provideCon : (symbol * symbol * longsymbol -> unit) ref
+  val provideFun : (symbol * (symbol * NameEvalEnv.funEEntry) -> unit) ref
+  val provideId : (symbol * (symbol * idstatus) -> unit) ref
+  val provideStr : (symbol * (symbol * NameEvalEnv.strEntry) -> unit) ref
+  val provideTstr : (symbol * (symbol * NameEvalEnv.tstr) -> unit) ref
+  val rebindFun : (DBSchema.category -> symbol * NameEvalEnv.funEEntry -> unit) ref
+  val rebindId : (DBSchema.category -> symbol *  idstatus -> unit) ref
+  val rebindSig : (DBSchema.category -> symbol * NameEvalEnv.sigEntry -> unit) ref
+  val rebindStr : (DBSchema.category -> symbol * NameEvalEnv.strEntry -> unit) ref
+  val rebindTstr : (DBSchema.category -> symbol * NameEvalEnv.tstr -> unit) ref
+end

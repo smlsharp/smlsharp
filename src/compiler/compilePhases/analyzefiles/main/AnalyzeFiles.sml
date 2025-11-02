@@ -30,9 +30,9 @@ in
              initialLineno = 1}
       val _ = IM.initRefMap ()
       val _ = IM.initDefMap ()
-      val _ = Analyzers.pushSourceFileId (#fileId fileId)
+      val _ = AnalyzersImpl.pushSourceFileId (#fileId fileId)
       val _ = Top.compile llvmOptions topOptions context input handle e => raise e
-      val _ = Analyzers.popSourceFileId ()
+      val _ = AnalyzersImpl.popSourceFileId ()
       val _ = TextIO.closeIn io
       val _ = IM.addRefTable()
       val _ = IM.addDefTable()

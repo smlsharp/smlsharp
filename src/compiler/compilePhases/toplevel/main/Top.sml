@@ -626,8 +626,8 @@ struct
         val _ = #start Counter.compilationTimeCounter()
 
         val _ = UserLevelPrimitive.initAnalyze
-                  {analyzeIdRef = Analyzers.analyzeIdRefForUP,
-                   analyzeTstrRef = Analyzers.analyzeTstrRefForUP
+                  {analyzeIdRef = !Analyzers.analyzeIdRefForUP,
+                   analyzeTstrRef = !Analyzers.analyzeTstrRefForUP
                   }
 
         val _ = initPointerSize llvmOptions

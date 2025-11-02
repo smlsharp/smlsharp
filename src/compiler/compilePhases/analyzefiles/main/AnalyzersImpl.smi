@@ -13,9 +13,10 @@ _require local "./AnalyzerTy.smi"
 _require local "./InfoMaps.smi"
 _require local "./PrintUtils.smi"
 _require local "./AnalyzerUtils.smi"
+_require local "./Analyzers.smi"
 
 
-structure Analyzers =
+structure AnalyzersImpl =
 struct
   type analyzers =
     {
@@ -69,5 +70,7 @@ struct
 
   val emptyAnalyzers : analyzers
   val analyzers : analyzers
+
+  val init : unit -> unit
 
 end

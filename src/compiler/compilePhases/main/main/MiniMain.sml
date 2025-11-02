@@ -10,6 +10,11 @@ struct
   fun interactive _ _ _ = ()
 end
 
+structure AnalyzersImpl =
+struct
+  fun init () = ()
+end
+
 structure AnalyzeFiles =
 struct
   fun analyzeFiles _ _ _ = ()

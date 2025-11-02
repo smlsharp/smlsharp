@@ -973,6 +973,7 @@ struct
                          srcfiles)
         | {mode = SOME (AnalyzeFiles dbparam), srcfiles, ...} =>
           let
+            val _ = AnalyzersImpl.init ()
             val sourceFile =
                 case srcfiles
                 of nil => raise Error ["a root .smi file must be specified in analyze mode"]

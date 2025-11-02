@@ -2,7 +2,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  *)
-structure Analyzers =
+structure AnalyzersImpl =
 struct
 local
   structure D = Dynamic 
@@ -924,6 +924,31 @@ in
          sigEntry = analyzeSig,
          funEEntry = analyzeFun
       }
+
+  fun init () =
+      (Analyzers.startNameRefTracing := startNameRefTracing;
+       Analyzers.stopNameRefTracing := stopNameRefTracing;
+       Analyzers.stopBindTracing := stopBindTracing;
+       Analyzers.pushInterfaceTracer := pushInterfaceTracer;
+       Analyzers.popInterfaceTracer := popInterfaceTracer;
+       Analyzers.analyzeFunRef := analyzeFunRef;
+       Analyzers.analyzeIdRef := analyzeIdRef;
+       Analyzers.analyzeIdRefForUP := analyzeIdRefForUP;
+       Analyzers.analyzeSigRef := analyzeSigRef;
+       Analyzers.analyzeStrRef := analyzeStrRef;
+       Analyzers.analyzeTstrRef := analyzeTstrRef;
+       Analyzers.analyzeTstrRefForUP := analyzeTstrRefForUP;
+       Analyzers.insertUPRefMap := insertUPRefMap;
+       Analyzers.provideCon := provideCon;
+       Analyzers.provideFun := provideFun;
+       Analyzers.provideId := provideId;
+       Analyzers.provideStr := provideStr;
+       Analyzers.provideTstr := provideTstr;
+       Analyzers.rebindFun := rebindFun;
+       Analyzers.rebindId := rebindId;
+       Analyzers.rebindSig := rebindSig;
+       Analyzers.rebindStr := rebindStr;
+       Analyzers.rebindTstr := rebindTstr)
 
 end
 end

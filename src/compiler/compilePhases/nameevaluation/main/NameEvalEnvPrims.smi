@@ -5,7 +5,7 @@ _require local "../../../libs/ids/main/LocalID.smi"
 _require local "./NameEvalError.ppg.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
-_require "../../../compilePhases/analyzefiles/main/AnalyzersImpl.smi"
+_require local "../../../compilePhases/analyzefiles/main/Analyzers.smi"
 _require "../../../compilePhases/analyzefiles/main/DBSchema.smi"
 _require "./NameEvalEnv.ppg.smi"
 

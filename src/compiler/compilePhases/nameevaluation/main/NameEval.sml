@@ -2838,7 +2838,7 @@ val _ = U.print "\n"
 
         val evalTopEnv = VP.topEnvWithTopEnv(evalTopEnv, returnTopEnvInclude)
 
-        val _ = Analyzers.startNameRefTracing ()
+        val _ = !Analyzers.startNameRefTracing ()
 
         val (renameEnv, returnTopEnvSource, topdecListSource) =
             evalPltopdecList
@@ -2857,7 +2857,7 @@ val _ = U.print "\n"
 val _ = U.print "*** before checkPitopdecList\n"
 *)
 
-        val _ = Analyzers.stopBindTracing ()
+        val _ = !Analyzers.stopBindTracing ()
 
         val (exnInfoList, returnTopEnv, exportList) =
             case source of
@@ -2873,7 +2873,7 @@ val _ = U.print "*** before checkPitopdecList\n"
               end
               handle e => raise e
 
-        val _ = Analyzers.stopNameRefTracing ()
+        val _ = !Analyzers.stopNameRefTracing ()
 
 (*
 val _ = U.print "*** after checkPitopdecList\n"

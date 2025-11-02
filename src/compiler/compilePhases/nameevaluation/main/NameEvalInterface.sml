@@ -1364,7 +1364,7 @@ in
             idLocList
         val source = #source interfaceName
 
-        val _ = Analyzers.pushInterfaceTracer source
+        val _ = !Analyzers.pushInterfaceTracer source
 
         val (renameEnv, _, topEnv, icdecls) = 
             evalPitopdecList provider emptyRenameEnv evalTopEnv (emptyExSet, provideTopdecs)
@@ -1376,7 +1376,7 @@ in
             else ()
 *)
 
-        val _ = Analyzers.popInterfaceTracer source
+        val _ = !Analyzers.popInterfaceTracer source
 
       in
         case InterfaceID.Map.find(IntEnv, interfaceId) of
