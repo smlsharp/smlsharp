@@ -31,7 +31,7 @@ _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../analyzefiles/main/AnalyzeSource.smi"
-_require "../../analyzefiles/main/Analyzers.smi"
+_require "../../analyzefiles/main/AnalyzersImpl.smi"
 _require "./NameEvalEnv.ppg.smi"
 _require local "./NameEvalEnvPrims.smi"
 

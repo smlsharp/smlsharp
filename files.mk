@@ -651,7 +651,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
@@ -1005,7 +1005,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/libs/util/main/Counter.o \
@@ -1375,7 +1375,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/libs/util/main/Counter.o \
@@ -1932,7 +1932,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \
@@ -2225,7 +2225,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeTopEnv.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
@@ -2641,7 +2641,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeTopEnv.smi \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.smi \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.smi \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.smi \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
@@ -3251,7 +3251,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o \
 src/compiler/extensions/reflection/main/ReifyTopEnv.o \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o \

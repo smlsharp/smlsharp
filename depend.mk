@@ -20654,8 +20654,8 @@ src/compiler/compilePhases/analyzefiles/main/PrintUtils.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
  src/compiler/compilePhases/analyzefiles/main/PrintUtils.smi \
  $(SMLSHARP_DEP)
-src/compiler/compilePhases/analyzefiles/main/Analyzers.o: \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.sml \
+src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.sml \
  src/basis/main/General.smi \
  src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi \
@@ -20804,7 +20804,7 @@ src/compiler/compilePhases/analyzefiles/main/Analyzers.o: \
  src/compiler/compilePhases/analyzefiles/main/InfoMaps.smi \
  src/compiler/compilePhases/analyzefiles/main/PrintUtils.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.sml \
@@ -20941,7 +20941,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  $(SMLSHARP_DEP)
 src/compiler/extensions/reflection/main/ReifyTopEnv.o: \
@@ -21094,7 +21094,7 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o: \
  src/compiler/extensions/reflection/main/ReifiedTyData.smi \
  src/compiler/extensions/reflection/main/ReifyUtils.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  src/compiler/extensions/reflection/main/ReifyTopEnv.smi \
  $(SMLSHARP_DEP)
@@ -22667,7 +22667,7 @@ src/compiler/compilePhases/elaborate/main/ElaborateCore.o: \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateSQL.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateForeach.smi \
@@ -23674,7 +23674,7 @@ src/compiler/compilePhases/nameevaluation/main/EvalTy.o: \
  src/compiler/compilePhases/nameevaluation/main/NormalizeTy.smi \
  src/compiler/compilePhases/nameevaluation/main/SetLiftedTys.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
  $(SMLSHARP_DEP)
@@ -23949,7 +23949,7 @@ src/compiler/compilePhases/nameevaluation/main/EvalSig.o: \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -24098,7 +24098,7 @@ src/compiler/compilePhases/nameevaluation/main/FunctorUtils.o: \
  src/compiler/data/runtimetypes/main/DatatypeLayout.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
@@ -24260,7 +24260,7 @@ src/compiler/compilePhases/nameevaluation/main/SigCheck.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
  src/compiler/compilePhases/nameevaluation/main/NormalizeTy.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
  src/compiler/compilePhases/nameevaluation/main/SigCheck.smi \
@@ -24531,7 +24531,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeTopEnv.o: \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -24686,7 +24686,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeSource.o: \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzeTopEnv.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
@@ -24833,7 +24833,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalInterface.o: \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
@@ -24989,7 +24989,7 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
@@ -25281,7 +25281,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEval.o: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/CheckProvide.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
@@ -28073,7 +28073,7 @@ src/compiler/compilePhases/typeinference/main/InferTypes2.o: \
  src/compiler/data/types/main/DynamicKindUtils.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/typeinference/main/TypeInferenceContext.ppg.smi \
  src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.smi \
  src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.smi \
@@ -29924,7 +29924,7 @@ src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o: \
  src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.smi \
  src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/typedelaboration/main/TypedElaboration.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o: \
@@ -33125,7 +33125,7 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.smi \
  src/compiler/compilePhases/recordcompilation/main/KIND_INSTANCE.sig \
  src/compiler/compilePhases/recordcompilation/main/OverloadKind.smi \
@@ -36140,7 +36140,7 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilePhases/elaborate/main/Elaborator.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzeSource.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEval.smi \
@@ -40021,7 +40021,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/analyzefiles/main/InfoMaps.smi \
  src/compiler/libs/toolchain/main/ShellUtils.smi \
  src/compiler/libs/toolchain/main/LLVMUtils.smi \
@@ -40201,7 +40201,7 @@ src/compiler/compilePhases/main/main/Main.o: \
  src/compiler/compilePhases/loadfile/main/LoadFile.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.smi \
  src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
- src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
+ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi \
  src/compiler/compilePhases/main/main/SignalHandler.smi \
  src/compiler/compilePhases/main/main/UserFileMap.smi \
