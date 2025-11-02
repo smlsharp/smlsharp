@@ -2,17 +2,16 @@
 (*
 2012-3-21 ohori
 defuncterized
-
 used only in mklrtable.sml as
 	structure Core = mkCore(structure IntGrammar = IntGrammar)
-
 *)
-structure Core  : CORE =
+
+structure Core : CORE =
 	struct
 		open IntGrammar
 		open  Grammar
 		structure IntGrammar = IntGrammar
-		(* structure Grammar = Grammar *)
+		structure Grammar = Grammar
 
 		datatype item = ITEM of
 				{ rule : rule,
@@ -77,4 +76,4 @@ structure Core  : CORE =
 					 prItem i; print "\n")) items;
 			   print "\n")
 		    end
-end
+end;

@@ -2,17 +2,14 @@
 (*
 2012-3-21 ohori
 defuncterized
-
 used only in mklrtable.sml as
 	structure CoreUtils = mkCoreUtils(structure IntGrammar = IntGrammar
 				  	  structure Core = Core)
-functor mkCoreUtils(structure Core : CORE) : CORE_UTILS =
 *)
 
-structure CoreUtils  : CORE_UTILS =
-
+structure CoreUtils : CORE_UTILS =
 	struct
-	        open Array List
+		val sub = Array.sub
 		infix 9 sub
 		val DEBUG = true
 		structure Core = Core
@@ -31,7 +28,7 @@ structure CoreUtils  : CORE_UTILS =
 			 end)
 
 	val mkFuncs = fn (GRAMMAR {rules,terms,nonterms,...}) =>
-	   let val derives=array(nonterms,nil : rule list)
+	   let val derives=Array.array(nonterms,nil : rule list)
 
 (* sort rules by their lhs nonterminal by placing them in an array indexed
    in their lhs nonterminal *)
@@ -40,7 +37,7 @@ structure CoreUtils  : CORE_UTILS =
 		 let val f = fn {lhs=lhs as (NT n), rhs, precedence,rulenum} =>
 			let val rule=RULE{lhs=lhs,rhs=rhs,precedence=precedence,
 					  rulenum=rulenum,num=0}
-		        in update(derives,n,rule::(derives sub n))
+		        in Array.update(derives,n,rule::(derives sub n))
 			end
 		  in app f rules
 		  end
@@ -61,7 +58,7 @@ structure CoreUtils  : CORE_UTILS =
 		          if i<nonterms then
 			    let val (l,n) =
 				        List.foldr f ([], num) (derives sub i)
-			    in update(derives,i,rev l); g(i+1,n)
+			    in Array.update(derives,i,rev l); g(i+1,n)
 			    end
 			  else ()
 		    in g(0,0)
@@ -246,4 +243,4 @@ fun mergeShiftItems (args as ((k,l),r)) =
 
      in {produces=produces,shifts=shifts,rules=rules,epsProds=epsProds}
      end
-end
+end;

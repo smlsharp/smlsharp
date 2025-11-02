@@ -2,22 +2,18 @@
 (*
 2012-3-21 ohori
 defuncterized
-
 yacc.sml is the only user as
    structure PrintStruct =
        mkPrintStruct(structure LrTable = MakeTable.LrTable
-(structure LrTable : LR_TABLE
-		      structure ShrinkLrTable : SHRINK_LR_TABLE
-		      sharing LrTable = ShrinkLrTable.LrTable)
+	              structure ShrinkLrTable : SHRINK_LR_TABLE
+	              sharing LrTable = ShrinkLrTable.LrTable)
 *)
-local
-   (* structure LrTable = MakeTable.LrTable *)
-in
+
 structure PrintStruct : PRINT_STRUCT =
    struct
-      open Array List
+      val sub = Array.sub
       infix 9 sub
-      (* structure LrTable = LrTable *)
+      structure LrTable = LrTable
       open ShrinkLrTable LrTable
       
      
@@ -186,7 +182,7 @@ structure PrintStruct : PRINT_STRUCT =
 \       fun f i =\n\
 \            if i=numstates then g i\n\
 \            else (Array.update(memo,i,SHIFT (STATE i)); f (i+1))\n\
-\          in f 0 handle Subscript => ()\n\
+\          in f 0 handle General.Subscript => ()\n\
 \          end\n\
 \in\n\
 \val entry_to_action = fn 0 => ACCEPT | 1 => ERROR | j => Array.sub(memo,(j-2))\n\
@@ -196,7 +192,7 @@ structure PrintStruct : PRINT_STRUCT =
 \val actionRowNumbers = string_to_list actionRowNumbers\n\
 \val actionT = let val actionRowLookUp=\n\
 \let val a=Array.fromList(actionRows) in fn i=>Array.sub(a,i) end\n\
-\in Array.fromList(map actionRowLookUp actionRowNumbers)\n\
+\in Array.fromList(List.map actionRowLookUp actionRowNumbers)\n\
 \end\n\
 \in LrTable.mkLrTable {actions=actionT,gotos=gotoT,numRules=numrules,\n\
 \numStates=numstates,initialState=STATE ";
@@ -204,5 +200,4 @@ print (Int.toString ((fn (STATE i) => i) (initialState table)));
 print "}\nend\n";
       entries
       end
-end
-end
+end;

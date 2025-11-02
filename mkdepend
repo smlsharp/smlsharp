@@ -83,8 +83,15 @@ IFS=$LF
 
 for i in `echo "$ALL_OBJECTS" | sed 's/\.o$//'`; do
   case "$i" in
-    src/ml-yacc/src/yacc.lex) ;;
-    src/ml-yacc/src/yacc.grm) ;;
+    src/ml-yacc/src/smlyacc.grm) ;;
+    src/ml-yacc/src/smlyacc.lex)
+      j=src/ml-yacc/src/yacc.lex
+      GEN_SOURCES="$GEN_SOURCES$LF$i.sml"
+      echo "$i.sml: \\" >> "$depend_mk"
+      echo " $j \\" >> "$depend_mk"
+      echo ' $(SMLLEX_DEP)' >> "$depend_mk"
+      echo "	\$(SMLSHARP_ENV) \$(MINISMLLEX) -o $i.sml \$(srcdir)/$j" >> "$depend_mk"
+      ;;
     src/smlnj-lib/JSON/json.lex) ;;
     *.ppg)
       GEN_SOURCES="$GEN_SOURCES$LF$i.sml"

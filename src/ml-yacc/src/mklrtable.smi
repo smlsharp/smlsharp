@@ -3,7 +3,7 @@ _require local "../../ml-yacc/lib/base.sig"
 _require "../../ml-yacc/lib/lrtable.smi"
 _require local "./utils.smi"
 _require local "./core.smi"
-(* _require "./coreutils.smi" *)
+_require local "./coreutils.smi"
 _require local "./graph.smi"
 _require "./grammar.smi"
 _require local "./look.smi"

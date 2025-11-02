@@ -1,4 +1,3 @@
-(* Modified by Katsuhiro Ueno on 2011-Nov-30 to port ml-yacc to SML#. *)
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi *)
 
 (* parser.sml:  This is a parser driver for LR tables with an error-recovery
@@ -81,13 +80,11 @@
 *)
 
 signature FIFO = 
-  sig 
-      type entry
-      type queue
-      val empty : queue
+  sig type 'a queue
+      val empty : 'a queue
       exception Empty
-      val get : queue -> entry * queue
-      val put : entry * queue -> queue
+      val get : 'a queue -> 'a * 'a queue
+      val put : 'a * 'a queue -> 'a queue
   end
 
 (* drt (12/15/89) -- the functor should be used in development work, but
@@ -97,58 +94,21 @@ functor ParserGen(structure LrTable : LR_TABLE
 		  structure Stream : STREAM) : LR_PARSER =
 *)
 
-(*
-(* Ueno (2011-Nov-30): The signature constraint to LrParser should be
-   transparent since SML# interface file syntax avoids problematic
-   replications of exceptions and types under opaque constraints. *)
-structure LrParser :> LR_PARSER =
-*)
-(* 2012-9-24: ohori
-  This is the top-level library structure.
-  This is changed to a functor that takes
-    type pos
-    type svalue
-    type arg
-
-   changed 'arg => arg
-   eliminated type parameters in token
-   and changed accordingly:
-     (('a,'b) token => token
-     'a => Token.svalue
-     'b => Token.pos
-*)
-(******************************************* 
-  2015-09-27 ohori
-  temoprary fix to speed up compilation
-  effectiveluy on change; signature constraint is
-  subsumed by interface specification.
-****************************************** 
-functor LrParserFun(type arg type pos type svalue) : LR_PARSER =
-*)
-functor LrParserFun(type arg type pos type svalue)  =
+(* Ueno (2025-11-02): make it functor for generative exceptions *)
+functor LrParser() : LR_PARSER =
    struct
-      type arg = arg
-      type pos = pos
-      type svalue = svalue
-      (* structure LrTable = LrTable *)
+      structure LrTable = LrTable
+      structure Stream = Stream
+
       fun eqT (LrTable.T i, LrTable.T i') = i = i'
 
       structure Token : TOKEN =
 	struct
-            type pos = pos
-            type svalue = svalue
 	    structure LrTable = LrTable
-	    datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
-	    val sameToken = 
-             fn (TOKEN(t,_) : token,TOKEN(t',_): token) => eqT (t,t')
+	    datatype ('a,'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+	    val sameToken = fn (TOKEN(t,_),TOKEN(t',_)) => eqT (t,t')
         end
 
-      type actions = 
-           int * pos * (LrTable.state * (svalue * pos * pos)) list * arg ->
-           LrTable.nonterm * (svalue * pos * pos) *
-           ((LrTable.state *(svalue * pos * pos)) list)
-
-      structure Stream = StreamFun(type tok = Token.token)
       open LrTable
       open Token
 
@@ -157,15 +117,9 @@ functor LrParserFun(type arg type pos type svalue)  =
       exception ParseError
       exception ParseImpossible of int
 
-      type elem = (state * (svalue * pos * pos))
-      type stack = elem list
-      type lexv = token
-      type lexpair = lexv * Stream.stream
-
-      structure Fifo :> FIFO where type entry = stack * lexpair =
+      structure Fifo :> FIFO =
         struct
-          type entry = stack * lexpair
-	  type queue = (entry list * entry list)
+	  type 'a queue = ('a list * 'a list)
 	  val empty = (nil,nil)
 	  exception Empty
 	  fun get(a::x, y) = (a, (x,y))
@@ -174,19 +128,26 @@ functor LrParserFun(type arg type pos type svalue)  =
  	  fun put(a,(x,y)) = (x,a::y)
         end
 
-      type distanceParse =
-	   lexpair * stack * Fifo.queue * int 
-           -> lexpair * stack * Fifo.queue * int * action option
+      type ('a,'b) elem = (state * ('a * 'b * 'b))
+      type ('a,'b) stack = ('a,'b) elem list
+      type ('a,'b) lexv = ('a,'b) token
+      type ('a,'b) lexpair = ('a,'b) lexv * (('a,'b) lexv Stream.stream)
+      type ('a,'b) distanceParse =
+		 ('a,'b) lexpair *
+		 ('a,'b) stack * 
+		 (('a,'b) stack * ('a,'b) lexpair) Fifo.queue *
+		 int ->
+		   ('a,'b) lexpair *
+		   ('a,'b) stack * 
+		   (('a,'b) stack * ('a,'b) lexpair) Fifo.queue *
+		   int *
+		   action option
 
-      (*  ('a, 'b) ecRecord => ecRecord
-           'a => svalue
-           'b => pos
-      *)
-      type ecRecord =
+      type ('a,'b) ecRecord =
 	 {is_keyword : term -> bool,
           preferred_change : (term list * term list) list,
-	  error : string * pos * pos -> unit,
-	  errtermvalue : term -> svalue,
+	  error : string * 'b * 'b -> unit,
+	  errtermvalue : term -> 'a,
 	  terms : term list,
 	  showTerminal : term -> string,
 	  noShift : term -> bool}
@@ -196,7 +157,7 @@ functor LrParserFun(type arg type pos type svalue)  =
 	 val println = fn s => (print s; print "\n")
 	 val showState = fn (STATE s) => "STATE " ^ (Int.toString s)
       in
-        fun printStack(stack: stack, n: int) =
+        fun printStack(stack: ('a,'b) stack, n: int) =
          case stack
            of (state,_) :: rest =>
                  (print("\t" ^ Int.toString n ^ ": ");
@@ -310,16 +271,16 @@ functor LrParserFun(type arg type pos type svalue)  =
 		 | ACCEPT => (lexPair,stack,queue,distance,SOME nextAction)
 	      end
 	   | parseStep _ = raise (ParseImpossible 242)
-	in parseStep : distanceParse 
+	in parseStep : ('_a,'_b) distanceParse 
 	end
 
 (* mkFixError: function to create fixError function which adjusts parser state
    so that parse may continue in the presence of an error *)
 
-    fun mkFixError({is_keyword,terms,errtermvalue,
+fun mkFixError({is_keyword,terms,errtermvalue,
 	      preferred_change,noShift,
-	      showTerminal,error,...} : ecRecord,
-	     distanceParse : distanceParse,
+	      showTerminal,error,...} : ('_a,'_b) ecRecord,
+	     distanceParse : ('_a,'_b) distanceParse,
 	     minAdvance,maxAdvance) 
 
             (lexv as (TOKEN (term,value as (_,leftPos,_)),_),stack,queue) =
@@ -359,9 +320,9 @@ functor LrParserFun(type arg type pos type svalue)  =
 	   orig = original terminal * value pair at the point being changed.
 	 *)
 
-	datatype change = CHANGE of
-	   {pos : int, distance : int, leftPos: pos, rightPos: pos,
-	    new : lexv list, orig : lexv list}
+	datatype ('a,'b) change = CHANGE of
+	   {pos : int, distance : int, leftPos: 'b, rightPos: 'b,
+	    new : ('a,'b) lexv list, orig : ('a,'b) lexv list}
 
 
          val showTerms = concat o map (fn TOKEN(t,_) => " " ^ showTerminal t)
@@ -554,14 +515,8 @@ functor LrParserFun(type arg type pos type svalue)  =
 			leftPos,leftPos); raise ParseError)
     end
 
-   val parse =
-    fn {arg:arg,
-        table:table,
-        lexer: Stream.stream,
-        saction: actions,
-        void:svalue,
-        lookahead:int,
-	ec=ec as {showTerminal,...} : ecRecord} =>
+   val parse = fn {arg,table,lexer,saction,void,lookahead,
+		   ec=ec as {showTerminal,...} : ('_a,'_b) ecRecord} =>
 	let val distance = 15   (* defer distance tokens *)
 	    val minAdvance = 1  (* must parse at least 1 token past error *)
 	    val maxAdvance = Int.max(lookahead,0)(* max distance for parse check *)

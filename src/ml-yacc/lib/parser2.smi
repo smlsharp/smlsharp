@@ -1,63 +1,38 @@
 _require local "../../basis.smi"
 _require local "./base.sig"
-_require local "./stream.smi"
+_require "./stream.smi"
 _require "./lrtable.smi"
 
-(* 2012-9-24: ohori
-  This is the top-level library structure.
-  This is changed to a functor that takes
-    type pos
-    type svalue
-    type arg
-
-   changed 'arg => arg
-   eliminated type parameters in token
-   and changed accordingly:
-     (('a,'b) token => token
-     'a => Token.svalue
-     'b => Token.pos
-*)
-
-functor LrParserFun (A : sig type arg type pos type svalue end) =
+functor LrParser(A : sig end) =
 struct
-  type arg = A.arg
-  type pos = A.pos
-  type svalue = A.svalue
+  structure Stream = Stream
   structure LrTable = LrTable
   structure Token =
   struct
-    type svalue = A.svalue
-    type pos = A.pos
     structure LrTable = LrTable
-    datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
-    val sameToken : token * token -> bool
-  end
-  type actions = 
-       int * pos * (LrTable.state * (svalue * pos * pos)) list * arg ->
-       LrTable.nonterm * (svalue * pos * pos) *
-       ((LrTable.state *(svalue * pos * pos)) list)
-  structure Stream = 
-  struct
-    type tok = Token.token
-    type stream (= ref)
-    val streamify : (unit -> tok) -> stream
-    val cons : tok * stream -> stream
-    val get : stream -> tok * stream
+    datatype ('a, 'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+    val sameToken : ('a, 'b) token * ('a, 'b) token -> bool
   end
   exception ParseError
   val parse
       : {table : LrTable.table,
-         lexer : Stream.stream,
-         arg: arg,
-         saction : actions,
-         void : Token.svalue,
+         lexer : ('b, 'c) Token.token Stream.stream,
+         arg: 'arg,
+         saction : int
+                   * 'c
+                   * (LrTable.state * ('b * 'c * 'c)) list
+                   * 'arg ->
+                     LrTable.nonterm
+                     * ('b * 'c * 'c)
+                     * (LrTable.state * ('b * 'c * 'c)) list,
+         void : 'b,
          ec : {is_keyword : LrTable.term -> bool,
                noShift : LrTable.term -> bool,
-               preferred_change : (LrTable.term list * LrTable.term list)
-                                  list,
-               errtermvalue : LrTable.term -> Token.svalue,
+               preferred_change : (LrTable.term list * LrTable.term list) list,
+               errtermvalue : LrTable.term -> 'b,
                showTerminal : LrTable.term -> string,
                terms: LrTable.term list,
-               error : string * Token.pos * Token.pos -> unit},
-         lookahead : int} -> Token.svalue * Stream.stream
+               error : string * 'c * 'c -> unit},
+         lookahead : int}
+        -> 'b * ('b, 'c) Token.token Stream.stream
 end

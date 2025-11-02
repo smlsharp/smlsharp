@@ -5,9 +5,11 @@
   2012-1-13 ohori
   %footer added for defuncteringing ml.grm.sml
 *)
-open Header
+
+structure Hdr = Header
+open Hdr
 %%
-%verbose
+
 %name Mlyacc
 %eop EOF
 %noshift EOF
@@ -18,9 +20,8 @@ open Header
 %term	ARROW | ASTERISK | BLOCK | BAR | CHANGE | COLON | 
 	COMMA | DELIMITER | EOF | FOR |
 	HEADER of string | ID of string*int | IDDOT of string |
-	PERCENT_HEADER | PERCENT_FOOTER | 
-        PERCENT_DECOMPOSE | PERCENT_BLOCKSIZE |
-        INT of string | KEYWORD | LBRACE | LPAREN |
+	PERCENT_FOOTER | PERCENT_DECOMPOSE | PERCENT_BLOCKSIZE |
+	PERCENT_HEADER | INT of string | KEYWORD | LBRACE | LPAREN |
 	NAME | NODEFAULT | NONTERM | NOSHIFT | OF |
 	PERCENT_EOP | PERCENT_PURE | PERCENT_POS | PERCENT_ARG |
 	PERCENT_TOKEN_SIG_INFO |
@@ -30,28 +31,28 @@ open Header
 	UNKNOWN of string | BOGUS_VALUE
 
 %nonterm
-	BEGIN of string * Header.declData * (Header.rule list) |
-	CONSTR_LIST of (Header.symbol * Header.ty option) list |
-	ID_LIST of Header.symbol list |
+	BEGIN of string * Hdr.declData * (Hdr.rule list) |
+	CONSTR_LIST of (Hdr.symbol * Hdr.ty option) list |
+	ID_LIST of Hdr.symbol list |
  	LABEL of string |
- 	MPC_DECL of Header.declData |
-	MPC_DECLS of Header.declData |
+ 	MPC_DECL of Hdr.declData |
+	MPC_DECLS of Hdr.declData |
 	QUAL_ID of string |
 	RECORD_LIST of string |
-	RHS_LIST of {rhs:Header.symbol list,code:string,
-		     prec:Header.symbol option} list |
-	G_RULE of Header.rule list |
-	G_RULE_LIST of Header.rule list |
-	G_RULE_PREC of Header.symbol option |
-	SUBST_DECL of (Header.symbol list * Header.symbol list) list |
-	SUBST_DEC of (Header.symbol list * Header.symbol list) |
-	CHANGE_DECL of (Header.symbol list * Header.symbol list) list |
-	CHANGE_DEC of (Header.symbol list * Header.symbol list) |
+	RHS_LIST of {rhs:Hdr.symbol list,code:string,
+		     prec:Hdr.symbol option} list |
+	G_RULE of Hdr.rule list |
+	G_RULE_LIST of Hdr.rule list |
+	G_RULE_PREC of Hdr.symbol option |
+	SUBST_DECL of (Hdr.symbol list * Hdr.symbol list) list |
+	SUBST_DEC of (Hdr.symbol list * Hdr.symbol list) |
+	CHANGE_DECL of (Hdr.symbol list * Hdr.symbol list) list |
+	CHANGE_DEC of (Hdr.symbol list * Hdr.symbol list) |
  	TY of string
-%header (structure LrVals
+%header (
+structure LrVals
 )
-%footer ()
-%arg (inputSource) : Header.inputSource
+%arg (inputSource) : Hdr.inputSource
 %%
 
 BEGIN : HEADER MPC_DECLS DELIMITER G_RULE_LIST
@@ -116,6 +117,7 @@ MPC_DECL: TERM CONSTR_LIST
 	     (DECL {prec=nil,control=[FUNCTOR PROG],nonterm=NONE,term=NONE,
 	            eop=nil,change=nil,keyword=nil,
 		    value=nil})
+(* 2012-9-24 ohori: %footer, %decompose, and %blockSize are added *)
 	| PERCENT_FOOTER PROG
 	     (DECL {prec=nil,control=[FOOTER PROG],nonterm=NONE,term=NONE,
 	            eop=nil,change=nil,keyword=nil,
@@ -144,22 +146,22 @@ MPC_DECL: TERM CONSTR_LIST
 		     value=nil})
 
 	| VERBOSE
-	     (DECL {prec=nil,control=[Header.VERBOSE],
+	     (DECL {prec=nil,control=[Hdr.VERBOSE],
 	        nonterm=NONE,term=NONE,eop=nil,
 	        change=nil,keyword=nil,
 		value=nil})
 	| NODEFAULT
-	     (DECL {prec=nil,control=[Header.NODEFAULT],
+	     (DECL {prec=nil,control=[Hdr.NODEFAULT],
 	        nonterm=NONE,term=NONE,eop=nil,
 	        change=nil,keyword=nil,
 		value=nil})
 	| PERCENT_PURE
-	     (DECL {prec=nil,control=[Header.PURE],
+	     (DECL {prec=nil,control=[Hdr.PURE],
 	        nonterm=NONE,term=NONE,eop=nil,
 	        change=nil,keyword=nil,
 		value=nil})
 	| PERCENT_POS TY
-	     (DECL {prec=nil,control=[Header.POS TY],
+	     (DECL {prec=nil,control=[Hdr.POS TY],
 	        nonterm=NONE,term=NONE,eop=nil,
 	        change=nil,keyword=nil,
 		value=nil})
@@ -197,7 +199,7 @@ CONSTR_LIST : CONSTR_LIST BAR ID OF TY
 
 G_RULE : ID COLON RHS_LIST
 	(map (fn {rhs,code,prec} =>
-    	          Header.RULE {lhs=symbolMake ID,rhs=rhs,
+    	          Hdr.RULE {lhs=symbolMake ID,rhs=rhs,
 			       code=code,prec=prec})
 	 RHS_LIST)
 

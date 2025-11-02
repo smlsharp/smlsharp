@@ -1,11 +1,10 @@
 _require local "../../basis.smi"
 _require local "./base.sig"
 
-functor StreamFun(A: sig type tok end) =
+structure Stream =
 struct
-  type tok = A.tok
-  type stream (= ref)
-  val streamify : (unit -> tok) -> stream
-  val cons : tok * stream -> stream
-  val get : stream -> tok * stream
+  type 'a stream (= ref)
+  val streamify : (unit -> 'a) -> 'a stream
+  val cons : 'a * 'a stream -> 'a stream
+  val get : 'a stream -> 'a * 'a stream
 end

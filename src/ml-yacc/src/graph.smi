@@ -7,7 +7,7 @@ _require "./grammar.smi"
 _require "./core.smi"
 _require local "./coreutils.smi"
 
-structure Graph  =
+structure Graph =
 struct
   structure Grammar =
   struct

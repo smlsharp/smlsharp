@@ -1,4 +1,3 @@
-(* Modified by Katsuhiro Ueno on 2011-Nov-25 to port ml-yacc to SML#. *)
 Library
   structure ExportParseGen
 is
@@ -10,18 +9,10 @@ is
   ../lib/ml-yacc-lib.cm
 # endif
 
-(*
-(* Ueno (2011-11-25): rearranged for MLton. *)
   sigs.sml
 
   utils.sig
-*)
-  utils.sig
-  sigs.sml
   hdr.sml
-
-(* Ueno (2011-11-25): added the following condition for MLton. *)
-#if defined(SMLNJ_VERSION)
 
 (* During installation we rely on pre-generated files
  * to avoid certain chicken-and-egg problems. *)
@@ -39,12 +30,6 @@ is
 #else
   yacc.lex
 #endif
-
-#else (* for MLton *)
-  yacc.grm.sig
-  yacc.grm.sml
-  yacc.lex.sml
-#endif (* SMLNJ_VERSION *)
 
   parse.sml
 
@@ -66,9 +51,3 @@ is
   link.sml
 
   export-yacc.sml
-
-(* Ueno (2011-11-25): added the following for SML# and MLton. *)
-#if defined(SMLNJ_VERSION)
-#else
-  ml-yacc.sml
-#endif

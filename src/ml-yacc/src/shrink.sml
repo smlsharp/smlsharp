@@ -79,7 +79,7 @@ functor MergeSortFun(A : SORT_ARG) : SORT =
 
 functor EquivFun(A : EQUIV_ARG) : EQUIV =
    struct
-       open Array List
+       val sub = Array.sub
        infix 9 sub
 
       (* Our algorithm for finding equivalence class is simple.  The basic
@@ -104,7 +104,7 @@ functor EquivFun(A : EQUIV_ARG) : EQUIV =
 
        type entry = A.entry
              
-       val gt = fn ((a,_):A.entry * int,(b,_):A.entry * int) => A.gt(a,b)
+       val gt = fn ((a,_),(b,_)) => A.gt(a,b)
 
        structure Sort = MergeSortFun(type entry = A.entry * int
      				     val gt = gt)
@@ -128,9 +128,9 @@ functor EquivFun(A : EQUIV_ARG) : EQUIV =
        val inversePermute = fn permutation =>
               fn nil => nil
                | l as h :: _ =>
-                   let val result = array(length l,h)
+                   let val result = Array.array(length l,h)
                        fun loop (elem :: r, dest :: s) =
-			     (update(result,dest,elem); loop(r,s))
+			     (Array.update(result,dest,elem); loop(r,s))
                          | loop _ = ()
                        fun listofarray i =
 			  if i < Array.length result then 
@@ -148,12 +148,10 @@ functor EquivFun(A : EQUIV_ARG) : EQUIV =
                val (R, SE) = createEquivalences sorted
             in (length R, inversePermute P SE, R)
             end
-val _ = "done\n"
 end
 
 (*
 2012-3-21 ohori defuncterized
-functor ShrinkLrTableFun(structure LrTable : LR_TABLE) : SHRINK_LR_TABLE =
 *)
 structure ShrinkLrTable : SHRINK_LR_TABLE =
     struct
@@ -224,4 +222,4 @@ structure ShrinkLrTable : SHRINK_LR_TABLE =
 	   case EquivActionList.equivalences
 	             (map (describeActions table) (states (numStates table)))
            of result as (_,_,l) => (result,if verbose then size l else 0)
-end
+end;

@@ -5,19 +5,12 @@
 *)
 
 (* STREAM: signature for a lazy stream.*)
-(* 2012-9-24: ohori
-  ('a,'b) token => token
-   'a => svalue
-   'b => pos
-*)
 
 signature STREAM =
- sig 
-     type tok
-     type stream
-     val streamify : (unit -> tok) -> stream
-     val cons : tok * stream -> stream
-     val get : stream -> tok * stream
+ sig type 'xa stream
+     val streamify : (unit -> '_a) -> '_a stream
+     val cons : '_a * '_a stream -> '_a stream
+     val get : '_a stream -> '_a * '_a stream
  end
 
 (* LR_TABLE: signature for an LR Table.
@@ -38,9 +31,11 @@ signature LR_TABLE =
 			| ACCEPT
 			| ERROR
 	type table
+	
 	val numStates : table -> int
 	val numRules : table -> int
-	val describeActions : table -> state -> (term,action) pairlist * action
+	val describeActions : table -> state ->
+				(term,action) pairlist * action
 	val describeGoto : table -> state -> (nonterm,state) pairlist
 	val action : table -> state * term -> action
 	val goto : table -> state * nonterm -> state
@@ -82,58 +77,47 @@ signature LR_TABLE =
 *)
 
 signature TOKEN =
-  sig
-    type svalue 
-    type pos 
-    structure LrTable : LR_TABLE
-    datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
-    val sameToken : token * token -> bool
-  end
+    sig
+	structure LrTable : LR_TABLE
+        datatype ('a,'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+	val sameToken : ('a,'b) token * ('a,'b) token -> bool
+    end
 
 (* LR_PARSER: signature for a polymorphic LR parser *)
-(* 2012-9-24: ohori
-  type pos added, which is needed in deining Token
-  type svalue added, which is needed in deining Token
-  type arg added and changed 'arg => arg
-   eliminated type parameters in token)
-   and changed accordingly:
-     (('a,'b) token => token
-     'a => Token.svalue
-     'b => Token.pos
-*)
-(* 2013-1-1 ohori: "type actions " entry added *)
+
 signature LR_PARSER =
     sig
-        type arg
-        type pos
-        type svalue
-	structure LrTable : LR_TABLE
 	structure Stream: STREAM
+	structure LrTable : LR_TABLE
 	structure Token : TOKEN
 
 	sharing LrTable = Token.LrTable
 
 	exception ParseError
-        type actions = 
-             int * Token.pos * (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list * arg ->
-             LrTable.nonterm * (Token.svalue * Token.pos * Token.pos) *
-             ((LrTable.state *(Token.svalue * Token.pos * Token.pos)) list)
+
 	val parse : {table : LrTable.table,
-		     lexer : Stream.stream,
-		     arg: arg,
-		     saction : actions,
-		     void : Token.svalue,
+		     lexer : ('_b,'_c) Token.token Stream.stream,
+		     arg: 'arg,
+		     saction : int *
+			       '_c *
+				(LrTable.state * ('_b * '_c * '_c)) list * 
+				'arg ->
+				     LrTable.nonterm *
+				     ('_b * '_c * '_c) *
+				     ((LrTable.state *('_b * '_c * '_c)) list),
+		     void : '_b,
 		     ec : { is_keyword : LrTable.term -> bool,
 			    noShift : LrTable.term -> bool,
 			    preferred_change : (LrTable.term list * LrTable.term list) list,
-			    errtermvalue : LrTable.term -> Token.svalue,
+			    errtermvalue : LrTable.term -> '_b,
 			    showTerminal : LrTable.term -> string,
 			    terms: LrTable.term list,
-			    error : string * Token.pos * Token.pos -> unit
+			    error : string * '_c * '_c -> unit
 			   },
 		     lookahead : int  (* max amount of lookahead used in *)
 				      (* error correction *)
-			} -> Token.svalue * Stream.stream
+			} -> '_b *
+			     (('_b,'_c) Token.token Stream.stream)
     end
 
 (* LEXER: a signature that most lexers produced for use with SML-Yacc's
@@ -147,36 +131,33 @@ signature LR_PARSER =
    of tokens.
 *)
 
-(* 2012-9-24: ohori
-  ('a,'b) token => token
-*)
 signature LEXER =
    sig
        structure UserDeclarations :
 	   sig
+	        type ('a,'b) token
 		type pos
-	        type token
+		type svalue
 	   end
-	val makeLexer : (int -> string) -> unit -> UserDeclarations.token
+	val makeLexer : (int -> string) -> unit -> 
+         (UserDeclarations.svalue,UserDeclarations.pos) UserDeclarations.token
    end
 
 (* ARG_LEXER: the %arg option of ML-Lex allows users to produce lexers which
    also take an argument before yielding a function from unit to a token
 *)
 
-(* 2012-9-24: ohori
-  ('a,'b) token => token
-*)
 signature ARG_LEXER =
    sig
        structure UserDeclarations :
 	   sig
-	        type token
+	        type ('a,'b) token
 		type pos
+		type svalue
 		type arg
 	   end
-	val makeLexer : 
-            (int -> string) -> UserDeclarations.arg -> unit -> UserDeclarations.token
+	val makeLexer : (int -> string) -> UserDeclarations.arg -> unit -> 
+         (UserDeclarations.svalue,UserDeclarations.pos) UserDeclarations.token
    end
 
 (* PARSER_DATA: the signature of ParserData structures in {parser name}LrValsFun
@@ -191,36 +172,45 @@ signature ARG_LEXER =
 signature PARSER_DATA =
    sig
         (* the type of line numbers *)
+
 	type pos
+
 	(* the type of semantic values *)
+
 	type svalue
+
          (* the type of the user-supplied argument to the parser *)
  	type arg
+ 
 	(* the intended type of the result of the parser.  This value is
 	   produced by applying extract from the structure Actions to the
 	   final semantic value resultiing from a parse.
 	 *)
+
 	type result
-        structure LrParser : LR_PARSER
+
 	structure LrTable : LR_TABLE
 	structure Token : TOKEN
-	sharing LrParser.LrTable = Token.LrTable = LrTable
+	sharing Token.LrTable = LrTable
+
 	(* structure Actions contains the functions which mantain the
 	   semantic values stack in the parser.  Void is used to provide
 	   a default value for the semantic stack.
 	 *)
+
 	structure Actions : 
 	  sig
-	      val actions : 
-                  int * pos *
-	          (LrTable.state * (svalue * pos * pos)) list * arg->
-	          LrTable.nonterm * (svalue * pos * pos) *
-	          (LrTable.state *(svalue * pos * pos)) list
+	      val actions : int * pos *
+		   (LrTable.state * (svalue * pos * pos)) list * arg->
+		         LrTable.nonterm * (svalue * pos * pos) *
+			 ((LrTable.state *(svalue * pos * pos)) list)
 	      val void : svalue
 	      val extract : svalue -> result
 	  end
+
 	(* structure EC contains information used to improve error
 	   recovery in an error-correcting parser *)
+
 	structure EC :
 	   sig
 	     val is_keyword : LrTable.term -> bool
@@ -230,41 +220,16 @@ signature PARSER_DATA =
 	     val showTerminal : LrTable.term -> string
 	     val terms: LrTable.term list
 	   end
+
 	(* table is the LR table for the parser *)
+
 	val table : LrTable.table
     end
 
-(* 2012-9-24: ohori
-   the user-level Parser structure in XXLrVals 
-   generated by smlyacc.
-*)
-signature PARSER =
-sig
-  type token
-  type stream
-  type result
-  type pos
-  type arg
-  exception ParseError
-  val makeStream : {lexer:unit -> token} -> stream
-  val consStream : token * stream -> stream
-  val getStream : stream -> token * stream
-  val sameToken : token * token -> bool
-  val parse : {lookahead:int,
-               stream:stream,
-               error: (string * pos * pos -> unit),
-               arg: arg}
-              -> result * stream
-end
-
-(*
 (* signature PARSER is the signature that most user parsers created by 
    SML-Yacc will match.
 *)
 
-(* 2012-9-24: ohori
-  (svalue,pos) Token.token => token
-*)
 signature PARSER =
     sig
         structure Token : TOKEN
@@ -290,26 +255,26 @@ signature PARSER =
 
 	(* val makeLexer is used to create a stream of tokens for the parser *)
 
-	val makeLexer : (int -> string) -> Stream.stream
+	val makeLexer : (int -> string) ->
+			 (svalue,pos) Token.token Stream.stream
 
 	(* val parse takes a stream of tokens and a function to print
 	   errors and returns a value of type result and a stream containing
 	   the unused tokens
 	 *)
 
-	val parse : int * Stream.stream * (string * pos * pos -> unit) * arg 
-                    -> result * Stream.stream
+	val parse : int * ((svalue,pos) Token.token Stream.stream) *
+		    (string * pos * pos -> unit) * arg ->
+				result * (svalue,pos) Token.token Stream.stream
 
-	val sameToken : Token.token * Token.token ->	bool
+	val sameToken : (svalue,pos) Token.token * (svalue,pos) Token.token ->
+				bool
      end
 
 (* signature ARG_PARSER is the signature that will be matched by parsers whose
     lexer takes an additional argument.
 *)
 
-(* 2012-9-24: ohori
-  (svalue,pos) Token.token => token
-*)
 signature ARG_PARSER = 
     sig
         structure Token : TOKEN
@@ -322,11 +287,35 @@ signature ARG_PARSER =
 	type result
 	type svalue
 
-	val makeLexer : (int -> string) -> lexarg -> Stream.stream
-	val parse : int * Stream.stream * (string * pos * pos -> unit) * arg 
-                    -> result * Stream.stream
+	val makeLexer : (int -> string) -> lexarg ->
+			 (svalue,pos) Token.token Stream.stream
+	val parse : int * ((svalue,pos) Token.token Stream.stream) *
+		    (string * pos * pos -> unit) * arg ->
+				result * (svalue,pos) Token.token Stream.stream
 
-	val sameToken : Token.token * Token.token -> bool
+	val sameToken : (svalue,pos) Token.token * (svalue,pos) Token.token ->
+				bool
      end
 
+(* 2012-9-24: ohori
+   the user-level Parser structure in XXLrVals
+   generated by smlyacc.
 *)
+signature SMLYACC_PARSER =
+sig
+  type pos
+  type token
+  type arg
+  type result
+  type stream
+  exception ParseError
+  val makeStream : {lexer : unit -> token} -> stream
+  val consStream : token * stream -> stream
+  val getStream : stream -> token * stream
+  val sameToken : token * token -> bool
+  val parse : {lookahead : int,
+               stream : stream,
+               error : (string * pos * pos -> unit),
+               arg : arg}
+              -> result * stream
+end

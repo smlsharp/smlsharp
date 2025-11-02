@@ -5,12 +5,13 @@
 (* 2012-9-30 ohori:
    action table is decomposed into a set of functions.
 *)
- structure ParseGen : PARSE_GEN =
+
+structure ParseGen : PARSE_GEN =
   struct
-    open Array List
+    val sub = Array.sub
     infix 9 sub
-    (* structure Grammar = MakeTable.Grammar *)
-    (* structure Header = ParseGenParser.Header *)
+    structure Grammar = MakeTable.Grammar
+    structure Header = ParseGenParser.Header
 
     open Header Grammar
 
@@ -112,7 +113,6 @@
      in sayln "local open Header in";
 	sayln ("type pos = " ^ pos_type);
 	sayln ("type arg = " ^ arg_type);
-	sayln ("type lexarg = " ^ arg_type);
 	sayln ("structure " ^ valueStruct ^ " = ");
 	sayln "struct";
 	say ("datatype svalue = " ^ termvoid ^ " | " ^ ntvoid ^ " of" ^
@@ -140,11 +140,8 @@
 		 (case tokenInfo of
 		      NONE => ()
 		    | _ => sayln ("open "^dataStruct^".Header"));
-(*
 	         sayln ("type svalue = " ^ dataStruct ^ ".svalue");
-*)
-	         sayln ("type pos = " ^ dataStruct ^ ".pos");
-		 sayln ("type token = " ^ dataStruct ^ ".Token.token");
+		 sayln "type token = Parser.token and pos = Parser.pos";
 		 let val f = fn term as T i =>
 			(say "fun "; say (termToString term);
 			 say " (";
@@ -174,20 +171,22 @@
 			say) =>
           say  ("signature " ^ tokenSig ^ " =\nsig\n"^
 		(case tokenInfo of NONE => "" | SOME s => (s^"\n"))^
-(*
 		 "type pos\ntype token\ntype svalue\n" ^
-*)
-		 "type pos\ntype token\n" ^
 		 (List.foldr (fn ((s,ty),r) => String.concat [
-		    "val ", symbolName s,
+		    "    val ", symbolName s,
 		    (case ty
 		     of NONE => ": " 
 		      | SOME l => ": (" ^ (tyName l) ^ ") * "),
 		    " pos * pos -> token\n", r]) "" term) ^
 		 "end\nsignature " ^ miscSig ^
 		  "=\nsig\nstructure Tokens : " ^ tokenSig ^
-		  "\nstructure Parser : PARSER" ^
-		  "\nsharing type Parser.token = Tokens.token\nend\n")
+		  "\nstructure " ^ dataStruct ^ ":" ^ dataSig ^
+		  "\nstructure Parser : SMLYACC_PARSER" ^
+		  "\nsharing type Parser.pos = " ^ dataStruct ^ ".pos" ^
+		  "\nsharing type Parser.arg = " ^ dataStruct ^ ".arg" ^
+		  "\nsharing type Parser.result = " ^ dataStruct ^ ".result" ^
+		  "\nsharing type Parser.token = Tokens.token\nsharing type " ^
+		  dataStruct ^ ".svalue = Tokens.svalue\nend\n")
 		
     (* function to print structure for error correction *)
 
@@ -251,7 +250,7 @@
 
 	   val ecTerms = 
 		List.foldr (fn (t,r) =>
-		  if hasType (TERM t) orelse exists (fn (a,_)=>a=t) value
+		  if hasType (TERM t) orelse List.exists (fn (a,_)=>a=t) value
 		    then r
 		    else t::r)
 		[] terms
@@ -276,16 +275,239 @@
 	    sayln "end"
 	end
 
+val printAction = fn (rules,
+			  VALS {hasType,say,sayln,termvoid,ntvoid,
+			        symbolToString,saydot,start,pureActions,...},
+			  NAMES {actionsStruct,valueStruct,tableStruct,arg,...}) =>
+(* 2012-9-30 %decompose and %blockSize *)
+fn (decompose_decl, blockSize_decl) =>
+let val printAbsynRule = Absyn.printRule(say,sayln)
+    val is_nonterm = fn (NONTERM i) => true | _ => false
+    val numberRhs = fn r =>
+	List.foldl (fn (e,(r,table)) =>
+		let val num = case SymbolTable.find(e,table)
+			       of SOME i => i
+				| NONE => 1
+		 in ((e,num,hasType e orelse is_nonterm e)::r,
+		     SymbolTable.insert((e,num+1),table))
+		 end) (nil,SymbolTable.empty) r
+
+    val saySym = symbolToString
+
+    val printCase = fn (i:int, r as {lhs=lhs as (NT lhsNum),prec,
+				        rhs,code,rulenum}) =>
+
+       (* mkToken: Build an argument *)
+
+       let open Absyn
+	   val mkToken = fn (sym,num : int,typed) =>
+	     let val symString = symbolToString sym
+	       val symNum = symString ^ (Int.toString num)
+	     in PTUPLE[WILD,
+		     PTUPLE[if not (hasType sym) then
+			      (if is_nonterm sym then
+				   PAPP(valueStruct^"."^ntvoid,
+					PVAR symNum)
+			      else WILD)
+			   else	
+			       PAPP(valueStruct^"."^symString,
+			         if num=1 andalso pureActions
+				     then AS(symNum,PVAR symString)
+				 else PVAR symNum),
+			     if num=1 then AS(symString^"left",
+					      PVAR(symNum^"left"))
+			     else PVAR(symNum^"left"),
+			     if num=1 then AS(symString^"right",
+					      PVAR(symNum^"right"))
+			     else PVAR(symNum^"right")]]
+	     end
+
+            val numberedRhs = #1 (numberRhs rhs)
+
+	(* construct case pattern *)
+
+	   val pat = PTUPLE[PINT i,PLIST(map mkToken numberedRhs,
+					 SOME (PVAR "rest671"))]
+
+	(* remove terminals in argument list w/o types *)
+
+	   val argsWithTypes =
+		  List.foldr (fn ((_,_,false),r) => r
+			 | (s as (_,_,true),r) => s::r) nil numberedRhs
+
+        (* construct case body *)
+
+           val defaultPos = EVAR "defaultPos"
+           val resultexp = EVAR "result"
+           val resultpat = PVAR "result"
+           val code = CODE code
+           val rest = EVAR "rest671"
+
+	   val body =
+	     LET([VB(resultpat,
+		     EAPP(EVAR(valueStruct^"."^
+			     (if hasType (NONTERM lhs)
+				  then saySym(NONTERM lhs)
+                                  else ntvoid)),
+                          if pureActions then code
+		          else if argsWithTypes=nil then FN(WILD,code)
+                          else
+			   FN(WILD,
+			     let val body =
+				LET(map (fn (sym,num:int,_) =>
+				  let val symString = symbolToString sym
+				      val symNum = symString ^ Int.toString num
+				  in VB(if num=1 then
+					     AS(symString,PVAR symNum)
+					else PVAR symNum,
+					EAPP(EVAR symNum,UNIT))
+				  end) (rev argsWithTypes),
+		                      code)
+			     in if hasType (NONTERM lhs) then
+				    body else SEQ(body,UNIT)
+			     end)))],
+                   ETUPLE[EAPP(EVAR(tableStruct^".NT"),EINT(lhsNum)),
+			  case rhs
+			  of nil => ETUPLE[resultexp,defaultPos,defaultPos]
+			   | r =>let val (rsym,rnum,_) = hd(numberedRhs)
+				     val (lsym,lnum,_) = hd(rev numberedRhs)
+				 in ETUPLE[resultexp,
+					   EVAR (symbolToString lsym ^
+						 Int.toString lnum ^ "left"),
+					   EVAR (symbolToString rsym ^
+						  Int.toString rnum ^ "right")]
+				 end,
+                           rest])
+    in printAbsynRule (RULE(pat,body))
+    end
+
+	  val prRules = fn () =>
+	     (sayln "fn (i392,defaultPos,stack,";
+	      say   "    ("; say arg; sayln "):arg) =>";
+	      sayln "case (i392,stack)";
+	      say "of ";
+	      app (fn (rule as {rulenum,...}) =>
+		   (printCase(rulenum,rule); say "| ")) rules;
+	     sayln "_ => raise (mlyAction i392)")
+
+          (* 2012-9-30 ohori:
+           Here we deconpose the action cases in a sequence of function applies
+           *)
+	  val prRules =
+              case decompose_decl of
+                NONE => prRules
+              | SOME _ =>
+                let
+                  fun take blockSize L =
+                      let
+                        fun take' 0 (blockRev, rest) = (List.rev blockRev, rest)
+                          | take' n (blockRev, nil) = (List.rev blockRev, nil)
+                          | take' n (blockRev, rest) = take' (n - 1) (hd rest :: blockRev, tl rest)
+                      in
+                        take' blockSize (nil,L)
+                      end
+                  fun decompose blockSize L =
+                      case blockSize of
+                        NONE => [L]
+                      | SOME blockSize =>
+                        let
+                          fun decomp L decomposedRev =
+                              let
+                                val (next, rest) = take blockSize L
+                                val decomposedRev = next::decomposedRev
+                              in
+                                case rest of
+                                  nil => List.rev decomposedRev
+                                | _ => decomp rest decomposedRev
+                              end
+                        in
+                          decomp L nil
+                        end
+                  fun decomposeRules (namePrefix, blockSize, rules) =
+                      let
+                        val rulesList = decompose blockSize rules
+                        val lastIndex = List.length rulesList
+                        val (_, decoposedRulesList) =
+                            foldl
+                              (fn (rules, (funIndex, decoposedRulesList)) =>
+                                  let
+                                    val funName = namePrefix ^ Int.toString funIndex
+                                    val continueOpt =
+                                        if funIndex = lastIndex then NONE
+                                        else SOME (namePrefix ^ Int.toString (funIndex + 1))
+                                  in
+                                    (funIndex + 1,
+                                     {funName=funName,
+                                      rules = rules,
+                                      continue = continueOpt
+                                     }
+                                     ::decoposedRulesList)
+                                  end
+                              )
+                              (1, nil)
+                              rulesList
+                      in
+                        decoposedRulesList
+                      end
+                  val argTuple = "(i392, defaultPos, stack," ^ arg ^ ")"
+                  fun mkContinue NONE = sayln "_ => raise (mlyAction i392)"
+                    | mkContinue (SOME s) = sayln ("_ => (" ^ s ^ argTuple ^ ")")
+                  fun mkFun {rules, funName, continue} =
+                      (sayln ("fun " ^ funName);
+                       sayln "     (i392:int,defaultPos:pos,stack:(LrTable.state * (svalue * pos * pos)) list,";
+                       say   "     ("; say arg; sayln "):arg) =";
+                       sayln "  case (i392, stack) of ";
+                       app (fn (rule as {rulenum,...}) =>
+                               (printCase(rulenum,rule); say "| "))
+                           rules;
+                       mkContinue continue
+                      )
+                  val funPrefix = "actionFun"
+                  val firstFun = "actionFun1"
+                  val blockSize =
+                      case blockSize_decl of
+                        NONE => Int.maxInt
+                      | SOME n => Int.fromString n
+                  val rulesList = decomposeRules (funPrefix, blockSize, rules)
+                in
+                  fn () =>
+                     (sayln "let";
+                      app mkFun rulesList;
+                      sayln ("in " ^ firstFun ^ "end"))
+                end
+
+   	in say "structure ";
+	   say actionsStruct;
+	   sayln " =";
+	   sayln "struct ";
+	   sayln "exception mlyAction of int";
+	   sayln "local open Header in";
+	   sayln "val actions = ";
+	   prRules();
+	   sayln "end";
+	   say "val void = ";
+	   saydot valueStruct;
+	   sayln termvoid;
+	   say "val extract = ";
+	   say "fn a => (fn ";
+	   saydot valueStruct;
+	   if hasType (NONTERM start)
+	      then say (symbolToString (NONTERM start))
+	      else say "ntVOID";
+	   sayln " x => x";
+	   sayln "| _ => let exception ParseInternal";
+	   say "\tin raise ParseInternal end) a ";
+	   sayln (if pureActions then "" else "()");
+	   sayln "end"
+	end
 
     val make_parser = fn ((header,
 	 DECL {eop,change,keyword,nonterm,prec,
 	       term, control,value} : declData,
 	       rules : rule list),spec,error : pos -> string -> unit,
 	       wasError : unit -> bool) =>
-(* 2019-07-06: Ueno: allow users to specify the prefix of output files.
-     let
-*)
-     fn opts as {p,s} => let
+(* 2019-07-06: Ueno: allow users to specify the prefix of output files. *)
+     fn opts as {p = _, s = _} => let
 	val spec = getOpt (#p opts, spec)
 	val verbose = List.exists (fn VERBOSE=>true | _ => false) control
 	val defaultReductions = not (List.exists (fn NODEFAULT=>true | _ => false) control)
@@ -313,27 +535,26 @@
 		 | f (_::r) = f r
 	   in f control
 	   end
+
+(* 2012-9-24 ohori: %footer, %decompose, and %blockSize are added *)
 	val footer_decl =
 	   let fun f nil = NONE
 		 | f ((FOOTER s)::r) = SOME s 
 		 | f (_::r) = f r
 	   in f control
 	   end
-
 	val decompose_decl =
 	   let fun f nil = NONE
 		 | f ((DECOMPOSE s)::r) = SOME s 
 		 | f (_::r) = f r
 	   in f control
 	   end
-
 	val blockSize_decl =
 	   let fun f nil = NONE
 		 | f ((BLOCKSIZE s)::r) = SOME s 
 		 | f (_::r) = f r
 	   in f control
 	   end
-
 	val token_sig_info_decl =
 	    let fun f nil = NONE
 		  | f ((TOKEN_SIG_INFO s)::_) = SOME s
@@ -377,220 +598,6 @@
 	  of NONE => (error 1 "missing %pos definition"; "")
 	   | SOME l => l
 
-        (* 2012-9-30 ohori:
-           printAction is moved in make_parser 
-           to acces "%decompose" and "%blockSize" that
-           are parsed in make_parser below to
-           decompose_decl and blockSize_decl.
-         *)
-        val printAction = 
-         fn (rules,
-             VALS {hasType,say,sayln,termvoid,ntvoid,
-        	   symbolToString,saydot,start,pureActions,...},
-             NAMES {actionsStruct,valueStruct,tableStruct,arg,...}) =>
-            let 
-              val printAbsynRule = Absyn.printRule(say,sayln)
-              val is_nonterm = fn (NONTERM i) => true | _ => false
-              val numberRhs = 
-               fn r =>
-        	  List.foldl (fn (e,(r,table)) =>
-        		         let val num = case SymbolTable.find(e,table)
-        			                of SOME i => i
-        				         | NONE => 1
-        		         in ((e,num,hasType e orelse is_nonterm e)::r,
-        		             SymbolTable.insert((e,num+1),table))
-        		         end) (nil,SymbolTable.empty) r
-              val saySym = symbolToString
-              val printCase = 
-               fn (i:int, r as {lhs=lhs as (NT lhsNum),prec,
-        			rhs,code,rulenum}) =>
-                  (* mkToken: Build an argument *)
-                  let open Absyn
-        	      val mkToken = 
-                       fn (sym,num : int,typed) =>
-        	          let val symString = symbolToString sym
-        	              val symNum = symString ^ (Int.toString num)
-        	          in PTUPLE
-                               [WILD,
-        		        PTUPLE[if not (hasType sym) then
-        			         (if is_nonterm sym then
-        				    PAPP(valueStruct^"."^ntvoid,
-        					 PVAR symNum)
-        			          else WILD)
-        			       else	
-        			         PAPP(valueStruct^"."^symString,
-        			              if num=1 andalso pureActions
-        				      then AS(symNum,PVAR symString)
-        				      else PVAR symNum),
-        			       if num=1 then AS(symString^"left",
-        					        PVAR(symNum^"left"))
-        			       else PVAR(symNum^"left"),
-        			       if num=1 then AS(symString^"right",
-        					        PVAR(symNum^"right"))
-        			       else PVAR(symNum^"right")]
-                               ]
-        	          end
-        
-                      val numberedRhs = #1 (numberRhs rhs)
-        	      (* construct case pattern *)
-        	      val pat = PTUPLE[PINT i,PLIST(map mkToken numberedRhs,
-        					    SOME (PVAR "rest671"))]
-                      (* remove terminals in argument list w/o types *)
-        	      val argsWithTypes =
-        		  List.foldr (fn ((_,_,false),r) => r
-        			       | (s as (_,_,true),r) => s::r) nil numberedRhs
-                      (* construct case body *)
-                      val defaultPos = EVAR "defaultPos"
-                      val resultexp = EVAR "result"
-                      val resultpat = PVAR "result"
-                      val code = CODE code
-                      val rest = EVAR "rest671"
-        	      val body =
-        	          LET([VB(resultpat,
-        		          EAPP(EVAR(valueStruct^"."^
-        			            (if hasType (NONTERM lhs)
-        				     then saySym(NONTERM lhs)
-                                             else ntvoid)),
-                                       if pureActions then code
-        		               else if argsWithTypes=nil then FN(WILD,code)
-                                       else
-        			         FN(WILD,
-        			            let 
-                                              val body =
-        				          LET(map 
-                                                        (fn (sym,num:int,_) =>
-        				                    let 
-                                                              val symString = symbolToString sym
-        				                      val symNum = symString ^ Int.toString num
-        				                    in VB(if num=1 then
-        					                    AS(symString,PVAR symNum)
-        					                  else PVAR symNum,
-        					                  EAPP(EVAR symNum,UNIT))
-        				                    end) (rev argsWithTypes),
-        		                              code)
-        			            in if hasType (NONTERM lhs) then
-        				         body else SEQ(body,UNIT)
-        			            end)))
-                              ],
-                              ETUPLE[EAPP(EVAR(tableStruct^".NT"),EINT(lhsNum)),
-        			     case rhs
-        			      of nil => ETUPLE[resultexp,defaultPos,defaultPos]
-        			       | r =>let val (rsym,rnum,_) = hd(numberedRhs)
-        				         val (lsym,lnum,_) = hd(rev numberedRhs)
-        				     in ETUPLE[resultexp,
-        					       EVAR (symbolToString lsym ^
-        						     Int.toString lnum ^ "left"),
-        					       EVAR (symbolToString rsym ^
-        						     Int.toString rnum ^ "right")]
-        				     end,
-                                     rest])
-                  in printAbsynRule (RULE(pat,body))
-                  end
-        
-              local
-                 fun take blockSize L =
-                     let
-                       fun take' 0 (blockRev, rest) = (List.rev blockRev, rest)
-                         | take' n (blockRev, nil) = (List.rev blockRev, nil)
-                         | take' n (blockRev, rest) = take' (n - 1) (hd rest :: blockRev, tl rest)
-                     in
-                       take' blockSize (nil,L)
-                     end
-                 fun decompose blockSize L =
-                     case blockSize of
-                       NONE => [L]
-                     | SOME blockSize => 
-                       let
-                         fun decomp L decomposedRev =
-                             let
-                               val (next, rest) = take blockSize L
-                               val decomposedRev = next::decomposedRev
-                             in
-                               case rest of
-                                 nil => List.rev decomposedRev
-                               | _ => decomp rest decomposedRev
-                             end
-                       in
-                         decomp L nil
-                       end
-                 fun decomposeRules (namePrefix, blockSize, rules) =
-                     let
-                       val rulesList = decompose blockSize rules
-                       val lastIndex = List.length rulesList
-                       val (_, decoposedRulesList) =
-                           foldl
-                             (fn (rules, (funIndex, decoposedRulesList)) =>
-                                 let
-                                   val funName = namePrefix ^ Int.toString funIndex
-                                   val continueOpt =
-                                       if funIndex = lastIndex then NONE
-                                       else SOME (namePrefix ^ Int.toString (funIndex + 1))
-                                 in
-                                   (funIndex + 1,
-                                    {funName=funName,
-                                     rules = rules,
-                                     continue = continueOpt
-                                    }
-                                    ::decoposedRulesList)
-                                 end
-                             )
-                             (1, nil)
-                             rulesList
-                     in
-                       decoposedRulesList
-                     end
-              in
-                (* 2012-9-30 ohori:
-                   Here we deconpose the action cases in a sequence of function applies
-                *)
-                val argTuple = "(i392, defaultPos, stack," ^ arg ^ ")"
-                fun mkContinue NONE = sayln "_ => raise (mlyAction i392)"
-                  | mkContinue (SOME s) = sayln ("_ => (" ^ s ^ argTuple ^ ")")
-                fun mkFun {rules, funName, continue} =
-                    (sayln ("fun " ^ funName);
-                     sayln "     (i392:int,defaultPos:pos,stack:(LrTable.state * (svalue * pos * pos)) list,";
-          	     say   "     ("; say arg; sayln "):arg) =";
-                     sayln "  case (i392, stack) of ";
-          	     app (fn (rule as {rulenum,...}) =>
-          		     (printCase(rulenum,rule); say "| ")) 
-                         rules;
-                     mkContinue continue
-                    )
-                val funPrefix = "actionFun"
-                val firstFun = "actionFun1"
-                val blockSize = 
-                    case decompose_decl of
-                      NONE => Int.maxInt
-                    | SOME _ => 
-                      (case blockSize_decl of
-                         NONE => Int.maxInt
-                       | SOME n => Int.fromString n)
-                val rulesList = decomposeRules (funPrefix, blockSize, rules)
-              end (* end local *)
-            in say "structure ";
-               say actionsStruct;
-               sayln " =";
-               sayln "struct ";
-               sayln "exception mlyAction of int";
-               sayln "local open Header in";
-               app mkFun rulesList;
-               sayln ("val actions = " ^ firstFun);
-               sayln "end";
-               say "val void = ";
-               saydot valueStruct;
-               sayln termvoid;
-               say "val extract = ";
-               say "fn a => (fn ";
-               saydot valueStruct;
-               if hasType (NONTERM start)
-               then say (symbolToString (NONTERM start))
-               else say "ntVOID";
-               sayln " x => x";
-               sayln "| _ => let exception ParseInternal";
-               say "\tin raise ParseInternal end) a ";
-               sayln (if pureActions then "" else "()");
-               sayln "end"
-            end (* the end of printAction *)
 
 	val termHash = 
 	  List.foldr (fn ((symbol,_),table) =>
@@ -711,10 +718,10 @@
 	(* termToString: map terminals back to strings *)
 
 	val termToString =
-	   let val data = array(numTerms,"")
+	   let val data = Array.array(numTerms,"")
 	       val unmap = fn (symbol,_) =>
 		   let val name = symbolName symbol
-                   in update(data,
+                   in Array.update(data,
 			     case SymbolHash.find(name,symbolHash) of
 				 SOME i => i
 			       | NONE => raise Fail "termToString",
@@ -728,10 +735,10 @@
 	   end
 
 	val nontermToString = 
-	   let val data = array(numNonterms,"")
+	   let val data = Array.array(numNonterms,"")
 	       val unmap = fn (symbol,_) =>
 		    let val name = symbolName symbol
-		    in update(data,
+		    in Array.update(data,
 			      case SymbolHash.find(name,symbolHash) of
 				  SOME i => i-numTerms
 				| NONE => raise Fail "nontermToString",
@@ -768,13 +775,13 @@ precedences of the rule and the terminal are equal.
   A rule is given the precedence of its rightmost terminal *)
 
 	val termPrec =
-	    let val precData = array(numTerms, NONE : int option)
+	    let val precData = Array.array(numTerms, NONE : int option)
 	        val addPrec = fn termPrec => fn term as (T i) =>
 		   case precData sub i
 		   of SOME _ =>
 		     error 1 ("multiple precedences specified for terminal " ^
 			    (termToString term))
-		    | NONE => update(precData,i,termPrec)
+		    | NONE => Array.update(precData,i,termPrec)
 		val termPrec = fn ((LEFT,_) ,i) => i
 			      | ((RIGHT,_),i) => i+2
 			      | ((NONASSOC,l),i) => i+1
@@ -823,9 +830,9 @@ precedences of the rule and the terminal are equal.
 		nontermNum "%start" name
 
 	val symbolType = 
-	   let val data = array(numTerms+numNonterms,NONE : ty option)
+	   let val data = Array.array(numTerms+numNonterms,NONE : ty option)
 	       fun unmap (symbol,ty) =
-		   update(data,
+		   Array.update(data,
 			  case SymbolHash.find(symbolName symbol,symbolHash) of
 			      SOME i => i
 			    | NONE => raise Fail "symbolType",
@@ -856,10 +863,7 @@ precedences of the rule and the terminal are equal.
 	            of NONE => ""
 		     | SOME s => symbolName s
 
-(* 2019-07-06: By Ohori, smlyacc have avoided functor usage.
 	val names = NAMES {miscStruct=name' ^ "LrValsFun",
-*)
-	val names = NAMES {miscStruct=name' ^ "LrVals",
 			   valueStruct="MlyValue",
 			   tableStruct="LrTable",
 			   tokenStruct="Tokens",
@@ -877,9 +881,7 @@ precedences of the rule and the terminal are equal.
         val entries = ref 0 (* save number of action table entries here *)
 	
     in  let val result = TextIO.openOut (spec ^ ".sml")
-(* 2019-07-06: Ueno: unify sig file to sml file
- 	    val sigs = TextIO.openOut (spec ^ ".sig")
-*)
+(* 2019-07-06: Ueno: unify sig file to sml file *)
 	    val pos = ref 0
 	    val pr = fn s => TextIO.output(result,s)
 	    val say = fn s => let val l = String.size s
@@ -916,20 +918,17 @@ precedences of the rule and the terminal are equal.
                          in printSigs(values,names,fn s => TextIO.output(sigs,s));
                             TextIO.closeOut sigs
                          end
+
 	    val (NAMES {miscStruct,tableStruct,dataStruct,tokenSig,tokenStruct,dataSig,...}) = names
          in case header_decl
-(* 2019-07-06: By Ohori, smlyacc have avoided functor usage.
-	    of NONE => (say "functor "; say miscStruct; 
-			sayln "(structure Token : TOKEN)";
-*)
-            of NONE => (say "structure "; sayln miscStruct;
+(* 2019-07-06: By Ohori, smlyacc have avoided functor usage. *)
+	    of NONE => (say "structure "; say miscStruct;
 			say " : sig structure ";
 			say dataStruct;
 			say " : "; sayln dataSig;
 			say "       structure ";
 			say tokenStruct; say " : "; sayln tokenSig;
-(* 2019-07-06: By Ohori, smlyacc have avoided functor usage. *)
-			sayln "       structure Parser : PARSER";
+			sayln "       structure Parser : SMLYACC_PARSER";
 			sayln "   end")
 	     | SOME s => say s;
 	    sayln " = ";
@@ -940,59 +939,57 @@ precedences of the rule and the terminal are equal.
 	    sayln "struct";
 	    sayln header;
 	    sayln "end";
-	    printTypes(values,names,symbolType);
-            sayln "structure ParserArg = struct type pos = pos type svalue = svalue type arg = arg end";
-            sayln "structure LrParser = LrParserFun(ParserArg)";
-	    sayln "structure Token = LrParser.Token";
-	    sayln "structure LrTable = LrParser.LrTable";
+	    sayln "structure Parser = LrParser()";
+	    sayln "structure Token = Parser.Token";
+	    sayln "structure LrTable = Token.LrTable";
+	    sayln "structure Token = Token";
 	    sayln "local open LrTable in ";
 	    entries := PrintStruct.makeStruct{table=table,print=pr,
 					      name = "table",
 				              verbose=verbose};
 	    sayln "end";
+	    printTypes(values,names,symbolType);
 	    printEC (keyword,change,noshift,value,values,names);
-	    printAction(rules,values,names);
-	    sayln "end"; (* ParserData *)
-            sayln 
-"structure Parser =\n\
-\ struct\n\
-\   type token = ParserData.LrParser.Token.token\n\
-\   type stream = ParserData.LrParser.Stream.stream\n\
-\   type result = ParserData.result\n\
-\   type pos = ParserData.pos\n\
-\   type arg = ParserData.arg\n\
-\   exception ParseError= ParserData.LrParser.ParseError\n\
-\   fun makeStream {lexer: unit -> token} : stream\n\
-\     = ParserData.LrParser.Stream.streamify lexer\n\
-\   val consStream = ParserData.LrParser.Stream.cons\n\
-\   val getStream = ParserData.LrParser.Stream.get\n\
-\   val sameToken = ParserData.Token.sameToken\n\
-\   fun parse {lookahead:int, stream:stream, error: (string * pos * pos -> unit),arg:arg} =\n\
-\      (fn (a,b) => (ParserData.Actions.extract a,b))\n\
-\      (ParserData.LrParser.parse\n\
-\         {table = ParserData.table,\n\
-\          lexer=stream,\n\
-\          lookahead=lookahead,\n\
-\          saction = ParserData.Actions.actions,\n\
-\          arg=arg,\n\
-\          void= ParserData.Actions.void,\n\
-\          ec = {is_keyword = ParserData.EC.is_keyword,\n\
-\                noShift = ParserData.EC.noShift,\n\
-\                preferred_change = ParserData.EC.preferred_change,\n\
-\                errtermvalue = ParserData.EC.errtermvalue,\n\
-\                error=error,\n\
-\                showTerminal = ParserData.EC.showTerminal,\n\
-\                terms = ParserData.EC.terms}}\n\
+	    printAction(rules,values,names)(decompose_decl,blockSize_decl);
+	    sayln "end";
+	    say ("\
+\structure Token = "^dataStruct^".Parser.Token\n\
+\structure Parser =\n\
+\struct\n\
+\type pos = "^dataStruct^".pos\n\
+\type token = ("^dataStruct^".svalue, pos) Token.token\n\
+\type arg = "^dataStruct^".arg\n\
+\type result = "^dataStruct^".result\n\
+\type stream = token "^dataStruct^".Parser.Stream.stream\n\
+\exception ParseError = "^dataStruct^".Parser.ParseError\n\
+\fun makeStream {lexer : unit -> token} =\n\
+\    "^dataStruct^".Parser.Stream.streamify lexer\n\
+\val consStream = "^dataStruct^".Parser.Stream.cons\n\
+\val getStream = "^dataStruct^".Parser.Stream.get\n\
+\val sameToken = "^dataStruct^".Token.sameToken\n\
+\    val parse = fn {lookahead,stream=lexer,error,arg} =>\n\
+\       (fn (a,b) => ("^dataStruct^".Actions.extract a,b))\n\
+\     ("^dataStruct^".Parser.parse {table = "^dataStruct^".table,\n\
+\               lexer=lexer,\n\
+\               lookahead=lookahead,\n\
+\               saction = "^dataStruct^".Actions.actions,\n\
+\               arg=arg,\n\
+\               void= "^dataStruct^".Actions.void,\n\
+\               ec = {is_keyword = "^dataStruct^".EC.is_keyword,\n\
+\                     noShift = "^dataStruct^".EC.noShift,\n\
+\                     preferred_change = "^dataStruct^".EC.preferred_change,\n\
+\                     errtermvalue = "^dataStruct^".EC.errtermvalue,\n\
+\                     error=error,\n\
+\                     showTerminal = "^dataStruct^".EC.showTerminal,\n\
+\                     terms = "^dataStruct^".EC.terms}}\n\
 \      )\n\
-\ end";
-	    sayln ("structure Token = " ^ dataStruct ^ ".LrParser.Token");
+\end\n\
+\");
 	    printTokenStruct(values,names);
 	    sayln "end";
-            case footer_decl of SOME s => sayln s | NONE => ();
-(* 2019-07-06: Ueno: unify sig file to sml file
-	    printSigs(values,names,fn s => TextIO.output(sigs,s));    
-	    TextIO.closeOut sigs;
-*)
+(* 2012-1-13 ohori %footer *)
+	    case footer_decl of SOME s => sayln s | NONE => ();
+(* 2019-07-06: Ueno: unify sig file to sml file *)
 	    TextIO.closeOut result;
 	    MakeTable.Errs.printSummary (fn s => TextIO.output(TextIO.stdOut,s)) errs
 	end;
@@ -1022,4 +1019,4 @@ precedences of the rule and the terminal are equal.
 		in make_parser(getResult result,spec,Header.error inputSource,
 				errorOccurred inputSource)
 		end
-end
+end;

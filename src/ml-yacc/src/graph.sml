@@ -2,26 +2,19 @@
 (*
 2012-3-21 ohori
 defuncterized
-
 used only in mklrtable.sml as
 	structure Graph = mkGraph(structure IntGrammar = IntGrammar
 			  	  structure Core = Core
 			  	  structure CoreUtils = CoreUtils)
-functor mkGraph(structure IntGrammar : INTGRAMMAR
-		structure Core : CORE
-		structure CoreUtils : CORE_UTILS
-		sharing IntGrammar = Core.IntGrammar = CoreUtils.IntGrammar
-		sharing CoreUtils.Core = Core
-		) : LRGRAPH =
 *)
 
 structure Graph : LRGRAPH =
 	struct
-	        open Array List
+		val sub = Array.sub
 		infix 9 sub
-		(* structure Core = Core *)
-		(* structure Grammar = IntGrammar.Grammar *)
-		(* structure IntGrammar = IntGrammar *)
+		structure Core = Core
+		structure Grammar = IntGrammar.Grammar
+		structure IntGrammar = IntGrammar
 		open Core Core.Grammar CoreUtils IntGrammar
 
 		structure NodeSet = RbOrdSet
@@ -106,4 +99,4 @@ structure Graph : LRGRAPH =
 			 print "\n")) (edges (n,g))
 	 in List.app (fn c => (printCore c; print "\n"; printEdges c)) nodes
 	 end
-end
+end;

@@ -13,8 +13,6 @@ _require local "./parse.smi"
 _require local "./utils.sig"
 _require local "./sigs.sml"
 _require local "./utils.smi"
-(* _require "./yacc.grm.smi" *)
-(* _require "./yacc.lex.smi" *)
 _require local "./verbose.smi"
 
 structure ParseGen =

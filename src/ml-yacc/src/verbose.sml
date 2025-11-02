@@ -6,11 +6,9 @@ as
    structure Verbose = mkVerbose()
 *)
 
-local
-  structure Errs = MakeTable.Errs
-in
-structure  Verbose : VERBOSE =
+structure Verbose : VERBOSE =
 struct
+   structure Errs = MakeTable.Errs
    structure Errs = Errs
    open Errs Errs.LrTable
    val mkPrintAction = fn print =>
@@ -97,7 +95,7 @@ struct
                         end
        =
       struct
-         val ('a, 'b) app = fn (f:'a*'b -> unit) =>
+         val app = fn f =>
 	     let fun g EMPTY = ()
                    | g (PAIR(a,b,r)) = (f(a,b); g r)
              in g
@@ -110,10 +108,7 @@ struct
       end
    val printVerbose =
 	fn {termToString,nontermToString,table,stateErrs,entries:int,
-	    print,
-            printRule : (string -> unit) -> int -> unit,
-            errs,
-            printCores} =>
+	    print,printRule,errs,printCores} =>
 	   let 
 		val printTerm = print o termToString
 		val printNonterm = print o nontermToString
@@ -122,7 +117,7 @@ struct
 		val printTermAction = mkPrintTermAction(printTerm,print)
 		val printAction = mkPrintAction print
 		val printGoto = mkPrintGoto(printNonterm,print)
-		val printError = mkPrintError(printTerm, printRule print, print)
+		val printError = mkPrintError(printTerm,printRule print,print)
 
 		val gotos = LrTable.describeGoto table
 		val actions = LrTable.describeActions table
@@ -141,7 +136,7 @@ struct
 		  else let val s = STATE i
 		       in (app printError (stateErrs s);
 			   print "\n";
-			   printCore s : unit;
+			   printCore s;
 			   let val (actionList,default) = actions s
 			       val gotoList = gotos s
 			   in (PairList.app printTermAction actionList;
@@ -165,5 +160,6 @@ struct
 		     " action table entries left after compaction\n");
 	      print (Int.toString (!gotoTableSize)^ " goto table entries\n")
 	  end
-end
-end
+end;
+
+

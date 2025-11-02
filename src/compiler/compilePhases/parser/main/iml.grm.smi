@@ -22,12 +22,12 @@ struct
     type svalue (= boxed)
     structure Token =
     struct
-      datatype token = TOKEN of EC.term * (svalue * Absyn.pos * Absyn.pos)
+      datatype ('a, 'b) token = TOKEN of EC.term * ('a * 'b * 'b)
     end
   end
   structure Parser =
   struct
-    type token = ParserData.Token.token
+    type token = (ParserData.svalue, Absyn.pos) ParserData.Token.token
     type stream (= ref)
     type result = Absyn.absyn
     type pos = Absyn.pos

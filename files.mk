@@ -57,6 +57,8 @@ src/basis/main/Timer.o \
 src/basis/main/Word16.o \
 src/basis/main/Word64.o \
 src/basis/main/toplevel.o \
+src/smlnj-lib/Util/lib-base.o \
+src/smlnj-lib/Util/redblack-map-fn.o \
 src/ml-lex/lexgen.o \
 src/ml-lex/export-lex.o \
 src/ml-lex/ml-lex.o
@@ -194,8 +196,8 @@ src/ml-yacc/src/shrink.o \
 src/ml-yacc/src/mkprstruct.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
-src/ml-yacc/src/yacc.grm.o \
-src/ml-yacc/src/yacc.lex.o \
+src/ml-yacc/src/smlyacc.grm.o \
+src/ml-yacc/src/smlyacc.lex.o \
 src/ml-yacc/src/parse.o \
 src/ml-yacc/src/verbose.o \
 src/ml-yacc/src/yacc.o \
@@ -3047,6 +3049,8 @@ src/basis/main/Timer.o \
 src/basis/main/Word16.o \
 src/basis/main/Word64.o \
 src/basis/main/toplevel.o \
+src/smlnj-lib/Util/lib-base.o \
+src/smlnj-lib/Util/redblack-map-fn.o \
 src/ml-lex/lexgen.o \
 src/ml-lex/export-lex.o \
 src/ml-lex/ml-lex.o \
@@ -3065,8 +3069,8 @@ src/ml-yacc/src/lalr.o \
 src/ml-yacc/src/mklrtable.o \
 src/ml-yacc/src/shrink.o \
 src/ml-yacc/src/mkprstruct.o \
-src/ml-yacc/src/yacc.grm.o \
-src/ml-yacc/src/yacc.lex.o \
+src/ml-yacc/src/smlyacc.grm.o \
+src/ml-yacc/src/smlyacc.lex.o \
 src/ml-yacc/src/parse.o \
 src/ml-yacc/src/verbose.o \
 src/ml-yacc/src/yacc.o \
@@ -3094,7 +3098,6 @@ src/smlformat/generator/main/FormatTemplate.o \
 src/smlformat/generator/main/Ast.o \
 src/smlformat/generator/main/Constants_MLton.o \
 src/compiler/libs/list-utils/main/Snoc.o \
-src/smlnj-lib/Util/lib-base.o \
 src/smlnj-lib/Util/binary-map-fn.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
@@ -3353,7 +3356,6 @@ src/smlnj-lib/Util/hash-string.o \
 src/smlnj-lib/Util/int-list-map.o \
 src/smlnj-lib/Util/list-mergesort.o \
 src/smlnj-lib/Util/list-xprod.o \
-src/smlnj-lib/Util/redblack-map-fn.o \
 src/ffi/main/DynamicLink.o \
 src/sql/main/SQLBackendTy.o \
 src/sql/main/builtintypes/timestamp/TimeStamp.o \
@@ -3493,6 +3495,7 @@ src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml \
 src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml \
 src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml \
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml \
+src/ml-yacc/src/smlyacc.lex.sml \
 src/compiler/compilePhases/parser/main/iml.grm.sml \
 src/compiler/compilePhases/parser/main/iml.lex.sml \
 src/smlformat/generator/main/FormatComment.grm.sml \

@@ -5,17 +5,10 @@ _require local "../../ml-yacc/lib/base.sig"
 _require local "./utils.sig"
 (* _require "./sigs.sml" *)
 _require "./hdr.smi"
-_require "./yacc.grm.smi"
+_require "./smlyacc.grm.smi"
 
-structure LexMLYACC 
-=
+structure LexMLYACC =
 struct
-  structure UserDeclarations =
-  struct
-    type token = LrVals.Tokens.token
-    type pos = int
-    type arg = Header.inputSource
-  end
   val makeLexer
-      : (int -> string) -> UserDeclarations.arg -> unit -> UserDeclarations.token
+      : (int -> string) -> Header.inputSource -> unit -> LrVals.Tokens.token
 end

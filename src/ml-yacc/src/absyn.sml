@@ -159,4 +159,4 @@ structure Absyn : ABSYN =
 	   case simplifyRule r of
 	       RULE (p, e) => app out (pp (p, " =>" :: pe (e, ["\n"])))
        end
-end
+end;

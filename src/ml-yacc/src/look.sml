@@ -2,19 +2,15 @@
 (*
 2012-3-21 ohori
 defunctorized
-*)
-(*
  used in mklrtable.sml as
 	structure Look = mkLook(structure IntGrammar = IntGrammar)
-functor mkLook (structure IntGrammar : INTGRAMMAR) : LOOK =
-
 *)
 
 structure Look : LOOK =
     struct
-	open Array List
+		val sub = Array.sub
 	infix 9 sub
-	(* structure Grammar = IntGrammar.Grammar *)
+	structure Grammar = IntGrammar.Grammar
 	structure IntGrammar = IntGrammar
 	open Grammar IntGrammar
 
@@ -28,7 +24,7 @@ structure Look : LOOK =
 	val union = TermSet.union
 	val make_set = TermSet.make_set
 
-	val prLook = fn (termToString:term->string,print:string -> unit) =>
+	val prLook = fn (termToString,print) =>
 		let val printTerm = print o termToString
 		    fun f nil = print " "
 		      | f (a :: b) = (printTerm a; print " "; f b)
@@ -83,8 +79,8 @@ structure Look : LOOK =
 		  | SOME ntlist => (lhs, ntlist) :: r
 	    end
 	    val items = List.foldr add_rule [] rules
-	    val nullable = array(nonterms,false)
-	    fun f ((NT i,nil),(l,_)) = (update(nullable,i,true);
+	    val nullable = Array.array(nonterms,false)
+	    fun f ((NT i,nil),(l,_)) = (Array.update(nullable,i,true);
 					(l,true))
 	      | f (a as (lhs,(h::t)),(l,change)) =
 		(case (nullable sub h) of
@@ -115,9 +111,9 @@ structure Look : LOOK =
        List.foldr (fn (RULE {rhs,...},r) =>(scanRhs addObj) (rhs,r)) empty rules
 
       val nontermMemo = fn f =>
-	let val lookup = array(nonterms,nil)
+	let val lookup = Array.array(nonterms,nil)
 	    fun g i = if i=nonterms then ()
-		      else (update(lookup,i,f (NT i)); g (i+1))
+		      else (Array.update(lookup,i,f (NT i)); g (i+1))
 	in (g 0; fn (NT j) => lookup sub j)
 	end
 
@@ -168,4 +164,4 @@ structure Look : LOOK =
 	  
     in {nullable = nullable, first = prefix}
     end
-end
+end;

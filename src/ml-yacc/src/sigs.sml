@@ -26,9 +26,10 @@ signature HEADER =
 
     datatype prec = LEFT | RIGHT | NONASSOC
     datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol |
-	               FUNCTOR of string  | FOOTER of string  | 
-                       DECOMPOSE of string | BLOCKSIZE of string |
-                       START_SYM of symbol |
+	               FUNCTOR of string  | START_SYM of symbol |
+(* 2012-9-24 ohori: %footer, %decompose, and %blockSize are added *)
+		       FOOTER of string |
+		       DECOMPOSE of string | BLOCKSIZE of string |
 		       NSHIFT of symbol list | POS of string | PURE |
 		       PARSE_ARG of string * string |
 		       TOKEN_SIG_INFO of string
@@ -60,9 +61,7 @@ signature PARSE_GEN_PARSER =
 
 signature PARSE_GEN =
   sig
-(* 2019-07-06: Ueno: add -s and -p prefix command line options
-    val parseGen : string -> unit
-*)
+(* 2019-07-06: Ueno: add -s and -p prefix command line options *)
     val parseGen : string -> {p:string option, s:bool} -> unit
   end;
 

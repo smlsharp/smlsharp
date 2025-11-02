@@ -1,10 +1,7 @@
-(* Modified by Katsuhiro Ueno on 2011-Nov-25 to port ml-yacc to SML#. *)
 (* export-yacc.sml
  *
  * ML-Yacc Parser Generator (c) 1991 Andrew W. Appel, David R. Tarditi
  *)
-(* 2012-8-19 ohori. Type annotation added to parseGen *) 
-
 structure ExportParseGen : sig
     val parseGen : (string * string list) -> OS.Process.status
 end = struct
@@ -17,34 +14,12 @@ end = struct
        (handleInterrupt foo) handle Interrupt => print "Bang!\n" *)
 
     fun handleInterrupt (operation : unit -> unit) =
-(*
 (* Ueno (2011-11-25): SML# does not have Signals and callcc. *)
-      let exception Done
-          val old'handler = Signals.inqHandler(Signals.sigINT)
-          fun reset'handler () =
-            Signals.setHandler(Signals.sigINT, old'handler)
-      in (SMLofNJ.Cont.callcc (fn k =>
-             (Signals.setHandler(Signals.sigINT, Signals.HANDLER(fn _ => k));
-               operation ();
-               raise Done));
-           err ("\n--- Interrupt ml-yacc ---\n");
-           raise Interrupt)
-          handle Done => (reset'handler ())
-               | exn  => (reset'handler (); raise exn)
-      end
-*)
       operation ()
 
     val exit = OS.Process.exit
 
-(* 2019-07-06: Ueno: add -s and -p prefix command line options
-    fun parseGen (_, argv) = let
-	fun parse_gen () =
-	    case argv of
-		[file] => (ParseGen.parseGen file; exit OS.Process.success)
-	      | _ => (err("Usage: ml-yacc filename\n");
-		      exit OS.Process.failure)
-*)
+(* 2019-07-06: Ueno: add -s and -p prefix command line options *)
     fun parseGen (name, argv) = let
         fun die msg = (err (concat msg); OS.Process.exit OS.Process.failure)
         fun die' msg = die (name :: ": " :: msg)

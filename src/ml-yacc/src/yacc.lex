@@ -1,23 +1,28 @@
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi
 
    yacc.lex: Lexer specification
-
+ *)
+(*
   2012-1-13 ohori
   %footer added for defuncteringing ml.grm.sml
- *)
+*)
 
+structure Hdr = Header
 structure Tokens = LrVals.Tokens
+
+structure Tokens = Tokens
+type svalue = Tokens.svalue
 type pos = int
 type token = Tokens.token
 type lexresult = token
 
-type lexarg = Header.inputSource
+type lexarg = Hdr.inputSource
 type arg = lexarg
 
 open Tokens
-val error = Header.error
-val lineno = Header.lineno
-val text = Header.text
+val error = Hdr.error
+val lineno = Hdr.lineno
+val text = Hdr.text
 
 val pcount = ref 0
 val commentLevel = ref 0
@@ -30,29 +35,21 @@ val eof = fn i => (if (!pcount)>0 then
 
 val Add = fn s => (text := s::(!text))
 
-local val dict = 
-  [("%prec",PREC_TAG),
-   ("%term",TERM),
-   ("%nonterm",NONTERM), 
-   ("%eop",PERCENT_EOP),
-   ("%start",START),
-   ("%prefer",PREFER),
-   ("%subst",SUBST),
-   ("%change",CHANGE),
-   ("%keyword",KEYWORD),
-   ("%name",NAME),
-   ("%verbose",VERBOSE), 
-   ("%nodefault",NODEFAULT),
-   ("%value",VALUE), 
-   ("%noshift",NOSHIFT),
-   ("%header",PERCENT_HEADER),
-   ("%footer",PERCENT_FOOTER), 
-   ("%decompose",PERCENT_DECOMPOSE),
-   ("%blocksize",PERCENT_BLOCKSIZE),
-   ("%pure",PERCENT_PURE),
-   ("%token_sig_info",PERCENT_TOKEN_SIG_INFO),
-   ("%arg",PERCENT_ARG),
-   ("%pos",PERCENT_POS)]
+
+local val dict = [("%prec",PREC_TAG),("%term",TERM),
+	       ("%nonterm",NONTERM), ("%eop",PERCENT_EOP),("%start",START),
+	       ("%prefer",PREFER),("%subst",SUBST),("%change",CHANGE),
+	       ("%keyword",KEYWORD),("%name",NAME),
+	       ("%verbose",VERBOSE), ("%nodefault",NODEFAULT),
+	       ("%value",VALUE), ("%noshift",NOSHIFT),
+	       ("%header",PERCENT_HEADER),("%pure",PERCENT_PURE),
+(* 2012-1-13 ohori *)
+	       ("%footer",PERCENT_FOOTER),
+	       ("%decompose",PERCENT_DECOMPOSE),
+	       ("%blocksize",PERCENT_BLOCKSIZE),
+	       ("%token_sig_info",PERCENT_TOKEN_SIG_INFO),
+	       ("%arg",PERCENT_ARG),
+	       ("%pos",PERCENT_POS)]
 in
 fun lookup (s,left,right) = let
        fun f ((a,d)::b) = if a=s then d(left,right) else f b
@@ -97,9 +94,9 @@ qualid ={id}".";
 <A>","		=> (COMMA(!lineno,!lineno));
 <A>"*"		=> (ASTERISK(!lineno,!lineno));
 <A>"->"		=> (ARROW(!lineno,!lineno));
-<A>"%left"	=> (PREC(Header.LEFT,!lineno,!lineno));
-<A>"%right"	=> (PREC(Header.RIGHT,!lineno,!lineno));
-<A>"%nonassoc" 	=> (PREC(Header.NONASSOC,!lineno,!lineno));
+<A>"%left"	=> (PREC(Hdr.LEFT,!lineno,!lineno));
+<A>"%right"	=> (PREC(Hdr.RIGHT,!lineno,!lineno));
+<A>"%nonassoc" 	=> (PREC(Hdr.NONASSOC,!lineno,!lineno));
 <A>"%"[a-z_]+	=> (lookup(yytext,!lineno,!lineno));
 <A>{tyvar}	=> (TYVAR(yytext,!lineno,!lineno));
 <A>{qualid}	=> (IDDOT(yytext,!lineno,!lineno));

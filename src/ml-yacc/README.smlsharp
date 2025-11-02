@@ -18,3 +18,6 @@ This is a ported version of ml-yacc from SML/NJ 110.73 for SML#.
 
 * yacc.grm must be compied with ml-yacc/lib with ml-yacc/smlyacc.
   For this bootstrap purpose we must keen ml-yacc dir.
+
+* 2025-11-02 katsu
+  merge upstream ml-yacc from SML/NJ 110.99.8

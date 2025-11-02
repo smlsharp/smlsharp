@@ -2,9 +2,7 @@ _require local "../../basis.smi"
 _require local "../../ml-yacc/lib/base.sig"
 _require local "../../ml-yacc/lib/parser2.smi"
 _require local "./utils.sig"
-(* _require "./sigs.sml" *)
 _require "./hdr.smi"
-(* _require "./yacc.grm.sig" *)
 
 structure LrVals =
 struct
@@ -12,23 +10,18 @@ struct
   struct
     type token (= boxed)
     type stream (= ref)
-    type pos = int
-    type arg = Header.inputSource
-    type result = string * Header.declData * (Header.rule list)
     exception ParseError
-    val makeStream : {lexer:unit -> token} -> stream
-    val consStream : token * stream -> stream
-    val getStream : stream -> token * stream
-    val sameToken : token * token -> bool
-    val parse : {lookahead:int,
-                 stream:stream,
-                 error: (string * pos * pos -> unit),
-                 arg: arg}
-                -> result * stream
+    val makeStream : {lexer : unit -> token} -> stream
+    val parse : {lookahead : int,
+                 stream : stream,
+                 error: (string * int * int -> unit),
+                 arg : Header.inputSource}
+                -> (string * Header.declData * Header.rule list) * stream
   end
   structure Tokens =
   struct
-    type pos = Parser.pos
+    type svalue (= boxed)
+    type pos = int
     type token = Parser.token
     val BOGUS_VALUE : pos * pos -> token
     val UNKNOWN : string * pos * pos -> token
@@ -58,10 +51,10 @@ struct
     val LBRACE : pos * pos -> token
     val KEYWORD : pos * pos -> token
     val INT : string * pos * pos -> token
-    val PERCENT_BLOCKSIZE:  pos * pos -> token
-    val PERCENT_DECOMPOSE:  pos * pos -> token
-    val PERCENT_FOOTER : pos * pos -> token
     val PERCENT_HEADER : pos * pos -> token
+    val PERCENT_FOOTER : pos * pos -> token
+    val PERCENT_DECOMPOSE : pos * pos -> token
+    val PERCENT_BLOCKSIZE : pos * pos -> token
     val IDDOT : string * pos * pos -> token
     val ID : (string * int) * pos * pos -> token
     val HEADER : string * pos * pos -> token

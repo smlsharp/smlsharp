@@ -2,6 +2,7 @@
 
 structure Grammar : GRAMMAR =
 	struct
+
 		(* define types term and nonterm using those in LrTable
 		   datatype term = T of int 
 		   datatype nonterm = NT of int *)
@@ -21,7 +22,7 @@ structure Grammar : GRAMMAR =
 				precedence : term -> int option,
 				termToString : term -> string,
 				nontermToString : nonterm -> string}
-end
+end;
 
 structure IntGrammar : INTGRAMMAR =
 	struct
@@ -97,4 +98,4 @@ structure IntGrammar : INTGRAMMAR =
 		    (print o nontermToString) start;
 		    ()
 		 end
-	end
+	end;

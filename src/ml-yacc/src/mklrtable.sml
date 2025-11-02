@@ -2,45 +2,27 @@
 (*
 2012-3-21 ohori
 defunctorized.
-*)
-
-(*
 in yacc.sml
    structure MakeTable = mkMakeLrTable(structure IntGrammar =IntGrammar
 				     structure LrTable = LrTable)
-functor mkMakeLrTable (structure IntGrammar : INTGRAMMAR
-		     structure LrTable : LR_TABLE
-		     sharing type LrTable.term = IntGrammar.Grammar.term
-		     sharing type LrTable.nonterm = IntGrammar.Grammar.nonterm
-		    ) : MAKE_LR_TABLE = 
 *)
-structure MakeTable = 
+structure MakeTable =
    struct 
-        open Array List
+	val sub = Array.sub
 	infix 9 sub
-(*
-	structure Core = mkCore(structure IntGrammar = IntGrammar)
-	structure CoreUtils = mkCoreUtils(structure IntGrammar = IntGrammar
-				  	  structure Core = Core)
-	structure Graph = mkGraph(structure IntGrammar = IntGrammar
-			  	  structure Core = Core
-			  	  structure CoreUtils = CoreUtils)
-*)
-(*
-	structure Look = mkLook(structure IntGrammar = IntGrammar)
-	structure Lalr = mkLalr(structure IntGrammar = IntGrammar
-				structure Core = Core
-				structure Graph = Graph
-				structure Look = Look)
-*)
-	(* structure LrTable = LrTable *)
-	(* structure IntGrammar = IntGrammar *)
-	(* structure Grammar = IntGrammar.Grammar *)
+	structure Core = Core
+	structure CoreUtils = CoreUtils
+	structure Graph = Graph
+	structure Look = Look
+	structure Lalr = Lalr
+	structure LrTable = LrTable
+	structure IntGrammar = IntGrammar
+	structure Grammar = IntGrammar.Grammar
 	structure GotoList = ListOrdSet
 		(struct
 		   type elem = Grammar.nonterm * LrTable.state
-		   val eq = fn ((Grammar.NT a,_:LrTable.state),(Grammar.NT b,_:LrTable.state)) => a=b
-		   val gt = fn ((Grammar.NT a,_:LrTable.state),(Grammar.NT b,_:LrTable.state)) => a>b
+		   val eq = fn ((Grammar.NT a,_),(Grammar.NT b,_)) => a=b
+		   val gt = fn ((Grammar.NT a,_),(Grammar.NT b,_)) => a>b
 		end)
 	structure Errs : LR_ERRS =
 	    struct
@@ -192,8 +174,8 @@ is true.
   val computeActions = fn (rules,precedence,graph,defaultReductions) =>
      
     let val rulePrec =
-	  let val precData = array(length rules,NONE : int option)
-	  in app (fn RULE {rulenum=r,precedence=p,...} => update(precData,r,p))
+	  let val precData = Array.array(length rules,NONE : int option)
+	  in app (fn RULE {rulenum=r,precedence=p,...} => Array.update(precData,r,p))
 	     rules;
 	     fn i => precData sub i
 	  end
@@ -336,7 +318,7 @@ is true.
 
 		val startErrs =
 	 	  List.foldr (fn (RULE {rhs,rulenum,...},r) =>
-			if (exists (fn NONTERM a => a=start
+			if (List.exists (fn NONTERM a => a=start
 				     | _ => false) rhs)
 			  then START rulenum :: r
 			  else r) [] rules
@@ -344,15 +326,15 @@ is true.
 		val nonshiftErrs =
 	 	  List.foldr (fn (RULE {rhs,rulenum,...},r) =>
 		          (List.foldr (fn (nonshift,r) =>
-			   if (exists (fn TERM a => a=nonshift
+			   if (List.exists (fn TERM a => a=nonshift
 				     | _ => false) rhs)
 			    then NS(nonshift,rulenum) :: r
 			    else r) r noshift)
 		       ) [] rules
 
 		val notReduced =
-		  let val ruleReduced = array(length rules,false)
-		      val test = fn REDUCE i => update(ruleReduced,i,true)
+		  let val ruleReduced = Array.array(length rules,false)
+		      val test = fn REDUCE i => Array.update(ruleReduced,i,true)
 				  | _ => ()
 		      val _ = app (fn (actions,default) =>
 				     (app (fn (_,r) => test r) actions;
@@ -399,4 +381,4 @@ is true.
 		    end,
 		    allErrs)
               end
-end
+end;

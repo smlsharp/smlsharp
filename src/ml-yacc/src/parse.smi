@@ -4,8 +4,8 @@ _require local "../../ml-yacc/lib/base.sig"
 _require local "./utils.sig"
 _require local "./sigs.sml"
 _require "./hdr.smi"
-_require local "./yacc.lex.smi"
-_require local "./yacc.grm.smi"
+_require local "./smlyacc.lex.smi"
+_require local "./smlyacc.grm.smi"
 
 structure ParseGenParser
  =
