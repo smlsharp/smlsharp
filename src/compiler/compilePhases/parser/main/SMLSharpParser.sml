@@ -186,7 +186,7 @@ struct
         lookahead : int,
         atOnce : bool,
         streamRef : Parser.stream ref,
-        tokensRef : (Token.token * Loc.loc) snoc ref,
+        tokensRef : (Token.token * (Loc.at * Loc.at)) snoc ref,
         first : bool ref,
         errors : (Loc.loc * string) list ref,
         errorFn : string * Loc.pos * Loc.pos -> unit,

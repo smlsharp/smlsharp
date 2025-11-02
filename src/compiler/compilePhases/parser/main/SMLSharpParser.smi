@@ -18,6 +18,6 @@ struct
   exception Error of (Loc.loc * string) list
   val sourceOfInput : input -> Loc.source
   val setup : source -> input
-  val parse : input -> (Token.token * Loc.loc) snoc * Absyn.absyn
+  val parse : input -> (Token.token * (Loc.at * Loc.at)) snoc * Absyn.absyn
   val isEOF : input -> bool
 end

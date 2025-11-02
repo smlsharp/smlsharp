@@ -55,13 +55,15 @@ struct
         r
       end
 
-  fun getPos Loc.NOPOS = raise Fail "BUG: getPos"
-    | getPos (Loc.POS {pos = Loc.EOF, ...}) = raise Fail "Bug: getPos"
-    | getPos (Loc.POS {pos = Loc.AT {pos, ...}, ...}) = pos
+  fun getPos Loc.EOF = raise Fail "Bug: getPos"
+    | getPos (Loc.AT {pos, ...}) = pos
+
+  fun posOf Loc.NOPOS = raise Fail "BUG: locToPos"
+    | posOf (Loc.POS {pos, ...}) = getPos pos
 
   fun parseFormatComments {filename, content, posToLoc, commentPos} beg loc =
       let
-        val left = getPos (#1 loc)
+        val left = posOf (#1 loc)
         val leftmost = case commentPos left of
                          NONE => left
                        | SOME (_, leftmost) => leftmost
@@ -108,7 +110,7 @@ struct
         S.DefiningWithInner x => x
       | _ => raise Fail "BUG: scanDefiningFormatCommentsWithInners"
 
-  fun locToRegion (pos1, pos2) = (getPos pos1, getPos pos2)
+  fun locToRegion (pos1, pos2) = (posOf pos1, posOf pos2)
 
   fun scanLongid (longsymbol, _) =
       map (Symbol.toString o #1) longsymbol

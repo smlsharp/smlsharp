@@ -9,14 +9,16 @@ struct
   structure UserDeclarations =
   struct
     type arg (= {})
-    type lexresult = Token.token * Loc.loc
+    type lexresult = Token.token * (Loc.source * Loc.at * Loc.at)
     val isINITIAL : arg -> bool
     val initArg : {source : Loc.source,
                    errorFn : string * Loc.pos * Loc.pos -> unit,
                    initialLineno : int,
                    allow8bitId : bool} -> arg
     val setupLexer
-        : lexresult snoc ref -> (unit -> lexresult) -> unit -> lexresult
+        : (Token.token * (Loc.at * Loc.at)) snoc ref
+          -> (unit -> lexresult)
+          -> unit -> Token.token * Loc.loc
   end
   val makeLexer
       : (int -> string) -> UserDeclarations.arg -> unit

@@ -120,7 +120,7 @@ struct
   type input =
       {
         streamRef : Parser.stream ref,
-        tokensRef : (Token.token * Loc.loc) snoc ref,
+        tokensRef : (Token.token * (Loc.at * Loc.at)) snoc ref,
         errors : UserError.errorQueue,
         errorFn : string * Loc.pos * Loc.pos -> unit
       }

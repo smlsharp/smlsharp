@@ -12,7 +12,7 @@
 
 structure T = Token
 
-type lexresult = Token.token * Loc.loc
+type lexresult = Token.token * (Loc.source * Loc.at * Loc.at)
 
 (* if you use ml-lex of SML/NJ, you need to specify this to 2. *)
 val INITIAL_POS_OF_LEXER = 0
@@ -22,19 +22,21 @@ type arg =
     {
       source : Loc.source,
       line : {count : int, begin : int} ref,
-      error : string * Loc.loc -> unit,
-      comment : Loc.pos list ref,
+      error : string * (Loc.source * Loc.at * Loc.at) -> unit,
+      comment : Loc.at list ref,
       string : {buf : string list ref,
-                startPos : Loc.pos option ref,
+                startPos : Loc.at option ref,
                 ty : string_type ref},
       allow8bitId : bool
     }
+
+fun toPos source at1 = Loc.POS {source = source, pos = at1}
 
 fun initArg {source, errorFn, initialLineno, allow8bitId} =
     {
       source = source,
       line = ref {count = initialLineno, begin = INITIAL_POS_OF_LEXER},
-      error = fn (msg, (pos1, pos2)) => errorFn (msg, pos1, pos2),
+      error = fn (msg, (s, p1, p2)) => errorFn (msg, toPos s p1, toPos s p2),
       comment = ref nil,
       string = {buf = ref nil, startPos = ref NONE, ty = ref STRING},
       allow8bitId = allow8bitId
@@ -48,15 +50,14 @@ fun isINITIAL (arg : arg) =
 fun newline pos yytext ({line as ref {count, begin}, ...} : arg) =
     line := {count = count + 1, begin = pos + size yytext}
 
-fun pos yypos ({source, line = ref {count, begin}, ...} : arg) =
-    Loc.POS {source = source,
-             pos = Loc.AT {line = count,
-                           col = yypos - begin + 1,
-                           pos = yypos - INITIAL_POS_OF_LEXER,
-                           token = 0}}
+fun pos yypos ({line = ref {count, begin}, ...} : arg) =
+    Loc.AT {line = count,
+            col = yypos - begin + 1,
+            pos = yypos - INITIAL_POS_OF_LEXER,
+            token = 0}
 
-fun loc yytext yypos arg =
-    (pos yypos arg, pos (yypos + size yytext - 1) arg)
+fun loc yytext yypos (arg as {source, ...}) =
+    (source, pos yypos arg, pos (yypos + size yytext - 1) arg)
 
 fun startComment yypos (arg as {comment,...}) =
     comment := pos yypos arg :: !comment
@@ -74,7 +75,7 @@ fun closeString yypos (arg as {string = {buf, startPos, ty}, ...} : arg) =
       NONE => raise Bug.Bug "closeString"
     | SOME left =>
       let
-        val loc = (left, pos yypos arg)
+        val loc = (#source arg, left, pos yypos arg)
         val s = String.concat (rev (!buf))
       in
         buf := nil;
@@ -90,26 +91,22 @@ fun addString s ({string = {buf, startPos, ...}, ...}:arg) =
     buf := s :: !buf
 
 fun eof ({source, string, comment, error, ...} : arg) =
-    let
-      val eof = Loc.POS {source = source, pos = Loc.EOF}
-    in
-      case !(#startPos string) of
-        SOME pos => error ("unclosed string", (pos, eof))
-      | NONE => ();
-      case !comment of
-        pos :: _ => error ("unclosed comment", (pos, eof))
-      | nil => ();
-      (T.EOF, (eof, eof))
-    end
+    (case !(#startPos string) of
+       SOME pos => error ("unclosed string", (source, pos, Loc.EOF))
+     | NONE => ();
+     case !comment of
+       pos :: _ => error ("unclosed comment", (source, pos, Loc.EOF))
+     | nil => ();
+     (T.EOF, (source, Loc.EOF, Loc.EOF)))
+
 
 fun check8bit yytext yypos (arg as {allow8bitId, error, ...} : arg) =
     if allow8bitId orelse CharVector.all (fn x => ord x < 128) yytext
     then ()
     else error ("8 bit characters in ID is not permitted", loc yytext yypos arg)
 
-fun setIndex (Loc.POS {source, pos = Loc.AT pos}) index =
-    Loc.POS {source = source, pos = Loc.AT (pos # {token = index})}
-  | setIndex loc _ = loc
+fun setIndex (Loc.AT pos) index = Loc.AT (pos # {token = index})
+  | setIndex Loc.EOF _ = Loc.EOF
 
 fun setupLexer tokens lexer =
     let
@@ -117,14 +114,15 @@ fun setupLexer tokens lexer =
     in
       fn () =>
          let
-           val (token, (pos1, pos2)) = lexer ()
+           val (token, (source, pos1, pos2)) = lexer ()
            val index = !count before count := !count + 1
-           val pos1 = setIndex pos1 index
-           val pos2 = setIndex pos2 index
-           val result = (token, (pos1, pos2))
+           val at1 = setIndex pos1 index
+           val at2 = setIndex pos2 index
+           val pos1 = toPos source at1
+           val pos2 = toPos source at2
          in
-           tokens := !tokens ::> result;
-           result
+           tokens := !tokens ::> (token, (at1, at2));
+           (token, (pos1, pos2))
          end
     end
 
@@ -284,7 +282,7 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
                   NONE => continue ()
                 | SOME left =>
                   (YYBEGIN INITIAL;
-                   (T.COMMENT, (left, pos (yypos + 2) arg))));
+                   (T.COMMENT, (#source arg, left, pos (yypos + 2) arg))));
 <COMM>.     => (continue ());
 
 <STR>{eol} => (let val (tok, loc) = closeString yypos arg
