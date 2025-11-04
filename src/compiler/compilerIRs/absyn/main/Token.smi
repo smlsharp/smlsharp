@@ -110,6 +110,4 @@ struct
     | WORD of string
     | WORDX of string
 
-  val tokenName : token -> string
-
 end

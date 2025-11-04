@@ -1,4 +1,5 @@
 include "./compiler/compilerIRs/absyn/main/Token.smi"
+include "./compiler/compilerIRs/absyn/main/TokenUtils.smi"
 include "./compiler/compilerIRs/absyn/main/Absyn.smi"
 include "./compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 include "./compiler/compilerIRs/absyn/main/AbsynSQL.smi"

@@ -1,0 +1,7 @@
+_require "../../../../basis.smi"
+_require "./Token.smi"
+
+structure TokenUtils =
+struct
+  val tokenName : Token.token -> string
+end

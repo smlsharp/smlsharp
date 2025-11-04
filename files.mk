@@ -1187,6 +1187,7 @@ src/basis/main/Timer.o \
 src/basis/main/Word16.o \
 src/basis/main/Word64.o \
 src/basis/main/toplevel.o \
+src/compiler/compilerIRs/absyn/main/TokenUtils.o \
 src/smlnj-lib/Util/parser-comb.o \
 src/smlformat/formatlib/main/FormatExpressionTypes.o \
 src/smlformat/formatlib/main/FormatExpression.o \
@@ -2441,6 +2442,7 @@ src/compiler/compilerIRs/absyn/main/Fixity.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
+src/compiler/compilerIRs/absyn/main/TokenUtils.o \
 src/compiler/compilerIRs/absyn/main/TransposeAbsyn.o \
 src/compiler/compilerIRs/anormal/main/ANormal.ppg.o \
 src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.o \
@@ -2867,6 +2869,7 @@ src/compiler/compilerIRs/absyn/main/Fixity.smi \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
 src/compiler/compilerIRs/absyn/main/RequirePath.smi \
 src/compiler/compilerIRs/absyn/main/Token.smi \
+src/compiler/compilerIRs/absyn/main/TokenUtils.smi \
 src/compiler/compilerIRs/absyn/main/TransposeAbsyn.smi \
 src/compiler/compilerIRs/anormal/main/ANormal.ppg.smi \
 src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.smi \
@@ -3517,6 +3520,7 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o \
 src/compiler/compilePhases/main/main/Main.o \
 src/compiler/smlsharp.o \
+src/compiler/compilerIRs/absyn/main/TokenUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynNode.o \
 src/compiler/compilerIRs/absyn/main/TransposeAbsyn.o \
 src/smlnj-lib/JSON/json-stream-printer.o \
