@@ -4,4 +4,5 @@ _require "./Token.smi"
 structure TokenUtils =
 struct
   val tokenName : Token.token -> string
+  val toString : Token.token -> string
 end
