@@ -635,6 +635,9 @@ struct
         String.translate (fn #"'" => "" | c => str (Char.toUpper c))
                          (SymbolWithLoc.symbolToString symbol)
 
+  fun sappSpine (S.APP (x, y, _)) r = sappSpine x (y :: r)
+    | sappSpine x r = x :: r
+
   (* syntactic category of each query construct *)
   datatype ty =
       EXPty
@@ -1527,7 +1530,7 @@ struct
 
   fun elabEmbed (env as {elabAbsynExp, ...}:env) ty (exp, loc) =
       case exp of
-        A.EXPAPP ([atexp], loc) => elabEmbed env ty (atexp, loc)
+        A.EXPPAREN (exp, loc) => elabEmbed env ty (exp, loc)
       | A.EXPSQL (S.SQL (sql, loc)) =>
         let
           val (ty2, (ret1, query)) = elabSQL env sql
@@ -1676,8 +1679,9 @@ struct
               (merge [ret1, ret3, ret2, ret4], SQL (OP2 (op2, q1, q2, loc)))
             end
         end
-      | S.APP (exps, loc) =>
+      | S.APP (exp1, exp2, loc) =>
         let
+          val exps = sappSpine exp1 [exp2]
           fun getLongsymbol (S.ID (_, id, _)) =
               SymbolWithLoc.toLongsymbol (toLongsymbol id)
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
@@ -1699,6 +1703,33 @@ struct
                   exps
         in
           elabInfixExp env (Fixity.parse error src)
+        end
+      | S.INFIX (exp1, vid, exp2, loc) =>
+        let
+          val (ret1, q1) = elabExp env exp1
+          val (ret2, q2) = elabExp env exp2
+        in
+          case (q1, q2) of
+            (ML q1, ML q2) =>
+            (merge [ret1, ret2],
+             ML (APP (MLEXP ([toSymbol vid], #2 vid),
+                      TUPLE ([q1, q2], loc),
+                      loc)))
+          | _ =>
+            let
+              val (ret3, q1) = toSQL q1
+              val (ret4, q2) = toSQL q2
+            in
+              (merge [ret1, ret3, ret2, ret4],
+               SQL (APPOP2 (toSymbol vid, q1, q2, loc)))
+            end
+        end
+      | S.CAST (vid, exp, loc) =>
+        let
+          val (ret1, q1) = elabExp env exp
+          val (ret2, q1) = toSQL q1
+        in
+          (merge [ret1, ret2], SQL (SQLAPP (true, toSymbol vid, q1, loc)))
         end
       | S.TUPLE (exps, loc) =>
         let

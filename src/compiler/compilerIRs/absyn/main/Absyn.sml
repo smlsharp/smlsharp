@@ -135,10 +135,15 @@ struct
        *)
       PATPAREN of pat * loc
     | (*%
-       * @format(pat pats * loc)
-       * !N0{ pats(pat)(+1) }
+       * @format(pat1 * pat2 * loc)
+       * !N0{ pat1 2[+1] pat2 }
        *)
-      PATAPP of pat list * loc
+      PATAPP of pat * pat * loc
+    | (*%
+       * @format(pat1 * vid * pat2 * loc)
+       * !N0{ pat1 2[+1] vid 2[+1] pat2 }
+       *)
+      PATINFIX of pat * vid * pat * loc
     | (*%
        * @format(pat * ty * loc)
        * !N0{ pat +1 ":" +d ty }
@@ -318,10 +323,15 @@ struct
        *)
       EXPPAREN of exp * loc
     | (*%
-       * @format(exp exps * loc)
-       * !N0{ exps(exp)(2[+1]) }
+       * @format(exp1 * exp2 * loc)
+       * !N0{ exp1 2[+1] exp2 }
        *)
-      EXPAPP of exp list * loc
+      EXPAPP of exp * exp * loc
+    | (*%
+       * @format(exp1 * vid * exp2 * loc)
+       * !N0{ exp1 2[+1] vid 2[+1] exp2 }
+       *)
+      EXPINFIX of exp * vid * exp * loc
     | (*%
        * @format(exp * ty * loc)
        * !N0{ exp +1 ":" +d ty }
@@ -662,11 +672,11 @@ struct
 
   and (*% @params(head) *) frule =
       (*%
-       * @format(pat pats * ty tyOpt * exp * loc)
+       * @format(pat * ty tyOpt * exp * loc)
        * !N0{
        *   !N0{
        *     head
-       *     pats(pat)(+1)
+       *     pat
        *     tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
        *     +1
        *   }
@@ -674,14 +684,14 @@ struct
        *   exp
        * }
        *)
-      pat list * ty option * exp * loc
+      pat * ty option * exp * loc
 
   and (*% @params(head1, head2) *) fvalbind =
       (*%
        * @format(frule frules * loc)
        * !N0{ head1 frules:decs(frule:frule)(head2, +1 "|" +d,) }
        *)
-      (pat list * ty option * exp * loc) list * loc
+      (pat * ty option * exp * loc) list * loc
 
   and (*% @params(head) *) pvalbind =
       (*%

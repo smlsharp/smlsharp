@@ -57,7 +57,9 @@ struct
     | OP2 of op2 * 'exp exp * 'exp exp * loc
     | ID of op_longvid
     | PAREN of 'exp exp * loc
-    | APP of 'exp exp list * loc
+    | APP of 'exp exp * 'exp exp * loc
+    | INFIX of 'exp exp * vid * 'exp exp * loc
+    | CAST of vid * 'exp exp * loc
     | TUPLE of 'exp exp list * loc
 
   and 'exp kwexp =

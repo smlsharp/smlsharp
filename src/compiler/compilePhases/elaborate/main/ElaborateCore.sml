@@ -341,6 +341,12 @@ struct
         (List.concat(rev elaborateds), env)
       end
 
+  fun expappSpine (A.EXPAPP (x, y, _)) r = expappSpine x (y :: r)
+    | expappSpine x r = x :: r
+
+  fun patappSpine (A.PATAPP (x, y, _)) r = patappSpine x (y :: r)
+    | patappSpine x r = x :: r
+
   fun truePat loc = PC.PLPATID(mkLongsymbol ["true"] loc)
   fun falsePat loc = PC.PLPATID(mkLongsymbol ["false"] loc)
   fun trueExp loc = PC.PLVAR(mkLongsymbol ["true"] loc)
@@ -471,7 +477,7 @@ struct
               A.PATID _ => pat
             | A.PATTYPED(innerPat, ty, loc) => 
               A.PATTYPED(assertPattern innerPat, ty, loc)
-            | A.PATAPP ([pat], _) => assertPattern pat
+            | A.PATPAREN (pat, _) => assertPattern pat
             | pat => 
               let
                 val loc = AbsynUtils.patLoc pat
@@ -549,9 +555,9 @@ struct
          *)
         fun resolveCase2 (args, tyOpt, exp, loc) =
              case args of
-               A.PATAPP([leftArg,
-                           pat as A.PATID (false, id, loc),
-                           rightArg], _)
+               A.PATAPP
+                 (A.PATAPP (leftArg, pat as A.PATID (false, id, loc), _),
+                  rightArg, _)
                :: otherArgs =>
                (case findFixity env id of
                   NONFIX => transNonfixForm (args, tyOpt, exp, loc)
@@ -575,8 +581,11 @@ struct
                   in (true, pat, [newArg], tyOpt, exp, loc)
                   end)
              | _ => resolveCase2 (args, tyOpt, exp, loc)
+
+        fun resolveCase0 (args, tyOpt, exp, loc) =
+            resolveCase1 (patappSpine args nil, tyOpt, exp, loc)
       in
-        {fdecl=map resolveCase1 fdecls, loc=loc}
+        {fdecl=map resolveCase0 fdecls, loc=loc}
       end
 
   and elabFunDecls env {fdecl=fdecls, loc=loc} =
@@ -752,7 +761,15 @@ struct
         in
           plexp
         end
-      | A.EXPAPP (elist, loc) => resolveInfixExp env elist
+      | A.EXPAPP (exp1, exp2, loc) =>
+        resolveInfixExp env (expappSpine exp1 [exp2])
+      | A.EXPINFIX (exp1, vid, exp2, loc) =>
+        PC.PLAPPM
+          (PC.PLVAR [toSymbol vid],
+           [PC.PLRECORD
+              (RecordLabel.tupleList [elabExp env exp1, elabExp env exp2],
+               loc)],
+           loc)
       | A.EXPSEQ (elist, loc) => PC.PLSEQ(map (elabExp env) elist, loc)
       | A.EXPTYPED (exp, ty, loc) => PC.PLTYPED (elabExp env exp, ty, loc)
       | A.EXPANDALSO (e1, e2, loc) =>
@@ -938,7 +955,16 @@ struct
          | INFIX _ => beginWithInfixError longvid
          | INFIXR _ => beginWithInfixError longvid;
          PC.PLPATID (toLongsymbol longvid))
-      | A.PATAPP (plist, loc) => resolveInfixPat env plist
+      | A.PATAPP (pat1, pat2, loc) =>
+        resolveInfixPat env (patappSpine pat1 [pat2])
+      | A.PATINFIX (pat1, vid, pat2, loc) =>
+        PC.PLPATCONSTRUCT
+          (PC.PLPATID [toSymbol vid],
+           PC.PLPATRECORD
+             (false,
+              RecordLabel.tupleList [elabPat env pat1, elabPat env pat2],
+              loc),
+           loc)
       | A.PATRECORD (pfields, flex, loc) =>
         (
           checkRecordLabelDuplication
@@ -1025,7 +1051,7 @@ struct
                 (* right hand side of val rec must be "fn". *)
                 fun assertExp (A.EXPFN _) = ()
                   (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
-                  | assertExp (A.EXPAPP ([exp],_)) = assertExp exp
+                  | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
                   | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
                 (* check pattern AFTER elaboration, because even single var pattern
                  * is parsed as application pattern. *)
@@ -1076,7 +1102,7 @@ struct
             (* right hand side of val rec must be "fn". *)
             fun assertExp (A.EXPFN _) = ()
               (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
-              | assertExp (A.EXPAPP ([exp],_)) = assertExp exp
+              | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
               | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
             fun elabBind (symbol, ty, exp, loc) =
                 let

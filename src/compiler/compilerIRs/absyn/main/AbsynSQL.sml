@@ -189,10 +189,19 @@ struct
        *)
       PAREN of 'exp exp * loc
     | (*%
-       * @format(e exp exps * loc)
-       * !N0{ exps(exp(e))(2[+1]) }
+       * @format(e1 exp1 * e2 exp2 * loc)
+       * !N0{ exp1(e1) 2[+1] exp2(e2) }
        *)
-      APP of 'exp exp list * loc
+      APP of 'exp exp * 'exp exp * loc
+    | (*%
+       * @format(e1 exp1 * vid * e2 exp2 * loc)
+       * !N0{ exp1(e1) 2[+1] vid 2[+1] exp2(e2) }
+       *)
+      INFIX of 'exp exp * vid * 'exp exp * loc
+    | (*%
+       * @format(vid * e exp * loc)
+       *)
+      CAST of vid * 'exp exp * loc
     | (*%
        * @format(e exp exps * loc)
        * "(" !N0{ exps(exp(e))("," +1) } ")"

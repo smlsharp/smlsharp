@@ -56,7 +56,8 @@ struct
     | PATTUPLE of pat list * loc
     | PATLIST of pat list * loc
     | PATPAREN of pat * loc
-    | PATAPP of pat list * loc
+    | PATAPP of pat * pat * loc
+    | PATINFIX of pat * vid * pat * loc
     | PATTYPED of pat * ty * loc
     | PATAS of op_vid * ty option * pat * loc
 
@@ -84,7 +85,8 @@ struct
     | EXPSEQ of exp list * loc
     | EXPLET of dec list * exp list * loc
     | EXPPAREN of exp * loc
-    | EXPAPP of exp list * loc
+    | EXPAPP of exp * exp * loc
+    | EXPINFIX of exp * vid * exp * loc
     | EXPTYPED of exp * ty * loc
     | EXPANDALSO of exp * exp * loc
     | EXPORELSE of exp * exp * loc
@@ -121,7 +123,7 @@ struct
   and dec =
       DECVAL of kinded_tyvarseq * valbind list * loc
     | DECFUN of kinded_tyvarseq
-                * ((pat list * ty option * exp * loc) list * loc) list
+                * ((pat * ty option * exp * loc) list * loc) list
                 * loc
     | DECTYPE of typbind list * loc
     | DECDATATYPE of datbind list * typbind list * loc
@@ -144,7 +146,7 @@ struct
 
   type dynamic_mrule = exist_quant * pat * exp * loc
 
-  type frule = pat list * ty option * exp * loc
+  type frule = pat * ty option * exp * loc
 
   type fvalbind = frule list * loc
 

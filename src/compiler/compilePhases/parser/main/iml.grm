@@ -26,12 +26,6 @@
 structure A = Absyn
 structure S = AbsynSQL
 
-fun EXPAPP (NIL ::> exp, loc) = exp
-  | EXPAPP (exps, loc) = A.EXPAPP (Snoc.toList exps, loc)
-fun PATAPP (NIL ::> pat, loc) = pat
-  | PATAPP (pats, loc) = A.PATAPP (Snoc.toList pats, loc)
-fun S_APP (NIL ::> exp, loc) = exp
-  | S_APP (exps, loc) = S.APP (Snoc.toList exps, loc)
 fun PATID (id, loc) =
     A.PATID (false, ([id], loc), loc)
 fun OP_PATID (id, pos1, loc as (_, pos3)) =
@@ -224,7 +218,7 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | exprow of A.exprow snoc
   | exps_comma of A.exp snoc
   | exps_semicolon of A.exp snoc
-  | appexp of A.exp snoc
+  | appexp of A.exp
   | colonexp of A.exp
   | conjexp of A.exp
   | conjexp_r of A.exp
@@ -280,14 +274,14 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | sqlDelete of A.exp S.con
   | sqlatexp of A.exp S.exp
   | sqlkwexp of A.exp S.kwexp
-  | sqlappexp of A.exp S.exp snoc
+  | sqlappexp of A.exp S.exp
   | sqlnotexp of A.exp S.exp
   | sqlconjexp of A.exp S.exp
   | sqlexp of A.exp S.exp
   | sqlexp_noAND of A.exp S.exp
   | sqlexps of A.exp S.exp list
   | sqlexps_noAND of A.exp S.exp list
-  | sqlapppat_noID of A.pat snoc
+  | sqlapppat_noID of A.pat
   | sqlpat of A.pat
   | decs of A.dec list
   | dec of A.dec
@@ -315,9 +309,9 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | atpat_noID_noPAREN of A.pat
   | atpat_noID of A.pat
   | atpat of A.pat
-  | apppat_noID of A.pat snoc
-  | apppat of A.pat snoc
-  | apppat_COLON_ty of A.pat snoc * A.loc * A.ty
+  | apppat_noID of A.pat
+  | apppat of A.pat
+  | apppat_COLON_ty of A.pat * A.ty
   | aspat of A.pat
   | pat of A.pat
   | colon_ty_opt of A.ty option
@@ -725,37 +719,23 @@ exps_semicolon
 
 appexp
         : atexp
-          (NIL ::> atexp)
+          (atexp)
         | appexp atexp
-          (appexp ::> atexp)
+          (A.EXPAPP (appexp, atexp, (appexpleft, atexpright)))
         | appexp HASH LBRACE atexp RBRACE
-          (NIL
-           ::> A.EXPUPDATE2
-                 (EXPAPP (appexp, (appexpleft, appexpright)),
-                  atexp,
-                  (appexpleft, RBRACEright)))
+          (A.EXPUPDATE2 (appexp, atexp, (appexpleft, RBRACEright)))
         | appexp HASH LBRACE exprow RBRACE
-          (NIL
-           ::> A.EXPRECORD_UPDATE
-                 (EXPAPP (appexp, (appexpleft, appexpright)),
-                  Snoc.toList exprow,
-                  (appexpleft, RBRACEright)))
+          (A.EXPRECORD_UPDATE
+             (appexp, Snoc.toList exprow, (appexpleft, RBRACEright)))
         | appexp HASH LBRACE RBRACE
-          (NIL
-           ::> A.EXPRECORD_UPDATE
-                 (EXPAPP (appexp, (appexpleft, appexpright)),
-                  nil,
-                  (appexpleft, RBRACEright)))
+          (A.EXPRECORD_UPDATE (appexp, nil, (appexpleft, RBRACEright)))
         | appexp HASH LPAREN exps_comma RPAREN
-          (NIL
-           ::> A.EXPTUPLE_UPDATE
-                 (EXPAPP (appexp, (appexpleft, appexpright)),
-                  Snoc.toList exps_comma,
-                  (appexpleft, RPARENright)))
+          (A.EXPTUPLE_UPDATE
+             (appexp, Snoc.toList exps_comma, (appexpleft, RPARENright)))
 
 colonexp
         : appexp
-          (EXPAPP (appexp, (appexpleft, appexpright)))
+          (appexp)
         | colonexp COLON ty
           (A.EXPTYPED (colonexp, ty, (colonexpleft, tyright)))
         | colonexp COLON U_IMPORT ffity
@@ -1320,49 +1300,31 @@ sqlkwexp
 
 sqlappexp
         : sqlatexp
-          (NIL ::> sqlatexp)
+          (sqlatexp)
         | sqlappexp IS NULL
-          (NIL ::> S.OP1 (S.IS_NULL,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, NULLright)))
+          (S.OP1 (S.IS_NULL, sqlappexp, (sqlappexpleft, NULLright)))
         | sqlappexp IS NOT NULL
-          (NIL ::> S.OP1 (S.IS_NOT_NULL,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, NULLright)))
+          (S.OP1 (S.IS_NOT_NULL, sqlappexp, (sqlappexpleft, NULLright)))
         | sqlappexp IS TRUE
-          (NIL ::> S.OP1 (S.IS_TRUE,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, TRUEright)))
+          (S.OP1 (S.IS_TRUE, sqlappexp, (sqlappexpleft, TRUEright)))
         | sqlappexp IS NOT TRUE
-          (NIL ::> S.OP1 (S.IS_NOT_TRUE,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, TRUEright)))
+          (S.OP1 (S.IS_NOT_TRUE, sqlappexp, (sqlappexpleft, TRUEright)))
         | sqlappexp IS FALSE
-          (NIL ::> S.OP1 (S.IS_FALSE,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, FALSEright)))
+          (S.OP1 (S.IS_FALSE, sqlappexp, (sqlappexpleft, FALSEright)))
         | sqlappexp IS NOT FALSE
-          (NIL ::> S.OP1 (S.IS_NOT_FALSE,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, FALSEright)))
+          (S.OP1 (S.IS_NOT_FALSE, sqlappexp, (sqlappexpleft, FALSEright)))
         | sqlappexp IS UNKNOWN
-          (NIL ::> S.OP1 (S.IS_UNKNOWN,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, UNKNOWNright)))
+          (S.OP1 (S.IS_UNKNOWN, sqlappexp, (sqlappexpleft, UNKNOWNright)))
         | sqlappexp IS NOT UNKNOWN
-          (NIL ::> S.OP1 (S.IS_NOT_UNKNOWN,
-                          S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                          (sqlappexpleft, UNKNOWNright)))
+          (S.OP1 (S.IS_NOT_UNKNOWN, sqlappexp, (sqlappexpleft, UNKNOWNright)))
         | sqlappexp sqlatexp
-          (sqlappexp ::> sqlatexp)
+          (S.APP (sqlappexp, sqlatexp, (sqlappexpleft, sqlatexpright)))
 
 sqlnotexp
         : sqlappexp
-          (S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)))
+          (sqlappexp)
         | NOT sqlappexp
-          (S.OP1 (S.NOT,
-                  S_APP (sqlappexp, (sqlappexpleft, sqlappexpright)),
-                  (NOTleft, sqlappexpright)))
+          (S.OP1 (S.NOT, sqlappexp, (NOTleft, sqlappexpright)))
 
 sqlconjexp
         : sqlnotexp
@@ -1399,29 +1361,27 @@ sqlexps_noAND
 
 sqlapppat_noID
         : atpat_noID_noPAREN
-          (NIL ::> atpat_noID_noPAREN)
+          (atpat_noID_noPAREN)
         | LPAREN RPAREN
-          (NIL ::> A.PATCONST (A.UNITCONST, (LPARENleft, RPARENright)))
+          (A.PATCONST (A.UNITCONST, (LPARENleft, RPARENright)))
         | id_noEQSQL atpat
-          (NIL
-           ::> PATID (id_noEQSQL, (id_noEQSQLleft, id_noEQSQLright))
-           ::> atpat)
+          (A.PATAPP
+             (PATID (id_noEQSQL, (id_noEQSQLleft, id_noEQSQLright)),
+              atpat,
+              (id_noEQSQLleft, atpatright)))
         | OP id_noEQ atpat
-          (NIL
-           ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright))
-           ::> atpat)
+          (A.PATAPP
+             (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)),
+              atpat,
+              (OPleft, atpatright)))
         | sqlapppat_noID atpat
-          (sqlapppat_noID ::> atpat)
+          (A.PATAPP (sqlapppat_noID, atpat, (sqlapppat_noIDleft, atpatright)))
 
 sqlpat
         : sqlapppat_noID
-          (PATAPP (sqlapppat_noID, (sqlapppat_noIDleft, sqlapppat_noIDright)))
+          (sqlapppat_noID)
         | sqlapppat_noID COLON ty
-          (A.PATTYPED
-             (PATAPP (sqlapppat_noID,
-                      (sqlapppat_noIDleft, sqlapppat_noIDright)),
-              ty,
-              (sqlapppat_noIDleft, tyright)))
+          (A.PATTYPED (sqlapppat_noID, ty, (sqlapppat_noIDleft, tyright)))
         | id_noEQ COLON ty
           (A.PATTYPED
              (PATID (id_noEQ, (id_noEQleft, id_noEQright)),
@@ -1621,10 +1581,10 @@ pvalbind
 
 frule
         : apppat EQ expOrSQL
-          (Snoc.toList apppat, NONE, expOrSQL, (apppatleft, expOrSQLright))
+          (apppat, NONE, expOrSQL, (apppatleft, expOrSQLright))
         | apppat_COLON_ty EQ expOrSQL
-          (Snoc.toList (#1 apppat_COLON_ty),
-           SOME (#3 apppat_COLON_ty),
+          (#1 apppat_COLON_ty,
+           SOME (#2 apppat_COLON_ty),
            expOrSQL,
            (apppat_COLON_tyleft, expOrSQLright))
 
@@ -1682,37 +1642,35 @@ atpat
 
 apppat_noID
         : atpat_noID
-          (NIL ::> atpat_noID)
+          (atpat_noID)
         | id_noEQ atpat
-          (NIL
-           ::> PATID (id_noEQ, (id_noEQleft, id_noEQright))
-           ::> atpat)
+          (A.PATAPP
+             (PATID (id_noEQ, (id_noEQleft, id_noEQright)),
+              atpat,
+              (id_noEQleft, atpatright)))
         | OP id_noEQ atpat
-          (NIL
-           ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright))
-           ::> atpat)
+          (A.PATAPP
+             (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)),
+              atpat,
+              (OPleft, atpatright)))
         | apppat_noID atpat
-          (apppat_noID ::> atpat)
+          (A.PATAPP (apppat_noID, atpat, (apppat_noIDleft, atpatright)))
 
 apppat
         : apppat_noID
           (apppat_noID)
         | id_noEQ
-          (NIL ::> PATID (id_noEQ, (id_noEQleft, id_noEQright)))
+          (PATID (id_noEQ, (id_noEQleft, id_noEQright)))
         | OP id_noEQ
-          (NIL ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)))
+          (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)))
 
 apppat_COLON_ty
         : apppat_noID COLON ty
-          (apppat_noID, (apppat_noIDleft, apppat_noIDright), ty)
+          (apppat_noID, ty)
         | id_noEQ COLON ty
-          (NIL ::> PATID (id_noEQ, (id_noEQleft, id_noEQright)),
-           (id_noEQleft, id_noEQright),
-           ty)
+          (PATID (id_noEQ, (id_noEQleft, id_noEQright)), ty)
         | OP id_noEQ COLON ty
-          (NIL ::> OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)),
-           (OPleft, id_noEQright),
-           ty)
+          (OP_PATID (id_noEQ, OPleft, (id_noEQleft, id_noEQright)), ty)
 
 aspat
         : id_noEQ colon_ty_opt AS pat
@@ -1730,11 +1688,11 @@ aspat
 
 pat
         : apppat
-          (PATAPP (apppat, (apppatleft, apppatright)))
+          (apppat)
         | apppat_COLON_ty
           (A.PATTYPED
-             (PATAPP (#1 apppat_COLON_ty, #2 apppat_COLON_ty),
-              #3 apppat_COLON_ty,
+             (#1 apppat_COLON_ty,
+              #2 apppat_COLON_ty,
               (apppat_COLON_tyleft, apppat_COLON_tyright)))
         | aspat
           (aspat)

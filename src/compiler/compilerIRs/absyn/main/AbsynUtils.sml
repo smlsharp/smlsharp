@@ -42,7 +42,8 @@ struct
       | A.PATTUPLE (_, loc) => loc
       | A.PATLIST (_, loc) => loc
       | A.PATPAREN (_, loc) => loc
-      | A.PATAPP (_, loc) => loc
+      | A.PATAPP (_, _, loc) => loc
+      | A.PATINFIX (_, _, _, loc) => loc
       | A.PATTYPED (_, _, loc) => loc
       | A.PATAS (_, _, _, loc) => loc
 
@@ -71,7 +72,9 @@ struct
       | S.OP2 (_, _, _, loc) => loc
       | S.ID (_, _, loc) => loc
       | S.PAREN (_, loc) => loc
-      | S.APP (_, loc) => loc
+      | S.APP (_, _, loc) => loc
+      | S.INFIX (_, _, _, loc) => loc
+      | S.CAST (_, _, loc) => loc
       | S.TUPLE (_, loc) => loc
 
   fun sqlTopLoc top =
@@ -91,7 +94,8 @@ struct
       | A.EXPSEQ (_, loc) => loc
       | A.EXPLET (_, _, loc) => loc
       | A.EXPPAREN (_, loc) => loc
-      | A.EXPAPP (_, loc) => loc
+      | A.EXPAPP (_, _, loc) => loc
+      | A.EXPINFIX (_, _, _, loc) => loc
       | A.EXPTYPED (_, _, loc) => loc
       | A.EXPANDALSO (_, _, loc) => loc
       | A.EXPORELSE (_, _, loc) => loc

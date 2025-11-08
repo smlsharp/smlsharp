@@ -176,6 +176,7 @@ struct
       | PAT (A.PATLIST _) => "PAT:PATLIST"
       | PAT (A.PATPAREN _) => "PAT:PATPAREN"
       | PAT (A.PATAPP _) => "PAT:PATAPP"
+      | PAT (A.PATINFIX _) => "PAT:PATINFIX"
       | PAT (A.PATTYPED _) => "PAT:PATTYPED"
       | PAT (A.PATAS _) => "PAT:PATAS"
       | PATROW (A.PATROW _) => "PATROW:PATROW"
@@ -195,6 +196,7 @@ struct
       | EXP (A.EXPLET _) => "EXP:EXPLET"
       | EXP (A.EXPPAREN _) => "EXP:EXPPAREN"
       | EXP (A.EXPAPP _) => "EXP:EXPAPP"
+      | EXP (A.EXPINFIX _) => "EXP:EXPINFIX"
       | EXP (A.EXPTYPED _) => "EXP:EXPTYPED"
       | EXP (A.EXPANDALSO _) => "EXP:EXPANDALSO"
       | EXP (A.EXPORELSE _) => "EXP:EXPORELSE"
@@ -306,6 +308,8 @@ struct
       | SQL_EXP (S.ID _) => "SQL_EXP:ID"
       | SQL_EXP (S.PAREN _) => "SQL_EXP:PAREN"
       | SQL_EXP (S.APP _) => "SQL_EXP:APP"
+      | SQL_EXP (S.INFIX _) => "SQL_EXP:INFIX"
+      | SQL_EXP (S.CAST _) => "SQL_EXP:CAST"
       | SQL_EXP (S.TUPLE _) => "SQL_EXP:TUPLE"
       | SQL_KWEXP (S.EXISTS _) => "SQL_KWEXP:EXISTS"
       | SQL_TABLE (S.TABLE _) => "SQL_TABLE:TABLE"
@@ -469,7 +473,8 @@ struct
       | PAT (A.PATTUPLE (_, loc)) => loc
       | PAT (A.PATLIST (_, loc)) => loc
       | PAT (A.PATPAREN (_, loc)) => loc
-      | PAT (A.PATAPP (_, loc)) => loc
+      | PAT (A.PATAPP (_, _, loc)) => loc
+      | PAT (A.PATINFIX (_, _, _, loc)) => loc
       | PAT (A.PATTYPED (_, _, loc)) => loc
       | PAT (A.PATAS (_, _, _, loc)) => loc
       | PATROW (A.PATROW (_, _, loc)) => loc
@@ -488,7 +493,8 @@ struct
       | EXP (A.EXPSEQ (_, loc)) => loc
       | EXP (A.EXPLET (_, _, loc)) => loc
       | EXP (A.EXPPAREN (_, loc)) => loc
-      | EXP (A.EXPAPP (_, loc)) => loc
+      | EXP (A.EXPAPP (_, _, loc)) => loc
+      | EXP (A.EXPINFIX (_, _, _, loc)) => loc
       | EXP (A.EXPTYPED (_, _, loc)) => loc
       | EXP (A.EXPANDALSO (_, _, loc)) => loc
       | EXP (A.EXPORELSE (_, _, loc)) => loc
@@ -599,7 +605,9 @@ struct
       | SQL_EXP (S.OP2 (_, _, _, loc)) => loc
       | SQL_EXP (S.ID (_, _, loc)) => loc
       | SQL_EXP (S.PAREN (_, loc)) => loc
-      | SQL_EXP (S.APP (_, loc)) => loc
+      | SQL_EXP (S.APP (_, _, loc)) => loc
+      | SQL_EXP (S.INFIX (_, _, _, loc)) => loc
+      | SQL_EXP (S.CAST (_, _, loc)) => loc
       | SQL_EXP (S.TUPLE (_, loc)) => loc
       | SQL_KWEXP (S.EXISTS (_, loc)) => loc
       | SQL_TABLE (S.TABLE (_, _, loc)) => loc
@@ -769,7 +777,8 @@ struct
       | PAT (A.PATTUPLE (pats, loc)) => map PAT pats
       | PAT (A.PATLIST (pats, loc)) => map PAT pats
       | PAT (A.PATPAREN (pat, loc)) => [PAT pat]
-      | PAT (A.PATAPP (pats, loc)) => map PAT pats
+      | PAT (A.PATAPP (pat1, pat2, loc)) => [PAT pat1, PAT pat2]
+      | PAT (A.PATINFIX (pat1, vid, pat2, loc)) => [PAT pat1, VID vid, PAT pat2]
       | PAT (A.PATTYPED (pat, ty, loc)) => [PAT pat, TY ty]
       | PAT (A.PATAS (id, NONE, pat, loc)) => [OP_VID id, PAT pat]
       | PAT (A.PATAS (id, SOME ty, pat, loc)) => [OP_VID id, TY ty, PAT pat]
@@ -797,7 +806,8 @@ struct
       | EXP (A.EXPSEQ (exps, loc)) => map EXP exps
       | EXP (A.EXPLET (decs, exps, loc)) => map DEC decs @ map EXP exps
       | EXP (A.EXPPAREN (exp, loc)) => [EXP exp]
-      | EXP (A.EXPAPP (exps, loc)) => map EXP exps
+      | EXP (A.EXPAPP (exp1, exp2, loc)) => [EXP exp1, EXP exp2]
+      | EXP (A.EXPINFIX (exp1, vid, exp2, loc)) => [EXP exp1, VID vid, EXP exp2]
       | EXP (A.EXPTYPED (exp, ty, loc)) => [EXP exp, TY ty]
       | EXP (A.EXPANDALSO (exp1, exp2, loc)) => [EXP exp1, EXP exp2]
       | EXP (A.EXPORELSE (exp1, exp2, loc)) => [EXP exp1, EXP exp2]
@@ -854,8 +864,8 @@ struct
       | MRULE (pat, exp, loc) => [PAT pat, EXP exp]
       | DYNAMIC_MRULE (exists, pat, exp, loc) =>
         [EXIST_QUANT exists, PAT pat, EXP exp]
-      | FRULE (pats, NONE, exp, loc) => map PAT pats @ [EXP exp]
-      | FRULE (pats, SOME ty, exp, loc) => map PAT pats @ [TY ty, EXP exp]
+      | FRULE (pat, NONE, exp, loc) => [PAT pat, EXP exp]
+      | FRULE (pat, SOME ty, exp, loc) => [PAT pat, TY ty, EXP exp]
       | FVALBIND (frules, loc) => map FRULE frules
       | PVALBIND (vid, ty, exp, loc) => [VID vid, TY ty, EXP exp]
       | VALDESC (vid, ty, loc) => [VID vid, TY ty]
@@ -944,7 +954,10 @@ struct
       | SQL_EXP (S.OP2 (op2, exp1, exp2, loc)) => [SQL_EXP exp1, SQL_EXP exp2]
       | SQL_EXP (S.ID id) => [OP_LONGVID id]
       | SQL_EXP (S.PAREN (exp, loc)) => [SQL_EXP exp]
-      | SQL_EXP (S.APP (exps, loc)) => map SQL_EXP exps
+      | SQL_EXP (S.APP (exp1, exp2, loc)) => [SQL_EXP exp1, SQL_EXP exp2]
+      | SQL_EXP (S.INFIX (exp1, vid, exp2, loc)) =>
+        [SQL_EXP exp1, VID vid, SQL_EXP exp2]
+      | SQL_EXP (S.CAST (vid, exp, loc)) => [VID vid, SQL_EXP exp]
       | SQL_EXP (S.TUPLE (exps, loc)) => map SQL_EXP exps
       | SQL_KWEXP (S.EXISTS (query, loc)) => [SQL_QUERY query]
       | SQL_TABLE (S.TABLE table) => [SQL_TABLE_SELECTOR table]
