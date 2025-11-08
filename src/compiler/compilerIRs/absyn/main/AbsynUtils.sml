@@ -56,8 +56,8 @@ struct
         A.EXBIND (_, _, loc) => loc
       | A.EXBINDREP (_, _, loc) => loc
 
-  fun sqlexpLoc sqlexp =
-      case sqlexp of
+  fun sqlTopLoc top =
+      case top of
         S.SQLSERVER (_, _, loc) => loc
       | S.SQLFN (_, _, loc) => loc
       | S.SQL (_, loc) => loc
@@ -88,7 +88,7 @@ struct
       | A.EXPTUPLE_UPDATE (_, _, loc) => loc
       | A.EXPIMPORT_NAME (_, _, loc) => loc
       | A.EXPIMPORT_EXP (_, _, loc) => loc
-      | A.EXPSQL sqlexp => sqlexpLoc sqlexp
+      | A.EXPSQL sqlexp => sqlTopLoc sqlexp
       | A.EXPFOREACH_DATA (_, _, _, _, _, _, loc) => loc
       | A.EXPFOREACH_ARRAY (_, _, _, _, _, loc) => loc
       | A.EXPJOIN (_, _, loc) => loc

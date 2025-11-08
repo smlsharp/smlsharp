@@ -9,7 +9,7 @@ struct
   val patLoc : Absyn.pat -> Absyn.loc
   val patrowLoc : Absyn.patrow -> Absyn.loc
   val exbindLoc : Absyn.exbind -> Absyn.loc
-  val sqlexpLoc : Absyn.sqlexp -> Absyn.loc
+  val sqlTopLoc : Absyn.sqlexp -> Absyn.loc
   val expLoc : Absyn.exp -> Absyn.loc
   val valbindLoc : Absyn.valbind -> Absyn.loc
   val decLoc : Absyn.dec -> Absyn.loc

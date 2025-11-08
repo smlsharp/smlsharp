@@ -150,7 +150,7 @@ struct
 
   type 'exp set = 'exp set_row list * loc
 
-  datatype 'exp sqlcon =
+  datatype 'exp con =
       QRY of 'exp query
     | SEL of 'exp select
     | FRM of 'exp from
@@ -170,18 +170,18 @@ struct
     | ROLLBACK of loc
 
   datatype 'exp step =
-      STEP of bool * 'exp sqlcon * loc
+      STEP of bool * 'exp con * loc
     | STEP_EMBED of 'exp * loc
 
-  datatype 'exp sql =
-      CON of bool * 'exp sqlcon * loc
+  datatype 'exp body =
+      CON of bool * 'exp con * loc
     | EXP of 'exp exp
     | SEQ of 'exp step list * loc
-    | SQLPAREN of 'exp sql * loc
+    | BODYPAREN of 'exp body * loc
 
-  datatype ('exp, 'pat, 'ty) sqlexp =
+  datatype ('exp, 'pat, 'ty) top =
       SQLSERVER of 'exp option * 'ty * loc
-    | SQL of 'exp sql * loc
-    | SQLFN of 'pat * 'exp sql * loc
+    | SQL of 'exp body * loc
+    | SQLFN of 'pat * 'exp body * loc
 
 end

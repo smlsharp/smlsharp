@@ -520,7 +520,7 @@ struct
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
-  datatype 'exp sqlcon =
+  datatype 'exp con =
       (*%
        * @format(e query)
        * query(e)
@@ -621,7 +621,7 @@ struct
        * @format(prefix * exp con * loc)
        * !N0{ prefix:iftrue()("_sql" +d,) con(exp) }
        *)
-      STEP of bool * 'exp sqlcon * loc
+      STEP of bool * 'exp con * loc
     | (*%
        * @format(exp * loc)
        * "...(" !N0{ exp } ")"
@@ -631,12 +631,12 @@ struct
   (*%
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    *)
-  datatype 'exp sql =
+  datatype 'exp body =
       (*%
        * @format(prefix * e con * loc)
        * !N0{ prefix:iftrue()("_sql" +d,) con(e) }
        *)
-      CON of bool * 'exp sqlcon * loc
+      CON of bool * 'exp con * loc
     | (*%
        * @format(e exp)
        * exp(e)
@@ -648,15 +648,15 @@ struct
        *)
       SEQ of 'exp step list * loc
     | (*%
-       * @format(e sql * loc)
-       * "(" !N0{ sql(e) } ")"
+       * @format(e body * loc)
+       * "(" !N0{ body(e) } ")"
        *)
-      SQLPAREN of 'exp sql * loc
+      BODYPAREN of 'exp body * loc
 
   (*%
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
-  datatype ('exp, 'pat, 'ty) sqlexp =
+  datatype ('exp, 'pat, 'ty) top =
       (*%
        * @format(exp expOpt * ty * loc)
        * !N0{
@@ -668,14 +668,14 @@ struct
        *)
       SQLSERVER of 'exp option * 'ty * loc
     | (*%
-       * @format(pat * exp sql * loc)
-       * !N0{ "_sql" +d !N0{ pat +d "=>" +1 sql(exp) } }
+       * @format(pat * exp body * loc)
+       * !N0{ "_sql" +d !N0{ pat +d "=>" +1 body(exp) } }
        *)
-      SQLFN of 'pat * 'exp sql * loc
+      SQLFN of 'pat * 'exp body * loc
     | (*%
-       * @format(exp sql * loc)
-       * !N0{ "_sql" +d sql(exp) }
+       * @format(exp body * loc)
+       * !N0{ "_sql" +d body(exp) }
        *)
-      SQL of 'exp sql * loc
+      SQL of 'exp body * loc
 
 end

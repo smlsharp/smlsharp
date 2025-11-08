@@ -100,10 +100,10 @@ struct
     | SQL_INSERT_LABELS of AbsynSQL.insert_labels
     | SQL_SET_ROW of Absyn.exp AbsynSQL.set_row
     | SQL_SET of Absyn.exp AbsynSQL.set
-    | SQL_SQLCON of Absyn.exp AbsynSQL.sqlcon
+    | SQL_CON of Absyn.exp AbsynSQL.con
     | SQL_STEP of Absyn.exp AbsynSQL.step
-    | SQL_SQL of Absyn.exp AbsynSQL.sql
-    | SQL_SQLEXP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp
+    | SQL_BODY of Absyn.exp AbsynSQL.body
+    | SQL_TOP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.top
       (*% AbsynInterface *)
     | OPAQUE_IMPL of AbsynInterface.opaque_impl
     | OVERLOAD_INSTANCE of AbsynInterface.overload_instance

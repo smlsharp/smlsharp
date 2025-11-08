@@ -238,11 +238,11 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | dynmatch of A.dynamic_mrule list
   | exist_quant of A.exist_quant
   | sql of A.exp
-  | sqlparen of A.exp S.sql
+  | sqlparen of A.exp S.body
   | sqlstep of A.exp S.step
   | sqlsteps of A.exp S.step list
   | sql_opt of bool
-  | sqlcon of A.exp S.sqlcon
+  | sqlcon of A.exp S.con
   | sqlSelect of A.exp S.select
   | sqlSelectOrExp of A.exp S.select
   | sqlquery of A.exp S.query
@@ -267,17 +267,17 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | sqltableAs of A.exp S.table
   | sqltableExp of A.exp S.table
   | sqltable of S.table_selector
-  | sqlInsert of A.exp S.sqlcon
+  | sqlInsert of A.exp S.con
   | sqlInsertLabels of A.lab list
   | sqlInsertValues of A.exp S.insert_values
   | sqlInsertRow of A.exp S.insert_row
   | sqlInsertRows of A.exp S.insert_row list
   | sqlInsertRowValue of A.exp S.insert_value
   | sqlInsertRowValues of A.exp S.insert_value list
-  | sqlUpdate of A.exp S.sqlcon
+  | sqlUpdate of A.exp S.con
   | sqlsetrow of A.exp S.set_row
   | sqlsetrows of A.exp S.set_row list
-  | sqlDelete of A.exp S.sqlcon
+  | sqlDelete of A.exp S.con
   | sqlatexp of A.exp S.exp
   | sqlkwexp of A.exp S.kwexp
   | sqlappexp of A.exp S.exp snoc
@@ -889,17 +889,17 @@ sql
 
 sqlparen
         : LPAREN sqlsteps RPAREN
-          (S.SQLPAREN
+          (S.BODYPAREN
              (S.SEQ (sqlsteps, (sqlstepsleft, sqlstepsright)),
               (LPARENleft, RPARENright)))
         | LPAREN sql_opt sqlcon RPAREN
-          (S.SQLPAREN
+          (S.BODYPAREN
              (S.CON (sql_opt, sqlcon, (sql_optleft, sqlconright)),
               (LPARENleft, RPARENright)))
         | LPAREN sqlexp RPAREN
           (S.EXP (S.PAREN (sqlexp, (LPARENleft, RPARENright))))
         | LPAREN PERIODS LPAREN expOrSQL RPAREN RPAREN
-          (S.SQLPAREN
+          (S.BODYPAREN
              (S.SEQ
                 ([S.STEP_EMBED (expOrSQL, (PERIODSleft, RPAREN1right))],
                  (PERIODSleft, RPAREN1right)),

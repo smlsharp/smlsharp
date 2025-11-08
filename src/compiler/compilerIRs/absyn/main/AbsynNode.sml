@@ -102,10 +102,10 @@ struct
     | SQL_INSERT_LABELS of AbsynSQL.insert_labels
     | SQL_SET_ROW of Absyn.exp AbsynSQL.set_row
     | SQL_SET of Absyn.exp AbsynSQL.set
-    | SQL_SQLCON of Absyn.exp AbsynSQL.sqlcon
+    | SQL_CON of Absyn.exp AbsynSQL.con
     | SQL_STEP of Absyn.exp AbsynSQL.step
-    | SQL_SQL of Absyn.exp AbsynSQL.sql
-    | SQL_SQLEXP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp
+    | SQL_BODY of Absyn.exp AbsynSQL.body
+    | SQL_TOP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.top
       (*% AbsynInterface *)
     | OPAQUE_IMPL of AbsynInterface.opaque_impl
     | OVERLOAD_INSTANCE of AbsynInterface.overload_instance
@@ -349,29 +349,29 @@ struct
       | SQL_INSERT_LABELS _ => "SQL_INSERT_LABELS"
       | SQL_SET_ROW _ => "SQL_SET_ROW"
       | SQL_SET _ => "SQL_SET"
-      | SQL_SQLCON (S.QRY _) => "SQL_SQLCON:QRY"
-      | SQL_SQLCON (S.SEL _) => "SQL_SQLCON:SEL"
-      | SQL_SQLCON (S.FRM _) => "SQL_SQLCON:FRM"
-      | SQL_SQLCON (S.WHR _) => "SQL_SQLCON:WHR"
-      | SQL_SQLCON (S.ORD _) => "SQL_SQLCON:ORD"
-      | SQL_SQLCON (S.OFF _) => "SQL_SQLCON:OFF"
-      | SQL_SQLCON (S.LMT _) => "SQL_SQLCON:LMT"
-      | SQL_SQLCON (S.INSERT_LABELED _) => "SQL_SQLCON:INSERT_LABELED"
-      | SQL_SQLCON (S.INSERT_NOLABEL _) => "SQL_SQLCON:INSERT_NOLABEL"
-      | SQL_SQLCON (S.UPDATE _) => "SQL_SQLCON:UPDATE"
-      | SQL_SQLCON (S.DELETE _) => "SQL_SQLCON:DELETE"
-      | SQL_SQLCON (S.BEGIN _) => "SQL_SQLCON:BEGIN"
-      | SQL_SQLCON (S.COMMIT _) => "SQL_SQLCON:COMMIT"
-      | SQL_SQLCON (S.ROLLBACK _) => "SQL_SQLCON:ROLLBACK"
+      | SQL_CON (S.QRY _) => "SQL_CON:QRY"
+      | SQL_CON (S.SEL _) => "SQL_CON:SEL"
+      | SQL_CON (S.FRM _) => "SQL_CON:FRM"
+      | SQL_CON (S.WHR _) => "SQL_CON:WHR"
+      | SQL_CON (S.ORD _) => "SQL_CON:ORD"
+      | SQL_CON (S.OFF _) => "SQL_CON:OFF"
+      | SQL_CON (S.LMT _) => "SQL_CON:LMT"
+      | SQL_CON (S.INSERT_LABELED _) => "SQL_CON:INSERT_LABELED"
+      | SQL_CON (S.INSERT_NOLABEL _) => "SQL_CON:INSERT_NOLABEL"
+      | SQL_CON (S.UPDATE _) => "SQL_CON:UPDATE"
+      | SQL_CON (S.DELETE _) => "SQL_CON:DELETE"
+      | SQL_CON (S.BEGIN _) => "SQL_CON:BEGIN"
+      | SQL_CON (S.COMMIT _) => "SQL_CON:COMMIT"
+      | SQL_CON (S.ROLLBACK _) => "SQL_CON:ROLLBACK"
       | SQL_STEP (S.STEP _) => "SQL_STEP:STEP"
       | SQL_STEP (S.STEP_EMBED _) => "SQL_STEP:STEP_EMBED"
-      | SQL_SQL (S.CON _) => "SQL_SQL:CON"
-      | SQL_SQL (S.EXP _) => "SQL_SQL:EXP"
-      | SQL_SQL (S.SEQ _) => "SQL_SQL:SEQ"
-      | SQL_SQL (S.SQLPAREN _) => "SQL_SQL:SQLPAREN"
-      | SQL_SQLEXP (S.SQLSERVER _) => "SQL_SQLEXP:SQLSERVER"
-      | SQL_SQLEXP (S.SQL _) => "SQL_SQLEXP:SQL"
-      | SQL_SQLEXP (S.SQLFN _) => "SQL_SQLEXP:SQLFN"
+      | SQL_BODY (S.CON _) => "SQL_BODY:CON"
+      | SQL_BODY (S.EXP _) => "SQL_BODY:EXP"
+      | SQL_BODY (S.SEQ _) => "SQL_BODY:SEQ"
+      | SQL_BODY (S.BODYPAREN _) => "SQL_BODY:BODYPAREN"
+      | SQL_TOP (S.SQLSERVER _) => "SQL_TOP:SQLSERVER"
+      | SQL_TOP (S.SQL _) => "SQL_TOP:SQL"
+      | SQL_TOP (S.SQLFN _) => "SQL_TOP:SQLFN"
       | OPAQUE_IMPL (I.IMPL_TY _) => "OPAQUE_IMPL:IMPL_TY"
       | OPAQUE_IMPL (I.IMPL_TUPLE _) => "OPAQUE_IMPL:IMPL_TUPLE"
       | OPAQUE_IMPL (I.IMPL_RECORD _) => "OPAQUE_IMPL:IMPL_RECORD"
@@ -503,7 +503,7 @@ struct
       | EXP (A.EXPTUPLE_UPDATE (_, _, loc)) => loc
       | EXP (A.EXPIMPORT_NAME (_, _, loc)) => loc
       | EXP (A.EXPIMPORT_EXP (_, _, loc)) => loc
-      | EXP (A.EXPSQL sqlexp) => getLoc (SQL_SQLEXP sqlexp)
+      | EXP (A.EXPSQL sqlexp) => getLoc (SQL_TOP sqlexp)
       | EXP (A.EXPFOREACH_DATA (_, _, _, _, _, _, loc)) => loc
       | EXP (A.EXPFOREACH_ARRAY (_, _, _, _, _, loc)) => loc
       | EXP (A.EXPJOIN (_, _, loc)) => loc
@@ -641,29 +641,29 @@ struct
       | SQL_INSERT_LABELS (_, loc) => loc
       | SQL_SET_ROW (_, _, loc) => loc
       | SQL_SET (_, loc) => loc
-      | SQL_SQLCON (S.QRY query) => getLoc (SQL_QUERY query)
-      | SQL_SQLCON (S.SEL select) => getLoc (SQL_SELECT select)
-      | SQL_SQLCON (S.FRM from) => getLoc (SQL_FROM from)
-      | SQL_SQLCON (S.WHR whr) => getLoc (SQL_WHR whr)
-      | SQL_SQLCON (S.ORD orderby) => getLoc (SQL_ORDERBY orderby)
-      | SQL_SQLCON (S.OFF offset) => getLoc (SQL_OFFSET offset)
-      | SQL_SQLCON (S.LMT limit) => getLoc (SQL_LIMIT limit)
-      | SQL_SQLCON (S.INSERT_LABELED (_, _, _, loc)) => loc
-      | SQL_SQLCON (S.INSERT_NOLABEL (_, _, loc)) => loc
-      | SQL_SQLCON (S.UPDATE (_, _, _, loc)) => loc
-      | SQL_SQLCON (S.DELETE (_, _, loc)) => loc
-      | SQL_SQLCON (S.BEGIN loc) => loc
-      | SQL_SQLCON (S.COMMIT loc) => loc
-      | SQL_SQLCON (S.ROLLBACK loc) => loc
+      | SQL_CON (S.QRY query) => getLoc (SQL_QUERY query)
+      | SQL_CON (S.SEL select) => getLoc (SQL_SELECT select)
+      | SQL_CON (S.FRM from) => getLoc (SQL_FROM from)
+      | SQL_CON (S.WHR whr) => getLoc (SQL_WHR whr)
+      | SQL_CON (S.ORD orderby) => getLoc (SQL_ORDERBY orderby)
+      | SQL_CON (S.OFF offset) => getLoc (SQL_OFFSET offset)
+      | SQL_CON (S.LMT limit) => getLoc (SQL_LIMIT limit)
+      | SQL_CON (S.INSERT_LABELED (_, _, _, loc)) => loc
+      | SQL_CON (S.INSERT_NOLABEL (_, _, loc)) => loc
+      | SQL_CON (S.UPDATE (_, _, _, loc)) => loc
+      | SQL_CON (S.DELETE (_, _, loc)) => loc
+      | SQL_CON (S.BEGIN loc) => loc
+      | SQL_CON (S.COMMIT loc) => loc
+      | SQL_CON (S.ROLLBACK loc) => loc
       | SQL_STEP (S.STEP (_, _, loc)) => loc
       | SQL_STEP (S.STEP_EMBED (_, loc)) => loc
-      | SQL_SQL (S.CON (_, _, loc)) => loc
-      | SQL_SQL (S.EXP exp) => getLoc (SQL_EXP exp)
-      | SQL_SQL (S.SEQ (_, loc)) => loc
-      | SQL_SQL (S.SQLPAREN (_, loc)) => loc
-      | SQL_SQLEXP (S.SQLSERVER (_, _, loc)) => loc
-      | SQL_SQLEXP (S.SQL (_, loc)) => loc
-      | SQL_SQLEXP (S.SQLFN (_, _, loc)) => loc
+      | SQL_BODY (S.CON (_, _, loc)) => loc
+      | SQL_BODY (S.EXP exp) => getLoc (SQL_EXP exp)
+      | SQL_BODY (S.SEQ (_, loc)) => loc
+      | SQL_BODY (S.BODYPAREN (_, loc)) => loc
+      | SQL_TOP (S.SQLSERVER (_, _, loc)) => loc
+      | SQL_TOP (S.SQL (_, loc)) => loc
+      | SQL_TOP (S.SQLFN (_, _, loc)) => loc
       | OPAQUE_IMPL (I.IMPL_TY (_, loc)) => loc
       | OPAQUE_IMPL (I.IMPL_TUPLE loc) => loc
       | OPAQUE_IMPL (I.IMPL_RECORD loc) => loc
@@ -813,7 +813,7 @@ struct
       | EXP (A.EXPTUPLE_UPDATE (exp, exps, loc)) => map EXP (exp :: exps)
       | EXP (A.EXPIMPORT_NAME (name, ty, loc)) => [EXTERN_NAME name, FFI_TY ty]
       | EXP (A.EXPIMPORT_EXP (exp, ty, loc)) => [EXP exp, FFI_TY ty]
-      | EXP (A.EXPSQL sqlexp) => [SQL_SQLEXP sqlexp]
+      | EXP (A.EXPSQL sqlexp) => [SQL_TOP sqlexp]
       | EXP (A.EXPFOREACH_DATA (id, exp1, exp2, pat, exp3, exp4, loc)) =>
         [VID id, EXP exp1, EXP exp2, PAT pat, EXP exp3, EXP exp4]
       | EXP (A.EXPFOREACH_ARRAY (id, exp1, pat, exp2, exp3, loc)) =>
@@ -1009,39 +1009,39 @@ struct
       | SQL_INSERT_LABELS (labs, loc) => map LAB labs
       | SQL_SET_ROW (lab, exp, loc) => [LAB lab, SQL_EXP exp]
       | SQL_SET (rows, loc) => map SQL_SET_ROW rows
-      | SQL_SQLCON (S.QRY query) => [SQL_QUERY query]
-      | SQL_SQLCON (S.SEL select) => [SQL_SELECT select]
-      | SQL_SQLCON (S.FRM from) => [SQL_FROM from]
-      | SQL_SQLCON (S.WHR whr) => [SQL_WHR whr]
-      | SQL_SQLCON (S.ORD orderby) => [SQL_ORDERBY orderby]
-      | SQL_SQLCON (S.OFF offset) => [SQL_OFFSET offset]
-      | SQL_SQLCON (S.LMT limit) => [SQL_LIMIT limit]
-      | SQL_SQLCON (S.INSERT_LABELED (table, labels, values, loc)) =>
+      | SQL_CON (S.QRY query) => [SQL_QUERY query]
+      | SQL_CON (S.SEL select) => [SQL_SELECT select]
+      | SQL_CON (S.FRM from) => [SQL_FROM from]
+      | SQL_CON (S.WHR whr) => [SQL_WHR whr]
+      | SQL_CON (S.ORD orderby) => [SQL_ORDERBY orderby]
+      | SQL_CON (S.OFF offset) => [SQL_OFFSET offset]
+      | SQL_CON (S.LMT limit) => [SQL_LIMIT limit]
+      | SQL_CON (S.INSERT_LABELED (table, labels, values, loc)) =>
         [SQL_TABLE_SELECTOR table, SQL_INSERT_LABELS labels,
          SQL_INSERT_VALUES values]
-      | SQL_SQLCON (S.INSERT_NOLABEL (table, query, loc)) =>
+      | SQL_CON (S.INSERT_NOLABEL (table, query, loc)) =>
         [SQL_TABLE_SELECTOR table, SQL_QUERY query]
-      | SQL_SQLCON (S.UPDATE (table, set, NONE, loc)) =>
+      | SQL_CON (S.UPDATE (table, set, NONE, loc)) =>
         [SQL_TABLE_SELECTOR table, SQL_SET set]
-      | SQL_SQLCON (S.UPDATE (table, set, SOME whr, loc)) =>
+      | SQL_CON (S.UPDATE (table, set, SOME whr, loc)) =>
         [SQL_TABLE_SELECTOR table, SQL_SET set, SQL_WHR whr]
-      | SQL_SQLCON (S.DELETE (table, NONE, loc)) =>
+      | SQL_CON (S.DELETE (table, NONE, loc)) =>
         [SQL_TABLE_SELECTOR table]
-      | SQL_SQLCON (S.DELETE (table, SOME whr, loc)) =>
+      | SQL_CON (S.DELETE (table, SOME whr, loc)) =>
         [SQL_TABLE_SELECTOR table, SQL_WHR whr]
-      | SQL_SQLCON (S.BEGIN _) => nil
-      | SQL_SQLCON (S.COMMIT _) => nil
-      | SQL_SQLCON (S.ROLLBACK _) => nil
-      | SQL_STEP (S.STEP (sql, sqlcon, loc)) => [SQL_SQLCON sqlcon]
+      | SQL_CON (S.BEGIN _) => nil
+      | SQL_CON (S.COMMIT _) => nil
+      | SQL_CON (S.ROLLBACK _) => nil
+      | SQL_STEP (S.STEP (sql, con, loc)) => [SQL_CON con]
       | SQL_STEP (S.STEP_EMBED (exp, loc)) => [EXP exp]
-      | SQL_SQL (S.CON (sql, sqlcon, loc)) => [SQL_SQLCON sqlcon]
-      | SQL_SQL (S.EXP exp) => [SQL_EXP exp]
-      | SQL_SQL (S.SEQ (steps, loc)) => map SQL_STEP steps
-      | SQL_SQL (S.SQLPAREN (sql, loc)) => [SQL_SQL sql]
-      | SQL_SQLEXP (S.SQLSERVER (NONE, ty, loc)) => [TY ty]
-      | SQL_SQLEXP (S.SQLSERVER (SOME exp, ty, loc)) => [EXP exp, TY ty]
-      | SQL_SQLEXP (S.SQL (sql, loc)) => [SQL_SQL sql]
-      | SQL_SQLEXP (S.SQLFN (pat, sql, loc)) => [PAT pat, SQL_SQL sql]
+      | SQL_BODY (S.CON (sql, con, loc)) => [SQL_CON con]
+      | SQL_BODY (S.EXP exp) => [SQL_EXP exp]
+      | SQL_BODY (S.SEQ (steps, loc)) => map SQL_STEP steps
+      | SQL_BODY (S.BODYPAREN (body, loc)) => [SQL_BODY body]
+      | SQL_TOP (S.SQLSERVER (NONE, ty, loc)) => [TY ty]
+      | SQL_TOP (S.SQLSERVER (SOME exp, ty, loc)) => [EXP exp, TY ty]
+      | SQL_TOP (S.SQL (body, loc)) => [SQL_BODY body]
+      | SQL_TOP (S.SQLFN (pat, body, loc)) => [PAT pat, SQL_BODY body]
       | OPAQUE_IMPL (I.IMPL_TY id) => [LONGTYCON id]
       | OPAQUE_IMPL (I.IMPL_TUPLE _) => nil
       | OPAQUE_IMPL (I.IMPL_RECORD _) => nil

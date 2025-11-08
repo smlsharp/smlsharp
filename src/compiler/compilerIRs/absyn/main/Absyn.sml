@@ -256,7 +256,7 @@ struct
       tyvarseq * tycon * conbind list * loc
 
   (*%
-   * @formatter(AbsynSQL.sqlexp) AbsynSQLFormatter.format_sqlexp
+   * @formatter(AbsynSQL.top) AbsynSQLFormatter.format_top
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
@@ -634,10 +634,10 @@ struct
 
   withtype sqlexp =
       (*%
-       * @format((exp, pat, ty) sqlexp)
-       * sqlexp(exp, pat, ty)
+       * @format((exp, pat, ty) sqltop)
+       * sqltop(exp, pat, ty)
        *)
-      (exp, pat, ty) AbsynSQL.sqlexp
+      (exp, pat, ty) AbsynSQL.top
 
   and exprow =
       (*%

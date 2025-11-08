@@ -8,11 +8,11 @@ _require local "./AbsynFormatterUtils.smi"
 structure AbsynSQLFormatter =
 struct
 
-  val format_sqlexp
+  val format_top
       : ('a -> SMLFormat.format)
         * ('b -> SMLFormat.format)
         * ('c -> SMLFormat.format)
-        -> ('a, 'b, 'c) AbsynSQL.sqlexp
+        -> ('a, 'b, 'c) AbsynSQL.top
         -> SMLFormat.format
 
 end

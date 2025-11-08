@@ -99,7 +99,7 @@ struct
     | EXPTUPLE_UPDATE of exp * exp list * loc
     | EXPIMPORT_NAME of extern_name * ffi_ty * loc
     | EXPIMPORT_EXP of exp * ffi_ty * loc
-    | EXPSQL of (exp, pat, ty) AbsynSQL.sqlexp
+    | EXPSQL of (exp, pat, ty) AbsynSQL.top
     | EXPFOREACH_DATA of vid * exp * exp * pat * exp * exp * loc
     | EXPFOREACH_ARRAY of vid * exp * pat * exp * exp * loc
     | EXPJOIN of exp * exp * loc
@@ -136,7 +136,7 @@ struct
     | DECNONFIX of vid list * loc
     | DECPOLYREC of (vid * ty * exp * loc) list * loc
 
-  type sqlexp = (exp, pat, ty) AbsynSQL.sqlexp
+  type sqlexp = (exp, pat, ty) AbsynSQL.top
 
   type exprow = lab * exp * loc
 

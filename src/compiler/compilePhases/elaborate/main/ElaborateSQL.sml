@@ -2123,7 +2123,7 @@ struct
         S.CON (_, sqlcon, _) => elabSQLcon env sqlcon
       | S.EXP exp => (EXPty, elabExpToQuery env exp)
       | S.SEQ (seq, _) => (COMMANDty, elabSeq env seq)
-      | S.SQLPAREN (sql, _) => elabSQL env sql
+      | S.BODYPAREN (sql, _) => elabSQL env sql
 
   and elabSeq env nil = raise Bug.Bug "elabSeq: nil"
     | elabSeq env [S.STEP (_, sql, _)] =
