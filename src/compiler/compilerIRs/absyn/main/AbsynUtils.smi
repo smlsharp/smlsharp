@@ -4,20 +4,10 @@ _require "./AbsynSQL.smi"
 structure AbsynUtils =
 struct
   val tyLoc : Absyn.ty -> Absyn.loc
-  val kindLoc : Absyn.kind -> Absyn.loc
-  val ffiTyLoc : Absyn.ffi_ty -> Absyn.loc
   val patLoc : Absyn.pat -> Absyn.loc
-  val patrowLoc : Absyn.patrow -> Absyn.loc
-  val exbindLoc : Absyn.exbind -> Absyn.loc
   val sqlExpLoc : Absyn.exp AbsynSQL.exp -> Absyn.loc
   val sqlTopLoc : Absyn.sqlexp -> Absyn.loc
   val expLoc : Absyn.exp -> Absyn.loc
-  val valbindLoc : Absyn.valbind -> Absyn.loc
   val decLoc : Absyn.dec -> Absyn.loc
-  val specLoc : Absyn.spec -> Absyn.loc
-  val sigexpLoc : Absyn.sigexp -> Absyn.loc
-  val strexpLoc : Absyn.strexp -> Absyn.loc
   val strdecLoc : Absyn.strdec -> Absyn.loc
-  val topdecLoc : Absyn.topdec -> Absyn.loc
-  val topLoc : Absyn.top -> Absyn.loc
 end

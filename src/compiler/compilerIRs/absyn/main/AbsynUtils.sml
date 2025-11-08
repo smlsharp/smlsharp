@@ -19,20 +19,6 @@ struct
       | A.TYVAR_FREE (_, _, loc) => loc
       | A.TYPOLY (_, _, loc) => loc
 
-  fun kindLoc kind =
-      case kind of
-        A.UNIV (_, loc) => loc
-      | A.REC (_, _, loc) => loc
-
-  fun ffiTyLoc ffiTy =
-      case ffiTy of
-        A.FFITYVAR (_, (_, loc)) => loc
-      | A.FFITYRECORD (_, loc) => loc
-      | A.FFITYCON (_, _, loc) => loc
-      | A.FFITYTUPLE (_, loc) => loc
-      | A.FFITYFUN (_, _, _, loc) => loc
-      | A.FFITYPAREN (_, loc) => loc
-
   fun patLoc pat =
       case pat of
         A.PATWILD loc => loc
@@ -46,16 +32,6 @@ struct
       | A.PATINFIX (_, _, _, loc) => loc
       | A.PATTYPED (_, _, loc) => loc
       | A.PATAS (_, _, _, loc) => loc
-
-  fun patrowLoc patrow =
-      case patrow of
-        A.PATROW (_, _, loc) => loc
-      | A.PATROWVAR (_, _, _, loc) => loc
-
-  fun exbindLoc exbind =
-      case exbind of
-        A.EXBIND (_, _, loc) => loc
-      | A.EXBINDREP (_, _, loc) => loc
 
   fun sqlExpLoc exp =
       case exp of
@@ -125,11 +101,6 @@ struct
       | A.EXPDYNAMICCASE (_, _, loc) => loc
       | A.EXPREIFYTY (_, loc) => loc
 
-  fun valbindLoc valbind =
-      case valbind of
-        A.VALBIND (_, _, loc) => loc
-      | A.VALREC (_, loc) => loc
-
   fun decLoc dec =
       case dec of
         A.DECVAL (_, _, loc) => loc
@@ -147,55 +118,11 @@ struct
       | A.DECNONFIX (_, loc) => loc
       | A.DECPOLYREC (_, loc) => loc
 
-  fun specLoc spec =
-      case spec of
-        A.SPECVAL (_, loc) => loc
-      | A.SPECTYPE (_, loc) => loc
-      | A.SPECTYPEINC (_, loc) => loc
-      | A.SPECEQTYPE (_, loc) => loc
-      | A.SPECDATATYPE (_, loc) => loc
-      | A.SPECDATATYPEREP (_, _, loc) => loc
-      | A.SPECEXCEPTION (_, loc) => loc
-      | A.SPECSTRUCTURE (_, loc) => loc
-      | A.SPECINCLUDE (_, loc) => loc
-      | A.SPECINCLUDE_ID (_, loc) => loc
-      | A.SPECSHARINGTYPE (_, _, loc) => loc
-      | A.SPECSHARING (_, _, loc) => loc
-      | A.SPECSEMICOLON loc => loc
-
-  fun sigexpLoc sigexp =
-      case sigexp of
-        A.SIGBASIC (_, loc) => loc
-      | A.SIGID (_, loc) => loc
-      | A.SIGWHERE (_, _, loc) => loc
-
-  fun strexpLoc strexp =
-      case strexp of
-        A.STRBASIC (_, loc) => loc
-      | A.STRID (_, loc) => loc
-      | A.STRCONSTRAINT (_, _, _, loc) => loc
-      | A.STRAPP (_, _, loc) => loc
-      | A.STRLET (_, _, loc) => loc
-
   fun strdecLoc strdec =
       case strdec of
         A.STRDEC dec => decLoc dec
       | A.STRUCTURE (_, loc) => loc
       | A.STRLOCAL (_, _, loc) => loc
       | A.STRSEMICOLON loc => loc
-
-  fun topdecLoc topdec =
-      case topdec of
-        A.TOPSTRDEC strdec => strdecLoc strdec
-      | A.TOPSIGNATURE (_, loc) => loc
-      | A.TOPFUNCTOR (_, loc) => loc
-      | A.TOPEXP (_, loc) => loc
-
-  fun topLoc top =
-      case top of
-        A.TOPDEC (_, loc) => loc
-      | A.USE (_, loc) => loc
-      | A.USE' (_, loc) => loc
-      | A.TOPSEMICOLON loc => loc
 
 end
