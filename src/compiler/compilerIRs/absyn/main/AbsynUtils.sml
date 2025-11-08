@@ -56,6 +56,24 @@ struct
         A.EXBIND (_, _, loc) => loc
       | A.EXBINDREP (_, _, loc) => loc
 
+  fun sqlExpLoc exp =
+      case exp of
+        S.EXP_EMBED (_, loc) => loc
+      | S.CONST (_, loc) => loc
+      | S.NULL loc => loc
+      | S.TRUE loc => loc
+      | S.FALSE loc => loc
+      | S.COLUMN1 (_, loc) => loc
+      | S.COLUMN2 (_, _, loc) => loc
+      | S.KWEXP (_, _, loc) => loc
+      | S.EXP_SUBQUERY (_, _, loc) => loc
+      | S.OP1 (_, _, loc) => loc
+      | S.OP2 (_, _, _, loc) => loc
+      | S.ID (_, _, loc) => loc
+      | S.PAREN (_, loc) => loc
+      | S.APP (_, loc) => loc
+      | S.TUPLE (_, loc) => loc
+
   fun sqlTopLoc top =
       case top of
         S.SQLSERVER (_, _, loc) => loc

@@ -694,24 +694,6 @@ struct
         (fn (k, s) => RecordLabel.Set.member (labels, k))
         set
 
-  fun expLoc exp =
-      case exp of
-        S.EXP_EMBED (_, loc) => loc
-      | S.CONST (_, loc) => loc
-      | S.NULL loc => loc
-      | S.TRUE loc => loc
-      | S.FALSE loc => loc
-      | S.COLUMN1 (_, loc) => loc
-      | S.COLUMN2 (_, _, loc) => loc
-      | S.KWEXP (_, _, loc) => loc
-      | S.EXP_SUBQUERY (_, _, loc) => loc
-      | S.OP1 (_, _, loc) => loc
-      | S.OP2 (_, _, _, loc) => loc
-      | S.ID (_, _, loc) => loc
-      | S.PAREN (_, loc) => loc
-      | S.APP (_, loc) => loc
-      | S.TUPLE (_, loc) => loc
-
   datatype query_const =
       INT of IntInf.int
     | WORD of IntInf.int
@@ -1711,9 +1693,9 @@ struct
           val src =
               map (fn exp as S.ID (false, ([id], _), _) =>
                       (case SymbolEnv.find (#fixEnv env, #1 id) of
-                         SOME (x,loc) => (x, exp, expLoc exp)
-                       | NONE => (Fixity.NONFIX, exp, expLoc exp))
-                    | exp => (Fixity.NONFIX, exp, expLoc exp))
+                         SOME (x,loc) => (x, exp, AbsynUtils.sqlExpLoc exp)
+                       | NONE => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
+                    | exp => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
                   exps
         in
           elabInfixExp env (Fixity.parse error src)
@@ -2013,7 +1995,7 @@ struct
       let
         val (ret, q) = elabExpToQuery env exp
       in
-        (ret, (SOME q, expLoc exp))
+        (ret, (SOME q, AbsynUtils.sqlExpLoc exp))
       end
     | elabInsertValue env (S.DEFAULT loc) = (emptyRet, (NONE, loc))
 

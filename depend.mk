@@ -18143,6 +18143,7 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \

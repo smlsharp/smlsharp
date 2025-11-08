@@ -12,6 +12,7 @@ _require local "./ElaborateErrorSQL.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/AbsynSQL.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynUtils.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 

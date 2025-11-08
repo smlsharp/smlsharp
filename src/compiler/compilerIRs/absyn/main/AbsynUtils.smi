@@ -1,5 +1,5 @@
 _require "./Absyn.smi"
-_require local "./AbsynSQL.smi"
+_require "./AbsynSQL.smi"
 
 structure AbsynUtils =
 struct
@@ -9,6 +9,7 @@ struct
   val patLoc : Absyn.pat -> Absyn.loc
   val patrowLoc : Absyn.patrow -> Absyn.loc
   val exbindLoc : Absyn.exbind -> Absyn.loc
+  val sqlExpLoc : Absyn.exp AbsynSQL.exp -> Absyn.loc
   val sqlTopLoc : Absyn.sqlexp -> Absyn.loc
   val expLoc : Absyn.exp -> Absyn.loc
   val valbindLoc : Absyn.valbind -> Absyn.loc
