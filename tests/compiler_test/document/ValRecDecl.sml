@@ -21,7 +21,7 @@ open SMLUnit.Test SMLUnit.Assert
 
   fun testValRecDeclTyvar () =
       let
-        val rec 'a v1 = fn x:'a => x
+        val 'a rec v1 = fn x:'a => x
         val _ = assertEqualInt 1 (v1 1)
         val _ = assertEqualString "A" (v1 "A")
       in
@@ -30,7 +30,7 @@ open SMLUnit.Test SMLUnit.Assert
 
   fun testValRecDeclTyvarSeq () =
       let
-        val rec ('a, 'b) v1 = fn x:'a => (fn y:'b => x)
+        val ('a, 'b) rec v1 = fn x:'a => (fn y:'b => x)
         val _ = assertEqualInt 1 (v1 1 "A")
         val _ = assertEqualString "A" (v1 "A" 1)
       in
