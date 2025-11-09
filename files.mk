@@ -1171,6 +1171,7 @@ src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
+src/compiler/compilePhases/analyzefiles/main/FileID.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
@@ -2304,6 +2305,7 @@ src/sql/main/SQLQuery.ppg.o \
 src/sql/main/SQLPrim.o \
 src/sql/main/PGSQLDynamic.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
+src/compiler/compilePhases/analyzefiles/main/FileID.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
@@ -2528,6 +2530,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
+src/compiler/compilePhases/analyzefiles/main/FileID.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
@@ -3005,6 +3008,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.smi \
 src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
 src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.smi \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
+src/compiler/compilePhases/analyzefiles/main/FileID.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
@@ -3910,6 +3914,7 @@ src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o \
+src/compiler/compilePhases/analyzefiles/main/FileID.o \
 src/compiler/compilePhases/analyzefiles/main/AnalyzerUtils.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \

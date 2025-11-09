@@ -1,0 +1,3 @@
+_require "../../../libs/ids/main/GenIDFun.smi"
+
+structure FileID = GenID
