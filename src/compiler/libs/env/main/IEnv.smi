@@ -1,4 +1,3 @@
-_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "./IOrd.smi"
+_require "../../../../smlnj-lib/Util/int-redblack-map.smi"
 
-structure IEnv = BinaryMapFn(IOrd)
+structure IEnv = IntRedBlackMap

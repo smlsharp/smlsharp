@@ -8332,8 +8332,8 @@ src/compiler/libs/config/main/Config.o: \
  src/config/main/SQLConfig.smi \
  src/compiler/libs/config/main/Config.smi \
  $(SMLSHARP_DEP)
-src/compiler/libs/env/main/IOrd.o: \
- src/compiler/libs/env/main/IOrd.sml \
+src/smlnj-lib/Util/int-binary-map.o: \
+ src/smlnj-lib/Util/int-binary-map.sml \
  src/basis/main/General.smi \
  src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi \
@@ -8429,7 +8429,10 @@ src/compiler/libs/env/main/IOrd.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/lib-base.smi \
+ src/smlnj-lib/Util/ord-key-sig.sml \
+ src/smlnj-lib/Util/ord-map-sig.sml \
+ src/smlnj-lib/Util/int-binary-map.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/env/main/IEnv.o: \
  src/compiler/libs/env/main/IEnv.sml \
@@ -8528,8 +8531,7 @@ src/compiler/libs/env/main/IEnv.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/util/main/Counter.o: \
@@ -8630,9 +8632,9 @@ src/compiler/libs/util/main/Counter.o: \
  src/basis/main/WORD.sig \
  src/basis.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -8958,6 +8960,108 @@ src/compiler/data/symbols/main/SymbolWithLoc.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  $(SMLSHARP_DEP)
+src/smlnj-lib/Util/int-binary-set.o: \
+ src/smlnj-lib/Util/int-binary-set.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlnj-lib/Util/lib-base.smi \
+ src/smlnj-lib/Util/ord-key-sig.sml \
+ src/smlnj-lib/Util/ord-set-sig.sml \
+ src/smlnj-lib/Util/int-binary-set.smi \
+ $(SMLSHARP_DEP)
 src/compiler/libs/env/main/ISet.o: \
  src/compiler/libs/env/main/ISet.sml \
  src/basis/main/General.smi \
@@ -9055,8 +9159,7 @@ src/compiler/libs/env/main/ISet.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-set.smi \
  src/compiler/libs/env/main/ISet.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/ids/main/GenIDFun.o: \
@@ -9161,10 +9264,9 @@ src/compiler/libs/ids/main/GenIDFun.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/int-binary-set.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/libs/ids/main/GenIDFun.smi \
  $(SMLSHARP_DEP)
@@ -9270,6 +9372,10 @@ src/compiler/libs/ids/main/LocalID.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/smlnj-lib/Util/int-binary-set.smi \
+ src/compiler/libs/env/main/ISet.smi \
  src/compiler/libs/ids/main/GenIDFun.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  $(SMLSHARP_DEP)
@@ -10998,6 +11104,10 @@ src/compiler/data/types/main/ExistTyID.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/smlnj-lib/Util/int-binary-set.smi \
+ src/compiler/libs/env/main/ISet.smi \
  src/compiler/libs/ids/main/GenIDFun.smi \
  src/compiler/data/types/main/ExistTyID.smi \
  $(SMLSHARP_DEP)
@@ -11987,7 +12097,7 @@ src/compiler/data/types/main/TypesBasics.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -12122,7 +12232,7 @@ src/compiler/data/types/main/TypesUtils.o: \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -12477,11 +12587,11 @@ src/compiler/data/runtimetypes/main/TypeLayout2.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -12967,7 +13077,7 @@ src/compiler/data/types/main/Unify.o: \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/data/types/main/CheckEq.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -13309,7 +13419,7 @@ src/compiler/compilerIRs/idcalc/main/EvalIty.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -16086,7 +16196,7 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/types/main/DummyTyID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -16381,7 +16491,7 @@ src/compiler/extensions/reflection/main/ReifyUtils.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -19031,10 +19141,9 @@ src/compiler/libs/util/main/Graph.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/int-binary-set.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/libs/util/main/GRAPH.sig \
  src/compiler/libs/util/main/Graph.smi \
@@ -21250,11 +21359,11 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceContext.ppg.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -21531,7 +21640,7 @@ src/compiler/data/types/main/TyAlphaRename.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -21806,7 +21915,7 @@ src/compiler/data/types/main/TyReduce.o: \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/data/types/main/TyAlphaRename.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -22694,7 +22803,7 @@ src/compiler/data/builtin/main/ConstantTypes.o: \
  src/compiler/data/types/main/Types.ppg.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -22978,7 +23087,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o: \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -23241,7 +23350,7 @@ src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -23363,7 +23472,7 @@ src/compiler/compilePhases/typeinference/main/CoerceRank1.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -23541,7 +23650,7 @@ src/compiler/compilePhases/typeinference/main/InferTypes2.o: \
  src/compiler/data/types/main/VarMap.smi \
  src/compiler/data/types/main/OPrimMap.smi \
  src/compiler/compilerIRs/idcalc/main/EvalIty.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -23784,7 +23893,7 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o: \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/Unify.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -24051,7 +24160,7 @@ src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o: \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.smi \
  src/compiler/data/types/main/DynamicKindUtils.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -24192,7 +24301,7 @@ src/compiler/compilePhases/typeinference/main/UncurryFundecl_ng.o: \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
  src/compiler/data/types/main/TyAlphaRename.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -24433,7 +24542,7 @@ src/compiler/data/types/main/TyRevealTy.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -24581,7 +24690,7 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -24711,7 +24820,7 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcTypeCheck.o: \
  src/compiler/data/types/main/ExistTyID.smi \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -25114,7 +25223,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o: \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -25533,7 +25642,7 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o: \
  src/compiler/data/types/main/ExistTyID.smi \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -25897,12 +26006,12 @@ src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/util/main/UnionFind.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -26177,7 +26286,7 @@ src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o: \
  src/compiler/data/types/main/ExistTyID.smi \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -26442,7 +26551,7 @@ src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o: \
  src/compiler/data/types/main/ExistTyID.smi \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -26931,7 +27040,7 @@ src/compiler/extensions/reflection/main/ReifiedTy.ppg.o: \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -27050,7 +27159,7 @@ src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o: \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -27171,7 +27280,7 @@ src/compiler/extensions/reflection/main/ReifiedTermToML.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -27286,7 +27395,7 @@ src/compiler/extensions/reflection/main/PartialDynamic.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
@@ -27408,7 +27517,7 @@ src/compiler/extensions/reflection/main/NaturalJoin.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -27520,7 +27629,7 @@ src/compiler/extensions/reflection/main/ReifyTerm.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
@@ -27668,7 +27777,7 @@ src/compiler/extensions/reflection/main/RecordUtils.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -28600,7 +28709,7 @@ src/compiler/extensions/reflection/main/Dynamic.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -28876,7 +28985,7 @@ src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -29013,7 +29122,7 @@ src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -29125,11 +29234,11 @@ src/compiler/compilePhases/recordcompilation/main/OverloadKind.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -29257,11 +29366,11 @@ src/compiler/compilePhases/recordcompilation/main/RecordKind.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -29404,7 +29513,7 @@ src/compiler/extensions/reflection/main/TyToReifiedTy.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -29567,7 +29676,7 @@ src/compiler/extensions/reflection/main/ReifyTy.o: \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
  src/compiler/extensions/reflection/main/ReifiedTyData.smi \
  src/compiler/extensions/reflection/main/ReifyUtils.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifyTy.smi \
@@ -29703,7 +29812,7 @@ src/compiler/compilePhases/datatypecompilation/main/SwitchCompile.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
  src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.smi \
@@ -29843,7 +29952,7 @@ src/compiler/compilePhases/datatypecompilation/main/DatatypeCompilation.o: \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
  src/compiler/data/builtin/main/ConstantError.ppg.smi \
  src/compiler/data/builtin/main/ConstantTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -29966,7 +30075,7 @@ src/compiler/compilePhases/recordcompilation/main/ReifyKind.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -30100,11 +30209,11 @@ src/compiler/compilePhases/recordcompilation/main/TagKind.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -30232,11 +30341,11 @@ src/compiler/compilePhases/recordcompilation/main/SizeKind.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -30390,7 +30499,7 @@ src/compiler/compilePhases/recordcompilation/main/DynamicExistInstance.o: \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -30508,7 +30617,7 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -30823,7 +30932,7 @@ src/compiler/compilePhases/bitmapcompilation/main/BitmapCompilation.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -31198,7 +31307,7 @@ src/compiler/compilePhases/bitmapcompilation/main/SingletonTyEnv.o: \
  src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
  src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/TypeLayout2.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -31344,7 +31453,7 @@ src/compiler/compilePhases/closureconversion/main/ClosureConversion2.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -31619,7 +31728,7 @@ src/compiler/compilePhases/cconvcompile/main/CallingConventionCompile.o: \
  src/compiler/data/control/main/PrintControl.smi \
  src/compiler/data/control/main/Control.smi \
  src/compiler/data/runtimetypes/main/TypeLayout2.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TypesBasics.smi \
@@ -31875,7 +31984,7 @@ src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.o: \
  src/compiler/data/types/main/ExistTyID.smi \
  src/compiler/data/types/main/DynamicKind.ppg.smi \
  src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -37920,210 +38029,6 @@ src/smlnj-lib/Util/hash2-table-fn.o: \
  src/smlnj-lib/Util/hash-table-rep.smi \
  src/smlnj-lib/Util/hash2-table-fn.smi \
  $(SMLSHARP_DEP)
-src/smlnj-lib/Util/int-binary-map.o: \
- src/smlnj-lib/Util/int-binary-map.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlnj-lib/Util/lib-base.smi \
- src/smlnj-lib/Util/ord-key-sig.sml \
- src/smlnj-lib/Util/ord-map-sig.sml \
- src/smlnj-lib/Util/int-binary-map.smi \
- $(SMLSHARP_DEP)
-src/smlnj-lib/Util/int-binary-set.o: \
- src/smlnj-lib/Util/int-binary-set.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlnj-lib/Util/lib-base.smi \
- src/smlnj-lib/Util/ord-key-sig.sml \
- src/smlnj-lib/Util/ord-set-sig.sml \
- src/smlnj-lib/Util/int-binary-set.smi \
- $(SMLSHARP_DEP)
 src/smlnj-lib/Util/int-hash-table.o: \
  src/smlnj-lib/Util/int-hash-table.sml \
  src/basis/main/General.smi \
@@ -43673,7 +43578,7 @@ src/sql/main/PGSQLDynamic.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -44524,7 +44429,7 @@ src/compiler/compilePhases/analyzefiles/main/SourceMap.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -44766,7 +44671,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -45017,7 +44922,7 @@ src/compiler/compilePhases/analyzefiles/main/InfoMaps.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -45292,7 +45197,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -45446,7 +45351,7 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -45618,7 +45523,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -46091,7 +45996,6 @@ src/compiler/smlsharp.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -47278,7 +47182,7 @@ tests/driver/Compiler.o: \
  src/compiler/compilePhases/main/main/UserFileMap.smi \
  src/compiler/compilePhases/main/main/Main.smi \
  src/compiler/compilePhases/main/main/Interactive.smi \
- src/compiler/libs/env/main/IOrd.smi \
+ src/smlnj-lib/Util/int-binary-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
@@ -47333,7 +47237,6 @@ tests/driver/Compiler.o: \
  src/smlnj-lib/Util/hash-table-sig.sml \
  src/smlnj-lib/Util/hash-table.smi \
  src/smlnj-lib/Util/hash2-table-fn.smi \
- src/smlnj-lib/Util/int-binary-map.smi \
  src/smlnj-lib/Util/int-binary-set.smi \
  src/smlnj-lib/Util/int-hash-table.smi \
  src/smlnj-lib/Util/int-list-map.smi \
@@ -47700,7 +47603,6 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -48020,7 +47922,6 @@ tests/suite/regression/RegressionTests.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -48350,7 +48251,6 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -48668,7 +48568,6 @@ tests/suite/example/ExampleTests.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -48986,7 +48885,6 @@ tests/suite/document/DocumentTests.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -49313,7 +49211,6 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -57636,7 +57533,6 @@ tests/driver/dotest.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/env/main/SSet.smi \
- src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/env/main/ISet.smi \
  src/compiler/data/control/main/PrintControl.smi \

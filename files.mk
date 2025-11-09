@@ -528,7 +528,7 @@ src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
-src/compiler/libs/env/main/IOrd.o \
+src/smlnj-lib/Util/int-binary-map.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
@@ -536,6 +536,7 @@ src/compiler/data/symbols/main/Symbol.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
+src/smlnj-lib/Util/int-binary-set.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
@@ -925,7 +926,6 @@ src/unix-utils/main/UnixUtils.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
-src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/extensions/debug/main/Bug.o \
@@ -1462,7 +1462,6 @@ src/unix-utils/main/UnixUtils.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
-src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/extensions/debug/main/Bug.o \
@@ -2079,8 +2078,9 @@ src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/SMLSharpParser.o \
 src/compiler/compilePhases/parser/main/Parser.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
-src/compiler/libs/env/main/IOrd.o \
+src/smlnj-lib/Util/int-binary-map.o \
 src/compiler/libs/env/main/IEnv.o \
+src/smlnj-lib/Util/int-binary-set.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
@@ -2351,8 +2351,6 @@ src/smlnj-lib/Util/hash-set-fn.o \
 src/smlnj-lib/Util/hash-string.o \
 src/smlnj-lib/Util/hash-table.o \
 src/smlnj-lib/Util/hash2-table-fn.o \
-src/smlnj-lib/Util/int-binary-map.o \
-src/smlnj-lib/Util/int-binary-set.o \
 src/smlnj-lib/Util/int-hash-table.o \
 src/smlnj-lib/Util/int-list-map.o \
 src/smlnj-lib/Util/int-list-set.o \
@@ -2740,7 +2738,6 @@ src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitiveError.ppg.o \
 src/compiler/libs/config/main/Config.o \
 src/compiler/libs/digest/main/SHA3.o \
 src/compiler/libs/env/main/IEnv.o \
-src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SOrd.o \
@@ -3223,7 +3220,6 @@ src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitiveError.ppg.smi 
 src/compiler/libs/config/main/Config.smi \
 src/compiler/libs/digest/main/SHA3.smi \
 src/compiler/libs/env/main/IEnv.smi \
-src/compiler/libs/env/main/IOrd.smi \
 src/compiler/libs/env/main/ISet.smi \
 src/compiler/libs/env/main/SEnv.smi \
 src/compiler/libs/env/main/SOrd.smi \
@@ -3598,12 +3594,13 @@ src/smlformat/generator/main/Main.o \
 src/smlformat/generator/main/call-main.o \
 src/config/main/SQLConfig.o \
 src/compiler/libs/config/main/Config.o \
-src/compiler/libs/env/main/IOrd.o \
+src/smlnj-lib/Util/int-binary-map.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
+src/smlnj-lib/Util/int-binary-set.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
@@ -3844,8 +3841,6 @@ src/smlnj-lib/Util/hash-set-fn.o \
 src/smlnj-lib/Util/hash-string.o \
 src/smlnj-lib/Util/hash-table.o \
 src/smlnj-lib/Util/hash2-table-fn.o \
-src/smlnj-lib/Util/int-binary-map.o \
-src/smlnj-lib/Util/int-binary-set.o \
 src/smlnj-lib/Util/int-hash-table.o \
 src/smlnj-lib/Util/int-list-map.o \
 src/smlnj-lib/Util/int-list-set.o \

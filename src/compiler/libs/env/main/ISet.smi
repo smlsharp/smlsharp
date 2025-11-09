@@ -1,4 +1,3 @@
-_require "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "./IOrd.smi"
+_require "../../../../smlnj-lib/Util/int-redblack-set.smi"
 
-structure ISet = BinarySetFn(IOrd)
+structure ISet = IntRedBlackSet
