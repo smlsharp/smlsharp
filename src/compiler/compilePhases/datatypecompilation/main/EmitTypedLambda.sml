@@ -390,7 +390,7 @@ struct
 
   fun allocExnTag {builtin, path, ty} =
       Cast ((if builtin then Vector_alloc_init else Vector_alloc_init_fresh)
-              (exnTagImplTy, [Tuple [String (Symbol.longsymbolToString path),
+              (exnTagImplTy, [Tuple [String (Longsymbol.toString path),
                                      exnMessageIndex ty]]),
             B.exntagTy)
 

@@ -11,13 +11,13 @@ struct
 
   type env = {varEnv : Types.ty VarID.Map.map,
               btvEnv : Types.btvEnv,
-              exVarEnv : Types.ty LongsymbolEnv.map,
+              exVarEnv : Types.ty Longsymbol.Map.map,
               catchEnv : Types.ty list FunLocalLabel.Map.map}
 
   val emptyEnv : env =
       {varEnv = VarID.Map.empty,
        btvEnv = BoundTypeVarID.Map.empty,
-       exVarEnv = LongsymbolEnv.empty,
+       exVarEnv = Longsymbol.Map.empty,
        catchEnv = FunLocalLabel.Map.empty}
 
   fun addBoundVar (env as {varEnv, ...} : env) (var : RecordCalc.varInfo) =
@@ -38,7 +38,7 @@ struct
       foldl (fn (v, z) => addCatchRule z v) env rules
 
   fun addExVar (env as {exVarEnv, ...} : env) (var : RecordCalc.exVarInfo) =
-      env # {exVarEnv = LongsymbolEnv.insert (exVarEnv, #path var, #ty var)}
+      env # {exVarEnv = Longsymbol.Map.insert (exVarEnv, #path var, #ty var)}
 
   fun eqTy format exp bug ty1 ty2 =
       if Unify.eqTy
@@ -98,9 +98,9 @@ struct
           RecordCalcType.typeOfString string
         | R.RCEXVAR ({path, ty, ...}, loc) =>
           (
-            case LongsymbolEnv.find (#exVarEnv env, path) of
+            case Longsymbol.Map.find (#exVarEnv env, path) of
               NONE =>
-              raise B ("RCEXVAR: " ^ Symbol.longsymbolToString path)
+              raise B ("RCEXVAR: " ^ Longsymbol.toString path)
             | SOME ty2 => (eqTy B ty ty2; ty2)
           )
         | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>

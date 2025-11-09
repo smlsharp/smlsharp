@@ -51,33 +51,33 @@ local
     | setVersion (longsymbol, I.SELF) = longsymbol
 
 
-  fun addExnExSet (externExnSet: I.exInfo LongsymbolEnv.map, 
+  fun addExnExSet (externExnSet: I.exInfo Longsymbol.Map.map,
                    exInfo as {used, longsymbol, ty, version}:I.exInfo) =
       let
         val longsymbol = setVersion(longsymbol, version)
       in
         ((*V.exnConAdd (V.EXEXN exInfo);*)
-         LongsymbolEnv.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
+         Longsymbol.Map.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
         )
       end
 
-  fun addVarExSet (externVarSet: I.exInfo LongsymbolEnv.map, 
+  fun addVarExSet (externVarSet: I.exInfo Longsymbol.Map.map,
                    exInfo as {used, longsymbol, ty, version}:I.exInfo) =
       let
         val longsymbol = setVersion(longsymbol, version)
       in
-        LongsymbolEnv.insert(externVarSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
+        Longsymbol.Map.insert(externVarSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
       end
 
-  fun exSetMember (externExnSet:I.exInfo LongsymbolEnv.map, 
+  fun exSetMember (externExnSet:I.exInfo Longsymbol.Map.map,
                    {used, longsymbol, ty, version}:I.exInfo) =
       let
         val longsymbol = setVersion(longsymbol, version)
       in
-        LongsymbolEnv.inDomain(externExnSet, SymbolWithLoc.toLongsymbol longsymbol)
+        Longsymbol.Map.inDomain(externExnSet, SymbolWithLoc.toLongsymbol longsymbol)
       end
 
-  val emptyExternVarSet = LongsymbolEnv.empty : I.exInfo LongsymbolEnv.map
+  val emptyExternVarSet = Longsymbol.Map.empty : I.exInfo Longsymbol.Map.map
 
   val DUMMYIDFUN = mkLongsymbol ["id"]
 
@@ -2512,10 +2512,10 @@ So we change exnSet to path exnMap in genExportIdstatus
               let
                 val longsymbol = setVersion(longsymbol, version)
               in
-                LongsymbolEnv.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
+                Longsymbol.Map.insert(externExnSet, SymbolWithLoc.toLongsymbol longsymbol, exInfo)
               end
             | I.ICBUILTINEXN {longsymbol, ty} => 
-              LongsymbolEnv.insert
+              Longsymbol.Map.insert
                 (externExnSet, SymbolWithLoc.toLongsymbol longsymbol,
                  {used = ref false, longsymbol=longsymbol, ty=ty, version=I.SELF})
             | _ => externExnSet
@@ -2530,7 +2530,7 @@ So we change exnSet to path exnMap in genExportIdstatus
             val idstatus = 
                 case VP.findId (#Env env, SymbolWithLoc.fromLongsymbol path Loc.noloc) of
                   SOME (sym, idstatus) => idstatus
-                | NONE => raise bug  (Symbol.longsymbolToString path
+                | NONE => raise bug  (Longsymbol.toString path
                                       ^
                                       ": not found in clearUsedflagOfSystemDecl")
           in
@@ -2826,7 +2826,7 @@ val _ = U.print "\n"
 
         (* for error checking *)
         val (_, topEnv, _) =
-            EI.evalPitopdecList I.SELF evalTopEnvProvide (LongsymbolSet.empty, provideTopdecs)
+            EI.evalPitopdecList I.SELF evalTopEnvProvide (Longsymbol.Set.empty, provideTopdecs)
         val _ = VP.unionTopEnv "210" (totalTopEnv, topEnv)
 
         val _ = clearUsedflag evalTopEnv
@@ -2885,11 +2885,11 @@ val _ = U.print "*** after checkPitopdecList\n"
         (* avoid duplicate declarations *)
         val _ = app (clearUsedflagOfSystemDecl evalTopEnv) systemDecls
 
-        val externExnSet = externExnSetSystemdecls systemDecls LongsymbolEnv.empty
+        val externExnSet = externExnSetSystemdecls systemDecls Longsymbol.Map.empty
         val ((externExnSet, externVarSet), interfaceDecls) = 
             genExterndecls (externExnSet, emptyExternVarSet) evalTopEnv
 
-        val externVarDecls = map I.ICEXTERNVAR (LongsymbolEnv.listItems externVarSet)
+        val externVarDecls = map I.ICEXTERNVAR (Longsymbol.Map.listItems externVarSet)
 
 (*
         val topdecs = 
@@ -2962,7 +2962,7 @@ val _ = U.print "*** after checkPitopdecList\n"
       let
         val _ = EU.initializeErrorQueue()
         val (_, topEnv, icdecls) =
-            EI.evalPitopdecList I.SELF V.emptyTopEnv (LongsymbolSet.empty, topdecList)
+            EI.evalPitopdecList I.SELF V.emptyTopEnv (Longsymbol.Set.empty, topdecList)
         val icdecls =
             map (fn I.ICEXTERNEXN {used, longsymbol, ty, version} =>
                     I.ICBUILTINEXN {longsymbol=longsymbol, ty=ty}

@@ -8,7 +8,7 @@ local
   structure T = Types
   structure TU = TypesBasics
   type ty = T.ty
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   type varInfo = T.varInfo
   fun bug s = Bug.Bug ("TyRevealTy: " ^ s)
 in

@@ -77,13 +77,13 @@ struct
       Types.btvEnv
 
   (*%
-    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
     @formatter(VarID.id) VarID.format_id
     @formatter(ifsome) ifsome
    *)
   (*%
     @prefix formatWithType_
-    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
     @formatter(VarID.id) VarID.format_id
     @formatter(ifsome) ifsome
    *)
@@ -97,7 +97,7 @@ struct
         @format({path: path pathOpt, id, ty})
         L2{ pathOpt:ifsome()(pathOpt(path) "($" id ")", "$" id) +1 ":" +d ty }
        *)
-      {path : Symbol.longsymbol option, id : VarID.id, ty : ty}
+      {path : Longsymbol.longsymbol option, id : VarID.id, ty : ty}
 
   (*%
     @formatter(Types.exVarInfo) Types.format_exVarInfo

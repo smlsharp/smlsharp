@@ -24,7 +24,7 @@ local
   type varInfo = RC.varInfo
 
   type path = RC.path
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   type btvEnv = T.kind BoundTypeVarID.Map.map
   type rcexp = RC.rcexp
 

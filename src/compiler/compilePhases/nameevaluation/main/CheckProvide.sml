@@ -1392,7 +1392,7 @@ val _ = U.print "\n"
           val argEnv = VP.rebindStr VP.PROVIDE(V.emptyEnv, strSymbol, argStrEntry)
           val evalEnv = VP.topEnvWithEnv (evalTopEnv, argEnv)
           val (_, {env=specBodyInterfaceEnv, strKind, ...}, _) =
-              EI.evalPistr I.SELF [functorSymbol] evalEnv (LongsymbolSet.empty, specBodyStr)
+              EI.evalPistr I.SELF [functorSymbol] evalEnv (Longsymbol.Set.empty, specBodyStr)
           val specBodyEnv = EI.internalizeEnv specBodyInterfaceEnv
 (*
 val _ = U.print "eqEnv in checkprovide decfun\n"

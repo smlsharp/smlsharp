@@ -10,7 +10,7 @@ local
   (* structure P = TyPrinters *)
   type ty = T.ty
   type varInfo = T.varInfo
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   type btv = BoundTypeVarID.id
   fun bug s = Bug.Bug ("TyReduce: " ^ s)
 in

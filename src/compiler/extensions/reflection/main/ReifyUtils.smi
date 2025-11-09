@@ -103,7 +103,7 @@ struct
 *)
   val BtvId : loc -> BoundTypeVarID.id -> {exp:exp, ty:ty}
   val TypId : loc -> TypID.id -> {exp:exp, ty:ty}
-  val Longsymbol : loc -> Symbol.longsymbol -> {exp:exp, ty:ty}
+  val Longsymbol : loc -> Longsymbol.longsymbol -> {exp:exp, ty:ty}
   val RecordLabelFromString : loc -> string -> {exp:exp, ty:ty}
 
 end

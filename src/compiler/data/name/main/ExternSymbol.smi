@@ -14,7 +14,7 @@ structure ExternSymbol =
 struct
 
   type id (= string)
-  val touch : Symbol.longsymbol -> id
+  val touch : Longsymbol.longsymbol -> id
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
 
@@ -103,7 +103,7 @@ structure ExternFunSymbol =
 struct
 
   type id (= string)
-  val touch : Symbol.longsymbol -> id
+  val touch : Longsymbol.longsymbol -> id
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
 

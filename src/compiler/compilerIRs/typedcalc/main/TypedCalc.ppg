@@ -44,12 +44,12 @@ structure TypedCalc = struct
   type loc = Loc.loc
 
   (*%
-    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
   (*% @prefix formatWithType_
-    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
 
   (*%
     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes

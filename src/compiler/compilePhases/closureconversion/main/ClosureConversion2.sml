@@ -1070,7 +1070,7 @@ struct
       {
         varEnv: varEnv,
         styEnv: SingletonTyEnv2.env,
-        path: Symbol.longsymbol option,
+        path: Longsymbol.longsymbol option,
         toplevel: bool
       }
 
@@ -1183,7 +1183,7 @@ struct
        argTyList = argTyList,
        retTy = retTy}
 
-  fun exportFunEntry (styEnv, path : Symbol.longsymbol) (exvar as {ty, loc, ...}, value) =
+  fun exportFunEntry (styEnv, path : Longsymbol.longsymbol) (exvar as {ty, loc, ...}, value) =
       case getFunTy ty of
         NONE => nil
       | SOME fty =>

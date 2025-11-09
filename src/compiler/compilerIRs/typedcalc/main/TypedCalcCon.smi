@@ -301,18 +301,18 @@ struct
   type env =
       {
         exnEnv : Types.exnInfo ExnID.Map.map,
-        exExnEnv : Types.exExnInfo LongsymbolEnv.map,
+        exExnEnv : Types.exExnInfo Longsymbol.Map.map,
         varEnv : Types.varInfo VarID.Map.map,
-        exVarEnv : Types.exVarInfo LongsymbolEnv.map,
+        exVarEnv : Types.exVarInfo Longsymbol.Map.map,
         btvEnv : Types.kind BoundTypeVarID.Map.map
       }
 
   val emptyEnv : env
   val extendEnv : env * env -> env
   val exnEnv : Types.exnInfo ExnID.Map.map -> env
-  val exExnEnv : Types.exExnInfo LongsymbolEnv.map -> env
+  val exExnEnv : Types.exExnInfo Longsymbol.Map.map -> env
   val varEnv : Types.varInfo VarID.Map.map -> env
-  val exVarEnv : Types.exVarInfo LongsymbolEnv.map -> env
+  val exVarEnv : Types.exVarInfo Longsymbol.Map.map -> env
   val btvEnv : Types.kind BoundTypeVarID.Map.map -> env
   val makeExnEnv : Types.exnInfo list -> env
   val makeExExnEnv : Types.exExnInfo list -> env

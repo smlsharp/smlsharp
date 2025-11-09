@@ -6,22 +6,11 @@ _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
 structure Symbol =
 struct
   eqtype symbol (= string)
-  eqtype longsymbol (= list)
   val format_symbol : symbol -> SMLFormat.format
-  val format_longsymbol : longsymbol -> SMLFormat.format
 
   val toString : symbol -> string
   val fromString : string -> symbol
   val compare : symbol * symbol -> order
-
-  val toStringList : longsymbol -> string list
-  val fromStringList : string list -> longsymbol
-  val toSymbolList : longsymbol -> symbol list
-  val fromSymbolList : symbol list -> longsymbol
-  val longsymbolToString : longsymbol -> string
-  val compareLongsymbol : longsymbol * longsymbol -> order
-  val append : longsymbol * symbol -> longsymbol
-  val lastSymbol : longsymbol -> symbol
 
   structure Ord =
   struct
@@ -32,10 +21,25 @@ struct
   structure Set = BinarySetFn(Ord)
 end
 
-structure LongsymbolOrd =
+structure Longsymbol =
 struct
-  type ord_key = Symbol.longsymbol
-  val compare : ord_key * ord_key -> order
+  eqtype longsymbol (= list)
+  val format_longsymbol : longsymbol -> SMLFormat.format
+
+  val toStringList : longsymbol -> string list
+  val fromStringList : string list -> longsymbol
+  val toSymbolList : longsymbol -> Symbol.symbol list
+  val fromSymbolList : Symbol.symbol list -> longsymbol
+  val toString : longsymbol -> string
+  val compare : longsymbol * longsymbol -> order
+  val append : longsymbol * Symbol.symbol -> longsymbol
+  val lastSymbol : longsymbol -> Symbol.symbol
+
+  structure Ord =
+  struct
+    type ord_key = longsymbol
+    val compare : ord_key * ord_key -> order
+  end
+  structure Map = BinaryMapFn2(Ord)
+  structure Set = BinarySetFn(Ord)
 end
-structure LongsymbolEnv = BinaryMapFn2(LongsymbolOrd)
-structure LongsymbolSet = BinarySetFn(LongsymbolOrd)

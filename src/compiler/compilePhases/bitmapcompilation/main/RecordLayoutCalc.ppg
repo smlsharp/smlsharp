@@ -9,14 +9,14 @@ structure RecordLayoutCalc =
 struct
 
   (*%
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    * @formatter(VarID.id) VarID.format_id
    *)
   type var =
       (*%
        * @format({path: path pathOpt, id}) pathOpt(path) "(" id ")"
        *)
-      {path : Symbol.longsymbol option, id : VarID.id} (* word32 *)
+      {path : Longsymbol.longsymbol option, id : VarID.id} (* word32 *)
 
   (*%
    * @formatter(Word32.word) SMLFormat.BasicFormatters.format_word

@@ -8,7 +8,7 @@
 signature CODE_LABEL =
 sig
   type id
-  val generate : Symbol.longsymbol -> id
+  val generate : Longsymbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -32,7 +32,7 @@ local
          case longsymbol of
            NONE => ""
          | SOME s =>
-           case Symbol.toStringList s of
+           case Longsymbol.toStringList s of
              nil => ""
            | l => NameMangle.mangle l)
 

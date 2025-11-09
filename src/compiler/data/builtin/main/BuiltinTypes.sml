@@ -399,7 +399,7 @@ struct
                      NONE => exnTy
                    | SOME ty => T.FUNMty([ty], exnTy)
       in
-        {path = Symbol.fromStringList longid, ty=ty}
+        {path = Longsymbol.fromStringList longid, ty=ty}
       end
 
   val BindExExn = evalExn (["Bind"], NONE)

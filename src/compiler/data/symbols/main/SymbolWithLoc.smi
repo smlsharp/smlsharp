@@ -14,8 +14,8 @@ struct
   val lastSymbol : longsymbol -> symbol
   val symbolToString : symbol -> string
   val symbolToLoc : symbol -> Loc.loc
-  val toLongsymbol : longsymbol -> Symbol.longsymbol
-  val fromLongsymbol : Symbol.longsymbol -> Loc.loc -> longsymbol
+  val toLongsymbol : longsymbol -> Longsymbol.longsymbol
+  val fromLongsymbol : Longsymbol.longsymbol -> Loc.loc -> longsymbol
   val longsymbolToString : longsymbol -> string
   val longsymbolToLoc : longsymbol -> Loc.loc
   val longsymbolToLastLoc : longsymbol -> Loc.loc

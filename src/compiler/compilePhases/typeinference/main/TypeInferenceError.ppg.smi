@@ -97,10 +97,10 @@ structure TypeInferenceError =
     exception NonFunction of string * {ty:Types.ty}
     exception NonConstruct of string * {pat:IDCalc.icpat}
     exception DuplicateTargsInTypeDef of string * {tvars:string list}
-    exception DuplicatePatternVar of string * {longsymbol:Symbol.longsymbol}
+    exception DuplicatePatternVar of string * {longsymbol:Longsymbol.longsymbol}
     exception RecDefinitionAndOccurrenceNotAgree
               of string * {definition:Types.ty,
-                           longsymbol:Symbol.longsymbol,
+                           longsymbol:Longsymbol.longsymbol,
                            occurrence:Types.ty}
     exception InconsistentEQInDatatype of string * {tyvar:string}
     exception DifferentOrPatternTypes of string * {ty1:Types.ty, ty2:Types.ty}
@@ -111,13 +111,13 @@ structure TypeInferenceError =
     exception DuplicateTvarNameInDatatypeArgs of string * {tyvar:string}
     exception NotBoundTyvar of string * {tyvar:string}
     exception ConstantConApplied of string * {con:string}
-    exception ConRequireArg of string * {longsymbol:Symbol.longsymbol}
-    exception ValueRestriction of string * {dummyTyPaths:Symbol.longsymbol list}
-    exception ConstructorPathNotFound of string * Symbol.longsymbol
+    exception ConRequireArg of string * {longsymbol:Longsymbol.longsymbol}
+    exception ValueRestriction of string * {dummyTyPaths:Longsymbol.longsymbol list}
+    exception ConstructorPathNotFound of string * Longsymbol.longsymbol
     exception InconsistentListElementType
               of string * {nextTy:Types.ty, prevTy:Types.ty}
     exception CyclicTvarkindSpec of string * Symbol.symbol
-    exception NonConstructorPathInPat of string * Symbol.longsymbol
+    exception NonConstructorPathInPat of string * Longsymbol.longsymbol
     exception ArityMismatchInTypeDeclaration
               of string * {given:int, tyCon:string, wants:int}
 

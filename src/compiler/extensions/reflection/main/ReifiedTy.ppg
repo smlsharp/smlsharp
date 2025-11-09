@@ -158,7 +158,7 @@ struct
      @formatter(option) TermPrintUtils.formatPrependedOpt
      @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
      @formatter(recordTy) TermFormat.formatRecordTy
-     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+     @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
   datatype reifiedTy
     = (*% @format(arg) arg + "array" *)
@@ -181,7 +181,7 @@ struct
            2[1 conSet]
            2[1 layout]
        *)
-      CONSTRUCTty of {longsymbol: Symbol.longsymbol, 
+      CONSTRUCTty of {longsymbol: Longsymbol.longsymbol,
                       id:TypID.id, 
                       args: reifiedTy list,
                       conSet : conSet,
@@ -193,7 +193,7 @@ struct
            tys(ty)(",") + longsymbol "(" id ")" 
            + 2[1 "datatype layout:" layout]
        *)
-      DATATYPEty of {longsymbol: Symbol.longsymbol, 
+      DATATYPEty of {longsymbol: Longsymbol.longsymbol,
                      id:TypID.id, 
                      args: reifiedTy list,
                      layout: layout,
@@ -235,7 +235,7 @@ struct
          @format({longsymbol, id, args:ty tys, boxed, size}) 
            tys(ty)(",") + longsymbol "(" id ")" 
        *)
-      OPAQUEty of {longsymbol: Symbol.longsymbol, 
+      OPAQUEty of {longsymbol: Longsymbol.longsymbol,
                    id:TypID.id, 
                    size : int,
                    boxed : bool,

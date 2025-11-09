@@ -32,7 +32,7 @@ local
   val emptyRenameEnv =  TypID.Map.empty : renameEnv
 
   val mkSymbol = SymbolWithLoc.mkSymbol
-  val mkLongsymbol = Symbol.fromStringList
+  val mkLongsymbol = Longsymbol.fromStringList
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
   fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
@@ -43,13 +43,13 @@ local
   (* FIXME factor out this def into some unique plcae *)
   val FUNCORPREFIX = "_"
 
-  fun addExSet (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
-      LongsymbolSet.add(externSet, SymbolWithLoc.toLongsymbol longsymbol)
+  fun addExSet (externSet:Longsymbol.Set.set, {used, longsymbol, ty, version}:I.exInfo) =
+      Longsymbol.Set.add(externSet, SymbolWithLoc.toLongsymbol longsymbol)
 
-  fun exSetMember (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
-      LongsymbolSet.member(externSet, SymbolWithLoc.toLongsymbol longsymbol)
+  fun exSetMember (externSet:Longsymbol.Set.set, {used, longsymbol, ty, version}:I.exInfo) =
+      Longsymbol.Set.member(externSet, SymbolWithLoc.toLongsymbol longsymbol)
 
-  val emptyExSet = LongsymbolSet.empty
+  val emptyExSet = Longsymbol.Set.empty
 
 in
   val revealKey = RevealID.generate() (* global reveal key *)
@@ -1075,19 +1075,19 @@ in
       (* defRangeの妥当性 *)
       case idstatus of
         I.IDEXEXN (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
+        (case Longsymbol.Map.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
            SOME idstatus => (pathEnv, idstatus)
          | NONE => 
            let
              val newId = ExnID.generate() (* dummy *)
              val idstatus = I.IDEXN {id=newId, longsymbol=longsymbol, ty= ty, defRange=defRange}
-             val pathEnv = LongsymbolEnv.insert(pathEnv, SymbolWithLoc.toLongsymbol longsymbol, idstatus)
+             val pathEnv = Longsymbol.Map.insert(pathEnv, SymbolWithLoc.toLongsymbol longsymbol, idstatus)
            in
               (pathEnv, idstatus)
             end
         )
       | I.IDEXEXNREP (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
+        (case Longsymbol.Map.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
            SOME idstatus => (pathEnv, idstatus)
          | NONE => (pathEnv, idstatus)
         )
@@ -1135,7 +1135,7 @@ in
       (* defRangeの妥当性 *)
       case idstatus of
         I.IDEXEXNREP (exInfo as {used, longsymbol, ty, version, defRange}) =>
-        (case LongsymbolEnv.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
+        (case Longsymbol.Map.find(pathEnv, SymbolWithLoc.toLongsymbol longsymbol) of
            SOME (I.IDEXN exInfo) => I.IDEXNREP exInfo
          | _ => idstatus
         )
@@ -1182,7 +1182,7 @@ in
   val internalizeEnv = 
    fn env => 
       let
-        val (pathEnv, env) = internalizeEnv (LongsymbolEnv.empty, env)
+        val (pathEnv, env) = internalizeEnv (Longsymbol.Map.empty, env)
       in
         internalizeEnvRep pathEnv env
       end

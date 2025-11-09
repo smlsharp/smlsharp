@@ -16,7 +16,7 @@ struct
   type loc = Loc.loc
   type ty = Types.ty
   type btvEnv = Types.btvEnv
-  type varInfo = {path : Symbol.longsymbol option, id : VarID.id, ty : ty}
+  type varInfo = {path : Longsymbol.longsymbol option, id : VarID.id, ty : ty}
   type exVarInfo = Types.exVarInfo
   datatype cast = datatype BuiltinPrimitive.cast
 

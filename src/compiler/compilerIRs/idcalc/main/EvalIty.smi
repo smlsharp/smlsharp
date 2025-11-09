@@ -23,7 +23,7 @@ structure EvalIty =
 struct
   exception EVALTFUN of {admitsEq: bool,
                          formals: IDCalc.formals,
-                         longsymbol:Symbol.longsymbol,
+                         longsymbol:Longsymbol.longsymbol,
                          realizerTy: IDCalc.ty}
   type ityContext = {oprimEnv:IDCalc.ty OPrimMap.map,
                      tvarEnv:Types.ty TvarMap.map,

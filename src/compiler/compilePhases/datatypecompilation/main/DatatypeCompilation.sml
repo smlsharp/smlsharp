@@ -63,8 +63,8 @@ struct
         fun find i k nil = NONE
           | find i k (h::t) = if k = h then SOME i else find (i+1) k t
       in
-        case find 0 (Symbol.toString (Symbol.lastSymbol path)) tagMap of
-          NONE => raise Bug.Bug ("dataconTag " ^ Symbol.longsymbolToString path)
+        case find 0 (Symbol.toString (Longsymbol.lastSymbol path)) tagMap of
+          NONE => raise Bug.Bug ("dataconTag " ^ Longsymbol.toString path)
         | SOME tag => tag
       end
 
@@ -75,7 +75,7 @@ struct
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
           val vid = EmitTypedLambda.newId ()
-          val nullName = Symbol.fromStringList [nullName]
+          val nullName = Longsymbol.fromStringList [nullName]
         in
           E.Let ([(vid, exp)],
                  E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),
@@ -129,7 +129,7 @@ struct
             case argExpOpt of
               SOME _ => raise Bug.Bug "composeCon: LAYOUT_CHOICE"
             | NONE =>
-              E.Cast (if Symbol.lastSymbol (#path conInfo)
+              E.Cast (if Longsymbol.lastSymbol (#path conInfo)
                          = Symbol.fromString falseName
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
@@ -200,11 +200,11 @@ struct
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
                   [(con1, NONE, exp1), (con2, NONE, exp2)] =>
-                  if Symbol.lastSymbol (#path con1) = falseName
+                  if Longsymbol.lastSymbol (#path con1) = falseName
                   then (con1, exp2, exp1)
                   else (con1, exp1, exp2)
                 | [(con1, NONE, exp1)] =>
-                  if Symbol.lastSymbol (#path con1) = falseName
+                  if Longsymbol.lastSymbol (#path con1) = falseName
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
                 | _ => raise Bug.Bug "switchCon: LAYOUT_CHOICE"
@@ -273,11 +273,11 @@ struct
   type env =
       {
         exnMap: TL.varInfo ExnID.Map.map,
-        exExnMap: TL.exVarInfo LongsymbolEnv.map
+        exExnMap: TL.exVarInfo Longsymbol.Map.map
       }
 
   val emptyEnv =
-      {exnMap = ExnID.Map.empty, exExnMap = LongsymbolEnv.empty} : env
+      {exnMap = ExnID.Map.empty, exExnMap = Longsymbol.Map.empty} : env
 
   fun newLocalExn (env:env, {path, ty, id}:Types.exnInfo) =
       let
@@ -294,7 +294,7 @@ struct
         val exVarInfo = {path = path, ty = BT.exntagTy} : TL.exVarInfo
       in
         ({exnMap = #exnMap env,
-          exExnMap = LongsymbolEnv.insert (#exExnMap env, path, exVarInfo)}
+          exExnMap = Longsymbol.Map.insert (#exExnMap env, path, exVarInfo)}
          : env,
          exVarInfo)
       end
@@ -303,7 +303,7 @@ struct
       ExnID.Map.find (exnMap, id)
 
   fun findExternExnTag ({exExnMap, ...}:env, {path,...}:Types.exExnInfo) =
-      LongsymbolEnv.find (exExnMap, path)
+      Longsymbol.Map.find (exExnMap, path)
 
   fun findExnTag (env, exnCon) =
       case exnCon of

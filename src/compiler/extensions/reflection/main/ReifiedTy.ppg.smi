@@ -46,8 +46,8 @@ struct
     | BOXEDty
     | CHARty
     | CODEPTRty
-    | CONSTRUCTty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, conSet:reifiedTy option SEnv.map, layout:layout, size:int}
-    | DATATYPEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
+    | CONSTRUCTty of {longsymbol: Longsymbol.longsymbol, id:TypID.id, args:reifiedTy list, conSet:reifiedTy option SEnv.map, layout:layout, size:int}
+    | DATATYPEty of {longsymbol: Longsymbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
     | DUMMYty of {boxed : bool, size : word}
     | DYNAMICty of reifiedTy
     | ERRORty
@@ -63,7 +63,7 @@ struct
     | INTERNALty
     | INTINFty
     | LISTty of reifiedTy
-    | OPAQUEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, boxed:bool, size:int}
+    | OPAQUEty of {longsymbol: Longsymbol.longsymbol, id:TypID.id, args:reifiedTy list, boxed:bool, size:int}
     | OPTIONty of reifiedTy
     | POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body:reifiedTy}
     | PTRty of reifiedTy
@@ -138,8 +138,8 @@ struct
   val stringIntListToTagMap : (string * int) list -> int SEnv.map
   val tagMapStringToTagMapNullNameRecord : (int SEnv.map) -> string -> {tagMap:int SEnv.map, nullName:string}
   val tagMapToTagMapRecord : (int SEnv.map) -> {tagMap:int SEnv.map}
-  val longsymbolIdArgsLayoutListToDatatypeTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> layout -> int -> reifiedTy
-  val longsymbolIdArgsToOpaqueTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> int -> bool -> reifiedTy
+  val longsymbolIdArgsLayoutListToDatatypeTy : Longsymbol.longsymbol -> TypID.id -> reifiedTy list -> layout -> int -> reifiedTy
+  val longsymbolIdArgsToOpaqueTy : Longsymbol.longsymbol -> TypID.id -> reifiedTy list -> int -> bool -> reifiedTy
 
   val sizeOf : reifiedTy -> word
   val isGroundTy : reifiedTy -> bool

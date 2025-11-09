@@ -170,7 +170,7 @@ struct
 
   val REIFY_exInfo_RecordLabelFromString
       : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_SymbolFromStringList
+  val REIFY_exInfo_LongsymbolFromStringList
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_TyRep
       : Loc.loc -> Types.exVarInfo

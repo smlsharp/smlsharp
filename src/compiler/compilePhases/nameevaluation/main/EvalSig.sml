@@ -1086,9 +1086,9 @@ local
       | P.PLSPECSHARESTR (plspec, longsymbolList, loc) =>
         let
           fun addToListEnv (pathEnv, key, x) =
-              LongsymbolEnv.unionWith
+              Longsymbol.Map.unionWith
                 (fn (x,y) => x @ y)
-                (pathEnv, LongsymbolEnv.singleton(key, [x]))
+                (pathEnv, Longsymbol.Map.singleton(key, [x]))
 
           and addTyE path key tyE pathEnv =
               SymbolWithLocEnv.foldli
@@ -1130,9 +1130,9 @@ local
                         addSpecEnv longsymbol nil specEnv pathEnv
                   end
                 )
-                LongsymbolEnv.empty
+                Longsymbol.Map.empty
                 longsymbolList
-          val idListList = LongsymbolEnv.listItems pathEnv
+          val idListList = Longsymbol.Map.listItems pathEnv
           val _ = processShare (specEnv, idListList, loc)
         in
           specEnv

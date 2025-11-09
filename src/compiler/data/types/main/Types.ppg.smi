@@ -54,7 +54,7 @@ struct
         tyCon :
         {
           id : TypID.id,
-          longsymbol : Symbol.longsymbol,
+          longsymbol : Longsymbol.longsymbol,
           admitsEq : bool,
           arity : int,
           conSet : (unit -> ty) option Symbol.Map.map,
@@ -87,7 +87,7 @@ struct
         operators :
         {
           oprimId : OPrimID.id,
-          longsymbol : Symbol.longsymbol,
+          longsymbol : Longsymbol.longsymbol,
           match : overloadMatch
         } list
       }
@@ -106,7 +106,7 @@ struct
       TYCON of
       {
         id : TypID.id,
-        longsymbol : Symbol.longsymbol,
+        longsymbol : Longsymbol.longsymbol,
         admitsEq : bool,
         arity : int,
         conSet : (unit -> ty) option Symbol.Map.map,
@@ -130,7 +130,7 @@ struct
       INSTCODEty of
       {
        oprimId : OPrimID.id,
-       longsymbol : Symbol.longsymbol,
+       longsymbol : Longsymbol.longsymbol,
        match : overloadMatch
       }
     | INDEXty of RecordLabel.label * ty
@@ -181,7 +181,7 @@ struct
   and overloadMatch =
       OVERLOAD_EXVAR of
       {
-        exVarInfo: {path: Symbol.longsymbol, ty: ty},
+        exVarInfo: {path: Longsymbol.longsymbol, ty: ty},
         instTyList: ty list option
       }
     | OVERLOAD_PRIM of
@@ -202,7 +202,7 @@ struct
   type tyCon =
       {
         id : TypID.id,
-        longsymbol : Symbol.longsymbol,
+        longsymbol : Longsymbol.longsymbol,
         admitsEq : bool,
         arity : int,
         conSet : (unit -> ty) option Symbol.Map.map,
@@ -214,18 +214,18 @@ struct
   type oprimSelector =
       {
         oprimId : OPrimID.id,
-        longsymbol : Symbol.longsymbol,
+        longsymbol : Longsymbol.longsymbol,
         match : overloadMatch
       }
 
   type btvEnv = kind BoundTypeVarID.Map.map
   type varInfo = {path:SymbolWithLoc.longsymbol, id:VarID.id, ty:ty, opaque:bool}
-  type exVarInfo = {path:Symbol.longsymbol, ty:ty}
+  type exVarInfo = {path:Longsymbol.longsymbol, ty:ty}
   type primInfo = {primitive : BuiltinPrimitive.primitive, ty : ty}
-  type oprimInfo = {ty : ty, path : Symbol.longsymbol, id : OPrimID.id}
-  type conInfo = {path: Symbol.longsymbol, ty: ty, id: ConID.id}
-  type exnInfo = {path: Symbol.longsymbol, ty: ty, id: ExnID.id}
-  type exExnInfo = {path: Symbol.longsymbol, ty: ty}
+  type oprimInfo = {ty : ty, path : Longsymbol.longsymbol, id : OPrimID.id}
+  type conInfo = {path: Longsymbol.longsymbol, ty: ty, id: ConID.id}
+  type exnInfo = {path: Longsymbol.longsymbol, ty: ty, id: ExnID.id}
+  type exExnInfo = {path: Longsymbol.longsymbol, ty: ty}
 
   type codeEntryTy =
       {

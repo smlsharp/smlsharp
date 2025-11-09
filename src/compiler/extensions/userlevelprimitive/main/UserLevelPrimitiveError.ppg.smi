@@ -4,8 +4,8 @@ _require "../../../data/symbols/main/Symbol.smi"
 
 structure UserLevelPrimitiveError =
 struct
-  exception TyConNotFound of (string * {longsymbol: Symbol.longsymbol})
-  exception ConNotFound of (string * {longsymbol: Symbol.longsymbol})
-  exception IdNotFound of (string * {longsymbol: Symbol.longsymbol})
-  exception ExnNotFound of (string * {longsymbol: Symbol.longsymbol})
+  exception TyConNotFound of (string * {longsymbol: Longsymbol.longsymbol})
+  exception ConNotFound of (string * {longsymbol: Longsymbol.longsymbol})
+  exception IdNotFound of (string * {longsymbol: Longsymbol.longsymbol})
+  exception ExnNotFound of (string * {longsymbol: Longsymbol.longsymbol})
 end

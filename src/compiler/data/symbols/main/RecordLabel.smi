@@ -10,7 +10,7 @@ struct
   eqtype label (= string)
 
   val fromSymbol : Symbol.symbol -> label
-  val fromLongsymbol : Symbol.longsymbol -> label
+  val fromLongsymbol : Longsymbol.longsymbol -> label
   val fromInt : int -> label
   val fromString : string -> label
   val toString : label -> string

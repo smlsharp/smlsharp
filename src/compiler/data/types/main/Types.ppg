@@ -52,13 +52,13 @@ struct
   type symbol = Symbol.symbol
 
   (*%
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
   (*%
    * @prefix print_
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
 
   (*%
    * @formatter(TypID.id) TypID.format_id

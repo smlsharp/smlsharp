@@ -12,7 +12,7 @@ local
   fun bug s = Bug.Bug ("AlphaRename: " ^ s)
 
   type ty = T.ty
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   type btvEnv = T.kind BoundTypeVarID.Map.map
 
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map

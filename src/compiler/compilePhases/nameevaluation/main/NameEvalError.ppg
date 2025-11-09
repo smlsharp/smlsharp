@@ -12,9 +12,9 @@ local
   (* structure UE = UserError *)
 
   (*%
-     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+     @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    *)
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   (*%
      @formatter(Symbol.symbol) Symbol.format_symbol
    *)

@@ -23,7 +23,7 @@ struct
    * @formatter(Types.ty) format_ty
    * @formatter(I.ffiTy) I.format_ffiTy
    * @formatter(path) Path.format_pathWithoutDotend
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    * @formatter(Symbol.symbol) Symbol.format_symbol
    * @formatter(I.icpat) I.format_icpat
    * @formatter(TypedCalc.tppat) TypedCalc.format_tppat
@@ -52,7 +52,7 @@ struct
    * @format(code * longsymbol) "(type inference" +d code ")" +d  
    * "path" +d longsymbol +d "is" +d "not" +d "a" +d "constructor"
    *)
-  NonConstructorPathInPat of string * Symbol.longsymbol
+  NonConstructorPathInPat of string * Longsymbol.longsymbol
 
   and
   (**
@@ -85,7 +85,7 @@ struct
    * @format(code * longsymbol) "(type inference" +d code ")" +d    
    * "constructor" +d "path" +d longsymbol +d "undefined"
    *)
-  ConstructorPathNotFound of string * Symbol.longsymbol
+  ConstructorPathNotFound of string * Longsymbol.longsymbol
 
   and
   (**
@@ -99,7 +99,7 @@ struct
     "are" +d "introduced" +d "due" +d "to" +d "value" +d "restriction"
     +d "in:" +d paths(path)(","+d)
    *)
-  ValueRestriction of string * {dummyTyPaths : Symbol.longsymbol list}
+  ValueRestriction of string * {dummyTyPaths : Longsymbol.longsymbol list}
 
   and
   (**
@@ -112,7 +112,7 @@ struct
      "data" +d "constructor" +d {longsymbol} +d "used" +d "without"
      +d "argument" +d "in" +d "pattern"
    *)
-  ConRequireArg of string * {longsymbol : Symbol.longsymbol}
+  ConRequireArg of string * {longsymbol : Longsymbol.longsymbol}
 
   and
   (**
@@ -210,7 +210,7 @@ struct
    * "occurrence:" +d {occurrence}
    *)
   RecDefinitionAndOccurrenceNotAgree of string *
-  {longsymbol : Symbol.longsymbol, definition : Types.ty, occurrence : Types.ty}
+  {longsymbol : Longsymbol.longsymbol, definition : Types.ty, occurrence : Types.ty}
 
   and
   (**
@@ -222,7 +222,7 @@ struct
    * @format(code * {longsymbol}) "(type inference" +d code ")" +d  
    *   "duplicate" +d "variables" +d "in" +d "pattern(s):" +d longsymbol
    *)
-  DuplicatePatternVar of string * {longsymbol : Symbol.longsymbol}
+  DuplicatePatternVar of string * {longsymbol : Longsymbol.longsymbol}
 
   and
   (**

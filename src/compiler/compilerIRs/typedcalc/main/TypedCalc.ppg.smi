@@ -158,10 +158,10 @@ structure TypedCalc =
       | TPEXNTAGD of {exnInfo:Types.exnInfo, varInfo:Types.varInfo} * Loc.loc
       | TPEXPORTEXN of Types.exnInfo
       | TPEXPORTVAR of {var : Types.exVarInfo, exp : tpexp}
-      | TPEXTERNEXN of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPEXTERNEXN of {path:Longsymbol.longsymbol, ty:Types.ty}
                         * Types.provider
-      | TPBUILTINEXN of {path:Symbol.longsymbol, ty:Types.ty}
-      | TPEXTERNVAR of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPBUILTINEXN of {path:Longsymbol.longsymbol, ty:Types.ty}
+      | TPEXTERNVAR of {path:Longsymbol.longsymbol, ty:Types.ty}
                         * Types.provider
       | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,
                       funVarInfo:Types.varInfo,

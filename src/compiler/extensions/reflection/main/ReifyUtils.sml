@@ -145,17 +145,17 @@ struct
                 loc = loc},
        ty = OptionTy ty}
 
-  fun MonoVar loc (exVarInfo as {path:Symbol.longsymbol, ty:T.ty}) =
+  fun MonoVar loc (exVarInfo as {path:Longsymbol.longsymbol, ty:T.ty}) =
       {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc)}
 
   fun Var (varInfo as {ty,path,id,opaque}) =
       {exp = TC.TPVAR varInfo, ty = ty}
 
-  fun InstVar loc {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTy} =
+  fun InstVar loc {exVarInfo as {path:Longsymbol.longsymbol, ty:T.ty}, instTy} =
       TypedCalcUtils.toplevelInstWithInstTy
         {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc), instTy = instTy}
 
-  fun InstListVar loc {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTyList} =
+  fun InstListVar loc {exVarInfo as {path:Longsymbol.longsymbol, ty:T.ty}, instTyList} =
       TypedCalcUtils.toplevelInstWithInstTyList
         {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc), instTyList = instTyList}
 
@@ -284,9 +284,9 @@ struct
       TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy loc)
   fun Longsymbol loc longsymbol =
       let
-        val stringList = Symbol.toStringList longsymbol
+        val stringList = Longsymbol.toStringList longsymbol
         val stringListExp = List loc StringTy (map (String loc) stringList)
-        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_SymbolFromStringList loc)
+        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_LongsymbolFromStringList loc)
       in
         Apply loc mkLongsymbolExp stringListExp
       end

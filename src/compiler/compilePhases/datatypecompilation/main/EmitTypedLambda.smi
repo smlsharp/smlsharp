@@ -128,7 +128,7 @@ struct
   val Real_gteq : Types.ty -> exp * exp -> exp
   val Real_lteq : Types.ty -> exp * exp -> exp
   val Real_sub : Types.ty -> exp * exp -> exp
-  val allocExnTag : {builtin:bool, path:Symbol.longsymbol, ty:Types.ty} -> exp
+  val allocExnTag : {builtin:bool, path:Longsymbol.longsymbol, ty:Types.ty} -> exp
   val extractExnTag : exp -> exp
   val extractExnArg : exp * Types.ty -> exp
   val composeExn : exp * Loc.loc * exp option -> exp

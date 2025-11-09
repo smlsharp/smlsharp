@@ -42,7 +42,7 @@ in
        tvarEnv=TvarMap.empty,
        varEnv=VarMap.empty
       }
-  exception EVALTFUN of {admitsEq:bool, formals:I.formals, realizerTy:I.ty, longsymbol:Symbol.longsymbol}
+  exception EVALTFUN of {admitsEq:bool, formals:I.formals, realizerTy:I.ty, longsymbol:Longsymbol.longsymbol}
 
   fun evalDtyKind context dtyKind = 
       case dtyKind of

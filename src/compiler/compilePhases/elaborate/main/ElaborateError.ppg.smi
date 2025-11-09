@@ -10,7 +10,7 @@ _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 structure ElaborateError =
   struct
     exception RuntimeTyNotFound of string
-    exception InvalidOpAssociativity of Symbol.longsymbol
+    exception InvalidOpAssociativity of Longsymbol.longsymbol
     exception AbstypeNotSupported
     exception SigIDFoundInInterface of Symbol.symbol
     exception DerivedFormFunArg
@@ -30,13 +30,13 @@ structure ElaborateError =
     exception NonVariablePatternInValRec
     exception NonfixExpected of string
     exception InfixRequired
-    exception InfixUsedWithoutOP of Symbol.longsymbol
+    exception InfixUsedWithoutOP of Longsymbol.longsymbol
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound
 (*
     exception ArgWithInfixID of Symbol.longsymbol
 *)
-    exception EndWithInfixID of Symbol.longsymbol
+    exception EndWithInfixID of Longsymbol.longsymbol
     exception DuplicateVarNameInValRec of Symbol.symbol
     exception DuplicateValDesc of Symbol.symbol
     exception DuplicateTypeNameInDatatype of Symbol.symbol
@@ -51,7 +51,7 @@ structure ElaborateError =
     exception DuplicateConstructorNameInException of Symbol.symbol
     exception DuplicateConstructorNameInDatatype of Symbol.symbol
     exception BindReservedName of Symbol.symbol
-    exception BeginWithInfixID of Symbol.longsymbol
+    exception BeginWithInfixID of Longsymbol.longsymbol
     exception ArityMismatchInTypeDeclaration of {given:int, tyCon:Symbol.symbol,
                                                  wants:int}
     exception InvalidPatternForJsonCase

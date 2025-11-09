@@ -13,39 +13,39 @@ structure NameEvalError =
   struct    
     type code = string
     exception CyclicKind of (code * {tvarList: IDCalc.tvar list})
-    exception IllegalBuiltinTy of code * {symbol: Symbol.longsymbol}
-    exception InvalidOverloadInst of code * {longsymbol: Symbol.longsymbol}
+    exception IllegalBuiltinTy of code * {symbol: Longsymbol.longsymbol}
+    exception InvalidOverloadInst of code * {longsymbol: Longsymbol.longsymbol}
     exception FFIFunTyIsNotAllowedHere of code * PatternCalc.ffiTy
-    exception ProvideFunctorMismatch of code * {longsymbol: Symbol.longsymbol}
+    exception ProvideFunctorMismatch of code * {longsymbol: Longsymbol.longsymbol}
     exception ProvideFunparamMismatch of code * 
-                                         {longsymbol: Symbol.longsymbol}
-    exception ProvideRedundantCon of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideUndefinedStr of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideStrRep of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideUndefinedFunctorName of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideUndefinedCon of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideConType of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideRuntimeType of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideEquality of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideArity of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideExceptionRepID of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideExceptionRep of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideExceptionDef of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideExceptionType of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideOpaqueExpected of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideDtyExpected of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideInequalTfun of code * {longsymbol: Symbol.longsymbol}
+                                         {longsymbol: Longsymbol.longsymbol}
+    exception ProvideRedundantCon of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideUndefinedStr of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideStrRep of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideUndefinedFunctorName of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideUndefinedCon of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideConType of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideRuntimeType of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideEquality of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideArity of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideExceptionRepID of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideExceptionRep of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideExceptionDef of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideExceptionType of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideOpaqueExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideDtyExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideInequalTfun of code * {longsymbol: Longsymbol.longsymbol}
     exception ProvideUndefinedException of code * 
-                                           {longsymbol: Symbol.longsymbol}
+                                           {longsymbol: Longsymbol.longsymbol}
     exception ProvideUndefinedTypeName of code * 
-                                          {longsymbol: Symbol.longsymbol}
-    exception ProvideVariableAlias of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideVarIDExpected of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideUndefinedID of code * {longsymbol: Symbol.longsymbol}
+                                          {longsymbol: Longsymbol.longsymbol}
+    exception ProvideVariableAlias of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideVarIDExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideUndefinedID of code * {longsymbol: Longsymbol.longsymbol}
     exception ProvideUndefinedFunctor of (code * {symbol: Symbol.symbol})
-    exception ProvideIDType of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideOverload of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideBuiltIn of code * {longsymbol: Symbol.longsymbol}
+    exception ProvideIDType of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideOverload of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideBuiltIn of code * {longsymbol: Longsymbol.longsymbol}
     exception InterfaceMisMatchNotFoundFunctor of code * {symbol: Symbol.symbol}
     exception SigMisMatchNotFoundStr of code * {symbol: Symbol.symbol}
     exception SigMisMatchNotFoundVar of code * {symbol: Symbol.symbol}
@@ -55,64 +55,64 @@ structure NameEvalError =
     exception FunctorNotFound of code * {symbol: Symbol.symbol}
     exception SignatureNotFound of code * {symbol: Symbol.symbol}
     exception ExnNotFound of code * {symbol: Symbol.symbol}
-    exception DtyUndefinedInSpec of code * {longsymbol: Symbol.longsymbol}
-    exception StrUndefinedInSpec of code * {longsymbol: Symbol.longsymbol}
-    exception TypUndefinedInSpec of code * {longsymbol: Symbol.longsymbol}
-    exception ExceptionNameUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception ExceptionExpected of code * {longsymbol: Symbol.longsymbol}
-    exception SpecTyExpected of code * {longsymbol: Symbol.longsymbol}
+    exception DtyUndefinedInSpec of code * {longsymbol: Longsymbol.longsymbol}
+    exception StrUndefinedInSpec of code * {longsymbol: Longsymbol.longsymbol}
+    exception TypUndefinedInSpec of code * {longsymbol: Longsymbol.longsymbol}
+    exception ExceptionNameUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception ExceptionExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception SpecTyExpected of code * {longsymbol: Longsymbol.longsymbol}
     exception FunIdUndefined of code * {symbol: Symbol.symbol}
     exception SigIdUndefined of code * {symbol: Symbol.symbol}
-    exception SIGStrUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception SIGShare of code * {longsymbolList: Symbol.longsymbol list}
-    exception SIGVarUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception SIGExnType of code * {longsymbol: Symbol.longsymbol}
-    exception SIGExnExpected of code * {longsymbol: Symbol.longsymbol}
-    exception SIGConExpected of code * {longsymbol: Symbol.longsymbol}
-    exception SIGConType of code * {longsymbol: Symbol.longsymbol}
-    exception SIGEqtype of code * {longsymbol: Symbol.longsymbol}
-    exception SIGConUndefined of code * {longsymbol: Symbol.longsymbol}
+    exception SIGStrUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGShare of code * {longsymbolList: Longsymbol.longsymbol list}
+    exception SIGVarUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGExnType of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGExnExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGConExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGConType of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGEqtype of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGConUndefined of code * {longsymbol: Longsymbol.longsymbol}
     exception SIGConNotExported of code * 
                                    {conSymbol: Symbol.symbol,
-                                    typSymbol: Symbol.longsymbol}
-    exception SIGConNotFound of code * {longsymbol: Symbol.longsymbol}
-    exception SIGConNotFoundInDty of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyrepUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyUndefined of code * {longsymbol: Symbol.longsymbol}
+                                    typSymbol: Longsymbol.longsymbol}
+    exception SIGConNotFound of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGConNotFoundInDty of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyrepUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyUndefined of code * {longsymbol: Longsymbol.longsymbol}
     exception SigErrorInSigShare of code * 
-                                    {longsymbolList: Symbol.longsymbol list}
-    exception EqtypeInSigwhere of code * {longsymbol: Symbol.longsymbol}
+                                    {longsymbolList: Longsymbol.longsymbol list}
+    exception EqtypeInSigwhere of code * {longsymbol: Longsymbol.longsymbol}
     exception EqtypeInSigShare of code * 
-                                  {longsymbolList: Symbol.longsymbol list}
+                                  {longsymbolList: Longsymbol.longsymbol list}
     exception ArityErrorInSigShare of code * 
-                                      {longsymbolList: Symbol.longsymbol list}
+                                      {longsymbolList: Longsymbol.longsymbol list}
     exception ArityErrorInSigwhere of code * 
-                                      {longsymbolList: Symbol.longsymbol list}
-    exception TypeErrorInSigwhere of code * {longsymbol: Symbol.longsymbol}
-    exception TypUndefinedInSigshare of code * {longsymbol: Symbol.longsymbol}
-    exception TypUndefinedInSigwhere of code * {longsymbol: Symbol.longsymbol}
-    exception SIGTypUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyrepType of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyrepId of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyrepRequired of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyMismatch of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyRequired of code * {longsymbol: Symbol.longsymbol}
-    exception SIGTyconArity of code * {longsymbol: Symbol.longsymbol}
-    exception SIGDtyArity of code * {longsymbol: Symbol.longsymbol}
-    exception SIGTypconMismatch of code * {longsymbol: Symbol.longsymbol}
-    exception SIGTypDefExpected of code * {longsymbol: Symbol.longsymbol}
-    exception SIGIlleagalShare of code * {longsymbol: Symbol.longsymbol}
-    exception SIGIlleagalRealizer of code * {longsymbol: Symbol.longsymbol}
-    exception SIGArity of code * {longsymbol: Symbol.longsymbol}
-    exception SIGConNotInSig of code * {longsymbol: Symbol.longsymbol}
-    exception TypArity of code * {longsymbol: Symbol.longsymbol}
-    exception VarPatExpected of code * {longsymbol: Symbol.longsymbol}
-    exception DataTypeNameExpected of code * {longsymbol: Symbol.longsymbol}
-    exception ExnExpected of code * {longsymbol: Symbol.longsymbol}
-    exception ExnUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception DataTypeNameUndefined of code * {longsymbol: Symbol.longsymbol}
-    exception StructureNameUndefined of code * {longsymbol : Symbol.longsymbol}
-    exception StructureRepOfFuncrorArgInInterface of code * {longsymbol : Symbol.longsymbol}
+                                      {longsymbolList: Longsymbol.longsymbol list}
+    exception TypeErrorInSigwhere of code * {longsymbol: Longsymbol.longsymbol}
+    exception TypUndefinedInSigshare of code * {longsymbol: Longsymbol.longsymbol}
+    exception TypUndefinedInSigwhere of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGTypUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyrepType of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyrepId of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyrepRequired of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyMismatch of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyRequired of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGTyconArity of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGDtyArity of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGTypconMismatch of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGTypDefExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGIlleagalShare of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGIlleagalRealizer of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGArity of code * {longsymbol: Longsymbol.longsymbol}
+    exception SIGConNotInSig of code * {longsymbol: Longsymbol.longsymbol}
+    exception TypArity of code * {longsymbol: Longsymbol.longsymbol}
+    exception VarPatExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception DataTypeNameExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception ExnExpected of code * {longsymbol: Longsymbol.longsymbol}
+    exception ExnUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception DataTypeNameUndefined of code * {longsymbol: Longsymbol.longsymbol}
+    exception StructureNameUndefined of code * {longsymbol : Longsymbol.longsymbol}
+    exception StructureRepOfFuncrorArgInInterface of code * {longsymbol : Longsymbol.longsymbol}
     exception FunctorNameUndefined of code * {symbol : Symbol.symbol}
     exception DuplicateDtyInSpec of code * Symbol.symbol
     exception DuplicateConInSpec of code * Symbol.symbol
@@ -140,23 +140,23 @@ structure NameEvalError =
     exception DuplicateRecordLabelInPat of code * RecordLabel.label
     exception DuplicateRecordLabelInUpdate of code * RecordLabel.label
     exception DuplicateSigname of code * Symbol.symbol
-    exception ImproperSigshare of code * {longsymbol: Symbol.longsymbol}
-    exception ImproperSigwhere of code * {longsymbol: Symbol.longsymbol}
+    exception ImproperSigshare of code * {longsymbol: Longsymbol.longsymbol}
+    exception ImproperSigwhere of code * {longsymbol: Longsymbol.longsymbol}
     exception NonConstructor of code * {pat:PatternCalc.plpat}
     exception IlleagalFunID of code * {pat:PatternCalc.plpat}
     exception TvarNotFound of code * {symbol: Symbol.symbol}
-    exception TypNotFound of code * {longsymbol: Symbol.longsymbol}
-    exception VarNotFound of code * {longsymbol: Symbol.longsymbol}
-    exception ConNotFound of code * {longsymbol: Symbol.longsymbol}
-    exception VarOrConNotFound of code * {longsymbol: Symbol.longsymbol}
+    exception TypNotFound of code * {longsymbol: Longsymbol.longsymbol}
+    exception VarNotFound of code * {longsymbol: Longsymbol.longsymbol}
+    exception ConNotFound of code * {longsymbol: Longsymbol.longsymbol}
+    exception VarOrConNotFound of code * {longsymbol: Longsymbol.longsymbol}
     exception BuiltinTyNotFound of code * {symbol: Symbol.symbol}
     exception RuntimeTyNotFound of code * {symbol: Symbol.symbol}
     exception PrimitiveNotFound of code * {symbol: Symbol.symbol}
     exception FunctorParamRestriction of code * 
-                                         {longsymbol: Symbol.longsymbol}
-    exception StrNotFound of code * {longsymbol: Symbol.longsymbol}
-    exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
-    exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
+                                         {longsymbol: Longsymbol.longsymbol}
+    exception StrNotFound of code * {longsymbol: Longsymbol.longsymbol}
+    exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Longsymbol.longsymbol})
+    exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Longsymbol.longsymbol})
     exception InvalidKind of code * AbsynTy.kind
     exception InvalidKindName of code * string
     exception FlexRecordNotAllowed of code * AbsynTy.ty

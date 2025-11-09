@@ -489,7 +489,7 @@ in
       evalKindedTvarList false tvarEnv env tvars
  
   fun evalDatatype 
-        (path:Symbol.longsymbol)
+        (path:Longsymbol.longsymbol)
         (env:V.env) 
         (datbindList:PatternCalc.datbind list, loc:Loc.loc) 
        : NameEvalEnv.env * IDCalc.icdecl list

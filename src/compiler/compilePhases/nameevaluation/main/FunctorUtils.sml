@@ -267,15 +267,15 @@ in
                      in
                        ( 
                         tfv := I.REALIZED{id= id, tfun=tfun};
-                        LongsymbolEnv.insert(extraTvarsMap, SymbolWithLoc.toLongsymbol path, tvar))
+                        Longsymbol.Map.insert(extraTvarsMap, SymbolWithLoc.toLongsymbol path, tvar))
                      end
                    | _ => extraTvarsMap
                   )
                 | _ => raise bug "non spec tfv"
               )
-              LongsymbolEnv.empty
+              Longsymbol.Map.empty
               specTfvs
-        val extraTvars = LongsymbolEnv.listItems extraTvarsMap
+        val extraTvars = Longsymbol.Map.listItems extraTvarsMap
         val pathTfvListList = L.setLiftedTysSpecEnv argSpecEnv
 (*
 val _ = U.print "argSpecEnv before materializeEnv\n"

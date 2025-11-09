@@ -552,7 +552,7 @@ in
       in
         case staticLongsymbolOpt of
           SOME longsymbol => SymbolWithLoc.longsymbolToString longsymbol
-        | NONE => "?." ^ Symbol.longsymbolToString longsymbol
+        | NONE => "?." ^ Longsymbol.toString longsymbol
           handle Bug.Bug _ => "?"
       end
           handle Bug.Bug _ => "??"

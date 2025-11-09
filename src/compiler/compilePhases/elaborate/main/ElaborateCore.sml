@@ -66,7 +66,7 @@ struct
   type loc = Loc.loc
   val noloc = Loc.noloc
   type symbol = Symbol.symbol
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
 
   val mkSymbol = SymbolWithLoc.mkSymbol
   val mkLongsymbol  = SymbolWithLoc.mkLongsymbol
@@ -312,7 +312,7 @@ struct
 
   fun beginWithInfixError ((ids, loc) : A.longvid) =
       EU.enqueueError
-        (loc, E.BeginWithInfixID (Symbol.fromSymbolList (map #1 ids)))
+        (loc, E.BeginWithInfixID (Longsymbol.fromSymbolList (map #1 ids)))
 
   fun resolveInfixError getLongsymbol (Fixity.Conflict, _, loc) =
       EU.enqueueError (loc, E.InvalidFixityPrecedence)
@@ -403,7 +403,7 @@ struct
    *)
   fun resolveInfixExp env elist =
       let
-        fun getLongsymbol (A.EXPID (_, (ids, _), _)) = Symbol.fromSymbolList (map #1 ids)
+        fun getLongsymbol (A.EXPID (_, (ids, _), _)) = Longsymbol.fromSymbolList (map #1 ids)
           | getLongsymbol exp = raise Bug.Bug "getLongsymbol expects EXPID."
         fun elab (Fixity.APP (x, y, loc)) =
             PC.PLAPPM (elab x, [elab y], loc)

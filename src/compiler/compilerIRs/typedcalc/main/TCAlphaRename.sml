@@ -14,7 +14,7 @@ local
   exception DuplicateBtv
 
   type ty = T.ty
-  type longsymbol = Symbol.longsymbol
+  type longsymbol = Longsymbol.longsymbol
   type btvEnv = T.kind BoundTypeVarID.Map.map
   type varInfo = T.varInfo
 

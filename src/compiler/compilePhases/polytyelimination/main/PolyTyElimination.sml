@@ -600,7 +600,7 @@ struct
            NONE => raise bug "analyzeExnCon: TPEXN"
          | SOME {ty,...} => (C.EXN (exnInfo # {ty = ty}), ty))
       | C.EXEXN exExnInfo =>
-        (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
+        (case Longsymbol.Map.find (#exExnEnv (#env env), #path exExnInfo) of
            NONE => raise bug "analyzeExnCon: TPEXEXN"
          | SOME {ty,...} => (C.EXEXN (exExnInfo # {ty = ty}), ty))
 
@@ -736,16 +736,16 @@ struct
          | SOME {ty,...} =>
            D.TPEXNTAG {exnInfo = exnInfo # {ty = ty}, loc = loc})
       | C.TPEXEXNTAG {exExnInfo, loc} =>
-        (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
+        (case Longsymbol.Map.find (#exExnEnv (#env env), #path exExnInfo) of
            NONE => raise bug "analyzeExp: TPEXEXNTAG"
          | SOME {ty,...} =>
            D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
       | C.TPEXVAR (var, loc) =>
-        (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
+        (case Longsymbol.Map.find (#exVarEnv (#env env), #path var) of
            NONE => 
            (
             print "TPEXVAR\n";
-            print (Symbol.longsymbolToString (#path var));
+            print (Longsymbol.toString (#path var));
             print "\n";
             raise bug "analyzeExp: TPEXVAR"
            )
@@ -1728,7 +1728,7 @@ struct
            NONE => raise bug "compileExnCon: TPEXN"
          | SOME {ty,...} => C.EXN (exnInfo # {ty = ty}))
       | C.EXEXN exExnInfo =>
-        (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
+        (case Longsymbol.Map.find (#exExnEnv (#env env), #path exExnInfo) of
            NONE => raise bug "compileExnCon: TPEXEXN"
          | SOME {ty,...} => C.EXEXN (exExnInfo # {ty = ty}))
 
@@ -1787,16 +1787,16 @@ struct
          | SOME {ty,...} =>
            D.TPEXNTAG {exnInfo = exnInfo # {ty = ty}, loc = loc})
       | C.TPEXEXNTAG {exExnInfo, loc} =>
-        (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
+        (case Longsymbol.Map.find (#exExnEnv (#env env), #path exExnInfo) of
            NONE => raise bug "compileExp: TPEXNTAG"
          | SOME {ty,...} =>
            D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
       | C.TPEXVAR (var, loc) =>
-        (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
+        (case Longsymbol.Map.find (#exVarEnv (#env env), #path var) of
            NONE => 
            (
             print "TPEXVAR\n";
-            print (Symbol.longsymbolToString (#path var));
+            print (Longsymbol.toString (#path var));
             print "\n";
             raise bug "compileExp: TPEXVAR"
            )

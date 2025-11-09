@@ -12,7 +12,7 @@ struct
   structure I = IDCalc
   structure T = Types
   structure E = EvalIty
-  structure L = LongsymbolEnv
+  structure L = Longsymbol.Map
   structure UE = UserLevelPrimitiveError
 
   val analyzeIdRefOptRef =
@@ -35,11 +35,11 @@ struct
       | NONE => raise Bug.Bug "requireEnv in UserLevelPrimitive not set"
 
   val stack =
-      ref LongsymbolEnv.empty
-      : IDCalc.exInfo LongsymbolEnv.map ref
+      ref Longsymbol.Map.empty
+      : IDCalc.exInfo Longsymbol.Map.map ref
 
   fun insert exInfo =
-      stack := LongsymbolEnv.insert (!stack, SymbolWithLoc.toLongsymbol (#longsymbol exInfo), exInfo)
+      stack := Longsymbol.Map.insert (!stack, SymbolWithLoc.toLongsymbol (#longsymbol exInfo), exInfo)
 
   exception UserLevelPrimError of Loc.loc * exn
   exception IDNotFound
@@ -371,8 +371,8 @@ struct
 
   val REIFY_exInfo_RecordLabelFromString =
       getExVar ["RecordLabel", "fromString"]
-  val REIFY_exInfo_SymbolFromStringList =
-      getExVar ["Symbol", "fromStringList"]
+  val REIFY_exInfo_LongsymbolFromStringList =
+      getExVar ["Longsymbol", "fromStringList"]
   val REIFY_exInfo_TyRep =
       getExVar ["ReifiedTy", "TyRep"]
   val REIFY_exInfo_TyRepToReifiedTy =

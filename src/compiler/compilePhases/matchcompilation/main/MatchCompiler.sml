@@ -64,7 +64,7 @@ local
   structure ME = MatchError
   (* structure S = Symbol *)
   fun bug s = Bug.Bug ("MatchCompiler: " ^ s)
-  type path = Symbol.longsymbol
+  type path = Longsymbol.longsymbol
   type constant = A.constant
   type conInfo = T.conInfo
 

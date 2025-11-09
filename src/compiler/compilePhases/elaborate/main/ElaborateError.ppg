@@ -12,7 +12,7 @@ struct
    * @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar
    * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
@@ -34,7 +34,7 @@ struct
    * @format(id) "expression" +d "or" +d "pattern" +d "begins" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  BeginWithInfixID of Symbol.longsymbol
+  BeginWithInfixID of Longsymbol.longsymbol
 
   and
   (**
@@ -202,14 +202,14 @@ struct
    * @format(id) "expression" +d "or" +d "pattern" +d "ends" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  EndWithInfixID of Symbol.longsymbol
+  EndWithInfixID of Longsymbol.longsymbol
 
 (*
   and
   (*%
    * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
    *)
- ArgWithInfixID of Symbol.longsymbol
+ ArgWithInfixID of Longsymbol.longsymbol
 *)
 
   and
@@ -229,7 +229,7 @@ struct
    * @format(id) "infix" +d "operator" +d id +d "used" +d "without" +d
    *            "\"op\"" +d "in" +d "fun" +d "dec"
    *)
-  InfixUsedWithoutOP of Symbol.longsymbol
+  InfixUsedWithoutOP of Longsymbol.longsymbol
 
   and
   (*%
@@ -389,7 +389,7 @@ struct
    * "operators" +d "of" +d "same" +d "precedence" +d "with" +d "mixed" +d
    * "associativities:" +d id
    *)
-  InvalidOpAssociativity of Symbol.longsymbol
+  InvalidOpAssociativity of Longsymbol.longsymbol
 
   and
   (*%

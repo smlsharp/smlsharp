@@ -44,13 +44,13 @@ struct
                        topEnv: NameEvalEnv.topEnv} InterfaceID.Map.map
   val evalPitopdecList : IDCalc.version
                          -> NameEvalEnv.topEnv
-                         -> LongsymbolSet.set * PatternCalcInterface.pitopdec list
-                         -> LongsymbolSet.set * NameEvalEnv.topEnv * IDCalc.icdecl list
+                         -> Longsymbol.Set.set * PatternCalcInterface.pitopdec list
+                         -> Longsymbol.Set.set * NameEvalEnv.topEnv * IDCalc.icdecl list
   val evalPistr : IDCalc.version
                   -> SymbolWithLoc.longsymbol
                   -> NameEvalEnv.topEnv
-                     -> LongsymbolSet.set * PatternCalcInterface.pistrexp
-                        -> LongsymbolSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list
+                     -> Longsymbol.Set.set * PatternCalcInterface.pistrexp
+                        -> Longsymbol.Set.set * NameEvalEnv.strEntry * IDCalc.icdecl list
   val internalizeEnv : NameEvalEnv.env -> NameEvalEnv.env
   val evalInterfaces : NameEvalEnv.topEnv
                        -> PatternCalcInterface.interfaceDec list

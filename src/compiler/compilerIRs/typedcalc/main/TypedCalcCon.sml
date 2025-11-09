@@ -832,26 +832,26 @@ struct
   type env =
       {
         exnEnv : Types.exnInfo ExnID.Map.map,
-        exExnEnv : Types.exExnInfo LongsymbolEnv.map,
+        exExnEnv : Types.exExnInfo Longsymbol.Map.map,
         varEnv : Types.varInfo VarID.Map.map,
-        exVarEnv : Types.exVarInfo LongsymbolEnv.map,
+        exVarEnv : Types.exVarInfo Longsymbol.Map.map,
         btvEnv : Types.kind BoundTypeVarID.Map.map
       }
 
   val emptyEnv : env =
       {
         exnEnv = ExnID.Map.empty,
-        exExnEnv = LongsymbolEnv.empty,
+        exExnEnv = Longsymbol.Map.empty,
         varEnv = VarID.Map.empty,
-        exVarEnv = LongsymbolEnv.empty,
+        exVarEnv = Longsymbol.Map.empty,
         btvEnv = BoundTypeVarID.Map.empty
       }
 
   fun extendEnv (env1:env, env2:env) : env =
       {exnEnv = ExnID.Map.unionWith #2 (#exnEnv env1, #exnEnv env2),
-       exExnEnv = LongsymbolEnv.unionWith #2 (#exExnEnv env1, #exExnEnv env2),
+       exExnEnv = Longsymbol.Map.unionWith #2 (#exExnEnv env1, #exExnEnv env2),
        varEnv = VarID.Map.unionWith #2 (#varEnv env1, #varEnv env2),
-       exVarEnv = LongsymbolEnv.unionWith #2 (#exVarEnv env1, #exVarEnv env2),
+       exVarEnv = Longsymbol.Map.unionWith #2 (#exVarEnv env1, #exVarEnv env2),
        btvEnv = BoundTypeVarID.Map.unionWith #2 (#btvEnv env1, #btvEnv env2)}
 
   fun exnEnv x = emptyEnv # {exnEnv = x}
@@ -870,8 +870,8 @@ struct
   fun makeExExnEnv l =
       exExnEnv
         (foldl
-           (fn (x, z) => LongsymbolEnv.insert (z, #path x, x))
-           LongsymbolEnv.empty
+           (fn (x, z) => Longsymbol.Map.insert (z, #path x, x))
+           Longsymbol.Map.empty
            l)
 
   fun makeVarEnv l =
@@ -884,8 +884,8 @@ struct
   fun makeExVarEnv l =
       exVarEnv
         (foldl
-           (fn (x:Types.exVarInfo, z) => LongsymbolEnv.insert (z, #path x, x))
-           LongsymbolEnv.empty
+           (fn (x:Types.exVarInfo, z) => Longsymbol.Map.insert (z, #path x, x))
+           Longsymbol.Map.empty
            l)
 
   fun clsVar (boundtvars, constraints) (var:Types.varInfo) =

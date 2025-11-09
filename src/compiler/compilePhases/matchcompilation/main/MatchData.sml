@@ -67,7 +67,7 @@ in
           (RC.EXN {id=id1,...}, RC.EXN{id=id2,...}) =>
           ExnID.compare(id1, id2)
         | (RC.EXEXN{longsymbol=longsymbol1,...},RC.EXEXN{longsymbol=longsymbol2,...}) => 
-          Symbol.longsymbolCompare(longsymbol1,longsymbol2)
+          Longsymbol.longsymbolCompare(longsymbol1,longsymbol2)
         | (RC.EXEXN _, RC.EXN _) => LESS
         | (RC.EXN _, RC.EXEXN _) => GREATER
   end
@@ -88,7 +88,7 @@ in
           (TC.EXN {id=id1,...}, TC.EXN{id=id2,...}) =>
           ExnID.compare(id1, id2)
         | (TC.EXEXN{path=path1,...},TC.EXEXN{path=path2,...}) =>
-          LongsymbolOrd.compare (path1,path2)
+          Longsymbol.Ord.compare (path1,path2)
         | (TC.EXEXN _, TC.EXN _) => LESS
         | (TC.EXN _, TC.EXEXN _) => GREATER
   end
