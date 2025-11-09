@@ -125,7 +125,7 @@ in
             val newFlatField = flatField tuple
             val newNestField = nestField tuple
           in
-            if RecordLabel.Map.eq 
+            if RecordLabel.Map.equiv
                  eqBaseTerm
                  (currentFlatField, newFlatField) then
               (SOME (R.RECORD currentFlatField), 

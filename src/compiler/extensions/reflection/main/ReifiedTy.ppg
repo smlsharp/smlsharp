@@ -628,7 +628,7 @@ struct
   fun conSetEnvToString conSetEnv =
       SMLFormat.prettyPrint nil (format_conSetEnv conSetEnv)
   fun conSetEnvEq (conSetMap1, conSetMap2) =
-      TypID.Map.eq conSetEq (conSetMap1, conSetMap2)
+      TypID.Map.equiv conSetEq (conSetMap1, conSetMap2)
   fun lookUpConSet (conSetEnv, id) = 
       case TypID.Map.find(conSetEnv, id) of
         NONE => 

@@ -423,7 +423,6 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
@@ -529,12 +528,12 @@ src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/libs/env/main/ISet.o \
@@ -926,7 +925,6 @@ src/unix-utils/main/UnixUtils.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/env/main/ISet.o \
@@ -952,6 +950,7 @@ src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
+src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \
@@ -1254,11 +1253,10 @@ src/smlformat/formatlib/main/BasicFormatters.o \
 src/smlformat/formatlib/main/PrettyPrinter2.o \
 src/smlformat/formatlib/main/SMLFormat.o \
 src/smlnj-lib/Util/lib-base.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
+src/smlnj-lib/Util/binary-map-fn.o \
 src/smlnj-lib/Util/binary-set-fn.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
-src/smlnj-lib/Util/binary-map-fn.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
@@ -1464,7 +1462,6 @@ src/unix-utils/main/UnixUtils.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/env/main/ISet.o \
@@ -1490,6 +1487,7 @@ src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
+src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \
@@ -2063,7 +2061,6 @@ src/compiler/libs/digest/main/SHA3.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
 src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
@@ -2087,6 +2084,7 @@ src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
+src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
@@ -3579,7 +3577,6 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
-src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
@@ -3605,6 +3602,7 @@ src/compiler/libs/env/main/IOrd.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
+src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \

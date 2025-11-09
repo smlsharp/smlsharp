@@ -20,7 +20,7 @@ struct
     type ord_key = symbol
     val compare = compare
   end
-  structure Map = BinaryMapFn2(Ord)
+  structure Map = BinaryMapFn(Ord)
   structure Set = BinarySetFn(Ord)
 end
 
@@ -53,6 +53,6 @@ struct
     type ord_key = longsymbol
     val compare = compare
   end
-  structure Map = BinaryMapFn2(Ord)
+  structure Map = BinaryMapFn(Ord)
   structure Set = BinarySetFn(Ord)
 end

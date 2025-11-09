@@ -104,6 +104,6 @@ struct
        tag = lubTagKind (t1, t2),
        record = lubRecKind (r1, r2)}
   fun eqKind ({tag=t1, size=s1, record=r1}, {tag=t2, size=s2, record=r2}) =
-      t1 = t2 andalso s1 = s2 andalso RecordLabel.Map.eq (op =) (r1, r2)
+      t1 = t2 andalso s1 = s2 andalso RecordLabel.Map.equiv (op =) (r1, r2)
 
 end

@@ -162,5 +162,7 @@ struct
   type ord_key = SymbolWithLoc.symbol
   val compare = SymbolWithLoc.symbolCompare
 end
+
 structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)
+
 structure SymbolWithLocSet = BinarySetFn(SymbolWithLocOrd)

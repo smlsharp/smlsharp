@@ -25,12 +25,6 @@ struct
   val insert : 'a map * Key.ord_key * 'a -> 'a map
   val insert' : (Key.ord_key * 'a) * 'a map -> 'a map
 
-  (* same as insert except that it invokes a function when there is an old item.*)
-  val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
-  (* same as insertWith except that the extra function takes the key in the map.*)
-  val insertWithi : (Key.ord_key * 'a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
-  val insertWithi2 : (Key.ord_key * 'a * 'a -> 'a) -> 'a map * Key.ord_key * 'a -> 'a map
-
   val find : 'a map * Key.ord_key -> 'a option
 
   (* Same as find except that it retruns the key in the map.  *)
@@ -62,20 +56,11 @@ struct
   val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
   val intersectWithi : (Key.ord_key * 'a * 'b -> 'c)
                        -> 'a map * 'b map -> 'c map
-
-  (* same as intersectWithi except that the extra function takes two pairs of key and value in the map 
-     and the key and the value that should be inserted.   *)
-  val intersectWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c))
-                        -> 'a map * 'b map -> 'c map
   val mergeWith : ('a option * 'b option -> 'c option)
                   -> 'a map * 'b map -> 'c map
   val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option)
                    -> 'a map * 'b map -> 'c map
 
-  (* same as mergeWithi except that the extra function takes two pairs of key and value in the map 
-     and the key and the value that should be inserted.   *)
-  val mergeWithi2 : ((Key.ord_key * 'a) option * (Key.ord_key * 'b) option -> (Key.ord_key * 'c) option)
-                   -> 'a map * 'b map -> 'c map
   val app : ('a -> unit) -> 'a map -> unit
   val appi : (Key.ord_key * 'a -> unit) -> 'a map -> unit
   val map : ('a -> 'b) -> 'a map -> 'b map
@@ -96,9 +81,4 @@ struct
   val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
   val all : ('a -> bool) -> 'a map -> bool
   val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
-
-  val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
-  val subtractByKeyEquiv : ('a * 'a -> bool) -> ('a map * 'a map) -> 'a map
-  val subtractByKeyElemEquiv : ('a * 'a -> bool) -> ('a map * 'a map) -> 'a map
-  val eq : ('a * 'a -> bool) -> ('a map * 'a map) -> bool
 end

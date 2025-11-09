@@ -182,6 +182,7 @@ in
           | _ => T{key=x,value=v,left=left,right=right,cnt= #cnt set}
     fun insert' ((k, x), m) = insert(m, k, x)
 
+(*
     (* Added the following function by Atsushi Ohori.*)
     fun 'a insertWith (f : 'a -> unit) (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
       | insertWith f (T(set as {key,left,right,value,...}),x,v) =
@@ -211,6 +212,7 @@ in
           end
 (* 
   The end of the addition.
+*)
 *)
 
     fun inDomain (set, x) = let 
@@ -508,7 +510,7 @@ in
 	      else intersect (fn (k, a, b) => f(k, b, a)) (m2, m1)
 	  end
 
-
+(*
     (* Added the following function by Atsushi Ohori.*)
     fun ('a, 'b, 'c) intersectWithi2 (f:(Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c)) (m1, m2) = let
 	(* iterate over the elements of m2, checking for membership in m1 *)
@@ -530,6 +532,7 @@ in
 	      then intersect f (m1, m2)
 	      else intersect (fn (X,Y) => f(Y,X)) (m2, m1)
 	  end
+*)
 
     fun mergeWith f (m1, m2) = let
 	  fun merge ([], [], m) = m
@@ -566,6 +569,7 @@ in
 	    merge (listItemsi m1, listItemsi m2, empty)
 	  end
 
+(*
     (* Added the following function by Atsushi Ohori.*)
     fun mergeWithi2 f (m1, m2) = let
 	  fun merge ([], [], m) = m
@@ -584,6 +588,7 @@ in
 	  in
 	    merge (listItemsi m1, listItemsi m2, empty)
 	  end
+*)
 
   (* this is a generic implementation of filter.  It should
    * be specialized to the data-structure at some point.
@@ -661,6 +666,7 @@ in
             all'
           end
 
+(*
 (* 2016-12-05 ohori: the following is added *)
     fun 'a difference (elemEq: 'a * 'a -> bool) (a:'a map,b:'a map) : ('a option * 'a option) map = 
         mergeWith 
@@ -686,5 +692,6 @@ in
 
     fun 'a eq (elemEq: 'a * 'a -> bool) (a,b) = 
         isEmpty (difference elemEq (a,b))
+*)
 
   end (* functor BinaryMapFn *)
