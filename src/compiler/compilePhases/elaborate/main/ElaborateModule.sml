@@ -48,10 +48,10 @@ struct
     | elabSequence elab env (elem::elems) =
       let
         val (elems1, env1) = elab env elem
-        val env = SymbolEnv.unionWith #2 (env, env1)
+        val env = Symbol.Map.unionWith #2 (env, env1)
         val (elems2, env2) = elabSequence elab env elems
       in
-        (elems1 @ elems2, SymbolEnv.unionWith #2 (env1, env2))
+        (elems1 @ elems2, Symbol.Map.unionWith #2 (env1, env2))
       end
 
   fun elabBinds elaborator elements =
@@ -256,7 +256,7 @@ struct
       | A.STRLET(strdecs, strexp, loc) =>
           let
             val (plstrdecs, env') = elabStrDecs env strdecs
-            val newenv = SymbolEnv.unionWith #1 (env', env)
+            val newenv = Symbol.Map.unionWith #1 (env', env)
           in
             PC.PLSTRUCTLET(plstrdecs, elabStrExp newenv strexp, loc)
           end
@@ -288,16 +288,16 @@ struct
           end
       | A.STRUCTURE(strbinds,loc) =>
           ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)],
-           SymbolEnv.empty)
+           Symbol.Map.empty)
       | A.STRLOCAL(strdecs1, strdecs2, loc) =>
           let
             val (plstrdecs1, env1) = elabStrDecs env strdecs1
             val (plstrdecs2, env2) =
-              elabStrDecs (SymbolEnv.unionWith #1 (env1, env)) strdecs2
+              elabStrDecs (Symbol.Map.unionWith #1 (env1, env)) strdecs2
           in
             ([PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, loc)], env2)
           end
-      | A.STRSEMICOLON _ => (nil, SymbolEnv.empty)
+      | A.STRSEMICOLON _ => (nil, Symbol.Map.empty)
 
     and elabStrDecs env strdecs = elabSequence elabStrDec env strdecs
 
@@ -402,14 +402,14 @@ struct
           end
       | A.TOPSIGNATURE(sigdecs, loc) =>
           let val plsigdecs = elabBinds elabSigExp sigdecs
-          in ([PC.PLTOPDECSIG(plsigdecs, loc)], SymbolEnv.empty)
+          in ([PC.PLTOPDECSIG(plsigdecs, loc)], Symbol.Map.empty)
           end
       | A.TOPFUNCTOR(funbinds, loc) =>
           let
             val plfunbinds = map (elabFunBind env) funbinds
           in ([PC.PLTOPDECFUN(plfunbinds, loc)
               ],
-              SymbolEnv.empty)
+              Symbol.Map.empty)
           end
 (*
       | A.TOPDECFUN(funbinds, loc) =>
@@ -428,7 +428,7 @@ struct
                    loc),
                 loc),
              loc)],
-         SymbolEnv.empty)
+         Symbol.Map.empty)
 
     and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
       

@@ -18,9 +18,9 @@ in
                 case pitopdec of
                   PI.PIDEC _ => fundeclEnv
                 | PI.PIFUNDEC (funbind as {functorSymbol,...}) => 
-                  SymbolEnv.insert(fundeclEnv, #symbol functorSymbol, funbind)
+                  Symbol.Map.insert(fundeclEnv, #symbol functorSymbol, funbind)
             )
-            SymbolEnv.empty
+            Symbol.Map.empty
             provideList
       in
         fundeclEnv
@@ -28,7 +28,7 @@ in
 
   fun spliceFunbind (funbind as {name, ...}, (funbindsRev, fundeclEnv)) =
       let
-        val (fundeclEnv, providedecl) = SymbolEnv.remove(fundeclEnv, #symbol name)
+        val (fundeclEnv, providedecl) = Symbol.Map.remove(fundeclEnv, #symbol name)
       in
         ({pltopdec=funbind, pitopdec=SOME providedecl}::funbindsRev, fundeclEnv)
       end
@@ -65,7 +65,7 @@ in
             spliceTopdec
             (nil, fundeclEnv)
             topdecsSource
-        val _ = SymbolEnv.app 
+        val _ = Symbol.Map.app
                   (fn {functorSymbol, ...} =>
                       EU.enqueueError
                         (SymbolWithLoc.symbolToLoc functorSymbol,

@@ -37,7 +37,7 @@ struct
 
   fun evalTy (env as (tvarMap, self)) ty =
       case ty of
-        TVAR s => (case SymbolEnv.find (tvarMap, mkSymbol s) of
+        TVAR s => (case Symbol.Map.find (tvarMap, mkSymbol s) of
                      SOME tv => I.TYVAR tv
                    | NONE =>
                      (print "bug tvar not found\n";
@@ -62,7 +62,7 @@ struct
       | FUN(bty1, bty2) =>
         I.TYFUNM([evalTy env bty1], evalTy env bty2)
 
-  val tstrinfoMap = ref SymbolEnv.empty
+  val tstrinfoMap = ref Symbol.Map.empty
 
   fun makeTfun typIdOpt {printName, admitsEq, formals, dtyKind} =
       let
@@ -77,8 +77,8 @@ struct
         val tvarEnv =
             ListPair.foldlEq
               (fn (name, tvar, tvarEnv) =>
-                  SymbolEnv.insert (tvarEnv, mkSymbol name, tvar))
-              SymbolEnv.empty
+                  Symbol.Map.insert (tvarEnv, mkSymbol name, tvar))
+              Symbol.Map.empty
               (formals, formalTvars)
         val tfvSpec =
             {longsymbol = [{symbol = symbol, loc = Loc.noloc}],
@@ -171,7 +171,7 @@ struct
             {tfun=tfun, defRange = Loc.noloc,
              varE=varE, formals=formalTvars, conSpec=conSpec}
       in
-        tstrinfoMap := SymbolEnv.insert (!tstrinfoMap, symbol, tstrInfo);
+        tstrinfoMap := Symbol.Map.insert (!tstrinfoMap, symbol, tstrInfo);
         (tstrInfo, tyCon, ity, ty, conList)
       end
 
@@ -413,7 +413,7 @@ struct
   val ChrExExn = evalExn (["Chr"], NONE)
 
   fun findTstrInfo name =
-      SymbolEnv.find (!tstrinfoMap, name)
+      Symbol.Map.find (!tstrinfoMap, name)
 
   (* 以下は，builtin typesか否かの判定に使用 *)
   val _ = TypID.setReservedId ()

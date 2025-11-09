@@ -15,11 +15,11 @@ struct
   val eqSymbol = SymbolWithLoc.eqSymbol
 
   type tvset = A.tyvar list
-  type btvEnv = {isEq:bool, kind:A.kind} SymbolEnv.map
+  type btvEnv = {isEq:bool, kind:A.kind} Symbol.Map.map
 
   val noloc = Loc.noloc
   val empty = nil : tvset
-  val emptyEnv = SymbolEnv.empty : btvEnv
+  val emptyEnv = Symbol.Map.empty : btvEnv
 
   fun member (set:tvset, (_, (s1, _)):A.tyvar) =
       List.exists (fn (_, (s2, _)) => s1 = s2) set
@@ -52,16 +52,16 @@ struct
 
   fun toBtvEnv (kindedTvars:A.kinded_tyvar list) : btvEnv =
       foldl (fn ((tvar as (isEq, (symbol, loc)), kind, _), btvEnv) =>
-                (if SymbolEnv.inDomain (btvEnv, symbol)
+                (if Symbol.Map.inDomain (btvEnv, symbol)
                  then EU.enqueueError (loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
-                 SymbolEnv.insert
+                 Symbol.Map.insert
                    (btvEnv, symbol, {isEq = isEq, kind = kind})))
-            SymbolEnv.empty
+            Symbol.Map.empty
             kindedTvars
 
   fun bindKindedTvars btvEnv kindedTvars =
-      SymbolEnv.unionWith #2 (btvEnv, toBtvEnv kindedTvars)
+      Symbol.Map.unionWith #2 (btvEnv, toBtvEnv kindedTvars)
 
   fun bindTvars btvEnv tvars =
       bindKindedTvars
@@ -70,7 +70,7 @@ struct
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
       foldl (fn ((isEq, (symbol, _)), btvEnv) =>
-                SymbolEnv.insert
+                Symbol.Map.insert
                   (btvEnv,
                    symbol,
                    {isEq = isEq, kind = A.UNIV (nil, noloc)}))
@@ -92,7 +92,7 @@ struct
       foldl (fn (x, z) => union (z, f x)) empty l
 
   fun tyvarsTvar btvEnv (tv as (_, (symbol, loc)) : A.tyvar) =
-      case SymbolEnv.find (btvEnv, symbol) of
+      case Symbol.Map.find (btvEnv, symbol) of
         NONE => singleton tv
       | SOME {isEq, kind} => (checkEq (tv, isEq); empty)
 
@@ -292,7 +292,7 @@ struct
   fun decideScope tyvarsFn btvEnv (explicitScope, x, loc) =
       let
         val _ = app (fn (tvar as (_, (symbol, _)), _, _) =>
-                        if SymbolEnv.inDomain (btvEnv, symbol)
+                        if Symbol.Map.inDomain (btvEnv, symbol)
                         then EU.enqueueError
                                (loc, E.UserTvarScopedAtOuterDecl {tvar = tvar})
                         else ())
@@ -515,7 +515,7 @@ struct
   fun decide program =
       map decideTopdec program
 
-  fun ftv ty = tyvarsTy SymbolEnv.empty ty
+  fun ftv ty = tyvarsTy Symbol.Map.empty ty
 
   fun tyvarsOverloadInstance inst =
       case inst of

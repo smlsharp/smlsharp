@@ -764,14 +764,14 @@ val _ = U.print "\n"
                         )
                         TvarID.Map.empty
                         tvarPairs
-          val _ = if length (SymbolEnv.listItems conSpec1) = 
-                     length (SymbolEnv.listItems conSpec2)
+          val _ = if length (Symbol.Map.listItems conSpec1) =
+                     length (Symbol.Map.listItems conSpec2)
                   then ()
                   else raiseFail 4
         in
-          SymbolEnv.appi
+          Symbol.Map.appi
             (fn (name, tyOpt1) =>
-                case SymbolEnv.find(conSpec2, name) of
+                case Symbol.Map.find(conSpec2, name) of
                   NONE => raiseFail 5
                 | SOME tyOpt2 => 
                   (case (tyOpt1, tyOpt2) of

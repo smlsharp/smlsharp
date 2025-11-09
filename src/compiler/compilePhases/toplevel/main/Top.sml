@@ -29,7 +29,7 @@ struct
   val emptyNewContext =
       {
         topEnv = NameEvalEnv.emptyTopEnv,
-        fixEnv = SymbolEnv.empty
+        fixEnv = Symbol.Map.empty
       } : newContext
 
   fun printDebug msg = Bug.printError msg
@@ -791,7 +791,7 @@ struct
              loadMode = InterfaceName.ALL,
              outputWarnings = fn l => raise UserError.UserErrors l}
         val context =
-            {fixEnv = SymbolEnv.empty,
+            {fixEnv = Symbol.Map.empty,
              topEnv = NameEvalEnv.emptyTopEnv}
         val (dependency, abunit) = doLoadInterface options [source]
         val (newFixEnv, plunit) = doElabInterface options context abunit

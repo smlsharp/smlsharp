@@ -484,9 +484,9 @@ in
       end
 
   fun SymbolEnvToSymbolSet senv =
-      SymbolEnv.foldli
-      (fn (name,_,set) => SymbolSet.add(set, name))
-      SymbolSet.empty
+      Symbol.Map.foldli
+      (fn (name,_,set) => Symbol.Set.add(set, name))
+      Symbol.Set.empty
       senv
 
   fun staticTyName (typId, envList) =

@@ -1479,7 +1479,7 @@ struct
         elabAbsynExp : A.exp -> P.plexp,
         (* if SOME, we are in a query with concrete FROMs in the context *)
         fromLabels : RecordLabel.Set.set option,
-        fixEnv : (Fixity.fixity * Loc.loc) SymbolEnv.map
+        fixEnv : (Fixity.fixity * Loc.loc) Symbol.Map.map
       }
 
   fun elabOpt f NONE = (emptyRet, NONE)
@@ -1696,7 +1696,7 @@ struct
                 (loc, E.EndWithInfixID (getLongsymbol exp))
           val src =
               map (fn exp as S.ID (false, ([id], _), _) =>
-                      (case SymbolEnv.find (#fixEnv env, #1 id) of
+                      (case Symbol.Map.find (#fixEnv env, #1 id) of
                          SOME (x,loc) => (x, exp, AbsynUtils.sqlExpLoc exp)
                        | NONE => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
                     | exp => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
@@ -2210,16 +2210,16 @@ struct
   fun elaborateExp {elabExp, elabPat} fixEnv sqlexp =
       let
         val fixEnv =
-            SymbolEnv.insert
+            Symbol.Map.insert
               (fixEnv, Symbol.fromString "like", (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
-            SymbolEnv.insert
+            Symbol.Map.insert
               (fixEnv, Symbol.fromString "||", (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
-            SymbolEnv.insert
+            Symbol.Map.insert
               (fixEnv, Symbol.fromString "%", (Fixity.INFIX 7, Loc.noloc))
         val fixEnv =
-            SymbolEnv.insert
+            Symbol.Map.insert
               (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, Loc.noloc))
         val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
       in

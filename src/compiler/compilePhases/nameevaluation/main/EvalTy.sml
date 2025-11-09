@@ -22,29 +22,29 @@ local
   fun bug s = Bug.Bug ("NameEval(EvalTy): " ^ s)
   fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
   fun toLongsymbol (ids, _) = map toSymbol ids
-  type freeTvarEnv = I.tvarId SymbolEnv.map
-  val freeTvarEnv = ref SymbolEnv.empty : freeTvarEnv ref
+  type freeTvarEnv = I.tvarId Symbol.Map.map
+  val freeTvarEnv = ref Symbol.Map.empty : freeTvarEnv ref
   fun findFreeTvarId symbol = 
-      case SymbolEnv.find(!freeTvarEnv, symbol) of
+      case Symbol.Map.find(!freeTvarEnv, symbol) of
         NONE => 
         let
           val id = TvarID.generate()
         in
-          (freeTvarEnv := SymbolEnv.insert(!freeTvarEnv, symbol, id);
+          (freeTvarEnv := Symbol.Map.insert(!freeTvarEnv, symbol, id);
            id)
         end
       | SOME id => id
 in
-  fun resetFreeTvarEnv () = freeTvarEnv := SymbolEnv.empty
-  type tvarEnv = I.tvar SymbolEnv.map
-  val emptyTvarEnv = SymbolEnv.empty : tvarEnv
+  fun resetFreeTvarEnv () = freeTvarEnv := Symbol.Map.empty
+  type tvarEnv = I.tvar Symbol.Map.map
+  val emptyTvarEnv = Symbol.Map.empty : tvarEnv
 
   fun genTvar (tvarEnv:tvarEnv) (isEq, symbol) : tvarEnv * I.tvar =
       let
         val id = TvarID.generate()
         val tvar = {symbol=toSymbol symbol, isEq=isEq, id=id, lifted=false}
       in
-        (SymbolEnv.insert(tvarEnv, #1 symbol, tvar), tvar)
+        (Symbol.Map.insert(tvarEnv, #1 symbol, tvar), tvar)
       end
 
   fun genTvarList (tvarEnv:tvarEnv) tvarList : tvarEnv * I.tvar list =
@@ -122,7 +122,7 @@ in
 
   (* type variable evaluators *)
   fun evalTvar (tvarEnv:tvarEnv) ((isEq, symbol) : A.tyvar) : I.tvar =
-      case SymbolEnv.find(tvarEnv, #1 symbol) of
+      case Symbol.Map.find(tvarEnv, #1 symbol) of
         SOME tvar => tvar
       | NONE =>
         (EU.enqueueError

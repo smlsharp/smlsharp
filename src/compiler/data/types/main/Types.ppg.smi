@@ -57,7 +57,7 @@ struct
           longsymbol : Symbol.longsymbol,
           admitsEq : bool,
           arity : int,
-          conSet : (unit -> ty) option SymbolEnv.map,
+          conSet : (unit -> ty) option Symbol.Map.map,
           conIDSet : ConID.Set.set,
           extraArgs : ty list,
           dtyKind : dtyKind
@@ -109,7 +109,7 @@ struct
         longsymbol : Symbol.longsymbol,
         admitsEq : bool,
         arity : int,
-        conSet : (unit -> ty) option SymbolEnv.map,
+        conSet : (unit -> ty) option Symbol.Map.map,
         conIDSet : ConID.Set.set,
         extraArgs : ty list,
         dtyKind : dtyKind
@@ -205,7 +205,7 @@ struct
         longsymbol : Symbol.longsymbol,
         admitsEq : bool,
         arity : int,
-        conSet : (unit -> ty) option SymbolEnv.map,
+        conSet : (unit -> ty) option Symbol.Map.map,
         conIDSet : ConID.Set.set,
         extraArgs : ty list,
         dtyKind : dtyKind

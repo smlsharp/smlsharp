@@ -17,7 +17,7 @@ structure ElaborateModule =
   struct
     val elabSigExp : Absyn.sigexp -> PatternCalc.plsigexp
     val elabTopDecs
-        : (Fixity.fixity * Loc.loc) SymbolEnv.map
+        : (Fixity.fixity * Loc.loc) Symbol.Map.map
           -> Absyn.topdec list
-          -> PatternCalc.pltopdec list * (Fixity.fixity * Loc.loc) SymbolEnv.map
+          -> PatternCalc.pltopdec list * (Fixity.fixity * Loc.loc) Symbol.Map.map
   end

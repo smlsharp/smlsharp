@@ -174,10 +174,10 @@ struct
         | A.TYPOLY(tvarList, ty, loc) => 
           let
             val shadowNameList =
-                SymbolSet.fromList
+                Symbol.Set.fromList
                   (map (fn ((_, (symbol, _)), _, _) => symbol) tvarList)
             fun newSubstFun  (tyID as (_, (symbol, loc))) =
-                if SymbolSet.member (shadowNameList, symbol)
+                if Symbol.Set.member (shadowNameList, symbol)
                 then A.TYVAR tyID
                 else substFun tyID
           in
@@ -195,11 +195,11 @@ struct
               val tyVarMap = 
                   foldr
                     (fn ((tyVar, destTy), map) =>
-                        SymbolEnv.insert(map, tyVar, destTy))
-                    SymbolEnv.empty
+                        Symbol.Map.insert(map, tyVar, destTy))
+                    Symbol.Map.empty
                     (ListPair.zip(tyVars, argTys))
               fun subst (tyID as (isEq, (symbol, loc))) =
-                  case SymbolEnv.find(tyVarMap, symbol) of
+                  case Symbol.Map.find(tyVarMap, symbol) of
                     NONE =>
                     (enqueueError(loc, E.NotBoundTyvar {tyvar = symbol});
                      A.TYVAR tyID)
@@ -209,8 +209,8 @@ struct
         val typeMap =
             foldr
             (fn (((tyargs, _), (symbol, _), ty, _), map) =>
-                SymbolEnv.insert(map, symbol, (tyargs, ty)))
-            SymbolEnv.empty
+                Symbol.Map.insert(map, symbol, (tyargs, ty)))
+            Symbol.Map.empty
             withTypeBinds
         fun expandInTy ty =
             case ty of
@@ -230,7 +230,7 @@ struct
               in
                 case #1 tyConPath of
                   [tyConName] =>
-                  (case SymbolEnv.find (typeMap, #1 tyConName) of
+                  (case Symbol.Map.find (typeMap, #1 tyConName) of
                      SOME (withTyVars, withTy) =>
                      let
                        val withTyVarNames = map (#1 o #2) withTyVars
@@ -278,10 +278,10 @@ struct
             conbind = map expandInDataCon conbind}
       end
 
-  type env = (fixity * loc) SymbolEnv.map
+  type env = (fixity * loc) Symbol.Map.map
 
   fun extendFixEnv (newFixEnv, fixEnv:env) : env =
-      SymbolEnv.unionWith #1 (newFixEnv, fixEnv)
+      Symbol.Map.unionWith #1 (newFixEnv, fixEnv)
 
   (**************************************************************)
   (* utility functions for infix resolution. *)
@@ -298,7 +298,7 @@ struct
   fun findFixity (fixEnv:env) longvid =
       case longvid of
         ([vid as (symbol, _)], _) =>
-        (case SymbolEnv.find (fixEnv, symbol) of
+        (case Symbol.Map.find (fixEnv, symbol) of
            SOME (v,loc) => 
            let
              val defSym = toSymbol (symbol, loc)
@@ -332,10 +332,10 @@ struct
            in
              (
               elaborated :: elaborateds,
-              SymbolEnv.unionWith #1 (env'', env')
+              Symbol.Map.unionWith #1 (env'', env')
               )
            end)
-          (nil, SymbolEnv.empty)
+          (nil, Symbol.Map.empty)
           elements
       in
         (List.concat(rev elaborateds), env)
@@ -1043,7 +1043,7 @@ struct
                         decls
               in
                 ([PC.PDVAL (#1 tyvs, newDecls, loc)],
-                 SymbolEnv.empty)
+                 Symbol.Map.empty)
               end
             | (nil, recbinds) =>
               let
@@ -1089,7 +1089,7 @@ struct
                       E.DuplicateVarNameInValRec
               in
                 ([PC.PDVALREC(#1 tyvs, elabedBinds, loc)],
-                 SymbolEnv.empty)
+                 Symbol.Map.empty)
               end
             | (valbinds, recbinds) =>
               (* FIXME: not followed the definition *)
@@ -1119,7 +1119,7 @@ struct
                     E.DuplicateVarNameInValRec
           in
             ([PC.PDVALPOLYREC(elabedBinds, loc)],
-             SymbolEnv.empty)
+             Symbol.Map.empty)
           end
         | A.DECFUN ((tyvs, _), fbinds, loc) =>
           let
@@ -1137,7 +1137,7 @@ struct
                     E.DuplicateVarNameInValRec
           in
             ([PC.PDDECFUN (tyvs, elabedFunBinds, loc)],
-             SymbolEnv.empty)
+             Symbol.Map.empty)
           end
         | A.DECTYPE (tyBinds, loc) =>
           let
@@ -1159,7 +1159,7 @@ struct
             checkSymbolDuplication
                 #2
                 newTyBinds E.DuplicateTypeNameInType;
-            ([PC.PDTYPE (newTyBinds, loc)], SymbolEnv.empty)
+            ([PC.PDTYPE (newTyBinds, loc)], Symbol.Map.empty)
           end
         | A.DECDATATYPE (dataBinds, withTypeBinds, loc) =>
           let
@@ -1170,11 +1170,11 @@ struct
               (PC.PDDATATYPE (newDataBinds, loc)) 
               :: (case newWithTypeBinds of
                     [] => [] | _ => [PC.PDTYPE(newWithTypeBinds, loc)]),
-              SymbolEnv.empty
+              Symbol.Map.empty
             )
           end
         | A.DECDATATYPEREP (defSymbol, refLongsymbol, loc) =>
-          ([PC.PDREPLICATEDAT (toSymbol defSymbol, toLongsymbol refLongsymbol, loc)], SymbolEnv.empty)
+          ([PC.PDREPLICATEDAT (toSymbol defSymbol, toLongsymbol refLongsymbol, loc)], Symbol.Map.empty)
         | A.DECABSTYPE (dataBinds, withTypeBinds, decs, loc) =>
           let
             val (newDataBinds, newWithTypeBinds) =
@@ -1207,7 +1207,7 @@ struct
                   checkReservedNameForConstructorBind 
                   (map getExnName exnBinds)
           in
-            ([PC.PDEXD (map elabExnBind exnBinds, loc)], SymbolEnv.empty)
+            ([PC.PDEXD (map elabExnBind exnBinds, loc)], Symbol.Map.empty)
           end
         | A.DECLOCAL (dec1, dec2, loc) => 
           let
@@ -1216,7 +1216,7 @@ struct
           in
             ([PC.PDLOCALDEC(pdecs1, pdecs2, loc)], env2)
           end
-        | A.DECOPEN(longids,loc) => ([PC.PDOPEN(map toLongsymbol longids, loc)], SymbolEnv.empty)
+        | A.DECOPEN(longids,loc) => ([PC.PDOPEN(map toLongsymbol longids, loc)], Symbol.Map.empty)
         | A.DECINFIX (n, idlist, loc) =>
           let
             val n = elabInfixPrec (getOpt (n, "0"), loc)
@@ -1225,8 +1225,8 @@ struct
             (
               [PC.PDINFIXDEC(n, idlist, loc)],
               foldr
-                (fn (x, env) => SymbolEnv.insert (env, #symbol x, (INFIX n, loc)))
-                SymbolEnv.empty
+                (fn (x, env) => Symbol.Map.insert (env, #symbol x, (INFIX n, loc)))
+                Symbol.Map.empty
                 idlist
             )
           end
@@ -1238,8 +1238,8 @@ struct
             (
               [PC.PDINFIXRDEC(n, idlist, loc)],
               foldr
-                (fn (x, env) => SymbolEnv.insert (env, #symbol x, (INFIXR n, loc)))
-                SymbolEnv.empty
+                (fn (x, env) => Symbol.Map.insert (env, #symbol x, (INFIXR n, loc)))
+                Symbol.Map.empty
                 idlist
             )
           end
@@ -1247,12 +1247,12 @@ struct
           (
             [PC.PDNONFIXDEC(map toSymbol idlist, loc)],
             foldr
-                (fn (x, env) => SymbolEnv.insert (env, #1 x, (NONFIX, loc)))
-                SymbolEnv.empty
+                (fn (x, env) => Symbol.Map.insert (env, #1 x, (NONFIX, loc)))
+                Symbol.Map.empty
                 idlist
           )
         | A.DECSEMICOLON _ =>
-          (nil, SymbolEnv.empty)
+          (nil, Symbol.Map.empty)
 
     and elabDecs env decs = elabSequence elabDec env decs
 

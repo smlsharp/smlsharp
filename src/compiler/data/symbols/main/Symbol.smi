@@ -2,7 +2,6 @@ _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
-_require "./Loc.smi"
 
 structure Symbol =
 struct
@@ -23,15 +22,15 @@ struct
   val compareLongsymbol : longsymbol * longsymbol -> order
   val append : longsymbol * symbol -> longsymbol
   val lastSymbol : longsymbol -> symbol
-end
 
-structure SymbolOrd =
-struct
-  type ord_key = Symbol.symbol
-  val compare : ord_key * ord_key -> order
+  structure Ord =
+  struct
+    type ord_key = symbol
+    val compare : ord_key * ord_key -> order
+  end
+  structure Map = BinaryMapFn2(Ord)
+  structure Set = BinarySetFn(Ord)
 end
-structure SymbolEnv = BinaryMapFn2(SymbolOrd)
-structure SymbolSet = BinarySetFn(SymbolOrd)
 
 structure LongsymbolOrd =
 struct

@@ -28,20 +28,20 @@ struct
    *)
   fun checkSymbolDuplication' getName elements makeExn =
     let
-      fun collectDuplication names duplicates [] = SymbolEnv.listItems duplicates
+      fun collectDuplication names duplicates [] = Symbol.Map.listItems duplicates
         | collectDuplication names duplicates (element :: elements) =
           case getName element of
             SOME (symbol as {symbol = name, loc = loc}) =>
               let
                 val newDuplicates =
-                  case SymbolEnv.find(names, name) of
-                    SOME _ => SymbolEnv.insert(duplicates, name, symbol)
+                  case Symbol.Map.find(names, name) of
+                    SOME _ => Symbol.Map.insert(duplicates, name, symbol)
                   | NONE => duplicates
-                val newNames = SymbolEnv.insert(names, name, symbol)
+                val newNames = Symbol.Map.insert(names, name, symbol)
               in collectDuplication newNames newDuplicates elements
               end
           | NONE => collectDuplication names duplicates elements
-      val duplicateNames = collectDuplication SymbolEnv.empty SymbolEnv.empty elements
+      val duplicateNames = collectDuplication Symbol.Map.empty Symbol.Map.empty elements
     in
       app (fn {symbol, loc} => enqueueError(loc, makeExn symbol)) duplicateNames
     end

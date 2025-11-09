@@ -28,7 +28,7 @@ _require local "./NameEvalEnvPrims.smi"
 
 structure EvalTy =
 struct
-  type tvarEnv = IDCalc.tvar SymbolEnv.map
+  type tvarEnv = IDCalc.tvar Symbol.Map.map
   val emptyTvarEnv : tvarEnv
   val genTvar : tvarEnv -> AbsynTy.tyvar -> tvarEnv * IDCalc.tvar
   val genTvarList : tvarEnv -> AbsynTy.tyvar list -> tvarEnv * IDCalc.tvar list

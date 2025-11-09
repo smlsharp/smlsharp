@@ -126,8 +126,8 @@ in
                conSet =
                  SymbolWithLocEnv.foldli
                    (fn (k, v, env) =>
-                       SymbolEnv.insert (env, #symbol k, Option.map argTyFn v))
-                   SymbolEnv.empty
+                       Symbol.Map.insert (env, #symbol k, Option.map argTyFn v))
+                   Symbol.Map.empty
                    conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
                dtyKind = evalDtyKind context dtyKind

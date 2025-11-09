@@ -33,15 +33,15 @@ struct
 
   fun append (x : longsymbol, y) = x @ [y]
   fun lastSymbol (x : longsymbol) = List.last x
-end
 
-structure SymbolOrd =
-struct
-  type ord_key = Symbol.symbol
-  val compare = Symbol.compare
+  structure Ord =
+  struct
+    type ord_key = symbol
+    val compare = compare
+  end
+  structure Map = BinaryMapFn2(Ord)
+  structure Set = BinarySetFn(Ord)
 end
-structure SymbolEnv = BinaryMapFn2(SymbolOrd)
-structure SymbolSet = BinarySetFn(SymbolOrd)
 
 structure LongsymbolOrd =
 struct

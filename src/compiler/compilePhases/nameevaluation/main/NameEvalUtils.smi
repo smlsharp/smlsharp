@@ -104,7 +104,7 @@ structure NameEvalUtils =
                    -> 'b list -> 'a * 'c list
     val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}
                        -> 'b list -> 'a * 'c list
-    val SymbolEnvToSymbolSet : 'a SymbolEnv.map -> SymbolSet.set
+    val SymbolEnvToSymbolSet : 'a Symbol.Map.map -> Symbol.Set.set
     val staticTfunName : NameEvalEnv.env list * IDCalc.tfun -> string
     val staticTyConName : NameEvalEnv.env list * Types.tyCon -> string
   end

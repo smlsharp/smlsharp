@@ -21,7 +21,7 @@ structure ElaborateSQL =
      val elaborateExp
          : {elabExp : Absyn.exp -> PatternCalc.plexp,
             elabPat : Absyn.pat -> PatternCalc.plpat}
-           -> (Fixity.fixity * Loc.loc) SymbolEnv.map
+           -> (Fixity.fixity * Loc.loc) Symbol.Map.map
            -> (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.top
            -> PatternCalc.plexp
   end

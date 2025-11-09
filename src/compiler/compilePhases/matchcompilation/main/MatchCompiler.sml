@@ -497,7 +497,7 @@ in
                raise bug "Non conty in userdefined type"
               )
       in
-        case SymbolEnv.listItems (#conSet tyCon) of
+        case Symbol.Map.listItems (#conSet tyCon) of
           nil => raise Bug.Bug "NON span field in userdefined type"
         | L => List.length L
       end
@@ -973,7 +973,7 @@ in
 	    SEnv.numItems ((#datacon tyCon))
 *)
 	fun getTagNums (tyCon : Types.tyCon) = 
-            case SymbolEnv.listItems (#conSet tyCon) of
+            case Symbol.Map.listItems (#conSet tyCon) of
               nil =>  raise Bug.Bug "NON span field in userdefined type"
             | L => List.length L
               

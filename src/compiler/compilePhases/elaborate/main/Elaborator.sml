@@ -16,20 +16,20 @@ struct
   structure A = AbsynInterfaceLoaded
   structure E = ElaborateError
 
-  type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
+  type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
-      SymbolEnv.unionWith #2 (env1, env2)
+      Symbol.Map.unionWith #2 (env1, env2)
 
   fun fixEnvToLocEnv (env:fixEnv) =
-      SymbolEnv.mapi (fn (k, (_, loc)) => loc) env
+      Symbol.Map.mapi (fn (k, (_, loc)) => loc) env
 
   fun elaborate fixEnv ({interface, topdecsSource}:A.compile_unit) =
       let
         val _ = EU.initializeErrorQueue ()
         val (interface, requireFixEnv, provideFixEnv, topdecsInclude) =
             case interface of
-              NONE => (NONE, SymbolEnv.empty, SymbolEnv.empty, nil)
+              NONE => (NONE, Symbol.Map.empty, Symbol.Map.empty, nil)
             | SOME interface =>
               case ElaborateInterface.elaborate interface of
                 {interface, requireFixEnv, provideFixEnv, topdecsInclude} =>
@@ -47,7 +47,7 @@ struct
 
         (* provide check *)
         val _ =
-            SymbolEnv.mergeWithi
+            Symbol.Map.mergeWithi
               (fn (k, x as SOME loc, NONE) =>
                   (EU.enqueueError (loc, E.ProvideInfixNotDefined k); x)
                 | (k, x, y) => x)

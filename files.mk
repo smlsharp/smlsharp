@@ -886,8 +886,6 @@ src/smlunit/src/main/TextUITestRunner.o \
 src/smlunit/src/main/SMLUnit.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
-src/compiler/libs/toolchain/main/Filename.o \
-src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/thread/main/Myth.o \
 src/thread/main/Concurrent.o \
@@ -899,6 +897,8 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
+src/compiler/libs/toolchain/main/Filename.o \
+src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \
@@ -1203,15 +1203,15 @@ src/smlformat/formatlib/main/SMLFormat.o \
 src/smlnj-lib/Util/lib-base.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/smlnj-lib/Util/binary-set-fn.o \
+src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/RecordLabel.o \
 src/smlnj-lib/Util/binary-map-fn.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
 src/compiler/libs/env/main/SSet.o \
 src/compiler/libs/toolchain/main/Filename.o \
-src/compiler/data/symbols/main/Loc.o \
-src/compiler/data/symbols/main/Symbol.o \
-src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
+src/compiler/data/symbols/main/Loc.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
@@ -1371,8 +1371,6 @@ src/smlunit/src/main/TextUITestRunner.o \
 src/smlunit/src/main/SMLUnit.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
-src/compiler/libs/toolchain/main/Filename.o \
-src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/thread/main/Myth.o \
 src/thread/main/Concurrent.o \
@@ -1384,6 +1382,8 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
+src/compiler/libs/toolchain/main/Filename.o \
+src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \

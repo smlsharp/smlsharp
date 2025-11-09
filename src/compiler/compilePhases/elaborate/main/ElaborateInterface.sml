@@ -24,11 +24,11 @@ struct
   fun toSymbol ((sym, loc):T.vid) = {symbol = sym, loc = loc}
   fun toLongsymbol ((ids, _):T.longvid) = map toSymbol ids
 
-  type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
-  val emptyFixEnv = SymbolEnv.empty : fixEnv
+  type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
+  val emptyFixEnv = Symbol.Map.empty : fixEnv
 
   fun unionFixEnv (env1, env2) =
-      SymbolEnv.mergeWithi
+      Symbol.Map.mergeWithi
         (fn (k, x, NONE) => x
           | (k, NONE, x) => x
           | (k, x as (SOME (_, loc)), y as (SOME _)) =>
@@ -40,43 +40,43 @@ struct
   (* ToDo: integrate expandWithTypesInDataBind in ElaborateCore.sml *)
   type subst =
       {
-        tyvar : T.ty SymbolEnv.map,
-        tycon : Absyn.typbind SymbolEnv.map
+        tyvar : T.ty Symbol.Map.map,
+        tycon : Absyn.typbind Symbol.Map.map
       }
 
   fun maskTyvar ({tyvar, tycon}:subst) (tvars : T.tyvar list) : subst =
       {tycon = tycon,
        tyvar = foldl (fn ((isEq, (symbol, _)), z) =>
-                         if SymbolEnv.inDomain (z, symbol)
-                         then #1 (SymbolEnv.remove (z, symbol))
+                         if Symbol.Map.inDomain (z, symbol)
+                         then #1 (Symbol.Map.remove (z, symbol))
                          else z)
                      tyvar
                      tvars}
 
   fun tyconSubst typbinds : subst =
-      {tyvar = SymbolEnv.empty,
-       tycon = foldl (fn (x, z) => SymbolEnv.insert (z, #1 (#2 x), x))
-                     SymbolEnv.empty
+      {tyvar = Symbol.Map.empty,
+       tycon = foldl (fn (x, z) => Symbol.Map.insert (z, #1 (#2 x), x))
+                     Symbol.Map.empty
                      typbinds}
 
   fun tyvarSubst pairs : subst =
-      {tycon = SymbolEnv.empty,
-       tyvar = foldl (fn ((x, ty), z) => SymbolEnv.insert (z, #symbol x, ty))
-                     SymbolEnv.empty
+      {tycon = Symbol.Map.empty,
+       tyvar = foldl (fn ((x, ty), z) => Symbol.Map.insert (z, #symbol x, ty))
+                     Symbol.Map.empty
                      pairs}
 
   fun substTy subst ty =
       case ty of
         T.TYWILD _ => ty
       | T.TYVAR (tvar as (isEq, (symbol, loc))) =>
-        (case SymbolEnv.find (#tyvar subst, symbol) of
+        (case Symbol.Map.find (#tyvar subst, symbol) of
            NONE => T.TYVAR tvar
          | SOME ty => ty)
       | T.TYVAR_FREE _ => raise Bug.Bug "FREE_TYID to substTy in ElaborateInterface"
       | T.TYRECORD (fields, ifFlex, loc) =>
         T.TYRECORD (substRecordTy subst fields, ifFlex, loc)
       | T.TYCON ((tyList, argLoc), tyCon as ([(symbol, _)], _), loc) =>
-        (case SymbolEnv.find (#tycon subst, symbol) of
+        (case Symbol.Map.find (#tycon subst, symbol) of
            NONE =>
            T.TYCON ((map (substTy subst) tyList, argLoc), tyCon, loc)
          | SOME ((tyvars, _), symbol, ty, loc) =>
@@ -358,14 +358,14 @@ struct
   fun toFixEnv fixity ids =
       foldl unionFixEnv
             emptyFixEnv
-            (map (fn id => SymbolEnv.singleton (#1 id, (fixity, #2 id))) ids)
+            (map (fn id => Symbol.Map.singleton (#1 id, (fixity, #2 id))) ids)
 
   fun elabTopdec itopdec =
       case itopdec of
       I.DEC dec =>
-      (SymbolEnv.empty, map P.PIDEC (elabDec dec))
+      (Symbol.Map.empty, map P.PIDEC (elabDec dec))
     | I.FUNCTOR (funbind, _) =>
-      (SymbolEnv.empty, [elabFunbind funbind])
+      (Symbol.Map.empty, [elabFunbind funbind])
     | I.INFIX (NONE, ids, _) =>
       (toFixEnv (Fixity.INFIX 0) ids, nil)
     | I.INFIX (SOME n, ids, loc) =>
@@ -384,7 +384,7 @@ struct
         val fixEnv = unionFixEnv (fixEnv, fixEnv1)
         val (fixEnv2, decs2) = elabTopdecList fixEnv decs
       in
-        (SymbolEnv.unionWith #2 (fixEnv1, fixEnv2), decs1 @ decs2)
+        (Symbol.Map.unionWith #2 (fixEnv1, fixEnv2), decs1 @ decs2)
       end
 
   fun elaborateTopdecList decs =
@@ -440,7 +440,7 @@ struct
               (fn ({id, ...}, z) =>
                   case InterfaceID.Map.find (interfaceEnv, id) of
                     NONE => raise Bug.Bug "elaborate: id not found"
-                  | SOME fixEnv => SymbolEnv.unionWith #2 (z, fixEnv))
+                  | SOME fixEnv => Symbol.Map.unionWith #2 (z, fixEnv))
               emptyFixEnv
               (requiredIds @ locallyRequiredIds)
       in

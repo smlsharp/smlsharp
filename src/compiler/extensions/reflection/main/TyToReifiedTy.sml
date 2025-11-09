@@ -76,7 +76,7 @@ struct
              val _ = R.setConSet (id, R.emptyConSet)
              val _ = app traverseTy args
              val rigidConSet = 
-                 SymbolEnv.foldli
+                 Symbol.Map.foldli
                    (fn (label, NONE, senv) => 
                        SEnv.insert(senv, Symbol.toString label, NONE)
                      | (label, SOME f, senv) => 
@@ -168,7 +168,7 @@ struct
         else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn loc)) then
           R.DYNAMICty (toReifiedTy loc (oneArg args))
         else if not (isOpaqueTycon tyCon) andalso 
-                not (SymbolEnv.isEmpty (#conSet tyCon)) then
+                not (Symbol.Map.isEmpty (#conSet tyCon)) then
           R.DATATYPEty 
             {longsymbol = #longsymbol tyCon, 
              id = #id tyCon, 

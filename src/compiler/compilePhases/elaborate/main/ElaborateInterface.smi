@@ -21,7 +21,7 @@ _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 
 structure ElaborateInterface =
   struct
-    type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
+    type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
     val elaborate
         : AbsynInterfaceLoaded.interface
           -> {interface : PatternCalcInterface.interface,
