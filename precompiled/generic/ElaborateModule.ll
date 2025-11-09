@@ -10,55 +10,55 @@
 @a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL3env_94 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL3env_288 to void(...)*),i32 -2147483647}>,align 8
 @b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule12elabSequenceE_96 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule12elabSequenceE_289 to void(...)*),i32 -2147483647}>,align 8
 @c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN15ElaborateModule10elabSigExpE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule10elabSigExpE_316 to void(...)*),i32 -2147483647}>,align 8
-@d=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:59.35(1635)\00"}>,align 8
+@d=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:59.35(1647)\00"}>,align 8
 @e=private unnamed_addr constant<{[4x i8],i32,[27x i8]}><{[4x i8]zeroinitializer,i32 -2147483621,[27x i8]c"nilspec found in elaborate\00"}>,align 8
 @f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_170 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_291 to void(...)*),i32 -2147483647}>,align 8
-@g=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:76.33(2262)\00"}>,align 8
+@g=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:76.33(2274)\00"}>,align 8
 @h=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_173 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_292 to void(...)*),i32 -2147483647}>,align 8
 @i=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_175 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_293 to void(...)*),i32 -2147483647}>,align 8
 @j=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_178 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_294 to void(...)*),i32 -2147483647}>,align 8
-@k=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:92.29(2816)\00"}>,align 8
+@k=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:92.29(2828)\00"}>,align 8
 @l=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_181 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_295 to void(...)*),i32 -2147483647}>,align 8
 @m=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_183 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_296 to void(...)*),i32 -2147483647}>,align 8
-@n=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:111.33(3332)\00"}>,align 8
+@n=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:111.33(3344)\00"}>,align 8
 @o=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_186 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_297 to void(...)*),i32 -2147483647}>,align 8
 @p=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_189 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_298 to void(...)*),i32 -2147483647}>,align 8
-@q=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:122.26(3746)\00"}>,align 8
+@q=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:122.26(3758)\00"}>,align 8
 @r=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_192 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_299 to void(...)*),i32 -2147483647}>,align 8
 @s=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_194 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_300 to void(...)*),i32 -2147483647}>,align 8
-@t=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:141.28(4250)\00"}>,align 8
+@t=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:141.28(4262)\00"}>,align 8
 @u=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_197 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_301 to void(...)*),i32 -2147483647}>,align 8
 @v=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL5check_199 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5check_302 to void(...)*),i32 -2147483647}>,align 8
-@w=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:146.28(4469)\00"}>,align 8
+@w=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:146.28(4481)\00"}>,align 8
 @x=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL5check_202 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5check_303 to void(...)*),i32 -2147483647}>,align 8
 @y=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLLL5check_204 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5check_304 to void(...)*),i32 -2147483647}>,align 8
 @z=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLLL5check_206 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL5check_305 to void(...)*),i32 -2147483647}>,align 8
 @A=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_208 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_306 to void(...)*),i32 -2147483647}>,align 8
 @B=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_210 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_307 to void(...)*),i32 -2147483647}>,align 8
 @C=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_212 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_308 to void(...)*),i32 -2147483647}>,align 8
-@D=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:169.27(5344)\00"}>,align 8
+@D=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:169.27(5356)\00"}>,align 8
 @E=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_215 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_309 to void(...)*),i32 -2147483647}>,align 8
 @F=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_217 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_310 to void(...)*),i32 -2147483647}>,align 8
 @G=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL8exnDescs_219 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL8exnDescs_311 to void(...)*),i32 -2147483647}>,align 8
 @H=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_221 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_312 to void(...)*),i32 -2147483647}>,align 8
-@I=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:182.55(5859)\00"}>,align 8
+@I=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:182.55(5871)\00"}>,align 8
 @J=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_224 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_313 to void(...)*),i32 -2147483647}>,align 8
 @K=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule8elabSpecE_227 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule8elabSpecE_314 to void(...)*),i32 -2147483647}>,align 8
-@L=private unnamed_addr constant<{[4x i8],i32,[73x i8]}><{[4x i8]zeroinitializer,i32 -2147483575,[73x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:67.6(1878)\00"}>,align 8
-@M=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:204.6(6610)\00"}>,align 8
+@L=private unnamed_addr constant<{[4x i8],i32,[73x i8]}><{[4x i8]zeroinitializer,i32 -2147483575,[73x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:67.6(1890)\00"}>,align 8
+@M=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:204.6(6622)\00"}>,align 8
 @N=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule10elabStrDecE_235 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule10elabStrDecE_321 to void(...)*),i32 -2147483647}>,align 8
 @O=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL6newenv_255 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL6newenv_317 to void(...)*),i32 -2147483647}>,align 8
-@P=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:211.6(6882)\00"}>,align 8
-@Q=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:249.6(8482)\00"}>,align 8
+@P=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:211.6(6894)\00"}>,align 8
+@Q=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:249.6(8494)\00"}>,align 8
 @R=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule10elabStrDecE_261 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule10elabStrDecE_318 to void(...)*),i32 -2147483647}>,align 8
-@S=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:268.6(9045)\00"}>,align 8
+@S=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:268.6(9057)\00"}>,align 8
 @T=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL9plsigdecs_266 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL9plsigdecs_322 to void(...)*),i32 -2147483647}>,align 8
 @U=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@V,i32 0,i32 0,i32 0),i32 8),i8*null,i32 3}>,align 8
 @V=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"_X\00"}>,align 8
-@W=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:288.6(9818)\00"}>,align 8
+@W=private unnamed_addr constant<{[4x i8],i32,[74x i8]}><{[4x i8]zeroinitializer,i32 -2147483574,[74x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:288.6(9830)\00"}>,align 8
 @X=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"it\00"}>,align 8
 @Y=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@X,i32 0,i32 0,i32 0),i32 8),i8*null,i32 3}>,align 8
-@Z=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:374.6(13106)\00"}>,align 8
+@Z=private unnamed_addr constant<{[4x i8],i32,[75x i8]}><{[4x i8]zeroinitializer,i32 -2147483573,[75x i8]c"src/compiler/compilePhases/elaborate/main/ElaborateModule.sml:374.6(13118)\00"}>,align 8
 @aa=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLLN15ElaborateModule10elabTopDecE_283 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule10elabTopDecE_323 to void(...)*),i32 -2147483647}>,align 8
 @ab=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN15ElaborateModule11elabTopDecsE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN15ElaborateModule11elabTopDecsE_324 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN15ElaborateModule10elabSigExpE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
@@ -176,172 +176,175 @@ n:
 %o=phi i8*[%m,%l],[%c,%p]
 store i8*null,i8**%e,align 8
 %q=icmp eq i8*%o,null
-br i1%q,label%r,label%B
+br i1%q,label%r,label%C
 r:
 store i8*null,i8**%d,align 8
-%s=call i8*@sml_alloc(i32 inreg 20)#0
-%t=getelementptr inbounds i8,i8*%s,i64 -4
-%u=bitcast i8*%t to i32*
-store i32 1342177296,i32*%u,align 4
-%v=bitcast i8*%s to i8**
-store i8*null,i8**%v,align 8
-%w=load i8*,i8**%h,align 8
-%x=getelementptr inbounds i8,i8*%s,i64 8
-%y=bitcast i8*%x to i8**
-store i8*%w,i8**%y,align 8
-%z=getelementptr inbounds i8,i8*%s,i64 16
-%A=bitcast i8*%z to i32*
-store i32 3,i32*%A,align 4
-ret i8*%s
-B:
-%C=bitcast i8*%o to i8**
-%D=load i8*,i8**%C,align 8
-store i8*%D,i8**%e,align 8
-%E=getelementptr inbounds i8,i8*%o,i64 8
-%F=bitcast i8*%E to i8**
-%G=load i8*,i8**%F,align 8
-store i8*%G,i8**%f,align 8
-%H=load i8*,i8**%d,align 8
-%I=getelementptr inbounds i8,i8*%H,i64 16
-%J=bitcast i8*%I to i8*(i8*,i8*)**
-%K=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%J,align 8
-%L=bitcast i8*%H to i8**
-%M=load i8*,i8**%L,align 8
-%N=load i8*,i8**%h,align 8
-%O=call fastcc i8*%K(i8*inreg%M,i8*inreg%N)
-%P=getelementptr inbounds i8,i8*%O,i64 16
-%Q=bitcast i8*%P to i8*(i8*,i8*)**
-%R=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%Q,align 8
-%S=bitcast i8*%O to i8**
-%T=load i8*,i8**%S,align 8
-%U=load i8*,i8**%e,align 8
-store i8*null,i8**%e,align 8
-%V=call fastcc i8*%R(i8*inreg%T,i8*inreg%U)
-%W=bitcast i8*%V to i8**
-%X=load i8*,i8**%W,align 8
-store i8*%X,i8**%e,align 8
-%Y=getelementptr inbounds i8,i8*%V,i64 8
-%Z=bitcast i8*%Y to i8**
-%aa=load i8*,i8**%Z,align 8
-store i8*%aa,i8**%g,align 8
-%ab=call fastcc i8*@_SMLFN9SymbolEnv9unionWithE(i32 inreg 1,i32 inreg 8)
-%ac=getelementptr inbounds i8,i8*%ab,i64 16
-%ad=bitcast i8*%ac to i8*(i8*,i8*)**
-%ae=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ad,align 8
-%af=bitcast i8*%ab to i8**
-%ag=load i8*,i8**%af,align 8
-%ah=call fastcc i8*%ae(i8*inreg%ag,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*))
-%ai=getelementptr inbounds i8,i8*%ah,i64 16
-%aj=bitcast i8*%ai to i8*(i8*,i8*)**
-%ak=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%aj,align 8
-%al=bitcast i8*%ah to i8**
-%am=load i8*,i8**%al,align 8
-store i8*%am,i8**%i,align 8
-%an=call i8*@sml_alloc(i32 inreg 20)#0
-%ao=getelementptr inbounds i8,i8*%an,i64 -4
-%ap=bitcast i8*%ao to i32*
-store i32 1342177296,i32*%ap,align 4
-%aq=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%ar=bitcast i8*%an to i8**
-store i8*%aq,i8**%ar,align 8
-%as=load i8*,i8**%g,align 8
-%at=getelementptr inbounds i8,i8*%an,i64 8
-%au=bitcast i8*%at to i8**
-store i8*%as,i8**%au,align 8
-%av=getelementptr inbounds i8,i8*%an,i64 16
-%aw=bitcast i8*%av to i32*
-store i32 3,i32*%aw,align 4
-%ax=load i8*,i8**%i,align 8
+%s=call fastcc i8*@_SMLFN9SymbolEnv5emptyE(i32 inreg 1,i32 inreg 8)
+store i8*%s,i8**%d,align 8
+%t=call i8*@sml_alloc(i32 inreg 20)#0
+%u=getelementptr inbounds i8,i8*%t,i64 -4
+%v=bitcast i8*%u to i32*
+store i32 1342177296,i32*%v,align 4
+%w=bitcast i8*%t to i8**
+store i8*null,i8**%w,align 8
+%x=load i8*,i8**%d,align 8
+%y=getelementptr inbounds i8,i8*%t,i64 8
+%z=bitcast i8*%y to i8**
+store i8*%x,i8**%z,align 8
+%A=getelementptr inbounds i8,i8*%t,i64 16
+%B=bitcast i8*%A to i32*
+store i32 3,i32*%B,align 4
+ret i8*%t
+C:
+%D=bitcast i8*%o to i8**
+%E=load i8*,i8**%D,align 8
+store i8*%E,i8**%e,align 8
+%F=getelementptr inbounds i8,i8*%o,i64 8
+%G=bitcast i8*%F to i8**
+%H=load i8*,i8**%G,align 8
+store i8*%H,i8**%f,align 8
+%I=load i8*,i8**%d,align 8
+%J=getelementptr inbounds i8,i8*%I,i64 16
+%K=bitcast i8*%J to i8*(i8*,i8*)**
+%L=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%K,align 8
+%M=bitcast i8*%I to i8**
+%N=load i8*,i8**%M,align 8
+%O=load i8*,i8**%h,align 8
+%P=call fastcc i8*%L(i8*inreg%N,i8*inreg%O)
+%Q=getelementptr inbounds i8,i8*%P,i64 16
+%R=bitcast i8*%Q to i8*(i8*,i8*)**
+%S=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%R,align 8
+%T=bitcast i8*%P to i8**
+%U=load i8*,i8**%T,align 8
+%V=load i8*,i8**%e,align 8
+store i8*null,i8**%e,align 8
+%W=call fastcc i8*%S(i8*inreg%U,i8*inreg%V)
+%X=bitcast i8*%W to i8**
+%Y=load i8*,i8**%X,align 8
+store i8*%Y,i8**%e,align 8
+%Z=getelementptr inbounds i8,i8*%W,i64 8
+%aa=bitcast i8*%Z to i8**
+%ab=load i8*,i8**%aa,align 8
+store i8*%ab,i8**%g,align 8
+%ac=call fastcc i8*@_SMLFN9SymbolEnv9unionWithE(i32 inreg 1,i32 inreg 8)
+%ad=getelementptr inbounds i8,i8*%ac,i64 16
+%ae=bitcast i8*%ad to i8*(i8*,i8*)**
+%af=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ae,align 8
+%ag=bitcast i8*%ac to i8**
+%ah=load i8*,i8**%ag,align 8
+%ai=call fastcc i8*%af(i8*inreg%ah,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*))
+%aj=getelementptr inbounds i8,i8*%ai,i64 16
+%ak=bitcast i8*%aj to i8*(i8*,i8*)**
+%al=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%ak,align 8
+%am=bitcast i8*%ai to i8**
+%an=load i8*,i8**%am,align 8
+store i8*%an,i8**%i,align 8
+%ao=call i8*@sml_alloc(i32 inreg 20)#0
+%ap=getelementptr inbounds i8,i8*%ao,i64 -4
+%aq=bitcast i8*%ap to i32*
+store i32 1342177296,i32*%aq,align 4
+%ar=load i8*,i8**%h,align 8
+store i8*null,i8**%h,align 8
+%as=bitcast i8*%ao to i8**
+store i8*%ar,i8**%as,align 8
+%at=load i8*,i8**%g,align 8
+%au=getelementptr inbounds i8,i8*%ao,i64 8
+%av=bitcast i8*%au to i8**
+store i8*%at,i8**%av,align 8
+%aw=getelementptr inbounds i8,i8*%ao,i64 16
+%ax=bitcast i8*%aw to i32*
+store i32 3,i32*%ax,align 4
+%ay=load i8*,i8**%i,align 8
 store i8*null,i8**%i,align 8
-%ay=call fastcc i8*%ak(i8*inreg%ax,i8*inreg%an)
-%az=load i8*,i8**%d,align 8
-%aA=load i8*,i8**%f,align 8
+%az=call fastcc i8*%al(i8*inreg%ay,i8*inreg%ao)
+%aA=load i8*,i8**%d,align 8
+%aB=load i8*,i8**%f,align 8
 store i8*null,i8**%d,align 8
 store i8*null,i8**%f,align 8
-%aB=call fastcc i8*@_SMLLLN15ElaborateModule12elabSequenceE_88(i8*inreg%az,i8*inreg%ay,i8*inreg%aA)
-%aC=bitcast i8*%aB to i8**
-%aD=load i8*,i8**%aC,align 8
-store i8*%aD,i8**%d,align 8
-%aE=getelementptr inbounds i8,i8*%aB,i64 8
-%aF=bitcast i8*%aE to i8**
-%aG=load i8*,i8**%aF,align 8
-store i8*%aG,i8**%f,align 8
-%aH=call fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
-%aI=getelementptr inbounds i8,i8*%aH,i64 16
-%aJ=bitcast i8*%aI to i8*(i8*,i8*)**
-%aK=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%aJ,align 8
-%aL=bitcast i8*%aH to i8**
-%aM=load i8*,i8**%aL,align 8
-store i8*%aM,i8**%h,align 8
-%aN=call i8*@sml_alloc(i32 inreg 20)#0
-%aO=getelementptr inbounds i8,i8*%aN,i64 -4
-%aP=bitcast i8*%aO to i32*
-store i32 1342177296,i32*%aP,align 4
-%aQ=load i8*,i8**%e,align 8
+%aC=call fastcc i8*@_SMLLLN15ElaborateModule12elabSequenceE_88(i8*inreg%aA,i8*inreg%az,i8*inreg%aB)
+%aD=bitcast i8*%aC to i8**
+%aE=load i8*,i8**%aD,align 8
+store i8*%aE,i8**%d,align 8
+%aF=getelementptr inbounds i8,i8*%aC,i64 8
+%aG=bitcast i8*%aF to i8**
+%aH=load i8*,i8**%aG,align 8
+store i8*%aH,i8**%f,align 8
+%aI=call fastcc i8*@_SMLFN4List1_VE(i32 inreg 1,i32 inreg 8)
+%aJ=getelementptr inbounds i8,i8*%aI,i64 16
+%aK=bitcast i8*%aJ to i8*(i8*,i8*)**
+%aL=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%aK,align 8
+%aM=bitcast i8*%aI to i8**
+%aN=load i8*,i8**%aM,align 8
+store i8*%aN,i8**%h,align 8
+%aO=call i8*@sml_alloc(i32 inreg 20)#0
+%aP=getelementptr inbounds i8,i8*%aO,i64 -4
+%aQ=bitcast i8*%aP to i32*
+store i32 1342177296,i32*%aQ,align 4
+%aR=load i8*,i8**%e,align 8
 store i8*null,i8**%e,align 8
-%aR=bitcast i8*%aN to i8**
-store i8*%aQ,i8**%aR,align 8
-%aS=load i8*,i8**%d,align 8
+%aS=bitcast i8*%aO to i8**
+store i8*%aR,i8**%aS,align 8
+%aT=load i8*,i8**%d,align 8
 store i8*null,i8**%d,align 8
-%aT=getelementptr inbounds i8,i8*%aN,i64 8
-%aU=bitcast i8*%aT to i8**
-store i8*%aS,i8**%aU,align 8
-%aV=getelementptr inbounds i8,i8*%aN,i64 16
-%aW=bitcast i8*%aV to i32*
-store i32 3,i32*%aW,align 4
-%aX=load i8*,i8**%h,align 8
+%aU=getelementptr inbounds i8,i8*%aO,i64 8
+%aV=bitcast i8*%aU to i8**
+store i8*%aT,i8**%aV,align 8
+%aW=getelementptr inbounds i8,i8*%aO,i64 16
+%aX=bitcast i8*%aW to i32*
+store i32 3,i32*%aX,align 4
+%aY=load i8*,i8**%h,align 8
 store i8*null,i8**%h,align 8
-%aY=call fastcc i8*%aK(i8*inreg%aX,i8*inreg%aN)
-store i8*%aY,i8**%d,align 8
-%aZ=call fastcc i8*@_SMLFN9SymbolEnv9unionWithE(i32 inreg 1,i32 inreg 8)
-%a0=getelementptr inbounds i8,i8*%aZ,i64 16
-%a1=bitcast i8*%a0 to i8*(i8*,i8*)**
-%a2=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%a1,align 8
-%a3=bitcast i8*%aZ to i8**
-%a4=load i8*,i8**%a3,align 8
-%a5=call fastcc i8*%a2(i8*inreg%a4,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*))
-%a6=getelementptr inbounds i8,i8*%a5,i64 16
-%a7=bitcast i8*%a6 to i8*(i8*,i8*)**
-%a8=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%a7,align 8
-%a9=bitcast i8*%a5 to i8**
-%ba=load i8*,i8**%a9,align 8
-store i8*%ba,i8**%e,align 8
-%bb=call i8*@sml_alloc(i32 inreg 20)#0
-%bc=getelementptr inbounds i8,i8*%bb,i64 -4
-%bd=bitcast i8*%bc to i32*
-store i32 1342177296,i32*%bd,align 4
-%be=load i8*,i8**%g,align 8
+%aZ=call fastcc i8*%aL(i8*inreg%aY,i8*inreg%aO)
+store i8*%aZ,i8**%d,align 8
+%a0=call fastcc i8*@_SMLFN9SymbolEnv9unionWithE(i32 inreg 1,i32 inreg 8)
+%a1=getelementptr inbounds i8,i8*%a0,i64 16
+%a2=bitcast i8*%a1 to i8*(i8*,i8*)**
+%a3=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%a2,align 8
+%a4=bitcast i8*%a0 to i8**
+%a5=load i8*,i8**%a4,align 8
+%a6=call fastcc i8*%a3(i8*inreg%a5,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*))
+%a7=getelementptr inbounds i8,i8*%a6,i64 16
+%a8=bitcast i8*%a7 to i8*(i8*,i8*)**
+%a9=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%a8,align 8
+%ba=bitcast i8*%a6 to i8**
+%bb=load i8*,i8**%ba,align 8
+store i8*%bb,i8**%e,align 8
+%bc=call i8*@sml_alloc(i32 inreg 20)#0
+%bd=getelementptr inbounds i8,i8*%bc,i64 -4
+%be=bitcast i8*%bd to i32*
+store i32 1342177296,i32*%be,align 4
+%bf=load i8*,i8**%g,align 8
 store i8*null,i8**%g,align 8
-%bf=bitcast i8*%bb to i8**
-store i8*%be,i8**%bf,align 8
-%bg=load i8*,i8**%f,align 8
+%bg=bitcast i8*%bc to i8**
+store i8*%bf,i8**%bg,align 8
+%bh=load i8*,i8**%f,align 8
 store i8*null,i8**%f,align 8
-%bh=getelementptr inbounds i8,i8*%bb,i64 8
-%bi=bitcast i8*%bh to i8**
-store i8*%bg,i8**%bi,align 8
-%bj=getelementptr inbounds i8,i8*%bb,i64 16
-%bk=bitcast i8*%bj to i32*
-store i32 3,i32*%bk,align 4
-%bl=load i8*,i8**%e,align 8
+%bi=getelementptr inbounds i8,i8*%bc,i64 8
+%bj=bitcast i8*%bi to i8**
+store i8*%bh,i8**%bj,align 8
+%bk=getelementptr inbounds i8,i8*%bc,i64 16
+%bl=bitcast i8*%bk to i32*
+store i32 3,i32*%bl,align 4
+%bm=load i8*,i8**%e,align 8
 store i8*null,i8**%e,align 8
-%bm=call fastcc i8*%a8(i8*inreg%bl,i8*inreg%bb)
-store i8*%bm,i8**%e,align 8
-%bn=call i8*@sml_alloc(i32 inreg 20)#0
-%bo=getelementptr inbounds i8,i8*%bn,i64 -4
-%bp=bitcast i8*%bo to i32*
-store i32 1342177296,i32*%bp,align 4
-%bq=load i8*,i8**%d,align 8
-%br=bitcast i8*%bn to i8**
-store i8*%bq,i8**%br,align 8
-%bs=load i8*,i8**%e,align 8
-%bt=getelementptr inbounds i8,i8*%bn,i64 8
-%bu=bitcast i8*%bt to i8**
-store i8*%bs,i8**%bu,align 8
-%bv=getelementptr inbounds i8,i8*%bn,i64 16
-%bw=bitcast i8*%bv to i32*
-store i32 3,i32*%bw,align 4
-ret i8*%bn
+%bn=call fastcc i8*%a9(i8*inreg%bm,i8*inreg%bc)
+store i8*%bn,i8**%e,align 8
+%bo=call i8*@sml_alloc(i32 inreg 20)#0
+%bp=getelementptr inbounds i8,i8*%bo,i64 -4
+%bq=bitcast i8*%bp to i32*
+store i32 1342177296,i32*%bq,align 4
+%br=load i8*,i8**%d,align 8
+%bs=bitcast i8*%bo to i8**
+store i8*%br,i8**%bs,align 8
+%bt=load i8*,i8**%e,align 8
+%bu=getelementptr inbounds i8,i8*%bo,i64 8
+%bv=bitcast i8*%bu to i8**
+store i8*%bt,i8**%bv,align 8
+%bw=getelementptr inbounds i8,i8*%bo,i64 16
+%bx=bitcast i8*%bw to i32*
+store i32 3,i32*%bx,align 4
+ret i8*%bo
 }
 define internal fastcc i8*@_SMLLL11makeSeqSpec_167(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 m:

@@ -44,7 +44,7 @@ struct
 
   datatype sigexpKind = Interface | OrdinarySig
 
-  fun elabSequence elab env nil = (nil, env)
+  fun elabSequence elab env nil = (nil, Symbol.Map.empty)
     | elabSequence elab env (elem::elems) =
       let
         val (elems1, env1) = elab env elem

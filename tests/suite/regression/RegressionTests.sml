@@ -1907,6 +1907,10 @@ val tests = TestList [
                 (compile ["regression/382_provideEvalOrder.sml",
                           "regression/382_provideEvalOrder2.sml"]))),
 
+  Test
+    ("383_infix",
+     fn () => ignore (compile ["regression/383_infix.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end
