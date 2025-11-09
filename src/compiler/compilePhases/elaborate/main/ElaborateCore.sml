@@ -417,7 +417,7 @@ struct
           | elab (Fixity.TERM (exp, _)) =
             elabExp env exp
         val src =
-            map (fn exp as A.EXPID (_, longsymbol, _) =>
+            map (fn exp as A.EXPID (false, longsymbol, _) =>
                     (findFixity env longsymbol, exp, AbsynUtils.expLoc exp)
                   | exp => (NONFIX, exp, AbsynUtils.expLoc exp))
                 elist
