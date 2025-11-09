@@ -115,7 +115,7 @@ struct
   val skipPrinter = ref false
 
   (* switches for parser *)
-  val allow8bitId = ref false
+  val allow8bitId = ref true
 
   (* switches for elaboration *)
   val doListExpressionOptimization = ref true
