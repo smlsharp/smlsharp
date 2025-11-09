@@ -1,0 +1,14 @@
+_require "../../basis.smi"
+_require local "./rand-sig.sml"
+_require local "./lib-base.smi"
+
+structure Rand =
+struct
+  type rand = word
+  val randMin : rand
+  val randMax : rand
+  val random : rand -> rand
+  val mkRandom : rand -> unit -> rand
+  val norm : rand -> real
+  val range : (int * int) -> rand -> int
+end

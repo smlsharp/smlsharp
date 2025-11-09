@@ -1,0 +1,6 @@
+_require local "../../../basis.smi"
+
+structure PrimeSizes =
+struct
+  val pick : int -> int
+end

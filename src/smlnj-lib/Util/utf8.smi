@@ -1,11 +1,18 @@
 _require "../../basis.smi"
-_require "./utf8-sig.sml"
+_require local "./utf8-sig.sml"
 
 structure UTF8 =
 struct
   type wchar = word
   val maxCodePoint : wchar
+  val replacementCodePoint : wchar
   exception Incomplete
+  exception Invalid
+  datatype decode_strategy = STRICT | REPLACE
+  val getWC : decode_strategy -> (char, 'strm) StringCvt.reader
+              -> (wchar, 'strm) StringCvt.reader
+  val getWCStrict : (char, 'strm) StringCvt.reader
+                    -> (wchar, 'strm) StringCvt.reader
   val getu : (char, 'strm) StringCvt.reader -> (wchar, 'strm) StringCvt.reader
   val encode : wchar -> string
   val isAscii : wchar -> bool
@@ -13,6 +20,7 @@ struct
   val fromAscii : char -> wchar
   val toString : wchar -> string
   val size : string -> int
+  val size' : substring -> int
   val explode : string -> wchar list
   val implode : wchar list -> string
   val map : (wchar -> wchar) -> string -> string

@@ -1,0 +1,23 @@
+_require "../../../basis.smi"
+_require local "../base64.smi"
+_require local "../lib-base.smi"
+_require local "../random-sig.sml"
+_require "./native.smi"
+
+structure Random =
+struct
+  type rand (= boxed)
+  val rand : (int * int) -> rand
+  val fromList : NativeWord.word list -> rand
+  val toBytes : rand -> Word8Vector.vector
+  val fromBytes : Word8Vector.vector -> rand
+  val toString : rand -> string
+  val fromString : string -> rand
+  val randNativeInt : rand -> NativeInt.int
+  val randNativeWord : rand -> NativeWord.word
+  val randInt : rand -> int
+  val randWord : rand -> word
+  val randNat : rand -> int
+  val randReal : rand -> real
+  val randRange : (int * int) -> rand -> int
+end

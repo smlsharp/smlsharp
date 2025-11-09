@@ -5,14 +5,29 @@ _require "./json-tokens.smi"
 
 structure JSONSource =
 struct
-  datatype source =
-      Src of {srcMap : AntlrStreamPos.sourcemap,
-              strm : JSONLexer.strm ref,
-              closeFn : unit -> unit,
-              closed : bool ref}
+  type state = TextIO.StreamIO.instream * int
+  type source = state option ref
+  datatype error_code =
+      InvalidCharacter
+    | InvalidLiteral
+    | NumberTooLarge
+    | InvalidNumber
+    | InvalidArray
+    | InvalidObject
+    | ExpectedKey
+    | ExpectedColon
+    | CommentsNotAllowed
+    | UnclosedComment
+    | UnclosedString
+    | InvalidEscape
+    | InvalidUTF8
+    | IncompleteUTF8
+    | InvalidUnicodeSurrogatePair
+    | InvalidUnicodeEscape
+    | NonPrintingASCII
   val openStream : TextIO.instream -> source
   val openFile : string -> source
   val openString : string -> source
   val close : source -> unit
-  val errorMsg : source -> AntlrStreamPos.span * string * JSONTokens.token -> string
+  val errorMsg : state * error_code -> string
 end

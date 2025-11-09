@@ -1,0 +1,6 @@
+_require local "../../basis.smi"
+
+structure MaxHashTableSize =
+struct
+  val maxSize : int
+end

@@ -1,0 +1,10 @@
+_require "../../basis.smi"
+_require "./Target32Bit/random.smi"
+
+structure RealOrderStats =
+struct
+  val select : real array * int -> real
+  val select' : real ArraySlice.slice * int -> real
+  val median : real array -> real
+  val median' : real ArraySlice.slice -> real
+end

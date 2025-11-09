@@ -82,9 +82,9 @@ structure IntListMap :> ORD_MAP where type Key.ord_key = Int.int =
     fun lookup (l, key) = let
 	  fun f [] = raise LibBase.NotFound
 	    | f ((key', x) :: r) =
-		if (key < key') then raise LibBase.NotFound
-		else if (key = key') then x
-		else f r
+                  if (key' < key) then f r
+                  else if (key' = key) then x
+                  else raise LibBase.NotFound
 	  in
 	    f l
 	  end
@@ -94,11 +94,20 @@ structure IntListMap :> ORD_MAP where type Key.ord_key = Int.int =
    *)
     fun remove (l, key) = let
 	  fun f (_, []) = raise LibBase.NotFound
-	    | f (prefix, (elem as (key', x)) :: r) = (case Key.compare(key, key')
-		   of LESS => raise LibBase.NotFound
-		    | EQUAL => (List.revAppend(prefix, r), x)
-		    | GREATER => f(elem :: prefix, r)
-		  (* end case *))
+	    | f (prefix, (elem as (key', x)) :: r) =
+                  if (key' < key) then f(elem :: prefix, r)
+                  else if (key' = key) then (List.revAppend(prefix, r), x)
+                  else raise LibBase.NotFound
+	  in
+	    f ([], l)
+	  end
+
+    fun findAndRemove (l, key) = let
+	  fun f (_, []) = raise LibBase.NotFound
+	    | f (prefix, (elem as (key', x)) :: r) =
+                  if (key' < key) then f(elem :: prefix, r)
+                  else if (key' = key) then SOME(List.revAppend(prefix, r), x)
+                  else NONE
 	  in
 	    f ([], l)
 	  end
@@ -112,17 +121,39 @@ structure IntListMap :> ORD_MAP where type Key.ord_key = Int.int =
 
     fun listKeys (l : 'a map) = List.map #1 l
 
+    fun equiv rngEq = let
+          fun cmp ([], []) = true
+            | cmp ((xk, x)::xr, (yk, y)::yr) =
+                (xk = yk) andalso rngEq(x, y) andalso cmp(xr, yr)
+            | cmp _ = false
+          in
+            cmp
+          end
+
     fun collate cmpRng = let
 	  fun cmp ([], []) = EQUAL
 	    | cmp ([], _) = LESS
 	    | cmp (_, []) = GREATER
-	    | cmp ((x1, y1)::r1, (x2, y2)::r2) = (case Key.compare(x1, x2)
-		 of EQUAL => (case cmpRng(y1, y2)
-		       of EQUAL => cmp (r1, r2)
-			| order => order
-		      (* end case *))
-		  | order => order
-		(* end case *))
+            | cmp (xs as ((xk, x)::xr), (yk, y)::yr) =
+                if (xk = yk)
+                  then (case cmpRng(x, y)
+                     of EQUAL => cmp (xr, yr)
+                      | order => order
+                    (* end case *))
+                else if (xk < yk)
+                  then LESS
+                  else GREATER
+	  in
+	    cmp
+	  end
+
+    fun extends rngEx = let
+	  fun cmp ([], []) = true
+            | cmp (_, []) = true
+            | cmp ([], _) = false
+            | cmp ((xk, x)::xr, ys as ((yk, y)::yr)) =
+                if (xk < yk) then cmp (xr, ys)
+                else (xk = yk) andalso rngEx(x, y) andalso cmp (xr, yr)
 	  in
 	    cmp
 	  end

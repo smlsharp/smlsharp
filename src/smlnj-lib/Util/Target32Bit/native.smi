@@ -1,0 +1,4 @@
+_require "../../../basis.smi"
+
+structure NativeInt = Int32
+structure NativeWord = Word32

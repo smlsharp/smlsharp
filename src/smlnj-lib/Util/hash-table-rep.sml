@@ -1,6 +1,6 @@
 (* hash-table-rep.sml
  *
- * COPYRIGHT (c) 2018 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * COPYRIGHT (c) 2023 The Fellowship of SML/NJ (http://www.smlnj.org)
  * All rights reserved.
  *
  * This is the internal representation of hash tables, along with some
@@ -70,15 +70,7 @@ structure HashTableRep : sig
    * sizes, since that give efficient indexing, and assume a minimum size of 32.
    *)
     val minSize = 32
-    val maxSize = let
-	  fun f i = let
-		  val i' = i+i
-		  in
-		    if i' < Array.maxLen then f i' else i
-		  end
-	  in
-	    f 0x10000
-	  end
+    val maxSize = MaxHashTableSize.maxSize
 
   (* round up `n` to the next hash-table size *)
     fun roundUp n = if (n >= maxSize)

@@ -1,12 +1,17 @@
 _require "../../basis.smi"
 _require local "../Util/format.smi"
 _require local "../Util/utf8.smi"
+_require "./json.smi"
+_require local "./json-stream-output.sig"
+_use local "./json-stream-output.fun"
 
 structure JSONStreamPrinter =
 struct
+  type outstream = TextIO.outstream
   type printer (= boxed)
   val null : printer -> unit
   val boolean : printer * bool -> unit
+  val int : printer * int -> unit
   val integer : printer * IntInf.int -> unit
   val float : printer * real -> unit
   val string : printer * string -> unit
@@ -15,7 +20,8 @@ struct
   val endObject : printer -> unit
   val beginArray : printer -> unit
   val endArray : printer -> unit
-  val new : TextIO.outstream -> printer
-  val new' : {strm : TextIO.outstream, pretty : bool} -> printer
+  val new : outstream -> printer
+  val new' : {strm : outstream, pretty : bool} -> printer
   val close : printer -> unit
+  val value : printer * JSON.value -> unit
 end

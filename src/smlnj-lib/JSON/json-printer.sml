@@ -16,26 +16,7 @@ structure JSONPrinter : sig
     structure J = JSON
     structure JSP = JSONStreamPrinter
 
-    fun printWith printer = let
-	  fun pr (J.OBJECT fields) = let
-		fun prField (key, v) = (JSP.objectKey(printer, key); pr v)
-		in
-		  JSP.beginObject printer;
-		  List.app prField fields;
-		  JSP.endObject printer
-		end
-	    | pr (J.ARRAY vs) = (
-		JSP.beginArray printer;
-		List.app pr vs;
-		JSP.endArray printer)
-	    | pr J.NULL = JSP.null printer
-	    | pr (J.BOOL b) = JSP.boolean (printer, b)
-	    | pr (J.INT n) = JSP.integer (printer, n)
-	    | pr (J.FLOAT f) = JSP.float (printer, f)
-	    | pr (J.STRING s) = JSP.string (printer, s)
-	  in
-	    fn v => (pr v; JSP.close printer)
-	  end
+    fun printWith printer v = (JSP.value(printer, v); JSP.close printer)
 
     fun print (strm, v) = printWith (JSP.new strm) v
 

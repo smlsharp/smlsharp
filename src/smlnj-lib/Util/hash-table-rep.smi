@@ -1,4 +1,5 @@
 _require "../../basis.smi"
+_require local "./max-hash-table-size.smi"
 
 structure HashTableRep =
 struct

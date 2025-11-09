@@ -1,0 +1,11 @@
+_require "../../basis.smi"
+_require local "./splaytree-sig.sml"
+
+structure SplayTree =
+struct
+  datatype 'a splay =
+      SplayObj of {value : 'a, right : 'a splay, left : 'a splay}
+    | SplayNil
+  val splay : ('a -> order) * 'a splay -> order * 'a splay
+  val join : 'a splay * 'a splay -> 'a splay
+end

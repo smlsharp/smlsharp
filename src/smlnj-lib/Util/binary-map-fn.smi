@@ -27,6 +27,7 @@ struct
   val find : 'a map * Key.ord_key -> 'a option
   val lookup : 'a map * Key.ord_key -> 'a
   val inDomain : 'a map * Key.ord_key -> bool
+  val findAndRemove : 'a map * Key.ord_key -> ('a map * 'a) option
   val remove : 'a map * Key.ord_key -> 'a map * 'a
   val first : 'a map -> 'a option
   val firsti : 'a map -> (Key.ord_key * 'a) option
@@ -34,7 +35,6 @@ struct
   val listItems : 'a map -> 'a list
   val listItemsi : 'a map -> (Key.ord_key * 'a) list
   val listKeys : 'a map -> Key.ord_key list
-  val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
   val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
   val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
   val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
@@ -44,6 +44,9 @@ struct
                   -> 'a map * 'b map -> 'c map
   val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option)
                    -> 'a map * 'b map -> 'c map
+  val equiv : ('a * 'b -> bool) -> 'a map * 'b map -> bool
+  val collate : ('a * 'b -> order) -> 'a map * 'b map -> order
+  val extends : ('a * 'b -> bool) -> 'a map * 'b map -> bool
   val app : ('a -> unit) -> 'a map -> unit
   val appi : (Key.ord_key * 'a -> unit) -> 'a map -> unit
   val map : ('a -> 'b) -> 'a map -> 'b map

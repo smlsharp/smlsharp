@@ -49,6 +49,12 @@ signature ORD_MAP =
     val inDomain : ('a map * Key.ord_key) -> bool
 	(* return true, if the key is in the domain of the map *)
 
+    val findAndRemove : 'a map * Key.ord_key -> ('a map * 'a) option
+        (* If an item with the specified key exists in the map, then it
+         * is removed and the residual map and the item are returned.
+         * Otherwise, `NONE` is returned.
+         *)
+
     val remove : 'a map * Key.ord_key -> 'a map * 'a
 	(* Remove an item, returning new map and value removed.
          * Raises LibBase.NotFound if not found.
@@ -67,11 +73,6 @@ signature ORD_MAP =
 
     val listKeys : 'a map -> Key.ord_key list
 	(* return an ordered list of the keys in the map. *)
-
-    val collate : ('a * 'a -> order) -> ('a map * 'a map) -> order
-	(* given an ordering on the map's range, return an ordering
-	 * on the map.
-	 *)
 
     val unionWith  : ('a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
     val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
@@ -95,6 +96,20 @@ signature ORD_MAP =
 	 * is applied to the image of the key under the map.  If the function
 	 * returns SOME y, then (k, y) is added to the resulting map.
 	 *)
+
+    val equiv : ('a * 'b -> bool) -> ('a map * 'b map) -> bool
+        (* `equiv rngEq (f, g)` returns true if `f` and `g`` have equal domains
+         * and if for every `x` in their domain, `rngEq(f x, g x) = true`.
+         *)
+    val collate : ('a * 'b -> order) -> ('a map * 'b map) -> order
+        (* Given two maps `f` and `g`, and a comparison function `rngCmp` on their
+         * range types, return the order of the maps.
+         *)
+    val extends : ('a * 'b -> bool) -> ('a map * 'b map) -> bool
+        (* `extends rngEx (f, g)` returns true if the domain of `g` is a
+         * subset of the domain of `f` and for every `x` in the domain of `g`,
+         * `rngEx(g x, f x) = true`.
+         *)
 
     val app  : ('a -> unit) -> 'a map -> unit
     val appi : ((Key.ord_key * 'a) -> unit) -> 'a map -> unit

@@ -1,0 +1,17 @@
+_require local "../../basis.smi"
+_require "./atom.smi"
+_require local "./atom-table.smi"
+
+functor KeywordFn (
+  KW : sig
+    type token
+    type pos
+    val ident : Atom.atom * pos * pos -> token
+    val keywords : (string * (pos * pos -> token)) list
+  end
+) =
+struct
+  type token = KW.token
+  type pos = KW.pos
+  val keyword : string * pos * pos -> token
+end

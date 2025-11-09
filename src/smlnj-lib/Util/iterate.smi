@@ -1,0 +1,10 @@
+_require local "../../basis.smi"
+_require local "./iterate-sig.sml"
+_require local "./lib-base.smi"
+
+structure Iterate =
+struct
+  val iterate : ('a -> 'a) -> int -> 'a -> 'a
+  val repeat : (int * 'a -> 'a) -> int -> 'a -> 'a
+  val for : (int * 'a -> 'a) -> int * int * int -> 'a -> 'a
+end

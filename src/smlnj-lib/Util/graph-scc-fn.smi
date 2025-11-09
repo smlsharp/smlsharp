@@ -1,0 +1,22 @@
+_require "../../basis.smi"
+_require local "./ord-key-sig.sml"
+_require local "./redblack-map-fn.smi"
+_require local "./graph-scc-sig.sml"
+
+functor GraphSCCFn (
+  Nd: sig
+    type ord_key
+    val compare : ord_key * ord_key -> order
+  end
+) =
+struct
+  structure Nd =
+  struct
+    type ord_key = Nd.ord_key
+    val compare : ord_key * ord_key -> order
+  end
+  type node = Nd.ord_key
+  datatype component = SIMPLE of node | RECURSIVE of node list
+  val topOrder': {roots: node list, follow: node -> node list} -> component list
+  val topOrder : {root: node, follow: node -> node list} -> component list
+end

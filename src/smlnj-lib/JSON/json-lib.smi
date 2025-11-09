@@ -1,6 +1,8 @@
 include "./json.smi"
 include "./json-parser.smi"
 include "./json-printer.smi"
+include "./json-decode.smi"
 include "./json-util.smi"
+include "./json-stream-output.sig"
 include "./json-stream-parser.smi"
 include "./json-stream-printer.smi"

@@ -1,9 +1,11 @@
+(* 2025-11-10 katsu: add Unsafe *)
 structure Unsafe = struct
   structure Array = struct
     val sub = SMLSharp_Builtin.Array.sub_unsafe
     val update = SMLSharp_Builtin.Array.update_unsafe
   end
 end
+
 (* array-qsort.sml
  *
  * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.

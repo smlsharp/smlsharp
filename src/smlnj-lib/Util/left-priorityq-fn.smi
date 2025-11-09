@@ -1,0 +1,27 @@
+_require "../../basis.smi"
+_require local "./priority-sig.sml"
+_require local "./mono-priorityq-sig.sml"
+
+functor LeftPriorityQFn (
+  P : sig
+    type priority
+    type item
+    val compare : priority * priority -> order
+    val priority : item -> priority
+  end
+) =
+struct
+  type item = P.item
+  type queue (= boxed)
+  val empty : queue
+  val singleton : item -> queue
+  val fromList : item list -> queue
+  val insert : item * queue -> queue
+  val remove : queue -> (item * queue)
+  val next : queue -> (item * queue) option
+  val findAndRemove : queue * (item -> bool) -> (item * queue) option
+  val delete : queue * (item -> bool) -> queue
+  val merge : queue * queue -> queue
+  val numItems : queue -> int
+  val isEmpty : queue -> bool
+end

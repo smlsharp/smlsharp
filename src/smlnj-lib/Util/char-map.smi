@@ -1,0 +1,10 @@
+_require local "../../basis.smi"
+_require local "./char-map-sig.sml"
+
+structure CharMap =
+struct
+  type 'a char_map (= array)
+  val mkCharMap : {default : 'a, bindings : (string * 'a) list} -> 'a char_map
+  val mapChr : 'a char_map -> char -> 'a
+  val mapStrChr : 'a char_map -> string * int -> 'a
+end

@@ -40,6 +40,7 @@ struct
   val union : set * set -> set
   val intersection : set * set -> set
   val difference : set * set -> set
+  val combineWith : (item * bool * bool -> bool) -> set * set -> set
   val map : (item -> item) -> set -> set
   val mapPartial : (item -> item option) -> set -> set
   val app : (item -> unit) -> set -> unit

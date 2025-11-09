@@ -1,0 +1,24 @@
+_require local "../../basis.smi"
+_require local "./real-order-stats.smi"
+
+structure UnivariateStats =
+struct
+  type light (= unit)
+  type heavy (= *)
+  type 'a sample (= *)
+  type 'a evaluation (= boxed)
+  val lempty : light sample
+  val hempty : unit -> heavy sample
+  val ladd : real * light sample -> light sample
+  val hadd : real * heavy sample -> heavy sample
+  val evaluate : 'a sample -> 'a evaluation
+  val N : 'a evaluation -> int
+  val n : 'a evaluation -> real
+  val mean : 'a evaluation -> real
+  val variance : 'a evaluation -> real
+  val standardDeviation : 'a evaluation -> real
+  val skew : 'a evaluation -> real
+  val kurtosis : 'a evaluation -> real
+  val median : heavy evaluation -> real
+  val averageDeviation  : heavy evaluation -> real
+end

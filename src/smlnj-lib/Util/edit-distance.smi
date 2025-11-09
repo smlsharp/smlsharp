@@ -1,0 +1,6 @@
+_require local "../../basis.smi"
+
+structure EditDistance =
+struct
+  val distance : string * string -> int
+end

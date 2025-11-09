@@ -230,6 +230,8 @@ in
             | _ => (delete'(left,right),value)
 	  (* end case *))
 
+    fun findAndRemove arg = SOME(remove arg) handle LibBase.NotFound => NONE
+
     fun listItems d = let
 	  fun d2l (E, l) = l
 	    | d2l (T{key,value,left,right,...}, l) =
@@ -258,15 +260,30 @@ in
 	| next _ = (E, [])
       and left (E, rest) = rest
 	| left (t as T{left=l, ...}, rest) = left(l, t::rest)
+      fun start m = left(m, [])
     in
-    fun collate cmpRng (s1, s2) = let
+    fun equiv rngEq (m1, m2) = let
+	  fun cmp (t1, t2) = (case (next t1, next t2)
+		 of ((E, _), (E, _)) => true
+		  | ((E, _), _) => false
+		  | (_, (E, _)) => false
+                  | ((T{key=xk, value=x, ...}, r1), (T{key=yk, value=y, ...}, r2)) => (
+		      case Key.compare(xk, yk)
+		       of EQUAL => rngEq(x, y) andalso cmp (r1, r2)
+			| _ => false
+		      (* end case *))
+		(* end case *))
+	  in
+	    cmp (start m1, start m2)
+	  end
+    fun collate rngCmp (m1, m2) = let
 	  fun cmp (t1, t2) = (case (next t1, next t2)
 		 of ((E, _), (E, _)) => EQUAL
 		  | ((E, _), _) => LESS
 		  | (_, (E, _)) => GREATER
-		  | ((T{key=x1, value=y1, ...}, r1), (T{key=x2, value=y2, ...}, r2)) => (
-		      case Key.compare(x1, x2)
-		       of EQUAL => (case cmpRng(y1, y2)
+                  | ((T{key=xk, value=x, ...}, r1), (T{key=yk, value=y, ...}, r2)) => (
+		      case Key.compare(xk, yk)
+		       of EQUAL => (case rngCmp(x, y)
 			     of EQUAL => cmp (r1, r2)
 			      | order => order
 			    (* end case *))
@@ -274,7 +291,23 @@ in
 		      (* end case *))
 		(* end case *))
 	  in
-	    cmp (left(s1, []), left(s2, []))
+	    cmp (start m1, start m2)
+	  end
+    fun extends rngEx (m1, m2) = let
+          (* does t1 extend t2? *)
+	  fun cmp (t1, t2) = (case (next t1, next t2)
+		 of ((E, _), (E, _)) => true
+		  | (_, (E, _)) => true
+		  | ((E, _), _) => false
+                  | ((T{key=xk, value=x, ...}, r1), (T{key=yk, value=y, ...}, r2)) => (
+		      case Key.compare(xk, yk)
+		       of LESS => cmp (r1, t2)
+			| EQUAL => rngEx(x, y) andalso cmp (r1, r2)
+			| GREATER => false
+		      (* end case *))
+		(* end case *))
+	  in
+	    cmp (start m1, start m2)
 	  end
     end (* local *)
 

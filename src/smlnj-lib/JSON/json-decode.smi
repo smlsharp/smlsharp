@@ -1,0 +1,64 @@
+_require "../../basis.smi"
+_require "./errors.smi"
+_require "./json.smi"
+_require "./json-util.smi"
+_require "./json-parser.smi"
+
+structure JSONDecode =
+struct
+  exception JSONError = JSONErrors.JSONError
+  exception NotNull = JSONErrors.NotNull
+  exception NotBool = JSONErrors.NotBool
+  exception NotInt = JSONErrors.NotInt
+  exception NotNumber = JSONErrors.NotNumber
+  exception NotString = JSONErrors.NotString
+  exception NotObject = JSONErrors.NotObject
+  exception FieldNotFound = JSONErrors.FieldNotFound
+  exception NotArray = JSONErrors.NotArray
+  exception ArrayBounds = JSONErrors.ArrayBounds
+  exception ElemNotFound = JSONErrors.ElemNotFound
+  val exnMessage : exn -> string
+  type 'a decoder (= boxed)
+  val decode : 'a decoder -> JSON.value -> 'a
+  val decodeString : 'a decoder -> string -> 'a
+  val decodeFile : 'a decoder -> string -> 'a
+  val bool : bool decoder
+  val int : int decoder
+  val intInf : IntInf.int decoder
+  val number : Real64.real decoder
+  val string : string decoder
+  val null : 'a -> 'a decoder
+  val raw : JSON.value decoder
+  val rawObject : (string * JSON.value) list decoder
+  val rawArray : JSON.value vector decoder
+  val nullable : 'a decoder -> 'a option decoder
+  val try : 'a decoder -> 'a option decoder
+  val seq : 'a decoder -> ('a -> 'b) decoder -> 'b decoder
+  val field : string -> 'a decoder -> 'a decoder
+  val reqField : string -> 'a decoder -> ('a -> 'b) decoder -> 'b decoder
+  val optField : string -> 'a decoder -> ('a option -> 'b) decoder -> 'b decoder
+  val dfltField : string -> 'a decoder -> 'a -> ('a -> 'b) decoder -> 'b decoder
+  val array : 'a decoder -> 'a list decoder
+  val sub : int -> 'a decoder -> 'a decoder
+  val at : JSONUtil.path -> 'a decoder -> 'a decoder
+  val succeed : 'a -> 'a decoder
+  val fail : string -> 'a decoder
+  val andThen : ('a -> 'b decoder) -> 'a decoder -> 'b decoder
+  val orElse : 'a decoder * 'a decoder -> 'a decoder
+  val choose : 'a decoder list -> 'a decoder
+  val map : ('a -> 'b) -> 'a decoder -> 'b decoder
+  val map2 : ('a * 'b -> 'res)
+        -> ('a decoder * 'b decoder)
+        -> 'res decoder
+  val map3 : ('a * 'b * 'c -> 'res)
+        -> ('a decoder * 'b decoder * 'c decoder)
+        -> 'res decoder
+  val map4 : ('a * 'b * 'c * 'd -> 'res)
+        -> ('a decoder * 'b decoder * 'c decoder * 'd decoder)
+        -> 'res decoder
+  val tuple2 : ('a decoder * 'b decoder) -> ('a * 'b) decoder
+  val tuple3 : ('a decoder * 'b decoder * 'c decoder) -> ('a * 'b * 'c) decoder
+  val tuple4 : ('a decoder * 'b decoder * 'c decoder * 'd decoder)
+        -> ('a * 'b * 'c * 'd) decoder
+  val delay : (unit -> 'a decoder) -> 'a decoder
+end
