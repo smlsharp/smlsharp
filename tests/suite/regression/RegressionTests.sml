@@ -1911,6 +1911,10 @@ val tests = TestList [
     ("383_infix",
      fn () => ignore (compile ["regression/383_infix.sml"])),
 
+  Test
+    ("384_prefixedLabel",
+     fn () => ignore (compile ["regression/384_prefixedLabel.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end

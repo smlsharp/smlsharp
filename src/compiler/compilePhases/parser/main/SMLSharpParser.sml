@@ -149,7 +149,6 @@ struct
         | T.EQTYVAR s => Tokens.EQTYVAR (s, pos1, pos2)
         | T.FREE_TYVAR s => Tokens.FREE_TYVAR (s, pos1, pos2)
         | T.FREE_EQTYVAR s => Tokens.FREE_EQTYVAR (s, pos1, pos2)
-        | T.PREFIXEDLABEL s => Tokens.PREFIXEDLABEL (s, pos1, pos2)
         | T.TYVAR s => Tokens.TYVAR (s, pos1, pos2)
         | T.SYMBOLID s => Tokens.SYMBOLID (s, pos1, pos2)
         | T.CHAR s => Tokens.CHAR (s, pos1, pos2)

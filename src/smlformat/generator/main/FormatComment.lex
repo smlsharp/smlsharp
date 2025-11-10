@@ -75,7 +75,6 @@ eol=("\013\010"|"\010"|"\013");
 symid=([-!%&$#+/:<=>?@\\~`^|*]+);
 int=([1-9]{digit}*);
 num={digit}+;
-prefixedlabel={int}"_"({id}|{symid});
 
 %%
 
@@ -169,9 +168,6 @@ prefixedlabel={int}"_"({id}|{symid});
          end);
 <FC>{id} =>
         (case pos (yypos, yytext, arg) of (l, r) => T.ID (yytext, l, r));
-<FC>{prefixedlabel} =>
-        (case pos (yypos, yytext, arg) of
-           (l, r) => T.PREFIXEDLABEL (yytext, l, r));
 <FC>. =>
         (case pos (yypos, yytext, arg) of
            (l, r) => T.SPECIAL (String.sub (yytext, 0), l, r));

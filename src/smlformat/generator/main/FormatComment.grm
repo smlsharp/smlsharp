@@ -21,7 +21,6 @@ fun markinstance (i as MarkInstance _, _, _) = i
   | COMMA
   | COLON
   | ID of string
-  | PREFIXEDLABEL of string
   | LPAREN
   | RPAREN
   | LBRACE
@@ -144,8 +143,6 @@ selector
       (id)
     | INT
       (INT)
-    | PREFIXEDLABEL
-      (PREFIXEDLABEL)
 
 start
     : CONTEXT_HEADER header_format_comment_list

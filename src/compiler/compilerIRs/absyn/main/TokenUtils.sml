@@ -97,7 +97,6 @@ struct
     | T.EQTYVAR _ => "EQTYVAR"
     | T.FREE_TYVAR _ => "FREE_TYVAR"
     | T.FREE_EQTYVAR _ => "FREE_EQTYVAR"
-    | T.PREFIXEDLABEL _ => "PREFIXEDLABEL"
     | T.SYMBOLID _ => "SYMBOLID"
     | T.TYVAR _ => "TYVAR"
     | T.CHAR _ => "CHAR"
@@ -201,7 +200,6 @@ fun toString token =
     | T.EQTYVAR s => s
     | T.FREE_TYVAR s => s
     | T.FREE_EQTYVAR s => s
-    | T.PREFIXEDLABEL s => s
     | T.SYMBOLID s => s
     | T.TYVAR s => s
     | T.CHAR s => "#\"" ^ String.toString s ^ "\""

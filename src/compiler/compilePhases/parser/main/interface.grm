@@ -140,7 +140,6 @@ structure I = AbsynInterface
   | FREE_EQTYVAR of string
   | ALNUMID of string
   | SYMBOLID of string
-  | PREFIXEDLABEL of string
   | TYVAR of string
     (* scon *)
   | CHAR of string
@@ -595,9 +594,6 @@ lab
           (RecordLabel.fromString INTLAB, (INTLABleft, INTLABright))
         | STRING
           (RecordLabel.fromString STRING, (STRINGleft, STRINGright))
-        | PREFIXEDLABEL
-          (RecordLabel.fromString PREFIXEDLABEL,
-           (PREFIXEDLABELleft, PREFIXEDLABELright))
 
 prec
         : int

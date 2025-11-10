@@ -135,7 +135,6 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | EQTYVAR of string
   | FREE_TYVAR of string
   | FREE_EQTYVAR of string
-  | PREFIXEDLABEL of string
   | SYMBOLID of string
   | TYVAR of string
     (* scon *)
@@ -689,9 +688,6 @@ lab
           (RecordLabel.fromString INTLAB, (INTLABleft, INTLABright))
         | STRING
           (RecordLabel.fromString STRING, (STRINGleft, STRINGright))
-        | PREFIXEDLABEL
-          (RecordLabel.fromString PREFIXEDLABEL,
-           (PREFIXEDLABELleft, PREFIXEDLABELright))
 
 exprow_1
         : lab EQ exp

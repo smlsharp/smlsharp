@@ -103,7 +103,6 @@ struct
     | EQTYVAR of string
     | FREE_TYVAR of string
     | FREE_EQTYVAR of string
-    | PREFIXEDLABEL of string
     | SYMBOLID of string
     | TYVAR of string
       (* scon *)

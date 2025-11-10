@@ -154,7 +154,6 @@ eol=("\013\010"|"\010"|"\013");
 symid=([-!%&$#+/:<=>?@\\~`^|*]+);
 int0=(0{digit}*);
 int=([1-9]{digit}*);
-prefixedlabel={int}"_"({id}|{symid});
 
 num=[0-9]+;
 frac="."{num};
@@ -259,7 +258,6 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>{id} => (check8bit yytext yypos arg;
                   (T.ALNUMID yytext, loc yytext yypos arg));
 <INITIAL>{symid} => ((T.SYMBOLID yytext, loc yytext yypos arg));
-<INITIAL>{prefixedlabel} => ((T.PREFIXEDLABEL yytext, loc yytext yypos arg));
 
 <INITIAL>"0w"{num} => ((T.WORD yytext, loc yytext yypos arg));
 <INITIAL>"~"?"0x"{xdigit}+ => ((T.INTX yytext, loc yytext yypos arg));
