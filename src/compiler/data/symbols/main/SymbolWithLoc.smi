@@ -46,4 +46,3 @@ struct
   val compare = SymbolWithLoc.symbolCompare
 end
 structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)
-structure SymbolWithLocSet = BinarySetFn(SymbolWithLocOrd)

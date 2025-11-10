@@ -164,5 +164,3 @@ struct
 end
 
 structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)
-
-structure SymbolWithLocSet = BinarySetFn(SymbolWithLocOrd)
