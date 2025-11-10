@@ -81,7 +81,6 @@ structure TermFormat :> sig
 
   (* formatting records and tuples *)
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
-  val formatRecordExpToJson : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatDummyRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
 
@@ -310,12 +309,6 @@ struct
                         args
                         map
 
-  fun formatEnclosedLabelMapToJson args map =
-      formatEnclosedMap RecordLabel.format_jsonLabel
-                        RecordLabel.Map.listItemsi
-                        args
-                        map
-
   fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
       begin_
         $lparen
@@ -380,11 +373,6 @@ struct
       else formatEnclosedLabelMap
              (formatter, [term "{"], [term ","], [dsp, term "="], [term "}"])
              smap
-
-  fun formatRecordExpToJson formatter smap =
-      formatEnclosedLabelMapToJson
-        (formatter, [term "{"], [term ","], [dsp, term ":"], [term "}"])
-        smap
 
   fun formatRecordTy formatter smap =
       if RecordLabel.isTupleMap smap

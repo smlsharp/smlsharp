@@ -7,80 +7,71 @@
 structure RecordLabel =
 struct
 
-  type label = string
+  type label = string * string
 
-  fun shouldEscape string =
-      let
-        fun escape c = 
-            not (Char.isAlpha c orelse
-                 Char.isDigit c orelse
-                 c = #"_" orelse
-                 c = #"'" orelse
-                 Char.ord c >= 128)
-        val charList = String.explode string
-      in
-        List.exists escape charList
-      end 
+  fun getDigits ss =
+      case Substring.getc ss of
+        NONE => ss
+      | SOME (c, ss2) =>
+        if Char.isDigit c then getDigits ss2 else ss
 
-  fun toString s = s
-  fun escapeString s = 
-      let
-        val s = StringEscape.toString s
-        val s = if shouldEscape s then "\"" ^ s ^ "\"" else s
-      in
-        s
-      end
-  val fromInt = Int.toString
-  fun fromString x = x : label
-  val fromSymbol = Symbol.toString
-  val fromLongsymbol = Longsymbol.toString
+  fun getNumeric ss =
+      case Substring.getc ss of
+        NONE => ss
+      | SOME (#"0", ss2) =>
+        if (case Substring.getc ss2 of
+              SOME (c, _) => not (Char.isDigit c)
+            | NONE => true)
+        then ss2
+        else ss
+      | SOME _ => getDigits ss
 
-  fun format_label s =
-      let
-        val s = escapeString s
-      in
-        [SMLFormat.FormatExpression.Term (size s, s)]
-      end
+  fun fromString string : label =
+      case Substring.base (getNumeric (Substring.full string)) of
+        (s, i, _) => (String.substring (s, 0, i), String.extract (s, i, NONE))
 
-  fun format_jsonLabel s =
-      let
-        val s = "\"" ^ s ^ "\""
-      in
-        [SMLFormat.FormatExpression.Term (size s, s)]
-      end
+  fun toString (digits, label) = digits ^ label
 
-  (* match with ^[1-9][0-9]*($|_) *)
-  fun numericPrefix s =
+  fun fromInt n = (Int.toString n, "")
+
+  fun fromSymbol symbol = fromString (Symbol.toString symbol)
+
+  fun fromLongsymbol longsymbol = fromString (Longsymbol.toString longsymbol)
+
+  fun isAlnumLabel s =
+      size s > 0
+      andalso CharVector.all
+                (fn c => Char.isAlphaNum c orelse c = #"'" orelse c = #"_")
+                s
+      andalso Char.isAlpha (String.sub (s, 0))
+
+  fun term s = [SMLFormat.FormatExpression.Term (size s, s)]
+
+  fun format_label (digits, "") = term digits
+    | format_label ("", label) =
+      if isAlnumLabel label
+      then term label
+      else term (StringEscape.toStringLiteral label)
+    | format_label (digits, label) =
+      term (StringEscape.toStringLiteral (digits ^ label))
+
+  fun compareDigits digits1 digits2 =
       let
-        val s = Substring.full s
+        val len1 = size digits1
+        val len2 = size digits2
       in
-        case Substring.getc s of
-          NONE => NONE
-        | SOME (c, _) =>
-          if Char.isDigit c andalso c <> #"0"
-          then
-            (* a label may contain an arbitrary precision integer *)
-            case IntInf.scan StringCvt.DEC Substring.getc s of
-              NONE => NONE
-            | SOME (n, s) =>
-              case Substring.getc s of
-                NONE => SOME n
-              | SOME (#"_", _) => SOME n
-              | _ => NONE
-          else NONE
+        if len1 = len2
+        then String.compare (digits1, digits2)
+        else Int.compare (len1, len2)
       end
 
-  (* There are four kinds of record labels: numeric, numeric-with-id, id,
-   * and string.  Numeric and numeric-with-id ones must be ordered in the
-   * order of their numeric parts.
-   *)
-  fun compare (x, y) =
-      case (numericPrefix x, numericPrefix y) of
-        (SOME m, SOME n) =>
-        (case IntInf.compare (m, n) of
-           EQUAL => String.compare (x, y)
-         | order => order)
-      | _ => String.compare (x, y)
+  (* There are three kinds of record labels: numeric, id, and string.
+   * Numeric and string ones must be ordered in the order of their
+   * numeric parts. *)
+  fun compare ((digits1, lab1), (digits2, lab2)) =
+      case compareDigits digits1 digits2 of
+        EQUAL => String.compare (lab1, lab2)
+      | order => order
 
   structure Ord =
   struct
@@ -91,9 +82,6 @@ struct
   structure Map = BinaryMapFn(Ord)
   structure Set = BinarySetFn(Ord)
 
-  fun check f n nil = true
-    | check f n ((l,_)::t) = f (n, l) andalso check f (IntInf.+ (n, 1)) t
-
   (* return true if the given list is of the form [(1,_), (2,_), ..., (n,_)]
    * where n >= 2. *)
   fun isTupleList nil = false
@@ -101,7 +89,9 @@ struct
     | isTupleList fields =
       let
         fun check n nil = true
-          | check n ((l,_)::t) = Int.toString n = l andalso check (n+1) t
+          | check n (((digits, ""), _) :: t) =
+            Int.toString n = digits andalso check (n + 1) t
+          | check n (_ :: _) = false
       in
         check 1 fields
       end
@@ -114,12 +104,8 @@ struct
   fun isOrderedList fields =
       let
         fun check n nil = true
-          | check n ((l,_)::t) =
-            let
-              val s = Int.toString n
-            in
-              (s = l orelse String.isPrefix (s ^ "_") l) andalso check (n+1) t
-            end
+          | check n (((digits, _), _) :: t) =
+            Int.toString n = digits andalso check (n + 1) t
       in
         check 1 fields
       end
@@ -129,23 +115,19 @@ struct
 
   fun tupleList values =
       let
-        fun make n nil = nil
-          | make n (h::t) = (Int.toString n, h) :: make (n+1) t
+        fun make n nil r = Snoc.toList r
+          | make n (h :: t) r = make (n + 1) t (r ::> ((Int.toString n, ""), h))
       in
-        make 1 values
+        make 1 values NIL
       end
 
   fun tupleMap values =
       let
-        fun make n z nil = z
-          | make n z (h::t) = make (n+1) (Map.insert (z, Int.toString n, h)) t
+        fun make n nil r = r
+          | make n (h :: t) r =
+            make (n + 1) t (Map.insert (r, (Int.toString n, ""), h))
       in
-        make 1 Map.empty values
+        make 1 values Map.empty
       end
 
-  fun fromFields stringValueList =
-      Map.foldr
-        (fn ((s,v), z) => Map.insert(z, s, v))
-        Map.empty
-        stringValueList
 end

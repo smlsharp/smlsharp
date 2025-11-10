@@ -6572,6 +6572,7 @@ src/compiler/data/symbols/main/RecordLabel.o: \
  src/smlformat-lib.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
