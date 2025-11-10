@@ -2,6 +2,7 @@ _require local "../../../../basis.smi"
 _require local "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 
 _require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"

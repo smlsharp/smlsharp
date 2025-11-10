@@ -5,7 +5,7 @@ _require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 
 _require "../../../../smlformat-lib.smi"
 
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"

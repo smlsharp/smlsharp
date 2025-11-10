@@ -20,26 +20,3 @@ struct
   structure Map = BinaryMapFn(Ord)
   structure Set = BinarySetFn(Ord)
 end
-
-structure Longsymbol =
-struct
-  eqtype longsymbol (= list)
-  val format_longsymbol : longsymbol -> SMLFormat.format
-
-  val toStringList : longsymbol -> string list
-  val fromStringList : string list -> longsymbol
-  val toSymbolList : longsymbol -> Symbol.symbol list
-  val fromSymbolList : Symbol.symbol list -> longsymbol
-  val toString : longsymbol -> string
-  val compare : longsymbol * longsymbol -> order
-  val append : longsymbol * Symbol.symbol -> longsymbol
-  val lastSymbol : longsymbol -> Symbol.symbol
-
-  structure Ord =
-  struct
-    type ord_key = longsymbol
-    val compare : ord_key * ord_key -> order
-  end
-  structure Map = BinaryMapFn(Ord)
-  structure Set = BinarySetFn(Ord)
-end

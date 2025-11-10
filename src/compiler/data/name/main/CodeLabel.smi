@@ -1,6 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require local "../../../../smlnj-lib/Util/ord-key-sig.sml"

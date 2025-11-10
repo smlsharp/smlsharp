@@ -10,6 +10,7 @@ _require local "../../../data/types/main/VarInfoEnv.smi"
 _require local "../../../data/types/main/Unify.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/types/main/TvarMap.smi"
 _require "../../../data/types/main/VarMap.smi"

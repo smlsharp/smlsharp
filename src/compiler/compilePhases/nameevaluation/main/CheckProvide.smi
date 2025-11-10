@@ -18,7 +18,7 @@ _require local "./NameEvalUtils.smi"
 _require local "./NormalizeTy.smi"
 
 _require "../../../data/symbols/main/Loc.smi"
-_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"

@@ -7,7 +7,7 @@ _require "../../../../smlformat-lib.smi"
 _require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
 _require local "../../../../smlnj-lib/Util/ord-set-sig.sml"
 _require local "../../../../smlnj-lib/Util/ord-map-sig.sml"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require local "./NameMangle.smi"
 
 structure ExternSymbol =

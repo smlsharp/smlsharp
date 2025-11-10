@@ -4,6 +4,7 @@ _require local "../../../../smlformat-lib.smi"
 
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"

@@ -2,8 +2,9 @@ _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
-_require "./Symbol.smi"
 _require "./Loc.smi"
+_require "./Symbol.smi"
+_require "./Longsymbol.smi"
 
 structure SymbolWithLoc =
 struct

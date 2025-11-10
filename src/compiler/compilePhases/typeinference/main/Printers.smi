@@ -6,7 +6,7 @@ _require local "../../../extensions/debug/main/Bug.smi"
 (* _require local "../../../data/types/main/TvarMap.smi" *)
 
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"

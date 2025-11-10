@@ -3,6 +3,7 @@ _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "./Symbol.smi"
+_require "./Longsymbol.smi"
 
 structure RecordLabel =
 struct
