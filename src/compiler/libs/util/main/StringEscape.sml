@@ -7,6 +7,7 @@ struct
 
   fun oct3 i = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.OCT i)
   fun dec3 i = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.DEC i)
+  fun chr3 i = if i < 32 then "^" ^ str (chr (i + 64)) else dec3 i
 
   val c20 = #"\032"
   val c7F = #"\127"
@@ -54,7 +55,9 @@ struct
       case Substring.getc ss of
         NONE => 0
       | SOME (c, ss) =>
-        if c <= c7F (* ascii *)
+        if c < c20 (* control *)
+        then 0
+        else if c <= c7F (* ascii *)
         then 1
         else if c < cC2 (* 110 00000 *)
         then 0
@@ -113,9 +116,9 @@ struct
 
   fun concat r = Substring.concat (Snoc.toList r)
 
-  fun toString s = concat (unquoted dec3 s)
+  fun toString s = concat (unquoted chr3 s)
   fun toCString s = concat (unquoted oct3 s)
-  fun toStringLiteral s = concat (quoted dec3 s)
+  fun toStringLiteral s = concat (quoted chr3 s)
   fun toCStringLiteral s = concat (quoted oct3 s)
 
 end
