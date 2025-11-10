@@ -146,21 +146,6 @@ struct
         else if #"\127" <= c then escapeCharDec c
         else str c   (* c < 256 *)
 
-  fun toRawString c =
-      case c of
-        #"\\" => "\\\\"
-      | #"\"" => "\\\""
-      | #"\007" => "\\a"
-      | #"\008" => "\\b"
-      | #"\009" => "\\t"
-      | #"\010" => "\\n"
-      | #"\011" => "\\v"
-      | #"\012" => "\\f"
-      | #"\013" => "\\r"
-      | _ =>
-        if c < #"\032" then escapeControl (Char.castToWord8 c)
-        else str c 
-
   fun toCString c =
       case c of
         #"\\" => "\\\\"

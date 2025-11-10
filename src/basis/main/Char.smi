@@ -33,7 +33,6 @@ struct
   val isPunct : char -> bool
   val isUpper : char -> bool
   val toString : char -> string
-  val toRawString : char -> string
   val scan = SMLSharp_ScanChar.scanChar
   val fromString : string -> char option
   val toCString : char -> string

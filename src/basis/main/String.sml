@@ -171,9 +171,6 @@ struct
   fun toString s =
       translate Char.toString s
 
-  fun toRawString s =
-      translate Char.toRawString s
-
   fun toCString s =
       translate Char.toCString s
 
