@@ -2,6 +2,7 @@ _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
+_require local "../../../libs/util/main/StringEscape.smi"
 _require "./Symbol.smi"
 _require "./Longsymbol.smi"
 

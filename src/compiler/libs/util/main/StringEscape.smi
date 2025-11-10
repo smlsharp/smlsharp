@@ -1,0 +1,10 @@
+_require local "../../../../basis.smi"
+_require local "../../list-utils/main/Snoc.smi"
+
+structure StringEscape =
+struct
+  val toString : string -> string
+  val toCString : string -> string
+  val toStringLiteral : string -> string
+  val toCStringLiteral : string -> string
+end

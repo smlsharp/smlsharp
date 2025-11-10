@@ -76,7 +76,7 @@ in
 
   fun format_string string =
       let
-        val text = "\"" ^ (String.toRawString string) ^ "\""
+        val text = StringEscape.toStringLiteral string
       in 
         makeToken text 
       end

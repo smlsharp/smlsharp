@@ -423,6 +423,7 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
@@ -537,6 +538,8 @@ src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
+src/compiler/libs/list-utils/main/Snoc.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/smlnj-lib/Util/int-redblack-set.o \
 src/compiler/libs/env/main/ISet.o \
@@ -590,7 +593,6 @@ src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
@@ -949,6 +951,8 @@ src/foreach/main/ForeachData.o \
 src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/Longsymbol.o \
+src/compiler/libs/list-utils/main/Snoc.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/libs/toolchain/main/Filename.o \
@@ -1043,7 +1047,6 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
@@ -1259,6 +1262,8 @@ src/smlformat/formatlib/main/SMLFormat.o \
 src/smlnj-lib/Util/lib-base.o \
 src/smlnj-lib/Util/binary-map-fn.o \
 src/smlnj-lib/Util/binary-set-fn.o \
+src/compiler/libs/list-utils/main/Snoc.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
@@ -1279,7 +1284,6 @@ src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
@@ -1488,6 +1492,8 @@ src/foreach/main/ForeachData.o \
 src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/Longsymbol.o \
+src/compiler/libs/list-utils/main/Snoc.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/libs/toolchain/main/Filename.o \
@@ -1582,7 +1588,6 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
@@ -2066,6 +2071,8 @@ src/compiler/libs/digest/main/SHA3.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
 src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
+src/compiler/libs/list-utils/main/Snoc.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
@@ -2075,7 +2082,6 @@ src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
 src/compiler/compilePhases/parser/main/ParserError.ppg.o \
-src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
@@ -2766,6 +2772,7 @@ src/compiler/libs/toolchain/main/TempFile.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/libs/util/main/Graph.o \
 src/compiler/libs/util/main/SCCFun.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/libs/util/main/TermFormat.o \
 src/compiler/libs/util/main/UnionFind.o \
 src/compiler/smlsharp.o \
@@ -3252,6 +3259,7 @@ src/compiler/libs/util/main/Counter.smi \
 src/compiler/libs/util/main/GRAPH.sig \
 src/compiler/libs/util/main/Graph.smi \
 src/compiler/libs/util/main/SCCFun.smi \
+src/compiler/libs/util/main/StringEscape.smi \
 src/compiler/libs/util/main/TermFormat.smi \
 src/compiler/libs/util/main/UnionFind.smi \
 src/compiler/smlsharp.smi \
@@ -3585,6 +3593,7 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
+src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \

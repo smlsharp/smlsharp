@@ -25,7 +25,7 @@ struct
   fun toString s = s
   fun escapeString s = 
       let
-        val s = String.toRawString s
+        val s = StringEscape.toString s
         val s = if shouldEscape s then "\"" ^ s ^ "\"" else s
       in
         s

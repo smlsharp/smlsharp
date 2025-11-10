@@ -57,26 +57,9 @@ struct
   fun format_word_hex_C x = format_hex_C Word.fmt x
   fun format_real64_C x = [term (Real64.fmt StringCvt.EXACT x)]
   fun format_real32_C x = [term (Real32.fmt StringCvt.EXACT x ^ "f")]
-
-  fun oct3 i = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.OCT i)
-
-  fun escapeC s =
-      String.translate
-        (fn #"\008" => "\\b"
-          | #"\012" => "\\f"
-          | #"\010" => "\\n"
-          | #"\013" => "\\r"
-          | #"\009" => "\\t"
-          | #"\092" => "\\\\"
-          | #"\034" => "\\\""
-          | c => if ord c < 128 andalso Char.isPrint c then str c
-                 else "\\" ^ oct3 (ord c))
-        s
-
-  fun format_string_ML s = [term ("\"" ^ String.toString s ^ "\"")]
-  fun format_string_C s = [term ("\"" ^ escapeC s ^ "\"")]
+  fun format_string_C s = [term (StringEscape.toCStringLiteral s)]
+  fun format_string_ML s = [term (StringEscape.toStringLiteral s)]
+  fun format_char_C c = [term ("'" ^ Char.toCString c ^ "'")]
   fun format_char_ML c = [term ("#\"" ^ Char.toString c ^ "\"")]
-  fun format_char_C #"\034" = [term "'\"'"]
-    | format_char_C c = [term ("'" ^ escapeC (str c) ^ "'")]
 
 end
