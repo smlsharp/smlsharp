@@ -15,7 +15,7 @@ struct
                  read : bool * int -> string,
                  initialLineno : int}
   type input (= {})
-  exception Error of (Loc.loc * string) list
+  exception Error of (Absyn.loc * string) list
   val sourceOfInput : input -> Loc.source
   val setup : source -> input
   val parse : input -> (Token.token * (Loc.at * Loc.at)) snoc * Absyn.absyn

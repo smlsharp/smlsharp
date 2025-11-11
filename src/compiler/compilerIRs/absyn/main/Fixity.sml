@@ -19,9 +19,9 @@ struct
   (***************************************************************************)
 
   datatype 'a exp =
-      APP of 'a exp * 'a exp * Loc.loc
-    | OP2 of 'a exp * ('a exp * 'a exp) * Loc.loc
-    | TERM of 'a * Loc.loc
+      APP of 'a exp * 'a exp * (Loc.pos * Loc.pos)
+    | OP2 of 'a exp * ('a exp * 'a exp) * (Loc.pos * Loc.pos)
+    | TERM of 'a * (Loc.pos * Loc.pos)
 
   datatype error =
       Conflict
@@ -44,8 +44,8 @@ struct
         fun loc (APP (_, _, l)) = l
           | loc (OP2 (_, _, l)) = l
           | loc (TERM (_, l)) = l
-        fun app (x, y) = APP (x, y, Loc.mergeLocs (loc x, loc y))
-        fun op2 (f, x, y) = OP2 (f, (x, y), Loc.mergeLocs (loc x, loc y))
+        fun app (x, y) = APP (x, y, Loc.mergeRange (loc x, loc y))
+        fun op2 (f, x, y) = OP2 (f, (x, y), Loc.mergeRange (loc x, loc y))
         fun loop stack input =
             case (stack, input) of
               ((NONFIX, y) :: (NONFIX, x) :: t, _) =>

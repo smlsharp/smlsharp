@@ -195,9 +195,7 @@ struct
         val _ =  #stop Counter.parseTimeCounter()
         val _ = printParseResult Control.printParse "Parsed" ret
       in
-        case ret of
-          Absyn.UNIT unit => unit
-        | Absyn.EOF => (NONE, nil, Loc.noloc)
+        ret
       end
 
   fun doLoadFile ({baseFilename, loadPath, loadMode, defaultInterface,

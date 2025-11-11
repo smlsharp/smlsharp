@@ -12,14 +12,18 @@ struct
   structure P = PatternCalc
   structure PI = PatternCalcInterface
   structure E = ElaborateError
+  datatype loc = datatype Loc.loc
   val eqSymbol = SymbolWithLoc.eqSymbol
 
   type tvset = A.tyvar list
-  type btvEnv = {isEq:bool, kind:A.kind} Symbol.Map.map
+  type btvEnv = {isEq:bool, kind:A.kind option} Symbol.Map.map
 
   val noloc = Loc.noloc
   val empty = nil : tvset
   val emptyEnv = Symbol.Map.empty : btvEnv
+
+  fun seq NONE = nil
+    | seq (SOME (items, _)) = items
 
   fun member (set:tvset, (_, (s1, _)):A.tyvar) =
       List.exists (fn (_, (s2, _)) => s1 = s2) set
@@ -30,7 +34,7 @@ struct
   fun checkEq (tvar as (isEq, (symbol, loc)):A.tyvar, isEq2) =
       if isEq = isEq2 then ()
       else EU.enqueueError
-             (loc, E.DifferentEqOfSameTvar {tvar = tvar})
+             (LOC loc, E.DifferentEqOfSameTvar {tvar = tvar})
 
   fun union (tvs1:tvset, tvs2:tvset) =
       foldr
@@ -48,12 +52,13 @@ struct
         tvs1
 
   fun toTvarList (tvset:tvset) =
-      map (fn tv as (_, (_, loc)) => (tv, A.UNIV (nil, noloc), loc)) (rev tvset)
+      map (fn tv as (_, (_, loc)) => (tv, NONE, loc)) (rev tvset)
 
   fun toBtvEnv (kindedTvars:A.kinded_tyvar list) : btvEnv =
       foldl (fn ((tvar as (isEq, (symbol, loc)), kind, _), btvEnv) =>
                 (if Symbol.Map.inDomain (btvEnv, symbol)
-                 then EU.enqueueError (loc, E.DuplicateUserTvar {tvar = tvar})
+                 then EU.enqueueError
+                        (LOC loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
                  Symbol.Map.insert
                    (btvEnv, symbol, {isEq = isEq, kind = kind})))
@@ -66,14 +71,14 @@ struct
   fun bindTvars btvEnv tvars =
       bindKindedTvars
         btvEnv
-        (map (fn tv => (tv, A.UNIV (nil, noloc), #2 (#2 tv))) tvars)
+        (map (fn tv => (tv, NONE, #2 (#2 tv))) tvars)
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
       foldl (fn ((isEq, (symbol, _)), btvEnv) =>
                 Symbol.Map.insert
                   (btvEnv,
                    symbol,
-                   {isEq = isEq, kind = A.UNIV (nil, noloc)}))
+                   {isEq = isEq, kind = NONE}))
             btvEnv
             tvset
 
@@ -104,8 +109,8 @@ struct
       | A.TYRECORD (rows, ifFlex, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
         tyvarsList (fn (k,t,_) => tyvarsTy btvEnv t) (sortTyrows rows)
-      | A.TYCON ((tys, _), tycon, loc) =>
-        tyvarsList (tyvarsTy btvEnv) tys
+      | A.TYCON (tys, tycon, loc) =>
+        tyvarsList (tyvarsTy btvEnv) (seq tys)
       | A.TYTUPLE (tys, loc) =>
         tyvarsList (tyvarsTy btvEnv) tys
       | A.TYFUN (ty1, ty2, loc) =>
@@ -124,8 +129,9 @@ struct
 
   and tyvarsTvarKind btvEnv kind =
       case kind of
-        A.UNIV _ => empty
-      | A.REC (properties, recordKind, loc) =>
+        NONE => empty
+      | SOME (A.UNIV _) => empty
+      | SOME (A.REC (properties, recordKind, loc)) =>
         (* sort rows in order to make the "occurrence order" unique *)
         tyvarsList (fn (k,t,_) => tyvarsTy btvEnv t) (sortTyrows recordKind)
 

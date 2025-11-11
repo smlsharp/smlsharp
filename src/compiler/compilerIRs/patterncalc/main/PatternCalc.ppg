@@ -52,7 +52,6 @@ struct
   fun format_ifnil (x,y) nil = x
     | format_ifnil (x,y) _ = y
 
-  (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
   (*% @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant *)
@@ -104,6 +103,7 @@ struct
       PLEXBINDREP of symbol * longsymbol * loc
 
   (*%
+   * @formatter(AbsynTy.longtycon) AbsynTyFormatter.format_longtycon
    * @formatter(app) TermFormat.formatAppList
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(enclosed) TermFormat.formatEnclosedList
@@ -125,23 +125,23 @@ struct
        * }
        *)
       FFIFUNTY of ffiAttributes option * ffiTy list * ffiTy list option
-                  * ffiTy list * loc
+                  * ffiTy list * AbsynTy.loc
     | (*%
        * @format(tvar * loc) tvar
        *)
-      FFITYVAR of tvar * loc
+      FFITYVAR of tvar * AbsynTy.loc
     | (*%
        * @format(field fields * loc)
        * fields:enclosed(field)("{", "," +1, "}")
        * @format:field(label * ty)
        * L4{ label +1 ":" +d ty }
        *)
-      FFIRECORDTY of (label * ffiTy) list * loc
+      FFIRECORDTY of (label * ffiTy) list * AbsynTy.loc
     | (*%
        * @format(arg args * id * loc)
        * args:ifnil()(id, L8{ args:seq(arg)("(", "," +1, ")") +1 id })
        *)
-      FFICONTY of ffiTy list * longsymbol * loc
+      FFICONTY of ffiTy list * AbsynTy.longtycon * AbsynTy.loc
 
   (*%
    * @formatter(ifnone) format_ifnone
@@ -228,7 +228,7 @@ struct
        * @format({symbol:name, ty: ty tyopt, loc})
        * !R0{ name tyopt:ifnone()(, +d "of" 1[ +1 tyopt(ty) ]) }
        *)
-      {symbol: symbol, ty: ty option, loc:Loc.loc}
+      {symbol: symbol, ty: ty option, loc:loc}
 
   (*%
    * @formatter(prepend) format_prepend
@@ -719,8 +719,6 @@ struct
       | PLDYNAMICVIEW (_,_,loc) => loc
       | PLDYNAMICCASE (_,_,loc) => loc
       | PLREIFYTY (_,loc) => loc
-  fun getLeftPosExp plexp = #1 (getLocExp plexp)
-  fun getRightPosExp plexp = #2 (getLocExp plexp)
 
   fun getLocPat pat =
       case pat of
@@ -731,8 +729,6 @@ struct
       | PLPATRECORD x => #3 x
       | PLPATLAYERED x => #4 x
       | PLPATTYPED x => #3 x
-  fun getLeftPosPat pat = #1 (getLocPat pat)
-  fun getRightPosPat pat = #2 (getLocPat pat)
   fun getLocDec dec =
       case dec of
         PDVAL (_, _, loc) => loc

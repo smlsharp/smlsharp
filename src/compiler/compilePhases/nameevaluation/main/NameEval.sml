@@ -33,7 +33,7 @@ local
 
   fun mkSymbol s = SymbolWithLoc.mkSymbol s Loc.noloc
   fun mkLongsymbol s = SymbolWithLoc.mkLongsymbol s Loc.noloc
-  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
+  fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
 
   fun printStrKind strkind =

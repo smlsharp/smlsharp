@@ -15707,13 +15707,13 @@ src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -17809,10 +17809,10 @@ src/compiler/compilePhases/loadfile/main/InterfaceHash.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/libs/list-utils/main/ListSorter.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -19296,16 +19296,16 @@ src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
@@ -20810,8 +20810,8 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/lib-base.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \

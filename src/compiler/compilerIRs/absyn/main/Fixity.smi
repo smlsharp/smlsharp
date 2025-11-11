@@ -8,14 +8,14 @@ struct
   val fixityToString : fixity -> string
 
   datatype 'a exp =
-      APP of 'a exp * 'a exp * Loc.loc
-    | OP2 of 'a exp * ('a exp * 'a exp) * Loc.loc
-    | TERM of 'a * Loc.loc
+      APP of 'a exp * 'a exp * (Loc.pos * Loc.pos)
+    | OP2 of 'a exp * ('a exp * 'a exp) * (Loc.pos * Loc.pos)
+    | TERM of 'a * (Loc.pos * Loc.pos)
   datatype error =
       Conflict
     | BeginWithInfix
     | EndWithInfix
-  val parse : (error * 'a * Loc.loc -> unit)
-              -> (fixity * 'a * Loc.loc) list
+  val parse : (error * 'a * (Loc.pos * Loc.pos) -> unit)
+              -> (fixity * 'a * (Loc.pos * Loc.pos)) list
               -> 'a exp
 end

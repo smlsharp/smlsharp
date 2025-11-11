@@ -21,10 +21,12 @@ struct
   structure T = AbsynTy
   structure P = PatternCalcInterface
   structure PC = PatternCalc
-  fun toSymbol ((sym, loc):T.vid) = {symbol = sym, loc = loc}
+  datatype loc = datatype Loc.loc
+  fun toSymbol ((sym, loc):T.vid) = {symbol = sym, loc = LOC loc}
   fun toLongsymbol ((ids, _):T.longvid) = map toSymbol ids
+  fun seq (SOME (items, _)) = items | seq NONE = nil
 
-  type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
+  type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
   val emptyFixEnv = Symbol.Map.empty : fixEnv
 
   fun unionFixEnv (env1, env2) =
@@ -33,7 +35,7 @@ struct
           | (k, NONE, x) => x
           | (k, x as (SOME (_, loc)), y as (SOME _)) =>
             (EU.enqueueError
-               (loc, E.MultipleInfixInInterface k);
+               (LOC loc, E.MultipleInfixInInterface k);
              y))
         (env1, env2)
 
@@ -75,24 +77,33 @@ struct
       | T.TYVAR_FREE _ => raise Bug.Bug "FREE_TYID to substTy in ElaborateInterface"
       | T.TYRECORD (fields, ifFlex, loc) =>
         T.TYRECORD (substRecordTy subst fields, ifFlex, loc)
-      | T.TYCON ((tyList, argLoc), tyCon as ([(symbol, _)], _), loc) =>
-        (case Symbol.Map.find (#tycon subst, symbol) of
-           NONE =>
-           T.TYCON ((map (substTy subst) tyList, argLoc), tyCon, loc)
-         | SOME ((tyvars, _), symbol, ty, loc) =>
-           substTy 
-             (tyvarSubst
-                (ListPair.zipEq (map (toSymbol o #2) tyvars, tyList)
-                 handle ListPair.UnequalLengths =>
-                        (EU.enqueueError
-                           (loc, E.ArityMismatchInTypeDeclaration
-                                   {tyCon = #1 symbol,
-                                    wants = length tyvars,
-                                    given = length tyList});
-                         nil)))
-             ty)
-      | T.TYCON ((tyList, argLoc), tyCon, loc) =>
-        T.TYCON ((map (substTy subst) tyList, argLoc), tyCon, loc)
+      | T.TYCON (tyseq, tyCon as ([(symbol, _)], _), loc) =>
+        let
+          val (tyList, con) =
+              case tyseq of
+                SOME (tys, loc) => (tys, fn tys => SOME (tys, loc))
+              | NONE => (nil, fn tys => NONE)
+        in
+          case Symbol.Map.find (#tycon subst, symbol) of
+            NONE =>
+            T.TYCON (con (map (substTy subst) tyList), tyCon, loc)
+          | SOME (tyvars, symbol, ty, loc) =>
+            substTy
+              (tyvarSubst
+                 (ListPair.zipEq (map (toSymbol o #2) (seq tyvars), tyList)
+                  handle ListPair.UnequalLengths =>
+                         (EU.enqueueError
+                            (LOC loc,
+                             E.ArityMismatchInTypeDeclaration
+                               {tyCon = #1 symbol,
+                                wants = length (seq tyvars),
+                                given = length tyList});
+                          nil)))
+              ty
+        end
+      | T.TYCON (SOME (tyList, argLoc), tyCon, loc) =>
+        T.TYCON (SOME (map (substTy subst) tyList, argLoc), tyCon, loc)
+      | T.TYCON (NONE, tyCon, loc) => ty
       | T.TYTUPLE (tys, loc) =>
         T.TYTUPLE (map (substTy subst) tys, loc)
       | T.TYFUN (ty1, ty2, loc) =>
@@ -115,19 +126,20 @@ struct
 
   and substTvarKind subst tvarKind =
       case tvarKind of
-        T.UNIV _ => tvarKind
-      | T.REC (properties, recordKind, loc) =>
-        T.REC (properties, substRecordTy subst recordKind, loc)
+        NONE => tvarKind
+      | SOME (T.UNIV _) => tvarKind
+      | SOME (T.REC (properties, recordKind, loc)) =>
+        SOME (T.REC (properties, substRecordTy subst recordKind, loc))
 
   fun substConbind subst ((_, id, _), ty, loc) =
       case ty of
-        NONE => {symbol = toSymbol id, ty = NONE, loc = loc}
-      | SOME ty => {symbol = toSymbol id, ty = SOME (substTy subst ty), loc = loc}
+        NONE => {symbol = toSymbol id, ty = NONE, loc = LOC loc}
+      | SOME ty => {symbol = toSymbol id, ty = SOME (substTy subst ty), loc = LOC loc}
 
-  fun substDatbind subst ((tyvars, _), symbol, conbind, loc) =
-      {tyvars = tyvars,
+  fun substDatbind subst (tyvars, symbol, conbind, loc) =
+      {tyvars = seq tyvars,
        symbol = toSymbol symbol,
-       loc = loc,
+       loc = LOC loc,
        conbind = map (substConbind subst) conbind}
 
   fun checkSigexp sigexp =
@@ -223,7 +235,7 @@ struct
       {tyvar = tyvar,
        expTy = ty,
        matches = map elabOverloadMrule mrules,
-       loc = loc}
+       loc = LOC loc}
 
   and elabOverloadMrule (ty, inst, loc) =
       {instTy = ty, instance = elabOverloadInst inst}
@@ -242,34 +254,34 @@ struct
          P.PIVAL {scopedTvars = nil,
                   symbol = toSymbol id,
                   body = P.VAL_EXTERN {ty = ty},
-                  loc = loc})
+                  loc = LOC loc})
       | I.VAL_ALIAS (id, longid, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
          P.PIVAL {scopedTvars = nil,
                   symbol = toSymbol id,
                   body = P.VALALIAS_EXTERN (toLongsymbol longid),
-                  loc = loc})
+                  loc = LOC loc})
       | I.VAL_BUILTIN (id, name, ty, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
          P.PIVAL {scopedTvars = nil,
                   symbol = toSymbol id,
                   body = P.VAL_BUILTIN {builtinSymbol = toSymbol name, ty = ty},
-                  loc = loc})
+                  loc = LOC loc})
       | I.VAL_OVERLOAD (id, exp, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
          P.PIVAL {scopedTvars = nil,
                   symbol = toSymbol id,
                   body = P.VAL_OVERLOAD (elabOverloadCase exp),
-                  loc = loc})
+                  loc = LOC loc})
 
   fun elabExbind exbind =
       case exbind of
         I.EXBIND ((_, id, _), ty, loc) =>
         (ElaborateCore.checkReservedNameForConstructorBind (toSymbol id);
-         P.PIEXCEPTION {symbol=toSymbol id, ty=ty, loc=loc})
+         P.PIEXCEPTION {symbol=toSymbol id, ty=ty, loc=LOC loc})
       | I.EXBINDREP ((_, id, _), (_, longid, _), loc) =>
         (ElaborateCore.checkReservedNameForConstructorBind (toSymbol id);
-         P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=toLongsymbol longid, loc=loc})
+         P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=toLongsymbol longid, loc=LOC loc})
 
   fun elabOpaqueImpl impl =
       case impl of
@@ -278,14 +290,14 @@ struct
       | I.IMPL_RECORD _ => P.IMPL_RECORD
       | I.IMPL_FUNC _ => P.IMPL_FUNC
 
-  fun elabTypdesc eq ((tyvars, _), symbol, runtimeTy, loc) =
+  fun elabTypdesc eq (tyvars, symbol, runtimeTy, loc) =
       P.PIOPAQUE_TYPE
-        {eq=eq, tyvars=tyvars, symbol= toSymbol symbol, runtimeTy=elabOpaqueImpl runtimeTy, loc=loc}
+        {eq=eq, tyvars=seq tyvars, symbol= toSymbol symbol, runtimeTy=elabOpaqueImpl runtimeTy, loc=LOC loc}
 
   fun elabTypbind typbind =
       case typbind of
-      I.TYPBIND ((tyvars, _), symbol, ty, loc) =>
-      P.PITYPE {tyvars=tyvars, symbol = toSymbol symbol, ty=ty, loc=loc}
+      I.TYPBIND (tyvars, symbol, ty, loc) =>
+      P.PITYPE {tyvars=seq tyvars, symbol = toSymbol symbol, ty=ty, loc=LOC loc}
     | I.TYPDESC typdesc => elabTypdesc false typdesc
 
   fun elabDec dec =
@@ -306,15 +318,15 @@ struct
              (map toSymbol (List.concat (map (map (#2 o #1) o #3) datbind)));
          P.PIDATATYPE
            {datbind = map (substDatbind (tyconSubst withType)) datbind,
-            loc = loc}
-         :: map (fn ((tyvars, _), id, ty, loc) =>
-                    P.PITYPE {tyvars = tyvars, symbol = toSymbol id,
-                              ty = ty, loc = loc})
+            loc = LOC loc}
+         :: map (fn (tyvars, id, ty, loc) =>
+                    P.PITYPE {tyvars = seq tyvars, symbol = toSymbol id,
+                              ty = ty, loc = LOC loc})
                 withType)
       | I.DATATYPEREP (symbol, longsymbol, loc) =>
-        [P.PITYPEREP {loc=loc, longsymbol = toLongsymbol longsymbol, symbol= toSymbol symbol}]
+        [P.PITYPEREP {loc=LOC loc, longsymbol = toLongsymbol longsymbol, symbol= toSymbol symbol}]
       | I.TYPEBUILTIN (symbol, builtinSymbol, loc) =>
-        [P.PITYPEBUILTIN {builtinSymbol= toSymbol builtinSymbol, loc=loc, symbol= toSymbol symbol}]
+        [P.PITYPEBUILTIN {builtinSymbol= toSymbol builtinSymbol, loc=LOC loc, symbol= toSymbol symbol}]
       | I.EXCEPTION (exbind, _) => map elabExbind exbind
       | I.STRUCTURE (strbind, _) => [elabStrbind strbind]
       | I.SEMICOLON _ => nil
@@ -322,15 +334,15 @@ struct
   and elabStrbind ((symbol, strexp, loc):I.strbind) =
       P.PISTRUCTURE {symbol = toSymbol symbol,
                      strexp = elabStrexp strexp,
-                     loc = loc}
+                     loc = LOC loc}
 
   and elabStrexp strexp =
       case strexp of
         I.STRBASIC (decs, loc) =>
-        P.PISTRUCT {decs = List.concat (map elabDec decs), loc = loc}
-      | I.STRID longvid => P.PISTRUCTREP{longsymbol= toLongsymbol longvid, loc= #2 longvid}
+        P.PISTRUCT {decs = List.concat (map elabDec decs), loc = LOC loc}
+      | I.STRID longvid => P.PISTRUCTREP{longsymbol= toLongsymbol longvid, loc= LOC (#2 longvid)}
       | I.STRAPP (functorSymbol, argument, loc) =>
-        P.PIFUNCTORAPP{functorSymbol= toSymbol functorSymbol, argument= toLongsymbol argument, loc=loc}
+        P.PIFUNCTORAPP{functorSymbol= toSymbol functorSymbol, argument= toLongsymbol argument, loc=LOC loc}
 
   fun elabFunbind ((functorSymbol, param, strexp, loc):I.funbind) =
       let
@@ -341,10 +353,10 @@ struct
               {strSymbol = toSymbol symbol, sigexp = elabSigexp sigexp}
             | I.FUNPARAM_SPEC spec =>
               let
-                val dummySym = SymbolWithLoc.mkSymbol "" loc
+                val dummySym = SymbolWithLoc.mkSymbol "" (LOC loc)
               in
                 (EU.enqueueError
-                   (loc, E.DerivedFormFunArg);
+                   (LOC loc, E.DerivedFormFunArg);
                  {strSymbol = dummySym, sigexp = PatternCalc.PLSIGID dummySym}
                 )
               end
@@ -352,7 +364,7 @@ struct
         P.PIFUNDEC {functorSymbol = toSymbol functorSymbol,
                     param = param,
                     strexp = strexp,
-                    loc = loc}
+                    loc = LOC loc}
       end
 
   fun toFixEnv fixity ids =
@@ -415,7 +427,7 @@ struct
          pdec :: pdecs)
       end
 
-  fun elaborate ({interfaceDecs, provide}:AbsynInterfaceLoaded.interface) =
+  fun elaborate ({interfaceDecs, provide}:'a AbsynInterfaceLoaded.interface) =
       let
         val {requiredIds, locallyRequiredIds, provideTopdecs, topdecsInclude} =
             provide
@@ -430,7 +442,7 @@ struct
                   provideFixEnv
                   interfaceEnv
 
-        val interface : P.interface =
+        val interface : 'a P.interface =
             {interfaceDecs = pinterfaceDecs,
              requiredIds = requiredIds,
              locallyRequiredIds = locallyRequiredIds,

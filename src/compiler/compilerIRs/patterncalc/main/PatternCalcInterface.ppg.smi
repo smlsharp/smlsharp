@@ -119,21 +119,21 @@ struct
       {
         interfaceId: interfaceId,
         interfaceName: InterfaceName.interface_name,
-        requiredIds: {id: interfaceId, loc: loc} list,
+        requiredIds: {id: interfaceId, loc: Loc.pos * Loc.pos} list,
         provideTopdecs: pitopdec list
       }
 
-  type interface =
+  type 'loc interface =
       {
         interfaceDecs : interfaceDec list,
-        requiredIds : {id: interfaceId, loc: loc} list,
-        locallyRequiredIds : {id: interfaceId, loc: loc} list,
+        requiredIds : {id: interfaceId, loc: 'loc} list,
+        locallyRequiredIds : {id: interfaceId, loc: 'loc} list,
         provideTopdecs : pitopdec list
       } 
 
   type compile_unit =
       {
-        interface : interface option,
+        interface : (Loc.pos * Loc.pos) interface option,
         topdecsInclude : PatternCalc.pltopdec list,
         topdecsSource : PatternCalc.pltopdec list
       }
@@ -141,7 +141,7 @@ struct
   type interface_unit =
       {
         interfaceDecs : interfaceDec list,
-        requiredIds : {id: interfaceId, loc: loc} list,
+        requiredIds : {id : interfaceId, loc : unit} list,
         topdecsInclude : PatternCalc.pltopdec list
       } 
 
@@ -156,7 +156,7 @@ struct
 
   type compile_unit_spliced =
       {
-        interface : interface option,
+        interface : (Loc.pos * Loc.pos) interface option,
         topdecsInclude : topdec list,
         topdecsSource : topdec list
       }

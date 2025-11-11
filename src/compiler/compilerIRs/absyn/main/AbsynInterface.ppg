@@ -134,19 +134,19 @@ struct
 
   (*%
    * @params(head)
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type typdesc =
       (*%
-       * @format(tyvarseq * tycon * impl * loc)
+       * @format(tyvarseq tyvarseqOpt * tycon * impl * loc)
        * !N0{
        *   head
-       *   tyvarseq tyvarseq:ifemptyseq()(,+1) tycon
+       *   tyvarseqOpt(tyvarseq) tyvarseqOpt:ifsome()(+1,) tycon
        *   +1
        *   "(" !N0{ "=" +d impl } ")"
        * }
        *)
-      tyvarseq * tycon * opaque_impl * loc
+      tyvarseq option * tycon * opaque_impl * loc
 
   (*%
    * @params(head)

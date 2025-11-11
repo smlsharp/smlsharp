@@ -7,7 +7,7 @@ structure AbsynTy =
 struct
 
   type pos = Loc.pos
-  type loc = Loc.loc
+  type loc = pos * pos
 
   type id = Symbol.symbol * loc
 
@@ -32,19 +32,19 @@ struct
   datatype ty =
       TYVAR of tyvar
     | TYRECORD of (lab * ty * loc) list * bool * loc
-    | TYCON of (ty list * loc) * longtycon * loc
+    | TYCON of (ty list * loc) option * longtycon * loc
     | TYTUPLE of ty list * loc
     | TYFUN of ty * ty * loc
     | TYPAREN of ty * loc
     | TYWILD of loc
-    | TYVAR_FREE of tyvar * kind * loc
-    | TYPOLY of (tyvar * kind * loc) list * ty * loc
+    | TYVAR_FREE of tyvar * kind option * loc
+    | TYPOLY of (tyvar * kind option * loc) list * ty * loc
 
   and kind =
       UNIV of id list * loc
     | REC of id list * (lab * ty * loc) list * loc
 
-  type kinded_tyvar = tyvar * kind * loc
+  type kinded_tyvar = tyvar * kind option * loc
 
   type tyrow = lab * ty * loc
 
@@ -57,9 +57,9 @@ struct
   datatype ffi_ty =
       FFITYVAR of tyvar
     | FFITYRECORD of (lab * ffi_ty * loc) list * loc
-    | FFITYCON of (ffi_ty list * loc) * longtycon * loc
+    | FFITYCON of (ffi_ty list * loc) option * longtycon * loc
     | FFITYTUPLE of ffi_ty list * loc
-    | FFITYFUN of ffi_attr
+    | FFITYFUN of ffi_attr option
                   * (ffi_ty list * ffi_ty list option * loc)
                   * (ffi_ty list * loc)
                   * loc

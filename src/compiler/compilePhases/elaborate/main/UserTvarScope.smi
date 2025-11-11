@@ -18,6 +18,5 @@ structure UserTvarScope =
     type tvset (= boxed)
     val decide : PatternCalc.pltopdec list -> PatternCalc.pltopdec list
     val decideSigexp : PatternCalc.plsigexp -> PatternCalc.plsigexp
-    val decideInterface : PatternCalcInterface.interface -> PatternCalcInterface.interface
-    val decidePitopdecs :  PatternCalcInterface.pitopdec list -> PatternCalcInterface.pitopdec list
+    val decideInterface : 'loc PatternCalcInterface.interface -> 'loc PatternCalcInterface.interface
   end

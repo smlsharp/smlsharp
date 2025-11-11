@@ -10,19 +10,19 @@ struct
   datatype file_place = STDPATH | USERPATH
   datatype source = FILE of file_place * Filename.filename | INTERACTIVE
   datatype at = AT of {line : int, col : int, pos : int, token : int} | EOF
-  datatype pos = POS of {source : source, pos : at} | NOPOS
-  type loc = pos * pos
+  type pos = {source : source, pos : at}
+  datatype loc = LOC of pos * pos | NOLOC
   val compareLoc : loc * loc -> order
   val comparePos : pos * pos -> order
   val noloc : loc
-  val nopos : pos
-  val isNopos : pos -> bool
   val isNoloc : loc -> bool
+  val mergeRange : (pos * pos) * (pos * pos) -> pos * pos
   val mergeLocs : loc * loc -> loc
   val format_file_place
       : file_place -> SMLFormat.FormatExpression.expression list
   val format_source : source -> SMLFormat.FormatExpression.expression list
-  val format_loc : pos * pos -> SMLFormat.FormatExpression.expression list
+  val format_loc : loc -> SMLFormat.FormatExpression.expression list
   val posToString : pos -> string
   val locToString : loc -> string
+  val rangeToString : pos * pos -> string
 end

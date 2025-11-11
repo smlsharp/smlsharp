@@ -735,7 +735,8 @@ struct
       | OP_LONGVID (_, longvid, loc) => [LONGVID longvid]
       | TY (A.TYVAR _) => nil
       | TY (A.TYRECORD (tyrows, _, loc)) => map TYROW tyrows
-      | TY (A.TYCON (tyseq, tycon, loc)) => [TYSEQ tyseq, LONGTYCON tycon]
+      | TY (A.TYCON (NONE, tycon, loc)) => [LONGTYCON tycon]
+      | TY (A.TYCON (SOME tyseq, tycon, loc)) => [TYSEQ tyseq, LONGTYCON tycon]
       | TY (A.TYTUPLE (tys, loc)) => map TY tys
       | TY (A.TYFUN (ty1, ty2, loc)) => [TY ty1, TY ty2]
       | TY (A.TYPAREN (ty, loc)) => [TY ty]
@@ -744,17 +745,20 @@ struct
       | TY (A.TYPOLY (tyvars, ty, loc)) => map KINDED_TYVAR tyvars @ [TY ty]
       | KIND (A.UNIV (ids, loc)) => map ID ids
       | KIND (A.REC (ids, tyrows, loc)) => map ID ids @ map TYROW tyrows
-      | KINDED_TYVAR (tyvar, kind, loc) => [TYVAR tyvar, KIND kind]
+      | KINDED_TYVAR (tyvar, NONE, loc) => [TYVAR tyvar]
+      | KINDED_TYVAR (tyvar, SOME kind, loc) => [TYVAR tyvar, KIND kind]
       | TYROW (lab, ty, loc) => [LAB lab, TY ty]
       | TYSEQ (tys, loc) => map TY tys
       | KINDED_TYVARSEQ (tyvars, loc) => map KINDED_TYVAR tyvars
       | FFI_ATTR (ids, loc) => map ID ids
       | FFI_TY (A.FFITYVAR tyvar) => [TYVAR tyvar]
       | FFI_TY (A.FFITYRECORD (tyrows, loc)) => map FFI_TYROW tyrows
-      | FFI_TY (A.FFITYCON (tyseq, tycon, loc)) =>
+      | FFI_TY (A.FFITYCON (NONE, tycon, loc)) => [LONGTYCON tycon]
+      | FFI_TY (A.FFITYCON (SOME tyseq, tycon, loc)) =>
         [FFI_TYSEQ tyseq, LONGTYCON tycon]
       | FFI_TY (A.FFITYTUPLE (tys, loc)) => map FFI_TY tys
-      | FFI_TY (A.FFITYFUN (attrs, arg, ret, loc)) =>
+      | FFI_TY (A.FFITYFUN (NONE, arg, ret, loc)) => [FFI_ARG arg, FFI_RET ret]
+      | FFI_TY (A.FFITYFUN (SOME attrs, arg, ret, loc)) =>
         [FFI_ATTR attrs, FFI_ARG arg, FFI_RET ret]
       | FFI_TY (A.FFITYPAREN (ty, loc)) => [FFI_TY ty]
       | FFI_TYROW (lab, ty, loc) => [LAB lab, FFI_TY ty]
@@ -791,11 +795,15 @@ struct
       | EXBIND (A.EXBIND (id, NONE, loc)) => [OP_VID id]
       | EXBIND (A.EXBIND (id, SOME ty, loc)) => [OP_VID id, TY ty]
       | EXBIND (A.EXBINDREP (id, longid, loc)) => [OP_VID id, OP_LONGVID longid]
-      | TYPBIND (tyvarseq, tycon, ty, loc) =>
+      | TYPBIND (NONE, tycon, ty, loc) =>
+        [TYCON tycon, TY ty]
+      | TYPBIND (SOME tyvarseq, tycon, ty, loc) =>
         [TYVARSEQ tyvarseq, TYCON tycon, TY ty]
       | CONBIND (id, NONE, loc) => [OP_VID id]
       | CONBIND (id, SOME ty, loc) => [OP_VID id, TY ty]
-      | DATBIND (tyvarseq, tycon, conbinds, loc) =>
+      | DATBIND (NONE, tycon, conbinds, loc) =>
+        TYCON tycon :: map CONBIND conbinds
+      | DATBIND (SOME tyvarseq, tycon, conbinds, loc) =>
         TYVARSEQ tyvarseq :: TYCON tycon :: map CONBIND conbinds
       | EXP (A.EXPCONST _) => nil
       | EXP (A.EXPID id) => [OP_LONGVID id]
@@ -842,9 +850,11 @@ struct
       | EXP (A.EXPREIFYTY (ty, loc)) => [TY ty]
       | VALBIND (A.VALBIND (pat, exp, loc)) => [PAT pat, EXP exp]
       | VALBIND (A.VALREC (valbinds, loc)) => map VALBIND valbinds
-      | DEC (A.DECVAL (tyvarseq, valbinds, loc)) =>
+      | DEC (A.DECVAL (NONE, valbinds, loc)) => map VALBIND valbinds
+      | DEC (A.DECVAL (SOME tyvarseq, valbinds, loc)) =>
         KINDED_TYVARSEQ tyvarseq :: map VALBIND valbinds
-      | DEC (A.DECFUN (tyvarseq, fvalbinds, loc)) =>
+      | DEC (A.DECFUN (NONE, fvalbinds, loc)) => map FVALBIND fvalbinds
+      | DEC (A.DECFUN (SOME tyvarseq, fvalbinds, loc)) =>
         KINDED_TYVARSEQ tyvarseq :: map FVALBIND fvalbinds
       | DEC (A.DECTYPE (typbinds, loc)) => map TYPBIND typbinds
       | DEC (A.DECDATATYPE (datbinds, typbinds, loc)) =>
@@ -862,21 +872,27 @@ struct
       | DEC (A.DECPOLYREC (pvalbinds, loc)) => map PVALBIND pvalbinds
       | EXPROW (lab, exp, loc) => [LAB lab, EXP exp]
       | MRULE (pat, exp, loc) => [PAT pat, EXP exp]
-      | DYNAMIC_MRULE (exists, pat, exp, loc) =>
+      | DYNAMIC_MRULE (NONE, pat, exp, loc) => [PAT pat, EXP exp]
+      | DYNAMIC_MRULE (SOME exists, pat, exp, loc) =>
         [EXIST_QUANT exists, PAT pat, EXP exp]
       | FRULE (pat, NONE, exp, loc) => [PAT pat, EXP exp]
       | FRULE (pat, SOME ty, exp, loc) => [PAT pat, TY ty, EXP exp]
       | FVALBIND (frules, loc) => map FRULE frules
       | PVALBIND (vid, ty, exp, loc) => [VID vid, TY ty, EXP exp]
       | VALDESC (vid, ty, loc) => [VID vid, TY ty]
-      | TYPDESC (tyvarseq, tycon, loc) => [TYVARSEQ tyvarseq, TYCON tycon]
+      | TYPDESC (NONE, tycon, loc) => [TYCON tycon]
+      | TYPDESC (SOME tyvarseq, tycon, loc) => [TYVARSEQ tyvarseq, TYCON tycon]
       | CONDESC (vid, NONE, loc) => [VID vid]
       | CONDESC (vid, SOME ty, loc) => [VID vid, TY ty]
-      | DATDESC (tyvarseq, tycon, condescs, loc) =>
+      | DATDESC (NONE, tycon, condescs, loc) =>
+        TYCON tycon :: map CONDESC condescs
+      | DATDESC (SOME tyvarseq, tycon, condescs, loc) =>
         TYVARSEQ tyvarseq :: TYCON tycon :: map CONDESC condescs
       | EXDESC (vid, NONE, loc) => [VID vid]
       | EXDESC (vid, SOME ty, loc) => [VID vid, TY ty]
-      | WHERETYPE (tyvarseq, tycon, ty, loc) =>
+      | WHERETYPE (NONE, tycon, ty, loc) =>
+        [LONGTYCON tycon, TY ty]
+      | WHERETYPE (SOME tyvarseq, tycon, ty, loc) =>
         [TYVARSEQ tyvarseq, LONGTYCON tycon, TY ty]
       | SPEC (A.SPECVAL (valdescs, loc)) => map VALDESC valdescs
       | SPEC (A.SPECTYPE (typdescs, loc)) => map TYPDESC typdescs
@@ -1071,7 +1087,9 @@ struct
         [VID id1, VID id2, TY ty]
       | IVALBIND (I.VAL_OVERLOAD (id, ovcase, loc)) =>
         [VID id, OVERLOAD_CASE ovcase]
-      | ITYPDESC (tyvarseq, tycon, impl, loc) =>
+      | ITYPDESC (NONE, tycon, impl, loc) =>
+        [TYCON tycon, OPAQUE_IMPL impl]
+      | ITYPDESC (SOME tyvarseq, tycon, impl, loc) =>
         [TYVARSEQ tyvarseq, TYCON tycon, OPAQUE_IMPL impl]
       | IDEC (I.VAL (valbind, loc)) => [IVALBIND valbind]
       | IDEC (I.TYPE (typbinds, loc)) =>

@@ -22,31 +22,31 @@ struct
         provideTopdecs: AbsynInterface.topdec list
       }
 
-  type interface =
+  type 'loc interface =
       {
         interfaceDecs : interface_dec list,
         provide :
-          {requiredIds : {id : InterfaceID.id, loc : loc} list,
-           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+          {requiredIds : {id : InterfaceID.id, loc : 'loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : 'loc} list,
            provideTopdecs : AbsynInterface.topdec list,
            topdecsInclude: Absyn.topdec list}
       }
 
   type compile_unit =
       {
-        interface : interface option,
+        interface : loc interface option,
         topdecsSource : Absyn.topdec list
       }
 
   type interface_unit =
       {
         interfaceDecs : interface_dec list,
-        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        requiredIds : {id : InterfaceID.id, loc : unit} list,
         topdecsInclude : Absyn.topdec list
       }
 
   val format_interface_dec : interface_dec -> SMLFormat.format
-  val format_interface : interface -> SMLFormat.format
+  val format_interface : 'a -> 'b interface -> SMLFormat.format
   val format_compile_unit : compile_unit -> SMLFormat.format
   val format_interface_unit : interface_unit -> SMLFormat.format
 

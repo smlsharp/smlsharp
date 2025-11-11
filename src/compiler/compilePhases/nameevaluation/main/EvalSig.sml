@@ -38,7 +38,7 @@ local
   exception ProcessShare
   exception FunIDUndefind
   fun bug s = Bug.Bug ("NameEval: " ^ s)
-  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
+  fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   

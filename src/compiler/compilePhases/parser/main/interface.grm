@@ -211,7 +211,7 @@ structure I = AbsynInterface
   | tyrow_flex of A.tyrow list * bool
   | atty of A.ty
   | appty of A.ty
-  | tyseq of A.tyseq
+  | tyseq of A.tyseq option
   | tys_comma of A.ty list
   | tytuple of A.ty list
   | tuplety of A.ty
@@ -313,10 +313,9 @@ iopaque_impl
 
 itypdesc_1
         : id_noSTAR LPAREN EQ iopaque_impl RPAREN
-          ((nil, Loc.noloc), id_noSTAR, iopaque_impl,
-           (id_noSTARleft, RPARENright))
+          (NONE, id_noSTAR, iopaque_impl, (id_noSTARleft, RPARENright))
         | tyvarseq id_noSTAR LPAREN EQ iopaque_impl RPAREN
-          (tyvarseq, id_noSTAR, iopaque_impl, (tyvarseqleft, RPARENright))
+          (SOME tyvarseq, id_noSTAR, iopaque_impl, (tyvarseqleft, RPARENright))
 
 itypdesc
         : itypdesc_1
@@ -603,9 +602,9 @@ prec
 
 typbind_1
         : id_noEQSTAR EQ ty
-          ((nil, Loc.noloc), id_noEQSTAR, ty, (id_noEQSTARleft, tyright))
+          (NONE, id_noEQSTAR, ty, (id_noEQSTARleft, tyright))
         | tyvarseq id_noEQSTAR EQ ty
-          (tyvarseq, id_noEQSTAR, ty, (tyvarseqleft, tyright))
+          (SOME tyvarseq, id_noEQSTAR, ty, (tyvarseqleft, tyright))
 
 typbind
         : typbind_1
@@ -615,11 +614,9 @@ typbind
 
 datbind_1
         : id_noEQSTAR EQ conbind
-          ((nil, Loc.noloc),
-           id_noEQSTAR,
-           conbind, (id_noEQSTARleft, conbindright))
+          (NONE, id_noEQSTAR, conbind, (id_noEQSTARleft, conbindright))
         | tyvarseq id_noEQSTAR EQ conbind
-          (tyvarseq, id_noEQSTAR, conbind, (tyvarseqleft, conbindright))
+          (SOME tyvarseq, id_noEQSTAR, conbind, (tyvarseqleft, conbindright))
 
 datbind
         : datbind_1
@@ -741,11 +738,11 @@ appty
 
 tyseq
         : appty
-          ([appty], (apptyleft, apptyright))
+          (SOME ([appty], (apptyleft, apptyright)))
         | LPAREN tys_comma RPAREN
-          (tys_comma, (LPARENleft, RPARENright))
+          (SOME (tys_comma, (LPARENleft, RPARENright)))
         | (* none *)
-          (nil, Loc.noloc)
+          (NONE)
 
 tys_comma
         : ty COMMA ty
@@ -829,28 +826,26 @@ kind
 
 kinded_tyvar
         : tyvar
-          (tyvar, A.UNIV (nil, Loc.noloc), (tyvarleft, tyvarright))
+          (tyvar, NONE, (tyvarleft, tyvarright))
         | tyvar kind
           (tyvar,
            case kind of
              (properties, NONE) =>
-             A.UNIV (properties, (kindleft, kindright))
+             SOME (A.UNIV (properties, (kindleft, kindright)))
            | (properties, SOME tyrow) =>
-             A.REC (properties, tyrow, (kindleft, kindright)),
+             SOME (A.REC (properties, tyrow, (kindleft, kindright))),
            (tyvarleft, kindright))
 
 kinded_free_tyvar
         : free_tyvar
-          (free_tyvar,
-           A.UNIV (nil, Loc.noloc),
-           (free_tyvarleft, free_tyvarright))
+          (free_tyvar, NONE, (free_tyvarleft, free_tyvarright))
         | free_tyvar kind
           (free_tyvar,
            case kind of
              (properties, NONE) =>
-             A.UNIV (properties, (kindleft, kindright))
+             SOME (A.UNIV (properties, (kindleft, kindright)))
            | (properties, SOME tyrow) =>
-             A.REC (properties, tyrow, (kindleft, kindright)),
+             SOME (A.REC (properties, tyrow, (kindleft, kindright))),
            (free_tyvarleft, kindright))
 
 kinded_tyvars
@@ -867,9 +862,9 @@ sigexpbasic
 
 wheretype
         : longtycon EQ ty
-          ((nil, Loc.noloc), longtycon, ty, (longtyconleft, tyright))
+          (NONE, longtycon, ty, (longtyconleft, tyright))
         | tyvarseq longtycon EQ ty
-          (tyvarseq, longtycon, ty, (tyvarseqleft, tyright))
+          (SOME tyvarseq, longtycon, ty, (tyvarseqleft, tyright))
 
 sigexpwhere
         : sigexp WHERE TYPE wheretype
@@ -983,10 +978,10 @@ valdesc
           (valdesc_1 :: valdesc)
 
 typdesc_1
-        : tyvarseq id_noSTAR
-          (tyvarseq, id_noSTAR, (tyvarseqleft, id_noSTARright))
-        | id_noSTAR
-          ((nil, Loc.noloc), id_noSTAR, (id_noSTARleft, id_noSTARright))
+        : id_noSTAR
+          (NONE, id_noSTAR, (id_noSTARleft, id_noSTARright))
+        | tyvarseq id_noSTAR
+          (SOME tyvarseq, id_noSTAR, (tyvarseqleft, id_noSTARright))
 
 typdesc
         : typdesc_1
@@ -996,9 +991,9 @@ typdesc
 
 datdesc_1
         : id_noSTAR EQ condesc
-          ((nil, Loc.noloc), id_noSTAR, condesc, (id_noSTARleft, condescright))
+          (NONE, id_noSTAR, condesc, (id_noSTARleft, condescright))
         | tyvarseq id_noSTAR EQ condesc
-          (tyvarseq, id_noSTAR, condesc, (tyvarseqleft, condescright))
+          (SOME tyvarseq, id_noSTAR, condesc, (tyvarseqleft, condescright))
 
 datdesc
         : datdesc_1

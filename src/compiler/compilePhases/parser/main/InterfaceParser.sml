@@ -125,7 +125,9 @@ struct
       }
 
   fun parseError errors (msg, lpos, rpos) =
-      UserError.enqueueError errors ((lpos, rpos), ParserError.ParseError msg)
+      UserError.enqueueError
+        errors
+        (Loc.LOC (lpos, rpos), ParserError.ParseError msg)
 
   fun setup ({read, source}:source) =
       let

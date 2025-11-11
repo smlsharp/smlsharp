@@ -335,8 +335,8 @@ struct
         T.CONSTRUCTty {tyCon,...} => TypID.eq (#id tyCon, #id B.stringTyCon)
       | _ => false
 
-  fun locToString ((pos1, pos2):Loc.loc) =
-      Loc.posToString pos1
+  fun locToString Loc.NOLOC = ""
+    | locToString (Loc.LOC (pos1, pos2)) = Loc.posToString pos1
 
   (*
    * An exception objet is implemented as either

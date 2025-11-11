@@ -12,7 +12,7 @@ structure AbsynTy =
 struct
 
   type pos = Loc.pos
-  type loc = Loc.loc
+  type loc = pos * pos
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
   type id =
@@ -87,7 +87,7 @@ struct
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
    * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
    * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   datatype ty =
       (*%
@@ -101,10 +101,10 @@ struct
        *)
       TYRECORD of tyrow list * bool * loc
     | (*%
-       * @format(tyseq * longtycon * loc)
-       * !N0{ tyseq tyseq:ifemptyseq()(,2[+1]) longtycon }
+       * @format(tyseq tyseqOpt * longtycon * loc)
+       * !N0{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
        *)
-      TYCON of tyseq * longtycon * loc
+      TYCON of tyseq option * longtycon * loc
     | (*%
        * @format(ty tys * loc)
        * !N0{ tys(ty)(+1 "*" +d) }
@@ -153,10 +153,10 @@ struct
 
   withtype kinded_tyvar =
       (*%
-       * @format(tyvar * tvkind * loc)
-       * tyvar tvkind
+       * @format(tyvar * kind kindOpt * loc)
+       * tyvar kindOpt(kind)
        *)
-      tyvar * kind * loc
+      tyvar * kind option * loc
 
   and tyrow =
       (*%
@@ -206,7 +206,7 @@ struct
    * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
    * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
    * @formatter(N0ifnotsingle) AbsynFormatterUtils.N0ifnotsingle
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   datatype ffi_ty =
       (*%
@@ -220,20 +220,20 @@ struct
        *)
       FFITYRECORD of ffi_tyrow list * loc
     | (*%
-       * @format(tyseq * longtycon * loc)
-       * !N0{ tyseq tyseq:ifemptyseq()(,2[+1]) longtycon }
+       * @format(tyseq tyseqOpt * longtycon * loc)
+       * !N0{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
        *)
-      FFITYCON of ffi_tyseq * longtycon * loc
+      FFITYCON of ffi_tyseq option * longtycon * loc
     | (*%
        * @format(ty tys * loc)
        * !N0{ tys(ty)(+1 "*" +d) }
        *)
       FFITYTUPLE of ffi_ty list * loc
     | (*%
-       * @format(attr * arg * ret * loc)
-       * !N0{ attr attr:ifemptyseq()(,+1) arg +1 "->" +d ret }
+       * @format(attr attrOpt * arg * ret * loc)
+       * !N0{ attrOpt(attr) attrOpt:ifsome()(+1,) arg +1 "->" +d ret }
        *)
-      FFITYFUN of ffi_attr * ffi_arg * ffi_ret * loc
+      FFITYFUN of ffi_attr option * ffi_arg * ffi_ret * loc
     | (*%
        * @format(ty * loc)
        * "(" !N0{ ty } ")"

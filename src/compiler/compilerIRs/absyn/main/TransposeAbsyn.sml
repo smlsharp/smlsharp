@@ -13,9 +13,8 @@ struct
   type input = Token.token * (Loc.at * Loc.at)
   type cursor = {result : leaf snoc, count : int, input : input list}
 
-  fun posInt Loc.NOPOS = ~1
-    | posInt (Loc.POS {pos = Loc.EOF, ...}) = ~1
-    | posInt (Loc.POS {pos = Loc.AT {token, ...}, ...}) = token
+  fun posInt {pos = Loc.EOF, ...} = ~1
+    | posInt {pos = Loc.AT {token, ...}, ...} = token
 
   fun enter (cursor as {count, ...} : cursor) node =
       (cursor # {count = count + 1}, {id = count, node = node})
@@ -55,7 +54,7 @@ struct
 
   fun toLeaf (token, loc) : leaf = (token, loc, nil)
 
-  fun generate (input, Absyn.EOF) = Snoc.map toLeaf input
+  fun generate (input, Absyn.EOF _) = Snoc.map toLeaf input
     | generate (input, Absyn.UNIT compileUnit) =
       let
         val cursor = {result = NIL, count = 0, input = Snoc.toList input}

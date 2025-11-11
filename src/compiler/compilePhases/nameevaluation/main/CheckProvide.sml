@@ -26,7 +26,7 @@ local
 
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
-  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
+  fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
   exception Fail
   fun raiseFail i = (U.print ( "CheckProvide Fail exception at " ^ (Int.toString i) ^ "\n"); raise Fail)

@@ -322,7 +322,7 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | tyrow_flex of A.tyrow list * bool
   | atty of A.ty
   | appty of A.ty
-  | tyseq of A.tyseq
+  | tyseq of A.tyseq option
   | tys_comma of A.ty list
   | tytuple of A.ty list
   | tuplety of A.ty
@@ -343,7 +343,7 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | ffitys of A.ffi_ty list
   | ffitys_opt of A.ffi_ty list
   | ffitys_COMMA of A.ffi_ty list
-  | ffityseq of A.ffi_tyseq
+  | ffityseq of A.ffi_tyseq option
   | ffiatty of A.ffi_ty
   | ffitytuple of A.ffi_ty list
   | ffituplety of A.ffi_ty
@@ -815,14 +815,14 @@ match
 
 dynmatch
         : exist_quant pat DARROW exp
-          ([(exist_quant, pat, exp, (exist_quantleft, expright))])
+          ([(SOME exist_quant, pat, exp, (exist_quantleft, expright))])
         | exist_quant pat DARROW exp BAR dynmatch
-          ((exist_quant, pat, exp, (exist_quantleft, expright))
+          ((SOME exist_quant, pat, exp, (exist_quantleft, expright))
            :: dynmatch)
         | pat DARROW exp
-          ([((nil, Loc.noloc), pat, exp, (patleft, expright))])
+          ([(NONE, pat, exp, (patleft, expright))])
         | pat DARROW exp BAR dynmatch
-          (((nil, Loc.noloc), pat, exp, (patleft, expright)) :: dynmatch)
+          ((NONE, pat, exp, (patleft, expright)) :: dynmatch)
 
 exist_quant
         : LBRACE kinded_tyvar RBRACE
@@ -1415,15 +1415,15 @@ decs
 
 dec
         : VAL valbind
-          (A.DECVAL ((nil, Loc.noloc), valbind, (VALleft, valbindright)))
+          (A.DECVAL (NONE, valbind, (VALleft, valbindright)))
         | VAL kinded_tyvarseq valbind
-          (A.DECVAL (kinded_tyvarseq, valbind, (VALleft, valbindright)))
+          (A.DECVAL (SOME kinded_tyvarseq, valbind, (VALleft, valbindright)))
         | VAL U_POLYREC pvalbind
           (A.DECPOLYREC (pvalbind, (VALleft, pvalbindright)))
         | FUN fvalbind
-          (A.DECFUN ((nil, Loc.noloc), fvalbind, (FUNleft, fvalbindright)))
+          (A.DECFUN (NONE, fvalbind, (FUNleft, fvalbindright)))
         | FUN kinded_tyvarseq fvalbind
-          (A.DECFUN (kinded_tyvarseq, fvalbind, (FUNleft, fvalbindright)))
+          (A.DECFUN (SOME kinded_tyvarseq, fvalbind, (FUNleft, fvalbindright)))
         | TYPE typbind
           (A.DECTYPE (typbind, (TYPEleft, typbindright)))
         | DATATYPE datbind
@@ -1455,9 +1455,9 @@ prec
 
 typbind_1
         : id_noEQSTAR EQ ty
-          ((nil, Loc.noloc), id_noEQSTAR, ty, (id_noEQSTARleft, tyright))
+          (NONE, id_noEQSTAR, ty, (id_noEQSTARleft, tyright))
         | tyvarseq id_noEQSTAR EQ ty
-          (tyvarseq, id_noEQSTAR, ty, (tyvarseqleft, tyright))
+          (SOME tyvarseq, id_noEQSTAR, ty, (tyvarseqleft, tyright))
 
 typbind
         : typbind_1
@@ -1467,11 +1467,9 @@ typbind
 
 datbind_1
         : id_noEQSTAR EQ conbind
-          ((nil, Loc.noloc),
-           id_noEQSTAR,
-           conbind, (id_noEQSTARleft, conbindright))
+          (NONE, id_noEQSTAR, conbind, (id_noEQSTARleft, conbindright))
         | tyvarseq id_noEQSTAR EQ conbind
-          (tyvarseq, id_noEQSTAR, conbind, (tyvarseqleft, conbindright))
+          (SOME tyvarseq, id_noEQSTAR, conbind, (tyvarseqleft, conbindright))
 
 datbind
         : datbind_1
@@ -1766,11 +1764,11 @@ appty
 
 tyseq
         : appty
-          ([appty], (apptyleft, apptyright))
+          (SOME ([appty], (apptyleft, apptyright)))
         | LPAREN tys_comma RPAREN
-          (tys_comma, (LPARENleft, RPARENright))
+          (SOME (tys_comma, (LPARENleft, RPARENright)))
         | (* none *)
-          (nil, Loc.noloc)
+          (NONE)
 
 tys_comma
         : ty COMMA ty
@@ -1859,28 +1857,26 @@ kind
 
 kinded_tyvar
         : tyvar
-          (tyvar, A.UNIV (nil, Loc.noloc), (tyvarleft, tyvarright))
+          (tyvar, NONE, (tyvarleft, tyvarright))
         | tyvar kind
           (tyvar,
            case kind of
              (properties, NONE) =>
-             A.UNIV (properties, (kindleft, kindright))
+             SOME (A.UNIV (properties, (kindleft, kindright)))
            | (properties, SOME tyrow) =>
-             A.REC (properties, tyrow, (kindleft, kindright)),
+             SOME (A.REC (properties, tyrow, (kindleft, kindright))),
            (tyvarleft, kindright))
 
 kinded_free_tyvar
         : free_tyvar
-          (free_tyvar,
-           A.UNIV (nil, Loc.noloc),
-           (free_tyvarleft, free_tyvarright))
+          (free_tyvar, NONE, (free_tyvarleft, free_tyvarright))
         | free_tyvar kind
           (free_tyvar,
            case kind of
              (properties, NONE) =>
-             A.UNIV (properties, (kindleft, kindright))
+             SOME (A.UNIV (properties, (kindleft, kindright)))
            | (properties, SOME tyrow) =>
-             A.REC (properties, tyrow, (kindleft, kindright)),
+             SOME (A.REC (properties, tyrow, (kindleft, kindright))),
            (free_tyvarleft, kindright))
 
 kinded_tyvarseq
@@ -1937,11 +1933,11 @@ ffitys_COMMA
 
 ffityseq
         : (* none *)
-          (nil, Loc.noloc)
+          (NONE)
         | ffiatty
-          ([ffiatty], (ffiattyleft, ffiattyright))
+          (SOME ([ffiatty], (ffiattyleft, ffiattyright)))
         | LPAREN ffitys RPAREN
-          (ffitys, (LPARENleft, RPARENright))
+          (SOME (ffitys, (LPARENleft, RPARENright)))
 
 ffiatty
         : LPAREN ffity RPAREN
@@ -1989,11 +1985,10 @@ ffiret
 
 ffifunty
         : ffiarg ARROW ffiret
-          (A.FFITYFUN
-             ((nil, Loc.noloc), ffiarg, ffiret, (ffiargleft, ffiretright)))
+          (A.FFITYFUN (NONE, ffiarg, ffiret, (ffiargleft, ffiretright)))
         | ffiattr ffiarg ARROW ffiret
           (A.FFITYFUN
-             (ffiattr, ffiarg, ffiret, (ffiattrleft, ffiretright)))
+             (SOME ffiattr, ffiarg, ffiret, (ffiattrleft, ffiretright)))
 
 ffiattrs
         : alphabetic_id
@@ -2120,9 +2115,9 @@ sigexpbasic
 
 wheretype
         : longtycon EQ ty
-          ((nil, Loc.noloc), longtycon, ty, (longtyconleft, tyright))
+          (NONE, longtycon, ty, (longtyconleft, tyright))
         | tyvarseq longtycon EQ ty
-          (tyvarseq, longtycon, ty, (tyvarseqleft, tyright))
+          (SOME tyvarseq, longtycon, ty, (tyvarseqleft, tyright))
 
 sigexpwhere
         : sigexp WHERE TYPE wheretype
@@ -2242,10 +2237,10 @@ valdesc
           (valdesc_1 :: valdesc)
 
 typdesc_1
-        : tyvarseq id_noSTAR
-          (tyvarseq, id_noSTAR, (tyvarseqleft, id_noSTARright))
-        | id_noSTAR
-          ((nil, Loc.noloc), id_noSTAR, (id_noSTARleft, id_noSTARright))
+        : id_noSTAR
+          (NONE, id_noSTAR, (id_noSTARleft, id_noSTARright))
+        | tyvarseq id_noSTAR
+          (SOME tyvarseq, id_noSTAR, (tyvarseqleft, id_noSTARright))
 
 typdesc
         : typdesc_1
@@ -2255,9 +2250,9 @@ typdesc
 
 datdesc_1
         : id_noSTAR EQ condesc
-          ((nil, Loc.noloc), id_noSTAR, condesc, (id_noSTARleft, condescright))
+          (NONE, id_noSTAR, condesc, (id_noSTARleft, condescright))
         | tyvarseq id_noSTAR EQ condesc
-          (tyvarseq, id_noSTAR, condesc, (tyvarseqleft, condescright))
+          (SOME tyvarseq, id_noSTAR, condesc, (tyvarseqleft, condescright))
 
 datdesc
         : datdesc_1

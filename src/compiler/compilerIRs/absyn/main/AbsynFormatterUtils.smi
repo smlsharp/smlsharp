@@ -21,8 +21,6 @@ struct
       : SMLFormat.format -> 'a list -> SMLFormat.format
   val N0ifsome
       : SMLFormat.format -> 'a option -> SMLFormat.format
-  val ifemptyseq
-      : SMLFormat.format * SMLFormat.format -> 'a list * 'b -> SMLFormat.format
   val decs
       : (SMLFormat.format -> 'a -> SMLFormat.format)
         * SMLFormat.format

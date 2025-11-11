@@ -30,7 +30,7 @@ type arg =
       allow8bitId : bool
     }
 
-fun toPos source at1 = Loc.POS {source = source, pos = at1}
+fun toPos source at1 : Loc.pos = {source = source, pos = at1}
 
 fun initArg {source, errorFn, initialLineno, allow8bitId} =
     {

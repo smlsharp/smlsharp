@@ -1,6 +1,5 @@
 _require local "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.smi"
 _require "./RequirePath.smi"
 _require "./Absyn.smi"
 _require "./AbsynTy.smi"
@@ -53,7 +52,7 @@ struct
     | VAL_OVERLOAD of vid * overload_case * loc
 
   type typdesc =
-      tyvarseq * tycon * opaque_impl * loc
+      tyvarseq option * tycon * opaque_impl * loc
 
   datatype typbind =
       TYPBIND of Absyn.typbind

@@ -357,13 +357,9 @@ struct
   val format_varId : varId -> TermFormat.format
   val format_varInfo : varInfo -> TermFormat.format
   val format_exInfo : exInfo -> TermFormat.format
-  val getLeftLocExp : icexp -> Loc.pos
-  val getLeftLocPat : icpat -> Loc.pos
   val getLocDec : icdecl -> Loc.loc
   val getLocExp : icexp -> Loc.loc
   val getLocPat : icpat -> Loc.loc
-  val getRightLocExp :icexp -> Loc.pos
-  val getRightLocPat : icpat -> Loc.pos
   val getRuleLocM : {args:icpat list, body:icexp} list -> Loc.loc
   val liftedTysSingleton : TvarSet.item -> liftedTys
   val liftedTysToTy : liftedTys -> ty list

@@ -12,11 +12,11 @@ struct
 
   structure UE = UserError
   structure EU = UserErrorUtils
-
   structure A = AbsynInterfaceLoaded
   structure E = ElaborateError
+  datatype loc = datatype Loc.loc
 
-  type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
+  type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
       Symbol.Map.unionWith #2 (env1, env2)
@@ -49,7 +49,7 @@ struct
         val _ =
             Symbol.Map.mergeWithi
               (fn (k, x as SOME loc, NONE) =>
-                  (EU.enqueueError (loc, E.ProvideInfixNotDefined k); x)
+                  (EU.enqueueError (LOC loc, E.ProvideInfixNotDefined k); x)
                 | (k, x, y) => x)
               (fixEnvToLocEnv provideFixEnv, fixEnvToLocEnv topdecsSourceFixEnv)
 

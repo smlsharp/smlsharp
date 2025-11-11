@@ -17,9 +17,9 @@ in
   fun onStdpath (L.STDPATH, fileName) = true
     | onStdpath (L.USERPATH, fileName) = false
   fun onUserpath source = not (onStdpath source)
-  fun locToStartPos (L.POS {pos=L.AT{pos,...},...}, _) = pos
+  fun locToStartPos (L.LOC ({pos=L.AT{pos,...},...}, _)) = pos
     | locToStartPos _ = ~1
-  fun locToEndPos (_, L.POS {pos=L.AT{pos,...},...}) = pos
+  fun locToEndPos (L.LOC (_, {pos=L.AT{pos,...},...})) = pos
     | locToEndPos _ = ~2
 end
 end

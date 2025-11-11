@@ -13,6 +13,7 @@ struct
   structure P = PatternCalc
   structure F = ElaborateErrorSQL
   structure E = ElaborateError
+  datatype loc = datatype Loc.loc
 
   val SQLPrim = "SMLSharp_SQL_Prim"
   structure Name =
@@ -131,11 +132,11 @@ struct
       in map f 0 l
       end
 
-  fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = loc}
+  fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
   fun toLongsymbol ((ids, _) : A.longvid) = map toSymbol ids
 
   fun recordLabelToSymbol label loc =
-      SymbolWithLoc.mkSymbol (RecordLabel.toString label) loc
+      SymbolWithLoc.mkSymbol (RecordLabel.toString label) (LOC loc)
 
   fun Ty ty (_:S.loc) = ty : A.ty
 
@@ -150,69 +151,70 @@ struct
 
   fun TyCon args name loc =
       A.TYCON
-        ((map (fn arg => arg loc) args, loc),
+        (case args of nil => NONE
+                    | _ :: _ => SOME (map (fn arg => arg loc) args, loc),
          (map (fn i => (Symbol.fromString i, loc)) name, loc),
          loc)
 
   fun TyFun (ty1, ty2) loc =
       A.TYFUN (ty1 loc, ty2 loc, loc)
 
-  fun Pat x (_:P.loc) = x : P.plpat
+  fun Pat x (_:A.loc) = x : P.plpat
 
   fun PatWild loc =
-      P.PLPATWILD loc
+      P.PLPATWILD (LOC loc)
 
   fun PatUnit loc =
-      P.PLPATCONSTANT (A.UNITCONST, loc)
+      P.PLPATCONSTANT (A.UNITCONST, LOC loc)
 
-  fun PatVar symbol (_:P.loc) =
+  fun PatVar symbol (_:A.loc) =
       P.PLPATID [symbol]
 
   fun PatVarLabel label loc =
       P.PLPATID [recordLabelToSymbol label loc]
 
   fun PatFlexRecord fields loc =
-      P.PLPATRECORD (true, map (fn (l, pat) => (l, pat loc)) fields, loc)
+      P.PLPATRECORD (true, map (fn (l, pat) => (l, pat loc)) fields, LOC loc)
 
   fun PatRecord fields loc =
-      P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, loc)
+      P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, LOC loc)
 
   fun PatTuple pats = PatRecord (RecordLabel.tupleList pats)
 
   fun PatAs (var, pat) loc =
-      P.PLPATLAYERED (var, NONE, pat loc, loc)
+      P.PLPATLAYERED (var, NONE, pat loc, LOC loc)
 
   fun PatAsLabel (label, pat) loc =
-      P.PLPATLAYERED (recordLabelToSymbol label loc, NONE, pat loc, loc)
+      P.PLPATLAYERED (recordLabelToSymbol label loc, NONE, pat loc, LOC loc)
 
   fun PatCon name symbol loc =
-      P.PLPATCONSTRUCT (P.PLPATID (SymbolWithLoc.mkLongsymbol name loc),
-                        P.PLPATID [symbol], loc)
+      P.PLPATCONSTRUCT (P.PLPATID (SymbolWithLoc.mkLongsymbol name (LOC loc)),
+                        P.PLPATID [symbol], LOC loc)
 
   fun PatTyped (pat, ty) loc =
-      P.PLPATTYPED (pat loc, ty loc, loc)
+      P.PLPATTYPED (pat loc, ty loc, LOC loc)
 
-  fun Exp x (_:P.loc) = x : P.plexp
+  fun Exp x (_:A.loc) = x : P.plexp
 
-  fun Loc (loc:P.loc) x = fn (_:P.loc) => x loc
+  fun Loc (loc:A.loc) x = fn (_:A.loc) => x loc
 
-  fun Var symbol (_:P.loc) =
+  fun Var symbol (_:A.loc) =
       P.PLVAR [symbol]
 
-  fun LongVar longsymbol (_:P.loc) =
+  fun LongVar longsymbol (_:A.loc) =
       P.PLVAR longsymbol
 
   fun VarLabel label loc =
       P.PLVAR [recordLabelToSymbol label loc]
 
   fun ExVar name loc =
-      P.PLVAR (SymbolWithLoc.mkLongsymbol name loc)
+      P.PLVAR (SymbolWithLoc.mkLongsymbol name (LOC loc))
 
   fun Case1 exp1 (pat, exp2) loc =
-      P.PLCASEM ([exp1 loc], [([pat loc], exp2 loc, loc)], P.MATCH, loc)
+      P.PLCASEM ([exp1 loc], [([pat loc], exp2 loc, LOC loc)], P.MATCH, LOC loc)
 
   fun Fn (pat, exp) loc =
-      P.PLFNM ([([pat loc], exp loc, loc)], loc)
+      P.PLFNM ([([pat loc], exp loc, LOC loc)], LOC loc)
 
   fun Fn1 f =
       let
@@ -222,12 +224,12 @@ struct
       end
 
   fun Let tyvars (pat, exp) exp2 loc =
-      P.PLLET ([P.PDVAL (map (fn x => (x loc, A.UNIV (nil, loc), loc)) tyvars,
-                         [(pat loc, exp loc, Loc.noloc)], loc)],
-               exp2 loc, loc)
+      P.PLLET ([P.PDVAL (map (fn x => (x loc, NONE, loc)) tyvars,
+                         [(pat loc, exp loc, LOC loc)], LOC loc)],
+               exp2 loc, LOC loc)
 
   fun Const const loc =
-      P.PLCONSTANT (const, loc)
+      P.PLCONSTANT (const, LOC loc)
 
   fun Unit loc =
       Const A.UNITCONST loc
@@ -251,10 +253,10 @@ struct
     | StringRows S.ROWS = String "rows"
 
   fun App exp1 exp2 loc =
-      P.PLAPPM (exp1 loc, [exp2 loc], loc)
+      P.PLAPPM (exp1 loc, [exp2 loc], LOC loc)
 
-  fun Record fields =
-      fn loc => P.PLRECORD (map (fn (l, e) => (l, e loc)) fields, loc)
+  fun Record fields loc =
+      P.PLRECORD (map (fn (l, e) => (l, e loc)) fields, LOC loc)
 
   fun Tuple exps = Record (RecordLabel.tupleList exps)
 
@@ -265,7 +267,7 @@ struct
       Tuple [x, y]
 
   fun Select label exp loc =
-      P.PLSELECT (label, exp loc, loc)
+      P.PLSELECT (label, exp loc, LOC loc)
 
   fun Fst exp =
       Select (RecordLabel.fromString "1") exp
@@ -274,19 +276,19 @@ struct
       Select (RecordLabel.fromString "2") exp
 
   fun Modify exp fields loc =
-      P.PLRECORD_UPDATE (exp loc, map (fn (l, e) => (l, e loc)) fields, loc)
+      P.PLRECORD_UPDATE (exp loc, map (fn (l, e) => (l, e loc)) fields, LOC loc)
 
   fun Typed (exp, ty) loc =
-      P.PLTYPED (exp loc, ty loc, loc)
+      P.PLTYPED (exp loc, ty loc, LOC loc)
 
   fun Ignore exp loc =
-      P.PLSEQ ([exp loc, Unit loc], loc)
+      P.PLSEQ ([exp loc, Unit loc], LOC loc)
 
   fun Seq (exp1, exp2) loc =
-      P.PLSEQ ([exp1 loc, exp2 loc], loc)
+      P.PLSEQ ([exp1 loc, exp2 loc], LOC loc)
 
   fun Join (exp1, exp2) loc =
-      P.PLJOIN (true, exp1 loc, exp2 loc, loc)
+      P.PLJOIN (true, exp1 loc, exp2 loc, LOC loc)
 
   fun Con name nil = ExVar name
     | Con name [arg] = App (ExVar name) arg
@@ -1279,11 +1281,11 @@ struct
       | EXP_SUBQUERY (query, loc) =>
         Loc loc (Con_EXP_SUBQUERY (queryToTerm query))
       | APP (f, x, loc) =>
-        (UserErrorUtils.enqueueError (loc, F.AppInSQLQuery); Unit)
+        (UserErrorUtils.enqueueError (LOC loc, F.AppInSQLQuery); Unit)
       | SQLAPP (true, _, arg, _) => queryToTerm arg
       | SQLAPP (false, funid, TUPLE (args, loc1), loc) =>
         (case SymbolWithLoc.symbolToString funid of
-           "~" => (UserErrorUtils.enqueueError (loc, F.NegNotUnary); Unit)
+           "~" => (UserErrorUtils.enqueueError (LOC loc, F.NegNotUnary); Unit)
          | _ => Loc loc (Con_FUNCALL (sqlFunName funid) (map queryToTerm args)))
       | SQLAPP (false, funid, arg, loc) =>
         (case SymbolWithLoc.symbolToString funid of
@@ -1292,7 +1294,7 @@ struct
       | APPOP2 (f, x, y, loc) =>
         Loc loc (Con_OP2 (queryToTerm x, f, queryToTerm y))
       | TUPLE (exps, loc) =>
-        (UserErrorUtils.enqueueError (loc, F.TupleInSQLQuery); Unit)
+        (UserErrorUtils.enqueueError (LOC loc, F.TupleInSQLQuery); Unit)
       | WHERE (exp, loc) =>
         Loc loc (Con_WHERE (queryToTerm exp))
       | FROM (tables, loc) =>
@@ -1453,7 +1455,7 @@ struct
       end
 
   type elab_ret =
-      {binds : {pat : P.plpat, exp : P.plexp, loc : P.loc} list,
+      {binds : {pat : P.plpat, exp : P.plexp, loc : A.loc} list,
        column2set: column2set}
 
   val emptyRet = {binds = nil, column2set = emptySet} : elab_ret
@@ -1479,7 +1481,7 @@ struct
         elabAbsynExp : A.exp -> P.plexp,
         (* if SOME, we are in a query with concrete FROMs in the context *)
         fromLabels : RecordLabel.Set.set option,
-        fixEnv : (Fixity.fixity * Loc.loc) Symbol.Map.map
+        fixEnv : (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
       }
 
   fun elabOpt f NONE = (emptyRet, NONE)
@@ -1547,7 +1549,7 @@ struct
   and elabApp env (left, _) nil = left
     | elabApp env ((ret1, q1), loc1) (arg :: args) =
       let
-        val loc = Loc.mergeLocs (loc1, fexpToLoc arg)
+        val loc = Loc.mergeRange (loc1, fexpToLoc arg)
         val (ret2, q2) = elabInfixExp env arg
         val left =
             case (q1, q2) of
@@ -1573,7 +1575,7 @@ struct
         (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: t) =
       let
         val last = List.last t handle Empty => raise Bug.Bug "elabSpine"
-        val loc = Loc.mergeLocs (loc, fexpToLoc last)
+        val loc = Loc.mergeRange (loc, fexpToLoc last)
         val (ret1, q1) = elabSpine env t
         val (ret2, q1) = toSQL q1
       in
@@ -1583,7 +1585,7 @@ struct
         env
         (Fixity.TERM (S.ID (false, ([id], _), _), loc1) :: arg :: args) =
       let
-        val loc = Loc.mergeLocs (loc1, fexpToLoc arg)
+        val loc = Loc.mergeRange (loc1, fexpToLoc arg)
         val (ret2, q2) = elabInfixExp env arg
         val id = toSymbol id
       in
@@ -1687,17 +1689,17 @@ struct
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
           fun error (Fixity.Conflict, _, loc) =
               UserErrorUtils.enqueueError
-                (loc, E.InvalidFixityPrecedence)
+                (LOC loc, E.InvalidFixityPrecedence)
             | error (Fixity.BeginWithInfix, exp, loc) =
               UserErrorUtils.enqueueError
-                (loc, E.BeginWithInfixID (getLongsymbol exp))
+                (LOC loc, E.BeginWithInfixID (getLongsymbol exp))
             | error (Fixity.EndWithInfix, exp, loc) =
               UserErrorUtils.enqueueError
-                (loc, E.EndWithInfixID (getLongsymbol exp))
+                (LOC loc, E.EndWithInfixID (getLongsymbol exp))
           val src =
               map (fn exp as S.ID (false, ([id], _), _) =>
                       (case Symbol.Map.find (#fixEnv env, #1 id) of
-                         SOME (x,loc) => (x, exp, AbsynUtils.sqlExpLoc exp)
+                         SOME (x,_) => (x, exp, AbsynUtils.sqlExpLoc exp)
                        | NONE => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
                     | exp => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
                   exps
@@ -1815,7 +1817,7 @@ struct
           val (hasCrossJoin, (ret, tab)) = elabTable env tab
         in
           if hasCrossJoin
-          then UserErrorUtils.enqueueError (loc, F.CrossJoinName label)
+          then UserErrorUtils.enqueueError (LOC loc, F.CrossJoinName label)
           else ();
           (hasCrossJoin, (ret, TABLE_AS (tab, label, loc)))
         end
@@ -1844,7 +1846,7 @@ struct
           val (hasCrossJoin2, (ret2, tab2)) = elabTable env tab2
         in
           if hasCrossJoin1 orelse hasCrossJoin2
-          then UserErrorUtils.enqueueError (loc, F.UnnaturalNaturalJoin)
+          then UserErrorUtils.enqueueError (LOC loc, F.UnnaturalNaturalJoin)
           else ();
           (false,
            (merge [ret1, ret2],
@@ -1862,7 +1864,7 @@ struct
         val _ = UserErrorUtils.checkRecordLabelDuplication
                   (fn x => x)
                   labels
-                  loc
+                  (LOC loc)
                   F.DuplicateSQLFromLabel
       in
         (SOME (RecordLabel.Set.fromList labels), (ret, FROM (tables, loc)))
@@ -1935,7 +1937,7 @@ struct
         val _ = UserErrorUtils.checkRecordLabelDuplication
                   #1
                   selectList
-                  loc1
+                  (LOC loc1)
                   F.DuplicateSQLSelectLabel
       in
         (ret, SELECT (distinct, (selectList, loc1), loc2))
@@ -2033,7 +2035,7 @@ struct
   and elabInsertRow env numLabels (row, loc:S.loc) =
       (if length row = numLabels
        then ()
-       else UserErrorUtils.enqueueError (loc, F.NumberOfSQLInsertLabel);
+       else UserErrorUtils.enqueueError (LOC loc, F.NumberOfSQLInsertLabel);
        (elabList (elabInsertValue env) row, loc))
 
   and elabInsertValues env numLabels values =
@@ -2056,7 +2058,7 @@ struct
           val _ = UserErrorUtils.checkRecordLabelDuplication
                     (fn (x, _) => x)
                     labels
-                    loc
+                    (LOC loc)
                     F.DuplicateSQLInsertLabel
         in
           case values of
@@ -2105,7 +2107,7 @@ struct
           val _ = UserErrorUtils.checkRecordLabelDuplication
                     (fn ((l, _), _, _) => l)
                     sets
-                    loc
+                    (LOC loc)
                     F.DuplicateSQLSetLabel
           val (ret2, sets) =
               elabList
@@ -2204,23 +2206,24 @@ struct
            | SOME exp => Exp (#elabAbsynExp env exp),
            Exp (P.PLSQLSCHEMA {tyFnExp = ExVar Name.fun_ty loc,
                                ty = schema,
-                               loc = loc}))
+                               loc = LOC loc}))
           loc
 
   fun elaborateExp {elabExp, elabPat} fixEnv sqlexp =
       let
+        val loc = AbsynUtils.sqlTopLoc sqlexp
         val fixEnv =
             Symbol.Map.insert
-              (fixEnv, Symbol.fromString "like", (Fixity.INFIX 5, Loc.noloc))
+              (fixEnv, Symbol.fromString "like", (Fixity.INFIX 5, loc))
         val fixEnv =
             Symbol.Map.insert
-              (fixEnv, Symbol.fromString "||", (Fixity.INFIX 5, Loc.noloc))
+              (fixEnv, Symbol.fromString "||", (Fixity.INFIX 5, loc))
         val fixEnv =
             Symbol.Map.insert
-              (fixEnv, Symbol.fromString "%", (Fixity.INFIX 7, Loc.noloc))
+              (fixEnv, Symbol.fromString "%", (Fixity.INFIX 7, loc))
         val fixEnv =
             Symbol.Map.insert
-              (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, Loc.noloc))
+              (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, loc))
         val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
       in
         elabSqlexp {elabPat = elabPat, env = env} sqlexp

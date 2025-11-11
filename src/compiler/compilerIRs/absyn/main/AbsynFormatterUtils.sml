@@ -31,9 +31,6 @@ struct
   fun N0ifsome x (SOME _) = N0 x
     | N0ifsome x NONE = x
 
-  fun ifemptyseq (x, y) (nil, _) = x
-    | ifemptyseq (x, y) (_::_, _) = y
-
   fun decs (formatter, first, sep, next) nil = nil
     | decs (formatter, first, sep, next) [x] = formatter first x
     | decs (formatter, first, sep, next) (h :: t) =

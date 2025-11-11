@@ -165,8 +165,9 @@ struct
   fun showToken (ImlGrm.ParserData.Token.TOKEN (t, _)) =
       ImlGrm.ParserData.EC.showTerminal t
 
-  val EOF = Tokens.EOF Loc.noloc
-  val SEMICOLON = Tokens.SEMICOLON Loc.noloc
+  val dummyPos = {source = Loc.INTERACTIVE, pos = Loc.EOF}
+  val EOF = Tokens.EOF (dummyPos, dummyPos)
+  val SEMICOLON = Tokens.SEMICOLON (dummyPos, dummyPos)
 
   fun getLoc (ImlGrm.ParserData.Token.TOKEN (_, (_, l, r))) = (l, r)
 
@@ -187,12 +188,12 @@ struct
         streamRef : Parser.stream ref,
         tokensRef : (Token.token * (Loc.at * Loc.at)) snoc ref,
         first : bool ref,
-        errors : (Loc.loc * string) list ref,
+        errors : (Absyn.loc * string) list ref,
         errorFn : string * Loc.pos * Loc.pos -> unit,
         source : Loc.source
       }
 
-  exception Error of (Loc.loc * string) list
+  exception Error of (Absyn.loc * string) list
 
   fun setup ({source, read, initialLineno}:source) =
       let
@@ -233,10 +234,10 @@ struct
   fun sourceOfInput ({source, ...}:input) = source
   fun parseWhole errorFn parseStep lex =
       case parseStep lex of
-        (Absyn.EOF, lex) => (Absyn.EOF, lex)
+        (u as Absyn.EOF _, lex) => (u, lex)
       | (u1 as Absyn.UNIT (unit1 as (interface1, tops1, loc1)), lex) =>
         case parseWhole errorFn parseStep lex of
-          (Absyn.EOF, lex) => (u1, lex)
+          (Absyn.EOF _, lex) => (u1, lex)
         | (Absyn.UNIT (interface, tops, loc), lex) =>
           let
             val interface =
@@ -251,7 +252,7 @@ struct
             (Absyn.UNIT (interface, tops1 @ tops, (#1 loc1, #2 loc)), lex)
           end
 
-  fun parse ({lookahead, atOnce, streamRef, tokensRef, first, errors,
+  fun parse ({lookahead, atOnce, streamRef, tokensRef, first, source, errors,
               errorFn, ...} : input) =
       let
         (* prevent reading this source after parse error occurred. *)
@@ -265,7 +266,7 @@ struct
               val _ = first := false
             in
               if Parser.sameToken (tok, EOF)
-              then (Absyn.EOF, stream)
+              then (Absyn.EOF {source = source, pos = Loc.EOF}, stream)
               else if Parser.sameToken (tok, SEMICOLON)
               then (semicolonUnit (getLoc tok), stream2)
               else Parser.parse {lookahead = lookahead,

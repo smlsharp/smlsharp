@@ -22,11 +22,11 @@ struct
         AT of {line : int, col : int, pos : int, token : int}
       | EOF
 
-    datatype pos =
-        POS of {source : source, pos : at}
-      | NOPOS
+    type pos = {source : source, pos : at}
 
-    type loc = pos * pos
+    datatype loc =
+        LOC of pos * pos
+      | NOLOC
 
     fun format_file_place STDPATH =
         [SMLFormat.FormatExpression.Term (7, "STDPATH")]
@@ -57,20 +57,17 @@ struct
       | atPairToString (at1, at2) =
         atToString at1 ^ "-" ^ atToString at2
 
-    fun sourcePosToString {source, pos} =
+    fun posToString {source, pos} =
         sourceToString source ^ ":" ^ atToString pos
 
-    fun posToString NOPOS = "(none)"
-      | posToString (POS pos) = sourcePosToString pos
-
-    fun locToString (NOPOS, NOPOS) = "(none)"
-      | locToString (NOPOS, POS pos) = sourcePosToString pos
-      | locToString (POS pos, NOPOS) = sourcePosToString pos
-      | locToString (pos1 as POS {source = source1, pos = at1},
-                     pos2 as POS {source = source2, pos = at2}) =
+    fun rangeToString (pos1 as {source = source1, pos = at1},
+                       pos2 as {source = source2, pos = at2}) =
         if source1 = source2
         then sourceToString source1 ^ ":" ^ atPairToString (at1, at2)
         else posToString pos1 ^ "-" ^ posToString pos2
+
+    fun locToString NOLOC = "(none)"
+      | locToString (LOC (pos1, pos2)) = rangeToString (pos1, pos2)
 
     fun format_loc loc =
         SMLFormat.BasicFormatters.format_string (locToString loc)
@@ -96,46 +93,36 @@ struct
       | compareAt (AT {pos = pos1, ...}, AT {pos = pos2, ...}) =
         Int.compare (pos1, pos2)
 
-    fun comparePos (NOPOS, NOPOS) = EQUAL
-      | comparePos (NOPOS, _) = LESS
-      | comparePos (POS _, NOPOS) = GREATER
-      | comparePos (POS {source=s1, pos=pos1}, POS {source=s2, pos=pos2}) =
+    fun comparePos ({source=s1, pos=pos1}, {source=s2, pos=pos2}) =
         case compareSource (s1, s2) of
           EQUAL => compareAt (pos1, pos2)
         | x => x
 
-    fun compareLoc ((pos1, _), (pos2,_)) = comparePos (pos1, pos2)
+    fun compareLoc (NOLOC, NOLOC) = EQUAL
+      | compareLoc (NOLOC, _) = LESS
+      | compareLoc (_, NOLOC) = GREATER
+      | compareLoc (LOC (pos1, _), LOC (pos2,_)) = comparePos (pos1, pos2)
 
-    val nopos = NOPOS
-    val noloc = (nopos, nopos)
-    fun isNopos x = x = NOPOS
-    fun isNoloc (p1, p2) = isNopos p1 andalso isNopos p2
-(*
-    fun isNopos NOPOS = true
-      | isNopos (POS _) = false
-*)
-    fun isNopos (POS _) = false
-      | isNopos _ = true
-    val makePos = POS
+    val noloc = NOLOC
+    fun isNoloc NOLOC = true | isNoloc _ = false
 
-    fun mergeLocs ((pos11, pos12), (pos21, pos22)) = 
-        if isNopos pos11 orelse isNopos pos12 then 
-          (pos21, pos22)
-        else if isNopos pos21 orelse isNopos pos22 then 
-          (pos11, pos12)
-        else
-          let
-            val pos1 = 
-                case comparePos(pos11, pos21) of
-                  GREATER => pos21
-                | _ => pos11
-            val pos2 = 
-                case comparePos(pos12, pos22) of
-                  LESS => pos22
-                | _ => pos12
-          in
-            (pos1, pos2)
-          end
+    fun mergeRange ((pos11, pos12), (pos21, pos22)) =
+        let
+          val pos1 =
+              case comparePos (pos11, pos21) of
+                GREATER => pos21
+              | _ => pos11
+          val pos2 =
+              case comparePos (pos12, pos22) of
+                LESS => pos22
+              | _ => pos12
+        in
+          (pos1, pos2)
+        end
+
+    fun mergeLocs (NOLOC, loc) = loc
+      | mergeLocs (loc, NOLOC) = loc
+      | mergeLocs (LOC loc1, LOC loc2) = LOC (mergeRange (loc1, loc2))
 
     (*************************************************************************)
 

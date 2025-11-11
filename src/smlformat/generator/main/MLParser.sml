@@ -58,8 +58,7 @@ struct
   fun getPos Loc.EOF = raise Fail "Bug: getPos"
     | getPos (Loc.AT {pos, ...}) = pos
 
-  fun posOf Loc.NOPOS = raise Fail "BUG: locToPos"
-    | posOf (Loc.POS {pos, ...}) = getPos pos
+  fun posOf {pos, ...} = getPos pos
 
   fun parseFormatComments {filename, content, posToLoc, commentPos} beg loc =
       let
@@ -122,7 +121,8 @@ struct
       let
         fun unsupported loc msg =
             raise ParseError
-                  [Loc.locToString loc ^ ": unsupported type term: " ^ msg]
+                  [Loc.locToString (Loc.LOC loc)
+                   ^ ": unsupported type term: " ^ msg]
       in
         case ty of
           A.TYWILD loc => unsupported loc "TYWILD"
@@ -133,7 +133,9 @@ struct
           S.RecordTy
             (map (fn ((l, _), t, _) => (RecordLabel.toString l, scanTy t))
                  fields)
-        | A.TYCON ((tyList, _), longsymbol, loc) =>
+        | A.TYCON (NONE, longsymbol, loc) =>
+          S.ConTy (scanLongid longsymbol, nil)
+        | A.TYCON (SOME (tyList, _), longsymbol, loc) =>
           S.ConTy (scanLongid longsymbol, map scanTy tyList)
         | A.TYTUPLE (tyList, loc) =>
           S.TupleTy (map scanTy tyList)
@@ -143,12 +145,12 @@ struct
         | A.TYPAREN (ty, loc) => scanTy ty
       end
 
-  fun scanTb c ((tyvars, _), tyConSymbol, ty, loc) =
+  fun scanTb c (tyvarseq, tyConSymbol, ty, loc) =
       S.Tb {innerHeaderFormatComments = scanInnerHeaderFormatComments c loc,
             formatComments = scanDefiningFormatComments c (AbsynUtils.tyLoc ty),
             tyConName = Symbol.toString (#1 tyConSymbol),
             ty = scanTy ty,
-            tyvars = map scanTyvar tyvars}
+            tyvars = map scanTyvar (getOpt (Option.map #1 tyvarseq, nil))}
 
   fun scanTypeDec c (tbs, loc) =
       S.TypeDec
@@ -161,10 +163,10 @@ struct
        valConName = Symbol.toString conSymbol,
        argTypeOpt = Option.map scanTy tyOpt}
 
-  fun scanDb c ((tyvars, _), (tyConSymbol, _), rhs, loc) =
+  fun scanDb c (tyvarseq, (tyConSymbol, _), rhs, loc) =
       S.Db {innerHeaderFormatComments = scanInnerHeaderFormatComments c loc,
             tyConName = Symbol.toString tyConSymbol,
-            tyvars = map scanTyvar tyvars,
+            tyvars = map scanTyvar (getOpt (Option.map #1 tyvarseq, nil)),
             rhs = S.Constrs (map (scanDbrhs c) rhs)}
 
   fun scanDatatypeDec c (datatys, withtys, loc) =
@@ -297,7 +299,7 @@ struct
   and scanUnitparseresult c result =
       case result of
         A.UNIT (interface, tops, loc) => List.concat (map (scanTop c) tops)
-      | A.EOF => nil
+      | A.EOF _ => nil
 
   fun makeCommMap map NIL = map
     | makeCommMap map (tokens ::> (Token.EOF, _)) =
@@ -347,7 +349,7 @@ struct
             handle SMLSharpParser.Error errors =>
                    raise ParseError
                          (map (fn (loc, msg) =>
-                                  Loc.locToString loc ^ ": " ^ msg)
+                                  Loc.locToString (Loc.LOC loc) ^ ": " ^ msg)
                               errors)
         val lineMap = lazyLineMap content
         val posToLoc = fn n => findLineMap (!lineMap ()) n

@@ -43,7 +43,7 @@ struct
    * @formatter(AbsynInterface.topdec) AbsynInterface.format_topdec
    * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
-  type interface =
+  type 'loc interface =
       (*%
        * @format({interfaceDecs: bind binds, provide})
        * binds(bind)()
@@ -63,8 +63,8 @@ struct
       {
         interfaceDecs : interface_dec list,
         provide :
-          {requiredIds : {id : InterfaceID.id, loc : loc} list,
-           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+          {requiredIds : {id : InterfaceID.id, loc : 'loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : 'loc} list,
            provideTopdecs : AbsynInterface.topdec list,
            topdecsInclude: Absyn.topdec list}
       }
@@ -75,15 +75,15 @@ struct
    *)
   type compile_unit =
       (*%
-       * @format({interface:interface interfaceOpt, topdecsSource: dec decs})
+       * @format({interface:i interface interfaceOpt, topdecsSource: dec decs})
        * "interface"
-       * 2[ +1 interfaceOpt(interface) ]
+       * 2[ +1 interfaceOpt(interface()) ]
        * +1 "topdecsSource"
        * 2[ decs:decList(dec)(+1, +1) ]
        * +1 "end"
        *)
       {
-        interface : interface option,
+        interface : loc interface option,
         topdecsSource : Absyn.topdec list
       }
 
@@ -109,7 +109,7 @@ struct
        *)
       {
         interfaceDecs : interface_dec list,
-        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        requiredIds : {id : InterfaceID.id, loc : unit} list,
         topdecsInclude : Absyn.topdec list
       }
 

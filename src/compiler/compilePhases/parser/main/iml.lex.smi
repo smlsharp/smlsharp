@@ -18,7 +18,7 @@ struct
     val setupLexer
         : (Token.token * (Loc.at * Loc.at)) snoc ref
           -> (unit -> lexresult)
-          -> unit -> Token.token * Loc.loc
+          -> unit -> Token.token * (Loc.pos * Loc.pos)
   end
   val makeLexer
       : (int -> string) -> UserDeclarations.arg -> unit

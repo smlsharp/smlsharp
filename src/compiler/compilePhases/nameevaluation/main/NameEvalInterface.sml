@@ -35,7 +35,7 @@ local
   val mkLongsymbol = Longsymbol.fromStringList
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
-  fun toSymbol (sym, loc) = {symbol = sym, loc = loc}
+  fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
   fun bug s = Bug.Bug ("NameEvalInterface: " ^ s)
   val nilPath = nil

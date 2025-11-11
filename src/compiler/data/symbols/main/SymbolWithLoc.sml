@@ -69,11 +69,11 @@ in
   fun longsymbolToLoc (s:longsymbol) =
       let
         val head = List.hd s
-        val (pos1,_) = symbolToLoc head
+        val loc1 = symbolToLoc head
         val last = List.last s
-        val (_, pos2) = symbolToLoc last
+        val loc2 = symbolToLoc last
       in
-        (pos1, pos2)
+        Loc.mergeLocs (loc1, loc2)
       end
       handle List.Empty => Loc.noloc
         

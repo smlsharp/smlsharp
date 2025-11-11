@@ -2651,9 +2651,6 @@ in
     | ICSQLSCHEMA {loc,...} => loc
     | ICJOIN (bool, icexp1, icexp2, loc) => loc
     | ICREIFYTY (ty, loc) => loc
-    
-  fun getLeftLocExp icexp = #1 (getLocExp icexp)
-  fun getRightLocExp icexp = #2 (getLocExp icexp)
 
   fun getLocPat pat = 
       case pat of
@@ -2688,9 +2685,6 @@ in
           Loc.mergeLocs (getLocPat pat1, getLocExp exp2)
         end
 
-  fun getLeftLocPat pat = #1 (getLocPat pat)
-  fun getRightLocPat pat = #2 (getLocPat pat)
-        
   fun getLocDec dec =
       case dec of
         ICVAL (scopedTvars, icpatIcexpList, loc) => loc

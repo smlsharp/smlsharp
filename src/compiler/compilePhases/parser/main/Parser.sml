@@ -14,7 +14,8 @@ struct
 
   fun raiseUserErrors errors =
       raise UserError.UserErrors
-            (map (fn (loc, msg) => (loc, UserError.Error, ParseError msg))
+            (map (fn (loc, msg) =>
+                     (Loc.LOC loc, UserError.Error, ParseError msg))
                  errors)
 
   val setup = SMLSharpParser.setup

@@ -69,11 +69,11 @@ struct
       EXBIND of op_vid * ty option * loc
     | EXBINDREP of op_vid * op_longvid * loc
 
-  type typbind = tyvarseq * tycon * ty * loc
+  type typbind = tyvarseq option * tycon * ty * loc
 
   type conbind = op_vid * ty option * loc
 
-  type datbind = tyvarseq * tycon * conbind list * loc
+  type datbind = tyvarseq option * tycon * conbind list * loc
 
   datatype exp =
       EXPCONST of constant * loc
@@ -113,7 +113,7 @@ struct
     | EXPDYNAMICVIEW of exp * ty * loc
     | EXPDYNAMICNULL of ty * loc
     | EXPDYNAMICTOP of ty * loc
-    | EXPDYNAMICCASE of exp * (exist_quant * pat * exp * loc) list * loc
+    | EXPDYNAMICCASE of exp * (exist_quant option * pat * exp * loc) list * loc
     | EXPREIFYTY of ty * loc
 
   and valbind =
@@ -121,8 +121,8 @@ struct
     | VALREC of valbind list * loc
 
   and dec =
-      DECVAL of kinded_tyvarseq * valbind list * loc
-    | DECFUN of kinded_tyvarseq
+      DECVAL of kinded_tyvarseq option * valbind list * loc
+    | DECFUN of kinded_tyvarseq option
                 * ((pat * ty option * exp * loc) list * loc) list
                 * loc
     | DECTYPE of typbind list * loc
@@ -144,7 +144,7 @@ struct
 
   type mrule = pat * exp * loc
 
-  type dynamic_mrule = exist_quant * pat * exp * loc
+  type dynamic_mrule = exist_quant option * pat * exp * loc
 
   type frule = pat * ty option * exp * loc
 
@@ -154,15 +154,15 @@ struct
 
   type valdesc = vid * ty * loc
 
-  type typdesc = tyvarseq * tycon * loc
+  type typdesc = tyvarseq option * tycon * loc
 
   type condesc = vid * ty option * loc
 
-  type datdesc = tyvarseq * tycon * condesc list * loc
+  type datdesc = tyvarseq option * tycon * condesc list * loc
 
   type exdesc = vid * ty option * loc
 
-  type wheretype = tyvarseq * longtycon * ty * loc
+  type wheretype = tyvarseq option * longtycon * ty * loc
 
   datatype spec =
       SPECVAL of valdesc list * loc
@@ -237,6 +237,6 @@ struct
 
   datatype absyn =
       UNIT of compile_unit
-    | EOF
+    | EOF of pos
 
 end

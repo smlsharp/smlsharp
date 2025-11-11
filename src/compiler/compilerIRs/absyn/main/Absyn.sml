@@ -207,23 +207,23 @@ struct
 
   (*%
    * @params(head)
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type typbind =
       (*%
-       * @format(tyvarseq * tycon * ty * loc)
+       * @format(tyvarseq tyvarseqOpt * tycon * ty * loc)
        * !N0{
        *   !N0{
        *     head
-       *     tyvarseq
-       *     tyvarseq:ifemptyseq()(,+1)
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+1,)
        *     tycon
        *   }
        *   +d "=" +1
        *   ty
        * }
        *)
-      tyvarseq * tycon * ty * loc
+      tyvarseq option * tycon * ty * loc
 
   (*%
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
@@ -242,30 +242,29 @@ struct
   (*%
    * @params(head)
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    * @formatter(decs) AbsynFormatterUtils.decs
    *)
   type datbind =
       (*%
-       * @format(tyvarseq * tycon * conbind conbinds * loc)
+       * @format(tyvarseq tyvarseqOpt * tycon * conbind conbinds * loc)
        * !N0{
        *   head
-       *   tyvarseq
-       *   tyvarseq:ifemptyseq()(,+d)
+       *   tyvarseqOpt(tyvarseq)
+       *   tyvarseqOpt:ifsome()(+d,)
        *   tycon
        *   +d "="
        *   conbinds:ifcons()(2[+1],)
        *   conbinds(conbind)(+1 "|" +d)
        * }
        *)
-      tyvarseq * tycon * conbind list * loc
+      tyvarseq option * tycon * conbind list * loc
 
   (*%
    * @formatter(AbsynSQL.top) AbsynSQLFormatter.format_top
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
    * @formatter(decs) AbsynFormatterUtils.decs
    * @formatter(decs2) AbsynFormatterUtils.decs2
    *)
@@ -512,31 +511,31 @@ struct
 
   and dec =
       (*%
-       * @format(tyvarseq * valbind valbinds * loc)
+       * @format(tyvarseq tyvarseqOpt * valbind valbinds * loc)
        * !N0{
        *   "val" +d
        *   valbinds:decs(valbind)(
-       *     tyvarseq
-       *     tyvarseq:ifemptyseq()(,+d),
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+d,),
        *     +1 "and" +d,
        *   )
        * }
        *)
-      DECVAL of kinded_tyvarseq * valbind list * loc
+      DECVAL of kinded_tyvarseq option * valbind list * loc
     | (*%
-       * @format(tyvarseq * fvalbind fvalbinds * loc)
+       * @format(tyvarseq tyvarseqOpt * fvalbind fvalbinds * loc)
        * !N0{
        *   "fu"
        *   fvalbinds:decs2(fvalbind)(
        *     "n" +d,
-       *     tyvarseq
-       *     tyvarseq:ifemptyseq()(,+1),
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+1,),
        *     +1 "an",
        *     "d" +d,
        *   )
        * }
        *)
-      DECFUN of kinded_tyvarseq * fvalbind list * loc
+      DECFUN of kinded_tyvarseq option * fvalbind list * loc
     | (*%
        * @format(typbind typbinds * loc)
        * !N0{ "ty" typbinds:decs(typbind)("pe" +d, +1 "an", "d" +d) }
@@ -665,10 +664,10 @@ struct
 
   and dynamic_mrule =
       (*%
-       * @format(exists * pat * exp * loc)
-       * !N0{ exists exists:ifemptyseq()(,+1) pat +d "=>" +1 exp }
+       * @format(exists existsOpt * pat * exp * loc)
+       * !N0{ existsOpt(exists) existsOpt:ifsome()(+1,) pat +d "=>" +1 exp }
        *)
-      exist_quant * pat * exp * loc
+      exist_quant option * pat * exp * loc
 
   and (*% @params(head) *) frule =
       (*%
@@ -710,14 +709,14 @@ struct
 
   (*%
    * @params(head)
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type typdesc =
       (*%
-       * @format(tyvarseq * tycon * loc)
-       * !N0{ head tyvarseq tyvarseq:ifemptyseq()(,+1) tycon }
+       * @format(tyvarseq tyvarseqOpt * tycon * loc)
+       * !N0{ head tyvarseqOpt(tyvarseq) tyvarseqOpt:ifsome()(+1,) tycon }
        *)
-      tyvarseq * tycon * loc
+      tyvarseq option * tycon * loc
 
   (*%
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
@@ -732,22 +731,22 @@ struct
   (*%
    * @params(head)
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type datdesc =
       (*%
-       * @format(tyvarseq * tycon * condesc condescs * loc)
+       * @format(tyvarseq tyvarseqOpt * tycon * condesc condescs * loc)
        * !N0{
        *   head
-       *   tyvarseq
-       *   tyvarseq:ifemptyseq()(,+1)
+       *   tyvarseqOpt(tyvarseq)
+       *   tyvarseqOpt:ifsome()(+1,)
        *   tycon
        *   +d "="
        *   condescs:ifcons()(2[+1],)
        *   condescs(condesc)(+1 "|" +d)
        * }
        *)
-      tyvarseq * tycon * condesc list * loc
+      tyvarseq option * tycon * condesc list * loc
 
   (*%
    * @params(head)
@@ -762,21 +761,21 @@ struct
 
   (*%
    * @params(head)
-   * @formatter(ifemptyseq) AbsynFormatterUtils.ifemptyseq
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type wheretype =
       (*%
-       * @format(tyvarseq * longtycon * ty * loc)
+       * @format(tyvarseq tyvarseqOpt * longtycon * ty * loc)
        * !N0{
        *   head
-       *   tyvarseq
-       *   tyvarseq:ifemptyseq()(,+1)
+       *   tyvarseqOpt(tyvarseq)
+       *   tyvarseqOpt:ifsome()(+1,)
        *   longtycon
        *   +d "=" +1
        *   ty
        * }
        *)
-      tyvarseq * longtycon * ty * loc
+      tyvarseq option * longtycon * ty * loc
 
   (*%
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
@@ -1136,7 +1135,9 @@ struct
        *)
       UNIT of compile_unit
     | (*%
+       * @format(pos)
+       * "EOF"
        *)
-      EOF
+      EOF of pos
 
 end

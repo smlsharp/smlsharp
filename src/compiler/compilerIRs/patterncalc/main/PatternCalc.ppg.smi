@@ -33,10 +33,10 @@ struct
     | PLEXBINDREP of symbol * longsymbol * loc
 
   datatype ffiTy 
-    = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
-    | FFITYVAR of tvar * loc
-    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
-    | FFICONTY of ffiTy list * longsymbol * loc
+    = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * AbsynTy.loc
+    | FFITYVAR of tvar * AbsynTy.loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * AbsynTy.loc
+    | FFICONTY of ffiTy list * AbsynTy.longtycon * AbsynTy.loc
 
   type scopedTvars 
     = kindedTvar list
@@ -177,12 +177,8 @@ struct
   val format_pltopdec
       : pltopdec -> SMLFormat.format
 
-  val getLeftPosExp : plexp -> Loc.pos
-  val getRightPosExp : plexp -> Loc.pos
-  val getLocExp : plexp -> Loc.pos * Loc.pos
-  val getLeftPosPat : plpat -> Loc.pos
-  val getRightPosPat : plpat -> Loc.pos
-  val getLocPat : plpat -> Loc.pos * Loc.pos
+  val getLocExp : plexp -> Loc.loc
+  val getLocPat : plpat -> Loc.loc
   val getLocDec : pdecl -> Loc.loc
   val getLocTopDec : pltopdec -> Loc.loc
   val getLocSigexp : plsigexp -> Loc.loc

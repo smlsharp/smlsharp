@@ -1,7 +1,7 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlformat-lib.smi"
 _require local "../../../../smlnj-lib/Util/lib-base.smi"
-_require local "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../libs/env/main/SEnv.smi"
@@ -29,7 +29,7 @@ struct
          loadPath : InterfaceName.source list,
          loadMode : InterfaceName.file_load_mode,
          defaultInterface : Filename.filename -> Filename.filename}
-        -> Absyn.compile_unit
+        -> Absyn.absyn
         -> InterfaceName.file_dependency
            * InterfaceName.toplevel_prelude
            * AbsynInterfaceLoaded.compile_unit

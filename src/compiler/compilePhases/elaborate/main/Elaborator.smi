@@ -15,7 +15,7 @@ _require "../../../extensions/usererror/main/UserError.ppg.smi"
 
 structure Elaborator =
 struct
-  type fixEnv = (Fixity.fixity * Loc.loc) Symbol.Map.map
+  type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
   val extendFixEnv : fixEnv * fixEnv -> fixEnv
   val elaborate :
       fixEnv

@@ -24,7 +24,7 @@ struct
   fun Loc (loc:P.loc) x = fn (_:P.loc) => x loc
 
   fun PatVar (sym, loc) (_:P.loc) =
-      P.PLPATID [{symbol = sym, loc = loc}]
+      P.PLPATID [{symbol = sym, loc = Loc.LOC loc}]
 
   fun PatRecord fields loc =
       P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, loc)
@@ -66,7 +66,7 @@ struct
         val iterator = Fn (pat, Exp (elabExp iterate))
         val pred = Fn (pat, Exp (elabExp pred))
       in
-        Fun_FoeachArray data iterator pred loc
+        Fun_FoeachArray data iterator pred (Loc.LOC loc)
       end
 
   fun elaborateForeachData {elabExp, elabPat}
@@ -91,7 +91,7 @@ struct
         val iterator = Fn (pat, Exp (elabExp iterate))
         val pred = Fn (pat, Exp (elabExp pred))
       in
-        Fun_ForeachData whereParam data iterator pred loc
+        Fun_ForeachData whereParam data iterator pred (Loc.LOC loc)
       end
 
 end

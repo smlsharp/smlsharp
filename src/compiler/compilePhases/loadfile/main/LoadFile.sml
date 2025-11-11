@@ -25,10 +25,7 @@ struct
       TextIO.output (TextIO.stdErr, x)
 
   fun raiseError (loc, exn) =
-      raise UserError.UserErrors [(loc, UserError.Error, exn)]
-
-  fun raiseLoadFileError exn (filename, loc) =
-      raiseError (loc, exn filename)
+      raise UserError.UserErrors [(Loc.LOC loc, UserError.Error, exn)]
 
   (* Key-value store in which insertion order is preserved *)
   structure Assoc :> sig
@@ -239,11 +236,9 @@ struct
 
   datatype eval_result =
       SML of {node : N.file_dependency_node,
-              loc : Loc.loc,
               topdecs : A.topdec list}
     | SMI of {dec : (L.interface_dec * toplevel_additionals) option,
               node : N.file_dependency_node,
-              loc: Loc.loc,
               inits : (L.interface_dec * N.init_requisite) Assoc.assoc,
               requires : (L.interface_dec * L.loc) Assoc.assoc,
               topdecs : A.topdec list Assoc.assoc}
@@ -323,7 +318,7 @@ struct
         (loaded, {edge = NONE, topdecs = topdecs})
       | A.USE ((path, _), loc) =>
         let
-          val (loaded, {node, loc, topdecs}) = loadUse loaded loader (path, loc)
+          val (loaded, {node, topdecs}) = loadUse loaded loader (path, loc)
         in
           case (allow, node) of
             (ALLOW_ALL, _) => ()
@@ -331,7 +326,7 @@ struct
             if Filename.Set.member (names, #2 source)
             then ()
             else raiseError (loc, E.UseNotAllowed path);
-          (loaded, {edge = SOME (N.USE, node, loc), topdecs = topdecs})
+          (loaded, {edge = SOME (N.USE, node, Loc.LOC loc), topdecs = topdecs})
         end
       | A.USE' (path, loc) =>
         evalTop loaded loader allow (A.USE (path, loc))
@@ -352,13 +347,13 @@ struct
 
   and loadUse loaded loader (path, loc) =
       case visitAndParseSml loaded loader (PATH path, loc) of
-        LOADED result => (loaded, (result # {loc=loc}))
+        LOADED result => (loaded, result)
       | NEW (loader, abunit, source) =>
         let
           val loaded = Assoc.append (loaded, #2 source, CYCLE)
           val (loaded, {edges, topdecs}) =
               case abunit of
-                A.EOF => (loaded, {edges = nil, topdecs = nil})
+                A.EOF _ => (loaded, {edges = nil, topdecs = nil})
               | A.UNIT (SOME ((path, _), loc), tops, _) =>
                 raiseError (loc, E.UnexpectedInterfaceDecl path)
               | A.UNIT (NONE, tops, _) =>
@@ -366,7 +361,6 @@ struct
           val result = {node = N.FILE {source = source,
                                        fileType = N.SML,
                                        edges = edges},
-                        loc = loc,
                         topdecs = topdecs}
           val loaded = Assoc.remove (loaded, #2 source)
           val loaded = Assoc.append (loaded, #2 source, SML result)
@@ -386,7 +380,7 @@ struct
   fun toTopdec (I.SIGNATURE sigdec) = [A.TOPSIGNATURE sigdec]
     | toTopdec (I.SIGSEMICOLON _) = []
 
-  fun evalRequireOptions symbols (args as {inits, ...}) =
+  fun evalRequireOptions symbols inits =
       let
         val {init} =
             foldl
@@ -396,24 +390,22 @@ struct
                   | s => raiseError (loc, E.UnknownRequireOption s))
               {init = false}
               symbols
-        val inits =
-            if init
-            then Assoc.map (fn (dec, _) => (dec, N.INIT_ALWAYS)) inits
-            else inits
       in
-        args # {inits = inits}
+        if init
+        then Assoc.map (fn (dec, _) => (dec, N.INIT_ALWAYS)) inits
+        else inits
       end
 
   fun evalIrequire loaded loader mode irequire =
       case irequire of
         I.REQUIRE ((path, _), options, loc) =>
         let
-          val (loaded, result) =
+          val loc = loc
+          val (loaded, {dec = _, node, inits, requires, topdecs}) =
               loadRequire loaded loader (nextMode mode) (PATH path, loc)
-          val {dec = _, node, loc=_, inits, requires, topdecs} =
-              evalRequireOptions options result
+          val inits = evalRequireOptions options inits
         in
-          (loaded, SOME {edge = (N.REQUIRE, node, loc),
+          (loaded, SOME {edge = (N.REQUIRE, node, Loc.LOC loc),
                          inits = inits,
                          localRequires = Assoc.empty,
                          requires = requires,
@@ -429,12 +421,12 @@ struct
            | N.NOLOCAL => false
         then
           let
-            val (loaded, result) =
+            val loc = loc
+            val (loaded, {dec = _, node, inits, requires, topdecs}) =
                 loadRequire loaded loader (nextMode mode) (PATH path, loc)
-            val {dec = _, node, loc=_, inits, requires, topdecs} =
-                evalRequireOptions options result
+            val inits = evalRequireOptions options inits
           in
-            (loaded, SOME {edge = (N.LOCAL_REQUIRE, node, loc),
+            (loaded, SOME {edge = (N.LOCAL_REQUIRE, node, Loc.LOC loc),
                            inits = inits,
                            localRequires = requires,
                            requires = Assoc.empty,
@@ -451,10 +443,10 @@ struct
            | N.NOLOCAL => false
         then
           let
-            val (loaded, {node, loc, topdecs = _}) =
+            val (loaded, {node, topdecs = _}) =
                 loadUse loaded loader (path, loc)
           in
-            (loaded, SOME {edge = (N.LOCAL_USE, node, loc),
+            (loaded, SOME {edge = (N.LOCAL_USE, node, Loc.LOC loc),
                            inits = Assoc.empty,
                            localRequires = Assoc.empty,
                            requires = Assoc.empty,
@@ -487,9 +479,9 @@ struct
                     topdecs = Assoc.concatWith #2 (t1, t2)})
       end
 
-  and loadRequire loaded loader mode (filePathLoc as (_, loc)) =
+  and loadRequire loaded loader mode filePathLoc =
       case visitAndParseSmi loaded loader filePathLoc of
-        LOADED result => (loaded, (result # {loc = loc}))
+        LOADED result => (loaded, result)
       | NEW (loader, I.INCLUDES (includes, sigdecs, _), source) =>
         let
 (*
@@ -506,13 +498,11 @@ val _ = map print (map locToString  topDecLocs)
 val _ = print "\n"
 *)
           val loaded = Assoc.append (loaded, #2 source, CYCLE)
-          val (loaded, {nodes, locs, inits, requires, topdecs = topdecsAssoc}) =
-              loadRequireList loaded loader mode includes
-          val edges = map (fn (n,l) => (N.INCLUDE, n, l)) (ListPair.zip (nodes, locs))
+          val (loaded, {edges, inits, requires, topdecs = topdecsAssoc}) =
+              loadIncludeList loaded loader mode includes
           val topdecs = List.concat (map toTopdec sigdecs)
           val result =
               {dec = NONE,
-               loc = loc,
                node = N.FILE {source = source,
                               fileType = N.INCLUDES,
                               edges = edges},
@@ -544,7 +534,6 @@ val _ = print "\n"
                topdecsInclude = topdecs}
           val result =
               {dec = SOME (dec, top),
-               loc = loc,
                node = N.FILE {source = source,
                               fileType = N.INTERFACE hash,
                               edges = edges},
@@ -557,29 +546,35 @@ val _ = print "\n"
           (loaded, result)
         end
 
-  and loadRequireList loaded loader mode nil =
-      (loaded, {nodes = nil,
-                locs = nil,
+  and loadIncludeList loaded loader mode nil =
+      (loaded, {edges = nil,
                 inits = Assoc.empty,
                 requires = Assoc.empty,
                 topdecs = Assoc.empty})
-    | loadRequireList loaded loader mode (I.INCLUDE ((path, _), loc) :: pathLocs) =
+    | loadIncludeList loaded loader mode
+                      (I.INCLUDE ((path, _), loc) :: pathLocs) =
       let
-        val (loaded, {node, loc, inits=i1, requires=r1, topdecs=t1, ...}) =
+        val (loaded, {node, inits=i1, requires=r1, topdecs=t1, ...}) =
             loadRequire loaded loader mode (PATH path, loc)
-        val (loaded, {nodes, locs, inits=i2, requires=r2, topdecs=t2}) =
-            loadRequireList loaded loader mode pathLocs
+        val (loaded, {edges, inits=i2, requires=r2, topdecs=t2}) =
+            loadIncludeList loaded loader mode pathLocs
       in
-        (loaded, {nodes = node :: nodes,
-                  locs = loc::locs,
+        (loaded, {edges = (N.INCLUDE, node, Loc.LOC loc) :: edges,
                   inits = Assoc.concatWith #2 (i1, i2),
                   requires = Assoc.concatWith #2 (r1, r2),
                   topdecs = Assoc.concatWith #2 (t1, t2)})
       end
-    | loadRequireList loaded loader mode (I.INCSEMICOLON _ :: t) =
-      loadRequireList loaded loader mode t
+    | loadIncludeList loaded loader mode (I.INCSEMICOLON _ :: t) =
+      loadIncludeList loaded loader mode t
 
-  fun checkHashDuplication (decs : L.interface_dec list) =
+  fun nodeEofLoc (N.FILE {source, ...}) =
+      let
+        val eof = {source = Loc.FILE source, pos = Loc.EOF}
+      in
+        (eof, eof)
+      end
+
+  fun checkHashDuplication (decs : L.interface_dec list) node =
       foldl
         (fn (dec as {interfaceName = iname1 as {hash, ...}, ...}, z) =>
             let
@@ -588,7 +583,7 @@ val _ = print "\n"
               case SEnv.find (z, k) of
                 NONE => SEnv.insert (z, k, iname1)
               | SOME iname2 =>
-                raiseError (Loc.noloc, E.DuplicateHash (iname1, iname2))
+                raiseError (nodeEofLoc node, E.DuplicateHash (iname1, iname2))
             end)
         SEnv.empty
         decs
@@ -600,9 +595,9 @@ val _ = print "\n"
                 baseDir = #baseDir loader})
     | loadProvideInterface loaded loader mode (SOME filePathLoc) =
       case loadRequire loaded loader mode filePathLoc of
-        (loaded, {dec = NONE, loc, node = N.FILE {source, ...}, ...}) =>
+        (loaded, {dec = NONE, node = N.FILE {source, ...}, ...}) =>
         raiseError (#2 filePathLoc, E.NotAnInterface (#2 source))
-      | (loaded, {dec = SOME (dec, top), loc, node, ...}) =>
+      | (loaded, {dec = SOME (dec, top), node, ...}) =>
         let
           val {initRequisites, locallyRequiredIds, topdecsInclude} = top
           val initRequisites =
@@ -625,7 +620,7 @@ val _ = print "\n"
               Assoc.collectPartial
                 (fn SMI {dec = SOME (dec, _), ...} => SOME dec | _ => NONE)
                 (Assoc.remove (loaded, #2 source))
-          val interface : L.interface =
+          val interface : L.loc L.interface =
               {interfaceDecs = interfaceDecs,
                provide = {requiredIds = #requiredIds dec,
                           locallyRequiredIds = locallyRequiredIds,
@@ -635,8 +630,8 @@ val _ = print "\n"
               {toplevelName = SOME (#interfaceName dec),
                initRequisites = initRequisites}
         in
-          checkHashDuplication (dec :: interfaceDecs);
-          (loaded, {node = SOME node,
+          checkHashDuplication (dec :: interfaceDecs) node;
+          (loaded, {node = SOME (node, #2 filePathLoc),
                     prelude = prelude,
                     interface = SOME interface,
                     baseDir = DIR (#1 source, Filename.dirname (#2 source))})
@@ -659,9 +654,16 @@ val _ = print "\n"
           | CYCLE => raise Bug.Bug "listNodes: CYCLE")
         loaded
 
-  fun load {baseFilename, loadPath, loadMode, defaultInterface}
-           ((interface, tops, loc) : A.compile_unit) =
+  fun load {baseFilename, loadPath, loadMode, defaultInterface} absyn =
       let
+        val (interface, tops, loc) =
+            case absyn of
+              A.UNIT unit => unit
+            | A.EOF pos =>
+              case baseFilename of
+                SOME filename => (NONE, nil, (pos, pos))
+              | NONE => (NONE, nil, (pos, pos))
+
         (* "_interface" may appear only in batch compile mode.
          * file path of "_interface" is relative to the sml file. *)
         val interfaceFileLoc =
@@ -674,7 +676,7 @@ val _ = print "\n"
                    val smifile = defaultInterface smifile
                  in
                    if CoreUtils.testExist smifile
-                   then SOME (FILE (Loc.USERPATH, smifile), Loc.noloc)
+                   then SOME (FILE (Loc.USERPATH, smifile), loc)
                    else NONE
                  end)
             | SOME ((path, _), loc) =>
@@ -706,7 +708,9 @@ val _ = print "\n"
             case baseFilenameReal of
               NONE => loaded
             | SOME file => Assoc.remove (loaded, file)
-        val smiEdge = Option.map (fn x => (N.PROVIDE, x, loc)) smiNode
+        val smiEdge =
+            Option.map (fn (node, loc) => (N.PROVIDE, node, Loc.LOC loc))
+                       smiNode
 
         (* In batch compile mode, _use is allowed only if its file
          * path is declared for _use in the interface file.
@@ -716,7 +720,7 @@ val _ = print "\n"
             case (baseFilename, smiNode) of
               (NONE, _) => ALLOW_ALL
             | (SOME _, NONE) => ALLOW_ONLY Filename.Set.empty
-            | (SOME _, SOME (N.FILE {edges, ...})) =>
+            | (SOME _, SOME (N.FILE {edges, ...}, _)) =>
               ALLOW_ONLY
                 (foldl
                    (fn ((N.LOCAL_USE, N.FILE {source=(_, x), ...}, _), z) =>
@@ -741,16 +745,17 @@ val _ = print "\n"
       end
 
   fun loadInterfaceFileList loaded loader mode nil =
-      (loaded, {nodes = nil, locs = nil, requires = Assoc.empty, topdecs = Assoc.empty})
+      (loaded, {edges = nil, requires = Assoc.empty, topdecs = Assoc.empty})
     | loadInterfaceFileList loaded loader mode (source :: sources) =
       let
-        val (loaded, {dec = _, node, loc, inits = _, requires=r1, topdecs=t1}) =
-            loadRequire loaded loader mode (FILE source, Loc.noloc)
-        val (loaded, {nodes, locs, requires=r2, topdecs=t2}) =
+        val dummyPos = {source = Loc.INTERACTIVE, pos = Loc.EOF}
+        val dummyLoc = (dummyPos, dummyPos)
+        val (loaded, {node, requires=r1, topdecs=t1, ...}) =
+            loadRequire loaded loader mode (FILE source, dummyLoc)
+        val (loaded, {edges, requires=r2, topdecs=t2}) =
             loadInterfaceFileList loaded loader mode sources
       in
-        (loaded, {nodes = node :: nodes,
-                  locs = loc :: locs,
+        (loaded, {edges = (N.INCLUDE, node, Loc.NOLOC) :: edges,
                   requires = Assoc.concatWith #2 (r1, r2),
                   topdecs = Assoc.concatWith #2 (t1, t2)})
       end
@@ -758,9 +763,8 @@ val _ = print "\n"
   fun loadInterfaceFiles {loadPath, loadMode} sources =
       let
         val loader = {baseDir = PWD Loc.USERPATH, loadPath = loadPath}
-        val (loaded, {nodes, locs, requires, topdecs}) =
+        val (loaded, {edges, requires, topdecs}) =
             loadInterfaceFileList Assoc.empty loader loadMode sources
-        val edges = map (fn (x,l) => (N.INCLUDE, x, l)) (ListPair.zip (nodes, locs))
         val dependency =
             {allNodes = listNodes loaded,
              root = {fileType = N.ROOT_INCLUDES,
@@ -770,11 +774,12 @@ val _ = print "\n"
             Assoc.collectPartial
               (fn SMI {dec = SOME (dec, _), ...} => SOME dec | _ => NONE)
               loaded
+        fun requiredId ({interfaceId, ...}, _) = {id = interfaceId, loc = ()}
       in
         checkHashDuplication interfaceDecs;
         (dependency,
          {interfaceDecs = interfaceDecs,
-          requiredIds = Assoc.collect decLocToIdLoc requires,
+          requiredIds = Assoc.collect requiredId requires,
           topdecsInclude = List.concat (Assoc.listItems topdecs)})
       end
 
