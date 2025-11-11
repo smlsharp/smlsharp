@@ -15,7 +15,6 @@ struct
   val compareLoc : loc * loc -> order
   val comparePos : pos * pos -> order
   val noloc : loc
-  val isNoloc : loc -> bool
   val mergeRange : (pos * pos) * (pos * pos) -> pos * pos
   val mergeLocs : loc * loc -> loc
   val format_file_place

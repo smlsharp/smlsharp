@@ -20,6 +20,9 @@ local
   structure IM = InfoMaps
   exception SYSTEMPATH
 
+  fun isNoloc Loc.NOLOC = true
+    | isNoloc (Loc.LOC _) = false
+
   fun locToKey (L.LOC ({source = L.FILE s, pos = L.AT {pos,...}},_)) =
       ({fileId = #fileId (IM.findSourceMap s), startPos = pos}
        handle x => raise x)
@@ -792,8 +795,8 @@ in
           val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
         in
-          if Loc.isNoloc refSymbolLoc orelse 
-             Loc.isNoloc defSymbolLoc orelse 
+          if isNoloc refSymbolLoc orelse
+             isNoloc defSymbolLoc orelse
              refSymbolFileId = defSymbolFileId
           then ()
           else
@@ -836,8 +839,8 @@ in
         val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
       in
-        if Loc.isNoloc refLongsymbolLoc orelse 
-           Loc.isNoloc defSymbolLoc orelse 
+        if isNoloc refLongsymbolLoc orelse
+           isNoloc defSymbolLoc orelse
            refSymbolFileId = defSymbolFileId
         then ()
         else
@@ -873,7 +876,7 @@ in
       let
         val longsymbolLoc = SymbolWithLoc.longsymbolToLoc longsymbol
       in
-        if Loc.isNoloc longsymbolLoc then ()
+        if isNoloc longsymbolLoc then ()
         else
           let
             val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 

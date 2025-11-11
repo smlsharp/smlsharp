@@ -104,7 +104,6 @@ struct
       | compareLoc (LOC (pos1, _), LOC (pos2,_)) = comparePos (pos1, pos2)
 
     val noloc = NOLOC
-    fun isNoloc NOLOC = true | isNoloc _ = false
 
     fun mergeRange ((pos11, pos12), (pos21, pos22)) =
         let
