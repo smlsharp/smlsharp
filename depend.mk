@@ -18285,6 +18285,7 @@ src/compiler/compilerIRs/absyn/main/Fixity.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \

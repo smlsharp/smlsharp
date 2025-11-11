@@ -1687,16 +1687,15 @@ struct
           fun getLongsymbol (S.ID (_, id, _)) =
               SymbolWithLoc.toLongsymbol (toLongsymbol id)
             | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
-          fun error (Fixity.Conflict (Fixity.TERM (left, _), right), loc) =
+          fun error (Fixity.Conflict ((left, loc1), (right, loc2))) =
               UserErrorUtils.enqueueError
-                (LOC loc,
+                (LOC (Loc.mergeRange (loc1, loc2)),
                  E.MixedAssociativity
                    (getLongsymbol left, getLongsymbol right))
-            | error (Fixity.Conflict _, _) = raise Bug.Bug "Fixity.Conflict"
-            | error (Fixity.BeginWithInfix exp, loc) =
+            | error (Fixity.BeginWithInfix (exp, loc)) =
               UserErrorUtils.enqueueError
                 (LOC loc, E.BeginWithInfixID (getLongsymbol exp))
-            | error (Fixity.EndWithInfix exp, loc) =
+            | error (Fixity.EndWithInfix (exp, loc)) =
               UserErrorUtils.enqueueError
                 (LOC loc, E.EndWithInfixID (getLongsymbol exp))
           val src =

@@ -1,5 +1,6 @@
 _require local "../../../../basis.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/list-utils/main/Snoc.smi"
 _require "../../../data/symbols/main/Loc.smi"
 
 structure Fixity =
@@ -7,15 +8,15 @@ struct
   datatype fixity = INFIX of int | INFIXR of int | NONFIX
   val fixityToString : fixity -> string
 
+  type loc = Loc.pos * Loc.pos
+
   datatype 'a exp =
-      APP of 'a exp * 'a exp * (Loc.pos * Loc.pos)
-    | OP2 of 'a exp * ('a exp * 'a exp) * (Loc.pos * Loc.pos)
-    | TERM of 'a * (Loc.pos * Loc.pos)
+      APP of 'a exp * 'a exp * loc
+    | OP2 of 'a exp * ('a exp * 'a exp) * loc
+    | TERM of 'a * loc
   datatype 'a error =
-      Conflict of 'a exp * 'a
-    | BeginWithInfix of 'a
-    | EndWithInfix of 'a
-  val parse : ('a error * (Loc.pos * Loc.pos) -> unit)
-              -> (fixity * 'a * (Loc.pos * Loc.pos)) list
-              -> 'a exp
+      Conflict of ('a * loc) * ('a * loc)
+    | BeginWithInfix of 'a * loc
+    | EndWithInfix of 'a * loc
+  val parse : ('a error -> unit) -> (fixity * 'a * loc) list -> 'a exp
 end

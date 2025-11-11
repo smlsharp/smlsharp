@@ -320,15 +320,13 @@ struct
       enqueueError
         (loc, E.BeginWithInfixID (Longsymbol.fromSymbolList (map #1 ids)))
 
-  fun resolveInfixError getLongsymbol (Fixity.Conflict conflict, loc) =
-      (case conflict of
-         (Fixity.TERM (left, _), right) =>
-         enqueueError
-           (loc, E.MixedAssociativity (getLongsymbol left, getLongsymbol right))
-       | _ => raise Bug.Bug "resolveInfixError")
-    | resolveInfixError getLongsymbol (Fixity.BeginWithInfix exp, loc) =
+  fun resolveInfixError getLongsymbol (Fixity.Conflict ((l, loc1), (r, loc2))) =
+      enqueueError
+        (Loc.mergeRange (loc1, loc2),
+         E.MixedAssociativity (getLongsymbol l, getLongsymbol r))
+    | resolveInfixError getLongsymbol (Fixity.BeginWithInfix (exp, loc)) =
       enqueueError (loc, E.BeginWithInfixID (getLongsymbol exp))
-    | resolveInfixError getLongsymbol (Fixity.EndWithInfix exp, loc) =
+    | resolveInfixError getLongsymbol (Fixity.EndWithInfix (exp, loc)) =
       enqueueError (loc, E.EndWithInfixID (getLongsymbol exp))
 
     fun elabSequence elabolator env elements =
