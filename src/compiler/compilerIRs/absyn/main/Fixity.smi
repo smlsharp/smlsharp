@@ -11,11 +11,11 @@ struct
       APP of 'a exp * 'a exp * (Loc.pos * Loc.pos)
     | OP2 of 'a exp * ('a exp * 'a exp) * (Loc.pos * Loc.pos)
     | TERM of 'a * (Loc.pos * Loc.pos)
-  datatype error =
-      Conflict
-    | BeginWithInfix
-    | EndWithInfix
-  val parse : (error * 'a * (Loc.pos * Loc.pos) -> unit)
+  datatype 'a error =
+      Conflict of 'a exp * 'a
+    | BeginWithInfix of 'a
+    | EndWithInfix of 'a
+  val parse : ('a error * (Loc.pos * Loc.pos) -> unit)
               -> (fixity * 'a * (Loc.pos * Loc.pos)) list
               -> 'a exp
 end

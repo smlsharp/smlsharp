@@ -240,6 +240,14 @@ struct
 
   and
   (*%
+   * @format(n1 * n2)
+   * "mixed" +d "associatibity" +d "of" +d "equal" +d
+   * "precedence:" +d n1 +d "and" +d n2
+   *)
+  MixedAssociativity of Longsymbol.longsymbol * Longsymbol.longsymbol
+
+  and
+  (*%
    * @format(id) "infix" +d "symbol" +d id +d "used" +d "where" +d "a" +d
    *            "nonfix" +d "identifier" +d "was" +d "expected"
    *)

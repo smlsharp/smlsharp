@@ -31,6 +31,7 @@ structure ElaborateError =
     exception NonVariablePatternInValRec
     exception NonfixExpected of string
     exception InfixRequired
+    exception MixedAssociativity of Longsymbol.longsymbol * Longsymbol.longsymbol
     exception InfixUsedWithoutOP of Longsymbol.longsymbol
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound

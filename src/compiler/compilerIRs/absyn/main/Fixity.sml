@@ -23,10 +23,10 @@ struct
     | OP2 of 'a exp * ('a exp * 'a exp) * (Loc.pos * Loc.pos)
     | TERM of 'a * (Loc.pos * Loc.pos)
 
-  datatype error =
-      Conflict
-    | BeginWithInfix
-    | EndWithInfix
+  datatype 'a error =
+      Conflict of 'a exp * 'a
+    | BeginWithInfix of 'a
+    | EndWithInfix of 'a
 
   datatype action = SHIFT | REDUCE | CONFLICT
 
@@ -56,19 +56,19 @@ struct
               (case action (a, b) of
                  SHIFT => loop ((b, TERM (w, l)) :: stack) s
                | REDUCE => loop ((NONFIX, op2 (y, x, z)) :: t) input
-               | CONFLICT => (error (Conflict, w, l);
+               | CONFLICT => (error (Conflict (y, w), l);
                               loop ((b, TERM (w, l)) :: stack) s))
             | ((NONFIX, z) :: (a, y) :: (NONFIX, x) :: t, nil) =>
               loop ((NONFIX, op2 (y, x, z)) :: t) nil
             | ((NONFIX, x) :: _, (a, y, l) :: s) =>
               loop ((a, TERM (y, l)) :: stack) s
             | (_, (a, x, l) :: s) =>
-              (error (BeginWithInfix, x, l);
+              (error (BeginWithInfix x, l);
                loop ((NONFIX, TERM (x, l)) :: stack) s)
             | ((NONFIX, x) :: nil, nil) =>
               x
             | ((a, TERM (x, l)) :: t, nil) =>
-              (error (EndWithInfix, x, l);
+              (error (EndWithInfix x, l);
                loop ((NONFIX, TERM (x, l)) :: t) nil)
             | ((a, x) :: t, nil) =>
               raise Bug.Bug "Fixity.parse: 1"
