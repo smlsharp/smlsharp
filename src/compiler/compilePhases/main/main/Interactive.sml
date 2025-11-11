@@ -159,10 +159,5 @@ struct
         in
           main () handle e => raise UncaughtException e
         end
-handle e as LinkError x =>
-(print "LinkError: ";
- print (exnMessage x);
- print "\n";
- raise e)
 
 end

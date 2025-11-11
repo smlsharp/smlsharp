@@ -101,6 +101,8 @@ struct
          CoreUtils.cat [stderr] TextIO.stdErr)
       | UserLevelPrimitive.UserLevelPrimError (loc, exn) =>
         putsErr (userErrorToString (loc, UserError.Error, exn))
+      | RunLoop.Failed =>
+        putsErr "failed to start interactive session"
       | _ =>
         putsErr ("uncaught exception: " ^ exnMessage e)
 

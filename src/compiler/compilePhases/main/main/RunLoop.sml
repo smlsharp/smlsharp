@@ -9,6 +9,8 @@ struct
 
   val isatty = _import "isatty" : int -> int
 
+  exception Failed
+
   type options =
       {options : Interactive.options, errorOutput : TextIO.outstream}
 
@@ -86,6 +88,7 @@ struct
       let
         val session = Interactive.start (#options options)
         val _ = Interactive.loadObjectFiles session preload
+                handle e => (handleError options e; raise Failed)
         val state = initInteractive ()
         fun error context e =
             (handleError options e;
@@ -101,17 +104,9 @@ struct
                 (if !Control.doProfile
                  then (print "Time Profile:\n"; print (Counter.dump ()))
                  else ();
-(*
-                 InteractiveEnv.setCurrentEnv (#topEnv context);
-*)
                  loop (Top.extendContext (context, newContext)) input)
       in
-        (
-(*
-         InteractiveEnv.setCurrentEnv (#topEnv context);
-*)
-         loop context (interactiveInput state)
-        )
+        loop context (interactiveInput state)
       end
 
 end

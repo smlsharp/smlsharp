@@ -18,6 +18,7 @@ _require "./Interactive.smi"
 
 structure RunLoop =
 struct
+  exception Failed
   val interactive
       : {options : Interactive.options, errorOutput : TextIO.outstream}
         -> Top.toplevelContext

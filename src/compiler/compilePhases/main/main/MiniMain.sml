@@ -7,6 +7,7 @@
 (* dummy *)
 structure RunLoop =
 struct
+  exception Failed
   fun interactive _ _ _ = ()
 end
 
