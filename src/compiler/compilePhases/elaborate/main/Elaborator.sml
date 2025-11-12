@@ -21,9 +21,6 @@ struct
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
       Symbol.Map.unionWith #2 (env1, env2)
 
-  fun fixEnvToLocEnv (env:fixEnv) =
-      Symbol.Map.mapi (fn (k, (_, loc)) => loc) env
-
   fun elaborate fixEnv ({interface, topdecsSource}:A.compile_unit) =
       let
         val _ = EU.initializeErrorQueue ()
@@ -48,10 +45,14 @@ struct
         (* provide check *)
         val _ =
             Symbol.Map.mergeWithi
-              (fn (k, x as SOME loc, NONE) =>
+              (fn (k, x as SOME (_, loc), NONE) =>
                   (EU.enqueueError (LOC loc, E.ProvideInfixNotDefined k); x)
-                | (k, x, y) => x)
-              (fixEnvToLocEnv provideFixEnv, fixEnvToLocEnv topdecsSourceFixEnv)
+                | (k, SOME (fix1, _), x as SOME (fix2, loc)) =>
+                  if fix1 = fix2
+                  then x
+                  else (EU.enqueueError (LOC loc, E.ProvideInfixMismatch k); x)
+                | (_, NONE, _) => NONE)
+              (provideFixEnv, topdecsSourceFixEnv)
 
         val plunit : PatternCalcInterface.compile_unit =
             {interface = interface,

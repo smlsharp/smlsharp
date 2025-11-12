@@ -58,4 +58,5 @@ structure ElaborateError =
                                                  wants:int}
     exception InvalidPatternForJsonCase
     exception ProvideInfixNotDefined of Symbol.symbol
+    exception ProvideInfixMismatch of Symbol.symbol
   end

@@ -418,4 +418,11 @@ struct
    *)
   ProvideInfixNotDefined of Symbol.symbol
 
+  and
+  (*%
+   * @format(id)
+   * "provide" +d "check" +d "fails" +d "(infix mismatch):" +d id
+   *)
+  ProvideInfixMismatch of Symbol.symbol
+
 end
