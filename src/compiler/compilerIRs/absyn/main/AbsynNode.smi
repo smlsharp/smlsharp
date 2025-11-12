@@ -21,6 +21,7 @@ struct
     | TY of AbsynTy.ty
     | KIND of AbsynTy.kind
     | KINDED_TYVAR of AbsynTy.kinded_tyvar
+    | BOUND_TYVARS of Absyn.bound_tyvars
     | TYROW of AbsynTy.tyrow
     | TYSEQ of AbsynTy.tyseq
     | KINDED_TYVARSEQ of AbsynTy.kinded_tyvarseq

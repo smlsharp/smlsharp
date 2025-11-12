@@ -39,7 +39,7 @@ struct
     | FFICONTY of ffiTy list * AbsynTy.longtycon * AbsynTy.loc
 
   type scopedTvars 
-    = kindedTvar list
+    = kindedTvar list * loc
 
   datatype plexp
     = PLCONSTANT of AbsynConst.constant * loc

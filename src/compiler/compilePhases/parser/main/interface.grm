@@ -788,9 +788,13 @@ poly_ty1
         | LPAREN poly_ty RPAREN
           (A.TYPAREN (poly_ty, (LPARENleft, RPARENright)))
         | LBRACKET kinded_tyvars PERIOD ty RBRACKET
-          (A.TYPOLY (kinded_tyvars, ty, (LBRACKETleft, RBRACKETright)))
+          (A.TYPOLY ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
+                     ty,
+                     (LBRACKETleft, RBRACKETright)))
         | LBRACKET kinded_tyvars PERIOD poly_ty RBRACKET
-          (A.TYPOLY (kinded_tyvars, poly_ty, (LBRACKETleft, RBRACKETright)))
+          (A.TYPOLY ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
+                     poly_ty,
+                     (LBRACKETleft, RBRACKETright)))
 
 poly_tytuple
         : poly_ty1 ASTERISK poly_tytuple

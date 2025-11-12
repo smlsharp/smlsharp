@@ -42,7 +42,7 @@ struct
    *)
   val NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER = "_X"
 
-  val emptyTvars = nil : PC.scopedTvars
+  val emptyTvars = (nil, Loc.NOLOC) : PC.scopedTvars
 
   datatype sigexpKind = Interface | OrdinarySig
 
@@ -425,7 +425,7 @@ struct
         ([PC.PLTOPDECSTR
             (PC.PLCOREDEC
                (PC.PDVAL
-                  (nil,
+                  (emptyTvars,
                    [(PC.PLPATID (SymbolWithLoc.mkLongsymbol ["it"] (LOC loc)),
                      ElaborateCore.elabExp env exp,
                      LOC loc)],

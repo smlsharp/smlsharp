@@ -221,10 +221,10 @@ in
                     false, loc))
     | A.TYFUN(ty1,ty2, loc) =>
       I.TYFUNM([evalTyAux allowFlex tvarEnv env ty1], evalTyAux allowFlex tvarEnv env ty2)
-    | A.TYPOLY (kindedTvarList, ty, loc) =>
+    | A.TYPOLY ((kindedTvarList, loc2), ty, loc) =>
       let
         val (tvarEnv, kindedTvarList) =
-            evalKindedTvarList allowFlex tvarEnv env kindedTvarList
+            evalKindedTvarList allowFlex tvarEnv env (kindedTvarList, LOC loc2)
 (*
         val cyclicTvars = checkCyclicKind kindedTvarList 
         fun tvarLoc {symbol, id, eq, lifted} = Symbol.symbolToLoc symbol
@@ -306,7 +306,7 @@ in
             I.REC {properties = props, recordKind = newRecordKind}
           end
       end
-  and evalKindedTvarList allowFlex (tvarEnv:tvarEnv) (env:V.env) tvarKindList
+  and evalKindedTvarList allowFlex (tvarEnv:tvarEnv) (env:V.env) (tvarKindList, tvarsLoc)
       : tvarEnv * I.kindedTvar list =
       let
         fun evalTvar tvarEnv (tvar, kind, _)  =
@@ -326,18 +326,10 @@ in
             case cyclicTvars of
               nil => tvarKindList
             | tvar1 :: rest => 
-              let
-                val tvarsLoc =
-                    foldl
-                    (fn (loc1, loc) => Loc.mergeLocs (loc1, loc))
-                    (tvarLoc tvar1)
-                    (map tvarLoc rest)
-              in
-                (EU.enqueueError
+              (EU.enqueueError
                  (tvarsLoc, 
                   E.CyclicKind("Ty-070", {tvarList = cyclicTvars}));
-                 map (fn (tvar, kind) => (tvar, I.UNIV I.emptyProperties)) tvarKindList)
-              end
+               map (fn (tvar, kind) => (tvar, I.UNIV I.emptyProperties)) tvarKindList)
 (*
         val tvarKindList =
             case cyclicTvars of

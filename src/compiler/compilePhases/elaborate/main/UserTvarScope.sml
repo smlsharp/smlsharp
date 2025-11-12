@@ -115,7 +115,7 @@ struct
         tyvarsList (tyvarsTy btvEnv) tys
       | A.TYFUN (ty1, ty2, loc) =>
         union (tyvarsTy btvEnv ty1, tyvarsTy btvEnv ty2)
-      | A.TYPOLY (kindedTvars, ty, loc) =>
+      | A.TYPOLY ((kindedTvars, _), ty, loc) =>
         let
           val btvEnv = bindKindedTvars btvEnv kindedTvars
         in
@@ -183,7 +183,7 @@ struct
   and tyvarsMatch1 btvEnv (pat, exp, loc) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
 
-  and tyvarsDynMatch btvEnv (tyvars, pat, exp, loc) =
+  and tyvarsDynMatch btvEnv ((tyvars, _), pat, exp, loc) =
       setminus (union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp), tyvars)
 
   and tyvarsBind btvEnv (pat, exp, loc) =
@@ -295,7 +295,7 @@ struct
   fun tyvarsFvalbindList btvEnv fvalbinds =
       tyvarsList (tyvarsFvalbind btvEnv) fvalbinds
 
-  fun decideScope tyvarsFn btvEnv (explicitScope, x, loc) =
+  fun decideScope tyvarsFn btvEnv ((explicitScope, loc2), x, loc) =
       let
         val _ = app (fn (tvar as (_, (symbol, _)), _, _) =>
                         if Symbol.Map.inDomain (btvEnv, symbol)
@@ -310,7 +310,7 @@ struct
         val scoped = explicitScope @ toTvarList unguarded
         val btvEnv = extend (btvEnv, unguarded)
       in
-        (btvEnv, scoped)
+        (btvEnv, (scoped, loc2))
       end
 
   fun decideRow btvEnv (label, exp) =
@@ -573,11 +573,11 @@ struct
       )
   fun decidePidec pidec =
       case pidec of
-        PI.PIVAL {scopedTvars, symbol,body,loc} =>
+        PI.PIVAL {scopedTvars = (_, loc2), symbol,body,loc} =>
         let
           val (scopedTvars, body) = decideValbindBody body
         in
-          PI.PIVAL {scopedTvars = scopedTvars, symbol = symbol, body=body, loc=loc}
+          PI.PIVAL {scopedTvars = (scopedTvars, loc2), symbol = symbol, body=body, loc=loc}
         end
     | PI.PITYPE {tyvars, symbol, ty, loc} => pidec
     | PI.PIOPAQUE_TYPE {eq, tyvars, symbol, runtimeTy, loc} => pidec

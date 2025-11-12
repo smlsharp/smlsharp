@@ -131,10 +131,10 @@ struct
        *)
       TYVAR_FREE of kinded_tyvar
     | (*%
-       * @format(tyvar tyvars * ty * loc)
-       * "[" !N0{ tyvars(tyvar)("," +1) "." +1 ty } "]"
+       * @format(tyvars * ty * loc)
+       * "[" !N0{ tyvars "." +1 ty } "]"
        *)
-      TYPOLY of kinded_tyvar list * ty * loc
+      TYPOLY of bound_tyvars * ty * loc
 
   and kind =
       (*%
@@ -147,7 +147,7 @@ struct
        * @format(prop props * row rows * loc)
        * props:ifcons()("#",)
        * props(prop)("#")
-       * "#{" !N0{ 2[ rows(row)("," +1) ] } "}"
+       * "#{" !N0{ rows(row)("," 2[+1]) } "}"
        *)
       REC of id list * tyrow list * loc
 
@@ -157,6 +157,13 @@ struct
        * tyvar kindOpt(kind)
        *)
       tyvar * kind option * loc
+
+  and bound_tyvars =
+      (*%
+       * @format(tyvar tyvars * loc)
+       * !N0{ tyvars(tyvar:kinded_tyvar)("," +1) }
+       *)
+      (tyvar * kind option * loc) list * loc
 
   and tyrow =
       (*%

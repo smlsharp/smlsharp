@@ -200,10 +200,10 @@ struct
    *)
   type scopedTvars =
       (*%
-       * @format(tvar tvars)
+       * @format(tvar tvars * loc)
        * tvars:ifnil()(, tvars:seq(tvar)("(",",",")") +d)
        *)
-      kindedTvar list
+      kindedTvar list * loc
 
   and tvars =
       (*%

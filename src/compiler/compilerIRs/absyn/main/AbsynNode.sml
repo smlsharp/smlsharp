@@ -23,6 +23,7 @@ struct
     | TY of AbsynTy.ty
     | KIND of AbsynTy.kind
     | KINDED_TYVAR of AbsynTy.kinded_tyvar
+    | BOUND_TYVARS of AbsynTy.bound_tyvars
     | TYROW of AbsynTy.tyrow
     | TYSEQ of AbsynTy.tyseq
     | KINDED_TYVARSEQ of AbsynTy.kinded_tyvarseq
@@ -146,6 +147,7 @@ struct
       | KIND (A.UNIV _) => "KIND:UNIV"
       | KIND (A.REC _) => "KIND:REC"
       | KINDED_TYVAR _ => "KINDED_TYVAR"
+      | BOUND_TYVARS _ => "BOUND_TYVARS"
       | TYROW _ => "TYROW"
       | TYSEQ _ => "TYSEQ"
       | KINDED_TYVARSEQ _ => "KINDED_TYVARSEQ"
@@ -444,6 +446,7 @@ struct
       | KIND (A.UNIV (_, loc)) => loc
       | KIND (A.REC (_, _, loc)) => loc
       | KINDED_TYVAR (_, _, loc) => loc
+      | BOUND_TYVARS (_, loc) => loc
       | TYROW (_, _, loc) => loc
       | TYSEQ (_, loc) => loc
       | KINDED_TYVARSEQ (_, loc) => loc
@@ -742,11 +745,12 @@ struct
       | TY (A.TYPAREN (ty, loc)) => [TY ty]
       | TY (A.TYWILD loc) => nil
       | TY (A.TYVAR_FREE tyvar) => [KINDED_TYVAR tyvar]
-      | TY (A.TYPOLY (tyvars, ty, loc)) => map KINDED_TYVAR tyvars @ [TY ty]
+      | TY (A.TYPOLY (tyvars, ty, loc)) => [BOUND_TYVARS tyvars, TY ty]
       | KIND (A.UNIV (ids, loc)) => map ID ids
       | KIND (A.REC (ids, tyrows, loc)) => map ID ids @ map TYROW tyrows
       | KINDED_TYVAR (tyvar, NONE, loc) => [TYVAR tyvar]
       | KINDED_TYVAR (tyvar, SOME kind, loc) => [TYVAR tyvar, KIND kind]
+      | BOUND_TYVARS (tyvars, loc) => map KINDED_TYVAR tyvars
       | TYROW (lab, ty, loc) => [LAB lab, TY ty]
       | TYSEQ (tys, loc) => map TY tys
       | KINDED_TYVARSEQ (tyvars, loc) => map KINDED_TYVAR tyvars

@@ -108,11 +108,11 @@ struct
         T.TYTUPLE (map (substTy subst) tys, loc)
       | T.TYFUN (ty1, ty2, loc) =>
         T.TYFUN (substTy subst ty1, substTy subst ty2, loc)
-      | T.TYPOLY (tvars, ty, loc) =>
+      | T.TYPOLY ((tvars, loc2), ty, loc) =>
         let
           val subst = maskTyvar subst (map #1 tvars)
         in
-          T.TYPOLY (map (substTvar subst) tvars,
+          T.TYPOLY ((map (substTvar subst) tvars, loc2),
                     substTy subst ty,
                     loc)
         end
@@ -251,25 +251,25 @@ struct
       case valbind of
         I.VAL_EXTERN (id, ty, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = nil,
+         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
                   symbol = toSymbol id,
                   body = P.VAL_EXTERN {ty = ty},
                   loc = LOC loc})
       | I.VAL_ALIAS (id, longid, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = nil,
+         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
                   symbol = toSymbol id,
                   body = P.VALALIAS_EXTERN (toLongsymbol longid),
                   loc = LOC loc})
       | I.VAL_BUILTIN (id, name, ty, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = nil,
+         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
                   symbol = toSymbol id,
                   body = P.VAL_BUILTIN {builtinSymbol = toSymbol name, ty = ty},
                   loc = LOC loc})
       | I.VAL_OVERLOAD (id, exp, loc) =>
         (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = nil,
+         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
                   symbol = toSymbol id,
                   body = P.VAL_OVERLOAD (elabOverloadCase exp),
                   loc = LOC loc})

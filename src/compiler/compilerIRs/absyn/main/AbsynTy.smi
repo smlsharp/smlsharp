@@ -38,13 +38,15 @@ struct
     | TYPAREN of ty * loc
     | TYWILD of loc
     | TYVAR_FREE of tyvar * kind option * loc
-    | TYPOLY of (tyvar * kind option * loc) list * ty * loc
+    | TYPOLY of ((tyvar * kind option * loc) list * loc) * ty * loc
 
   and kind =
       UNIV of id list * loc
     | REC of id list * (lab * ty * loc) list * loc
 
   type kinded_tyvar = tyvar * kind option * loc
+
+  type bound_tyvars = kinded_tyvar list * loc
 
   type tyrow = lab * ty * loc
 

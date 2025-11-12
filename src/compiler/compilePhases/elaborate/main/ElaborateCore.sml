@@ -81,13 +81,14 @@ struct
   val checkRecordLabelDuplication = UserErrorUtils.checkRecordLabelDuplication
   val checkSymbolDuplication = UserErrorUtils.checkSymbolDuplication
   val checkSymbolDuplication' = UserErrorUtils.checkSymbolDuplication'
-  val emptyTvars = nil : PC.scopedTvars
+  val emptyTvars = (nil, Loc.NOLOC) : PC.scopedTvars
 
   fun bug s = Bug.Bug ("ElaborateCore: " ^ s)
 
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
   fun toLongsymbol ((ids,_):A.longvid) = map toSymbol ids
   fun seq (SOME (items, _)) = items | seq NONE = nil
+  fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, Loc.NOLOC)
 
   datatype fixity = datatype Fixity.fixity
 
@@ -176,7 +177,7 @@ struct
           let
             val shadowNameList =
                 Symbol.Set.fromList
-                  (map (fn ((_, (symbol, _)), _, _) => symbol) tvarList)
+                  (map (fn ((_, (symbol, _)), _, _) => symbol) (#1 tvarList))
             fun newSubstFun  (tyID as (_, (symbol, loc))) =
                 if Symbol.Set.member (shadowNameList, symbol)
                 then A.TYVAR tyID
@@ -944,7 +945,7 @@ struct
         PC.PLDYNAMICCASE 
           (elabExp env exp, 
            map (fn (tyvars, x, y, loc) =>
-                   (seq tyvars, elabPat env x, elabExp env y, LOC loc))
+                   (seq' tyvars, elabPat env x, elabExp env y, LOC loc))
                matches,
            LOC loc)
       | A.EXPREIFYTY (ty, loc) => PC.PLREIFYTY (ty, LOC loc)
@@ -1055,7 +1056,7 @@ struct
                             (elabPat env pat, elabExp env e, LOC loc))
                         decls
               in
-                ([PC.PDVAL (seq tyvs, newDecls, LOC loc)],
+                ([PC.PDVAL (seq' tyvs, newDecls, LOC loc)],
                  Symbol.Map.empty)
               end
             | (nil, recbinds) =>
@@ -1101,7 +1102,7 @@ struct
                       elabedBinds
                       E.DuplicateVarNameInValRec
               in
-                ([PC.PDVALREC(seq tyvs, elabedBinds, LOC loc)],
+                ([PC.PDVALREC(seq' tyvs, elabedBinds, LOC loc)],
                  Symbol.Map.empty)
               end
             | (valbinds, recbinds) =>
@@ -1149,7 +1150,7 @@ struct
                     elabedFunBinds
                     E.DuplicateVarNameInValRec
           in
-            ([PC.PDDECFUN (seq tyvs, elabedFunBinds, LOC loc)],
+            ([PC.PDDECFUN (seq' tyvs, elabedFunBinds, LOC loc)],
              Symbol.Map.empty)
           end
         | A.DECTYPE (tyBinds, loc) =>

@@ -30,6 +30,7 @@ struct
   datatype ty = datatype AbsynTy.ty
   datatype kind = datatype AbsynTy.kind
   type kinded_tyvar = AbsynTy.kinded_tyvar
+  type bound_tyvars = AbsynTy.bound_tyvars
   type tyrow = AbsynTy.tyrow
   type tyseq = AbsynTy.tyseq
   type kinded_tyvarseq = AbsynTy.kinded_tyvarseq

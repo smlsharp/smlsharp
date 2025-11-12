@@ -224,7 +224,7 @@ struct
       end
 
   fun Let tyvars (pat, exp) exp2 loc =
-      P.PLLET ([P.PDVAL (map (fn x => (x loc, NONE, loc)) tyvars,
+      P.PLLET ([P.PDVAL ((map (fn x => (x loc, NONE, loc)) tyvars, LOC loc),
                          [(pat loc, exp loc, LOC loc)], LOC loc)],
                exp2 loc, LOC loc)
 
