@@ -160,7 +160,7 @@ struct
       | PC.PLSPECREPLIC _ => ()
       | PC.PLSPECEXCEPTION _ => ()
       | PC.PLSPECSTRUCT (strdecs, loc) =>
-        app (fn (symbol, sigexp) => checkSigexp sigexp) strdecs
+        app (fn (symbol, sigexp, loc) => checkSigexp sigexp) strdecs
       | PC.PLSPECINCLUDE (sigexp, loc) => checkSigexp sigexp
       | PC.PLSPECSEQ (spec1, spec2) =>
         (checkSpec spec1; checkSpec spec2)

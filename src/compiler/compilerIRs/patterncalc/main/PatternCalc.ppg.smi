@@ -133,7 +133,7 @@ struct
        conbind: {symbol: symbol, ty: ty option, loc:loc} list} list * loc
     | PLSPECREPLIC of symbol * longsymbol * loc (* replication *)
     | PLSPECEXCEPTION of (symbol * ty option * loc) list * loc (* exception *)
-    | PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
+    | PLSPECSTRUCT of (symbol * plsigexp * loc) list * loc (* structure *)
     | PLSPECINCLUDE of plsigexp * loc (* include *)
     | PLSPECSEQ of plspec * plspec
     | PLSPECSHARE of plspec * longsymbol list * loc 
@@ -142,7 +142,7 @@ struct
 
   and pltopdec 
     = PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)
-    | PLTOPDECSIG of (symbol * plsigexp ) list * loc 
+    | PLTOPDECSIG of (symbol * plsigexp * loc) list * loc
     | PLTOPDECFUN of
       {name:symbol, argStrName:symbol, argSig:plsigexp, body:plstrexp, loc:loc}
         list * loc 

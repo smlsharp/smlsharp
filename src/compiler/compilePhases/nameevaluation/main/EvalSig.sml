@@ -1024,14 +1024,10 @@ local
                     (fn s => E.DuplicateStrInSpec("Sig-070",s))
           val specEnv =
            foldl
-             (fn ((symbol, sigexp), specEnv) =>
+             (fn ((symbol, sigexp, defLoc), specEnv) =>
                let
                  val {env = strSpecEnv,...} = evalSig topEnv (path@[symbol]) sigexp
                  val sigId = SignatureID.generate()
-                 val defLoc =
-                     Loc.mergeLocs
-                     (SymbolWithLoc.symbolToLoc symbol,
-                      P.getLocSigexp sigexp)
                  val specEnv =
                      VP.rebindStr VP.BIND_SIG
                        (specEnv, 

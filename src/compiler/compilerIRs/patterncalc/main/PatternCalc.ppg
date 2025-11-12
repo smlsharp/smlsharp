@@ -606,10 +606,10 @@ struct
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "structure" +d, +1, "and" +d) }
-       * @format:bind(id * sigexp)
+       * @format:bind(id * sigexp * loc)
        * !R0{ id +1 ":" +d sigexp }
        *)
-      PLSPECSTRUCT of (symbol * plsigexp) list * loc
+      PLSPECSTRUCT of (symbol * plsigexp * loc) list * loc
     | (*%
        * @format(sigexp * loc)
        * !R0{ "include" 1[ +1 sigexp ] }
@@ -643,10 +643,10 @@ struct
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "signature" +d, +1, "and" +d) }
-       * @format:bind(id * sigexp)
+       * @format:bind(id * sigexp * loc)
        * !R0{ id +d "=" 1[ +1 sigexp ] }
        *)
-      PLTOPDECSIG of (symbol * plsigexp ) list * loc
+      PLTOPDECSIG of (symbol * plsigexp * loc) list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "functor" +d, +1, "and" +d) }

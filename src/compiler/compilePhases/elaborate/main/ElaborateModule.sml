@@ -57,7 +57,7 @@ struct
       end
 
   fun elabBinds elaborator elements =
-      map (fn (label, element, _) => (toSymbol label, elaborator element)) elements
+      map (fn (label, element, loc) => (toSymbol label, elaborator element, LOC loc)) elements
 
   fun specListToSpecSeq specList =
       let

@@ -376,7 +376,7 @@ struct
     | (*%
        * @format(sigbind sigbinds * loc) "TOPDECSIG"
       *)
-      TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
+      TOPDECSIG of (symbol * PatternCalc.plsigexp * loc) list * loc
     | (*%
        * @format(decfun decfuns * loc)
        *  "TOPDECFUN:" \n

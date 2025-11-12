@@ -2176,7 +2176,7 @@ val _ = U.print "\n"
                     (fn s => E.DuplicateSigname("460",s))
           val sigE =
               foldl
-                (fn ((symbol, plsig), sigE) =>
+                (fn ((symbol, plsig, loc), sigE) =>
                     let
                       val sigEEntry = Sig.evalPlsig topEnv plsig
                     in

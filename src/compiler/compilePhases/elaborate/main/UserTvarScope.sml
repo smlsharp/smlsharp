@@ -463,7 +463,7 @@ struct
       | P.PLSPECREPLIC _ => spec
       | P.PLSPECEXCEPTION _ => spec
       | P.PLSPECSTRUCT (strdescs, loc) =>
-        P.PLSPECSTRUCT (map (fn (k,e) => (k, decideSigexp e)) strdescs, loc)
+        P.PLSPECSTRUCT (map (fn (k,e,l) => (k, decideSigexp e, l)) strdescs, loc)
       | P.PLSPECINCLUDE (sigexp, loc) =>
         P.PLSPECINCLUDE (decideSigexp sigexp, loc)
       | P.PLSPECSEQ (spec1, spec2) =>
@@ -506,7 +506,7 @@ struct
         P.PLTOPDECSTR (strdec, loc) =>
         P.PLTOPDECSTR (decideStrdec strdec, loc)
       | P.PLTOPDECSIG (sigbinds, loc) =>
-        P.PLTOPDECSIG (map (fn (k,e) => (k, decideSigexp e)) sigbinds, loc)
+        P.PLTOPDECSIG (map (fn (k,e,l) => (k, decideSigexp e, l)) sigbinds, loc)
       | P.PLTOPDECFUN (funbinds, loc) =>
         P.PLTOPDECFUN
           (map (fn {name, argStrName, argSig, body, loc} =>
