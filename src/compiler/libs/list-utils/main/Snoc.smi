@@ -12,6 +12,7 @@ struct
   val toList : 'a snoc -> 'a list
   val fromList : 'a list -> 'a snoc
   val concat : 'a snoc snoc -> 'a list
+  val concatList : 'a list list -> 'a snoc
   val app : ('a -> unit) -> 'a snoc -> unit
   val mapPrepend : ('a -> 'b) -> 'a snoc * 'b list -> 'b list
   val mapAppend : ('a -> 'b) -> 'b snoc * 'a list -> 'b snoc

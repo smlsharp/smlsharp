@@ -51,6 +51,11 @@ struct
 
   fun concat l = concat' l nil
 
+  fun concatList' nil r = r
+    | concatList' (h :: t) r = concatList' t (append' r h)
+
+  fun concatList l = concatList' l NIL
+
   fun app' f NIL = ()
     | app' f (h ::> t) = (f t : unit; app' f h)
 
