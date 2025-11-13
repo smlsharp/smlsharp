@@ -4,14 +4,13 @@ _require local "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 (* _require "../../../data/symbols/main/Loc.smi" *)
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 
 structure ElaborateError =
   struct
     exception RuntimeTyNotFound of string
-    exception InvalidOpAssociativity of Longsymbol.longsymbol
+    exception InvalidOpAssociativity of Symbol.symbol * Symbol.symbol
     exception AbstypeNotSupported
     exception SigIDFoundInInterface of Symbol.symbol
     exception DerivedFormFunArg
@@ -27,18 +26,17 @@ structure ElaborateError =
     exception NotFnBoundInValRec
     exception NotBoundTyvar of {tyvar:Symbol.symbol}
     exception NotAllHaveSameNumberPatterns
-    exception NotAllHaveFunctionName
+    exception NotAllHaveSameFunctionName
     exception NonVariablePatternInValRec
     exception NonfixExpected of string
     exception InfixRequired
-    exception MixedAssociativity of Longsymbol.longsymbol * Longsymbol.longsymbol
-    exception InfixUsedWithoutOP of Longsymbol.longsymbol
+    exception ImproperInfixPattern
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound
 (*
     exception ArgWithInfixID of Symbol.longsymbol
 *)
-    exception EndWithInfixID of Longsymbol.longsymbol
+    exception EndWithInfixID of Symbol.symbol
     exception DuplicateVarNameInValRec of Symbol.symbol
     exception DuplicateValDesc of Symbol.symbol
     exception DuplicateTypeNameInDatatype of Symbol.symbol
@@ -53,7 +51,7 @@ structure ElaborateError =
     exception DuplicateConstructorNameInException of Symbol.symbol
     exception DuplicateConstructorNameInDatatype of Symbol.symbol
     exception BindReservedName of Symbol.symbol
-    exception BeginWithInfixID of Longsymbol.longsymbol
+    exception BeginWithInfixID of Symbol.symbol
     exception ArityMismatchInTypeDeclaration of {given:int, tyCon:Symbol.symbol,
                                                  wants:int}
     exception InvalidPatternForJsonCase

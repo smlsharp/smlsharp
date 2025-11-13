@@ -1480,8 +1480,7 @@ struct
       {
         elabAbsynExp : A.exp -> P.plexp,
         (* if SOME, we are in a query with concrete FROMs in the context *)
-        fromLabels : RecordLabel.Set.set option,
-        fixEnv : (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
+        fromLabels : RecordLabel.Set.set option
       }
 
   fun elabOpt f NONE = (emptyRet, NONE)
@@ -1513,13 +1512,6 @@ struct
          MLEXP ([x], loc))
       end
 
-  fun fexpToLoc (Fixity.APP (_, _, loc)) = loc
-    | fexpToLoc (Fixity.OP2 (_, _, loc)) = loc
-    | fexpToLoc (Fixity.TERM (_, loc)) = loc
-
-  fun getSpine (Fixity.APP (x, y, loc)) = getSpine x @ [y]
-    | getSpine x = [x]
-
   fun embed (ty, plexp, loc) =
       let
         val x = SymbolWithLoc.generate ()
@@ -1545,88 +1537,6 @@ struct
         end
       | _ =>
         embed (ty, elabAbsynExp exp, loc)
-
-  and elabApp env (left, _) nil = left
-    | elabApp env ((ret1, q1), loc1) (arg :: args) =
-      let
-        val loc = Loc.mergeRange (loc1, fexpToLoc arg)
-        val (ret2, q2) = elabInfixExp env arg
-        val left =
-            case (q1, q2) of
-              (ML q1, ML q2) =>
-              (merge [ret1, ret2], ML (APP (q1, q2, loc)))
-            | _ =>
-              let
-                val (ret3, q1) = toSQL q1
-                val (ret4, q2) = toSQL q2
-              in
-                (merge [ret1, ret3, ret2, ret4], SQL (APP (q1, q2, loc)))
-              end
-      in
-        elabApp env (left, loc) args
-      end
-
-  and elabSpine
-        env
-        (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: nil) =
-      (emptyRet, ML (MLEXP ([toSymbol id], loc)))
-    | elabSpine
-        env
-        (Fixity.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc) :: t) =
-      let
-        val last = List.last t handle Empty => raise Bug.Bug "elabSpine"
-        val loc = Loc.mergeRange (loc, fexpToLoc last)
-        val (ret1, q1) = elabSpine env t
-        val (ret2, q1) = toSQL q1
-      in
-        (merge [ret1, ret2], SQL (SQLAPP (true, toSymbol id, q1, loc)))
-      end
-    | elabSpine
-        env
-        (Fixity.TERM (S.ID (false, ([id], _), _), loc1) :: arg :: args) =
-      let
-        val loc = Loc.mergeRange (loc1, fexpToLoc arg)
-        val (ret2, q2) = elabInfixExp env arg
-        val id = toSymbol id
-      in
-        case q2 of
-          ML q2 =>
-          elabApp env ((ret2, ML (APP (MLEXP ([id], loc), q2, loc))), loc) args
-        | SQL q2 =>
-          elabApp env ((ret2, SQL (SQLAPP (false, id, q2, loc))), loc) args
-      end
-    | elabSpine env (Fixity.TERM (S.ID (false, ([id], _), _), loc) :: nil) =
-      (emptyRet, ML (MLEXP ([toSymbol id], loc)))
-    | elabSpine env (exp :: exps) =
-      elabApp env (elabInfixExp env exp, fexpToLoc exp) exps
-    | elabSpine env nil = raise Bug.Bug "elabSpine"
-
-  and elabInfixExp env exp =
-      case exp of
-        Fixity.APP _ => elabSpine env (getSpine exp)
-      | Fixity.OP2 (Fixity.TERM (S.ID (false, ([id], _), _), _), (x, y), loc) =>
-        let
-          val (ret1, q1) = elabInfixExp env x
-          val (ret2, q2) = elabInfixExp env y
-        in
-          case (q1, q2) of
-            (ML q1, ML q2) =>
-            (merge [ret1, ret2],
-             ML (APP (MLEXP ([toSymbol id], #2 id),
-                      TUPLE ([q1, q2], loc),
-                      loc)))
-          | _ =>
-            let
-              val (ret3, q1) = toSQL q1
-              val (ret4, q2) = toSQL q2
-            in
-              (merge [ret1, ret3, ret2, ret4],
-               SQL (APPOP2 (toSymbol id, q1, q2, loc)))
-            end
-        end
-      | Fixity.OP2 _ => raise Bug.Bug "elabInfixExp: OP2"
-      | Fixity.TERM (exp, _) =>
-        elabExp env exp
 
   and elabExp env exp =
       case exp of
@@ -1681,32 +1591,32 @@ struct
               (merge [ret1, ret3, ret2, ret4], SQL (OP2 (op2, q1, q2, loc)))
             end
         end
+      | S.APP (S.ID (false, ([id], _), loc1), exp2, loc) =>
+        let
+          val (ret2, q2) = elabExp env exp2
+          val id = toSymbol id
+        in
+          case q2 of
+            ML q2 =>
+            (ret2, ML (APP (MLEXP ([id], loc1), q2, loc)))
+          | SQL q2 =>
+            (ret2, SQL (SQLAPP (false, id, q2, loc)))
+        end
       | S.APP (exp1, exp2, loc) =>
         let
-          val exps = sappSpine exp1 [exp2]
-          fun getLongsymbol (S.ID (_, id, _)) =
-              SymbolWithLoc.toLongsymbol (toLongsymbol id)
-            | getLongsymbol _ = raise Bug.Bug "elabExp: getLongsymbol"
-          fun error (Fixity.Conflict ((left, loc1), (right, loc2))) =
-              UserErrorUtils.enqueueError
-                (LOC (Loc.mergeRange (loc1, loc2)),
-                 E.MixedAssociativity
-                   (getLongsymbol left, getLongsymbol right))
-            | error (Fixity.BeginWithInfix (exp, loc)) =
-              UserErrorUtils.enqueueError
-                (LOC loc, E.BeginWithInfixID (getLongsymbol exp))
-            | error (Fixity.EndWithInfix (exp, loc)) =
-              UserErrorUtils.enqueueError
-                (LOC loc, E.EndWithInfixID (getLongsymbol exp))
-          val src =
-              map (fn exp as S.ID (false, ([id], _), _) =>
-                      (case Symbol.Map.find (#fixEnv env, #1 id) of
-                         SOME (x,_) => (x, exp, AbsynUtils.sqlExpLoc exp)
-                       | NONE => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
-                    | exp => (Fixity.NONFIX, exp, AbsynUtils.sqlExpLoc exp))
-                  exps
+          val (ret1, q1) = elabExp env exp1
+          val (ret2, q2) = elabExp env exp2
         in
-          elabInfixExp env (Fixity.parse error src)
+          case (q1, q2) of
+            (ML q1, ML q2) =>
+            (merge [ret1, ret2], ML (APP (q1, q2, loc)))
+          | _ =>
+            let
+              val (ret3, q1) = toSQL q1
+              val (ret4, q2) = toSQL q2
+            in
+              (merge [ret1, ret3, ret2, ret4], SQL (APP (q1, q2, loc)))
+            end
         end
       | S.INFIX (exp1, vid, exp2, loc) =>
         let
@@ -2183,13 +2093,13 @@ struct
 
   fun elabSqlexp (context as {elabPat, env}) sqlexp =
       case sqlexp of
-        S.SQL (sql, loc) =>
+        S.SQL (sql, loc) : (A.exp,A.pat,A.ty) S.top  =>
         let
           val (ty, (ret, query)) = elabSQL env sql
         in
           makeBind ret (queryToExp query) loc
         end
-      | S.SQLFN (pat, sql, loc) =>
+      | S.SQLFN (pat, sql, loc) : (A.exp,A.pat,A.ty) S.top  =>
         let
           val pat = elabPat pat
           val (ty, (ret, query)) = elabSQL env sql
@@ -2211,22 +2121,9 @@ struct
                                loc = LOC loc}))
           loc
 
-  fun elaborateExp {elabExp, elabPat} fixEnv sqlexp =
+  fun elaborateExp {elabExp, elabPat} sqlexp =
       let
-        val loc = AbsynUtils.sqlTopLoc sqlexp
-        val fixEnv =
-            Symbol.Map.insert
-              (fixEnv, Symbol.fromString "like", (Fixity.INFIX 5, loc))
-        val fixEnv =
-            Symbol.Map.insert
-              (fixEnv, Symbol.fromString "||", (Fixity.INFIX 5, loc))
-        val fixEnv =
-            Symbol.Map.insert
-              (fixEnv, Symbol.fromString "%", (Fixity.INFIX 7, loc))
-        val fixEnv =
-            Symbol.Map.insert
-              (fixEnv, Symbol.fromString "mod", (Fixity.NONFIX, loc))
-        val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
+        val env = {elabAbsynExp = elabExp, fromLabels = NONE}
       in
         elabSqlexp {elabPat = elabPat, env = env} sqlexp
       end

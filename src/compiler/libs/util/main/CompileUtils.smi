@@ -1,0 +1,40 @@
+_require "../../../../basis.smi"
+_require "../../list-utils/main/Snoc.smi"
+
+structure CompileUtils =
+struct
+  val compileList'
+      : ['env#boxed, 'src#boxed, 'ret#boxed, 'dst#boxed.
+         {extend : 'env * 'ret -> 'env,
+          accum : 'ret * 'ret -> 'ret,
+          empty : 'ret}
+           -> ('env -> 'src -> 'ret * 'dst)
+           -> 'env
+           -> 'src list
+           -> 'ret * 'dst snoc]
+
+  val compileList
+      : ['env#boxed, 'src#boxed, 'ret#boxed, 'dst#boxed.
+         {extend : 'env * 'ret -> 'env,
+          accum : 'ret * 'ret -> 'ret,
+          empty : 'ret}
+           -> ('env -> 'src -> 'ret * 'dst)
+           -> 'env
+           -> 'src list
+           -> 'ret * 'dst list]
+
+  val mapAccum'
+      : ['acc#boxed, 'src#boxed, 'dst#boxed.
+         ('acc -> 'src -> 'acc * 'dst)
+         -> 'acc
+         -> 'src list
+         -> 'acc * 'dst snoc]
+
+  val mapAccum
+      : ['acc#boxed, 'src#boxed, 'dst#boxed.
+         ('acc -> 'src -> 'acc * 'dst)
+         -> 'acc
+         -> 'src list
+         -> 'acc * 'dst list]
+
+end

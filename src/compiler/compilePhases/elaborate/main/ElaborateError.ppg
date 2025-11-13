@@ -12,7 +12,6 @@ struct
    * @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar
    * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
-   * @formatter(Longsymbol.longsymbol) Longsymbol.format_longsymbol
    * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
@@ -34,7 +33,7 @@ struct
    * @format(id) "expression" +d "or" +d "pattern" +d "begins" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  BeginWithInfixID of Longsymbol.longsymbol
+  BeginWithInfixID of Symbol.symbol
 
   and
   (**
@@ -202,7 +201,7 @@ struct
    * @format(id) "expression" +d "or" +d "pattern" +d "ends" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  EndWithInfixID of Longsymbol.longsymbol
+  EndWithInfixID of Symbol.symbol
 
 (*
   and
@@ -226,10 +225,11 @@ struct
 
   and
   (*%
-   * @format(id) "infix" +d "operator" +d id +d "used" +d "without" +d
-   *            "\"op\"" +d "in" +d "fun" +d "dec"
+   * @format
+   * "improper" +d "infix" +d "pattern" +d "in" +d "function"
+   * +d "clause"
    *)
-  InfixUsedWithoutOP of Longsymbol.longsymbol
+  ImproperInfixPattern
 
   and
   (*%
@@ -237,14 +237,6 @@ struct
    *        "parentheses"
    *)
   InfixRequired
-
-  and
-  (*%
-   * @format(n1 * n2)
-   * "mixed" +d "associatibity" +d "of" +d "equal" +d
-   * "precedence:" +d n1 +d "and" +d n2
-   *)
-  MixedAssociativity of Longsymbol.longsymbol * Longsymbol.longsymbol
 
   and
   (*%
@@ -268,7 +260,7 @@ struct
    * @format "clauses" +d "don't" +d "all" +d "have" +d "same"
               +d "function" +d "name"
    *)
-  NotAllHaveFunctionName
+  NotAllHaveSameFunctionName
 
   and
   (*%
@@ -393,11 +385,11 @@ struct
 
   and
   (*%
-   * @format(id)
+   * @format(id1 * id2)
    * "operators" +d "of" +d "same" +d "precedence" +d "with" +d "mixed" +d
-   * "associativities:" +d id
+   * "associativities:" +d id1 +d "and" +d id2
    *)
-  InvalidOpAssociativity of Longsymbol.longsymbol
+  InvalidOpAssociativity of Symbol.symbol * Symbol.symbol
 
   and
   (*%

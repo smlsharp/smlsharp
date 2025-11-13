@@ -18178,114 +18178,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
  $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/Fixity.o: \
- src/compiler/compilerIRs/absyn/main/Fixity.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/compiler/extensions/debug/main/Bug.smi \
- src/compiler/libs/list-utils/main/Snoc.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/compiler/compilerIRs/absyn/main/Fixity.smi \
- $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o: \
  src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.sml \
  src/basis/main/General.smi \
@@ -18517,7 +18409,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
- src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateSQL.smi \
@@ -18757,7 +18648,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateCore.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
- src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -18905,13 +18795,120 @@ src/compiler/compilePhases/elaborate/main/ElaborateModule.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
- src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateCore.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateModule.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilerIRs/absyn/main/Fixity.o: \
+ src/compiler/compilerIRs/absyn/main/Fixity.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/compilerIRs/absyn/main/Fixity.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ElaborateInterface.o: \
  src/compiler/compilePhases/elaborate/main/ElaborateInterface.sml \
@@ -19036,10 +19033,9 @@ src/compiler/compilePhases/elaborate/main/ElaborateInterface.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
- src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateCore.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateModule.smi \
+ src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -19178,6 +19174,232 @@ src/compiler/compilePhases/elaborate/main/UserTvarScope.o: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
  src/compiler/compilePhases/elaborate/main/UserTvarScope.smi \
  $(SMLSHARP_DEP)
+src/compiler/libs/util/main/CompileUtils.o: \
+ src/compiler/libs/util/main/CompileUtils.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ src/compiler/libs/util/main/CompileUtils.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilePhases/elaborate/main/ResolveInfix.o: \
+ src/compiler/compilePhases/elaborate/main/ResolveInfix.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/compiler/libs/list-utils/main/Snoc.smi \
+ src/compiler/libs/util/main/CompileUtils.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
+ src/compiler/compilerIRs/absyn/main/Fixity.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/extensions/usererror/main/UserError.ppg.smi \
+ src/compiler/extensions/usererror/main/UserErrorUtils.smi \
+ src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/compilePhases/elaborate/main/ResolveInfix.smi \
+ $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/compilePhases/elaborate/main/Elaborator.sml \
  src/basis/main/General.smi \
@@ -19310,9 +19532,9 @@ src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateInterface.smi \
- src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateModule.smi \
  src/compiler/compilePhases/elaborate/main/UserTvarScope.smi \
+ src/compiler/compilePhases/elaborate/main/ResolveInfix.smi \
  src/compiler/compilePhases/elaborate/main/Elaborator.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/util/main/Graph.o: \

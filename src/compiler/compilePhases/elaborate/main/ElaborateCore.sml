@@ -43,8 +43,9 @@
  *
  * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
- * @author Atsushi Ohori 
+ * @author Atsushi Ohori
  * @author Liu Bochao
+ * @author Katsuhiro Ueno
  * @version $Id: Elaborator.sml,v 1.105.6.8 2010/02/10 05:17:29 hiro-en Exp $
 *)
 (*
@@ -53,7 +54,7 @@ sig
   val elabDec : Fixity.fixity SEnv.map
                 -> Absyn.dec
                 -> PatternCalc.pdecl list * Fixity.fixity SEnv.map
-end 
+end
 *)
 structure ElaborateCore =
 struct
@@ -90,7 +91,9 @@ struct
   fun seq (SOME (items, _)) = items | seq NONE = nil
   fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, Loc.NOLOC)
 
-  datatype fixity = datatype Fixity.fixity
+  fun checkAllEqual f nil = true
+    | checkAllEqual f [x] = true
+    | checkAllEqual f (h :: t) = case f h of k => List.all (fn x => f x = k) t
 
   local
     fun isReservedConstructorName name =
@@ -285,77 +288,6 @@ struct
             conbind = map expandInDataCon conbind}
       end
 
-  type env = (fixity * loc) Symbol.Map.map
-
-  fun extendFixEnv (newFixEnv, fixEnv:env) : env =
-      Symbol.Map.unionWith #1 (newFixEnv, fixEnv)
-
-  (**************************************************************)
-  (* utility functions for infix resolution. *)
-  (* Here, we assume the left-right scan so that the first param is the 
-   * right of the second. 
-   * In the case of conflict, we give a preference to the left.
-   *)
-  fun stronger (INFIX n, INFIX m) = n > m
-    | stronger (INFIX n, INFIXR m) = n > m  
-    | stronger (INFIXR n, INFIX m) = n > m  
-    | stronger (INFIXR n, INFIXR m) = n >= m  
-    | stronger (NONFIX, _) = raise Bug.Bug "NONFIX in Elab.stronger"
-    | stronger (_, NONFIX) = raise Bug.Bug "NONFIX in Elab.stronger"
-  fun findFixity (fixEnv:env) longvid =
-      case longvid of
-        ([vid as (symbol, _)], _) =>
-        (case Symbol.Map.find (fixEnv, symbol) of
-           SOME (v,loc) => 
-           let
-             val defSym = toSymbol (symbol, loc)
-             val _ = 
-                 !Analyzers.insertUPRefMap (toSymbol vid, defSym)
-           in
-             v
-           end
-         | _ => NONFIX)
-      | _ => NONFIX
-
-  fun beginWithInfixError ((ids, loc) : A.longvid) =
-      enqueueError
-        (loc, E.BeginWithInfixID (Longsymbol.fromSymbolList (map #1 ids)))
-
-  fun resolveInfixError getLongsymbol (Fixity.Conflict ((l, loc1), (r, loc2))) =
-      enqueueError
-        (Loc.mergeRange (loc1, loc2),
-         E.MixedAssociativity (getLongsymbol l, getLongsymbol r))
-    | resolveInfixError getLongsymbol (Fixity.BeginWithInfix (exp, loc)) =
-      enqueueError (loc, E.BeginWithInfixID (getLongsymbol exp))
-    | resolveInfixError getLongsymbol (Fixity.EndWithInfix (exp, loc)) =
-      enqueueError (loc, E.EndWithInfixID (getLongsymbol exp))
-
-    fun elabSequence elabolator env elements =
-      let
-        val (elaborateds, env) =
-          foldl
-          (fn (element, (elaborateds, env')) =>
-           let
-             val (elaborated, env'') =
-               elabolator (extendFixEnv (env', env)) element
-           in
-             (
-              elaborated :: elaborateds,
-              Symbol.Map.unionWith #1 (env'', env')
-              )
-           end)
-          (nil, Symbol.Map.empty)
-          elements
-      in
-        (List.concat(rev elaborateds), env)
-      end
-
-  fun expappSpine (A.EXPAPP (x, y, _)) r = expappSpine x (y :: r)
-    | expappSpine x r = x :: r
-
-  fun patappSpine (A.PATAPP (x, y, _)) r = patappSpine x (y :: r)
-    | patappSpine x r = x :: r
-
   fun truePat loc = PC.PLPATID(mkLongsymbol ["true"] (LOC loc))
   fun falsePat loc = PC.PLPATID(mkLongsymbol ["false"] (LOC loc))
   fun trueExp loc = PC.PLVAR(mkLongsymbol ["true"] (LOC loc))
@@ -407,322 +339,156 @@ struct
                 SOME x => x
               | NONE => 0)
 
-  (**
-   * transforms infix application expression into non-infix application
-   * expression.
-   * This function also perform elaboration.
-   *)
-  fun resolveInfixExp env elist =
-      let
-        fun getLongsymbol (A.EXPID (_, (ids, _), _)) = Longsymbol.fromSymbolList (map #1 ids)
-          | getLongsymbol exp = raise Bug.Bug "getLongsymbol expects EXPID."
-        fun elab (Fixity.APP (x, y, loc)) =
-            PC.PLAPPM (elab x, [elab y], LOC loc)
-          | elab (Fixity.OP2 (f, (x, y), loc)) =
-            PC.PLAPPM
-              (elab f,
-               [PC.PLRECORD (RecordLabel.tupleList [elab x, elab y], LOC loc)],
-               LOC loc)
-          | elab (Fixity.TERM (A.EXPID (false, longid, _), _)) =
-            PC.PLVAR (toLongsymbol longid)
-          | elab (Fixity.TERM (exp, _)) =
-            elabExp env exp
-        val src =
-            map (fn exp as A.EXPID (false, longsymbol, _) =>
-                    (findFixity env longsymbol, exp, AbsynUtils.expLoc exp)
-                  | exp => (NONFIX, exp, AbsynUtils.expLoc exp))
-                elist
-      in
-        elab (Fixity.parse (resolveInfixError getLongsymbol) src)
-      end
-
-  (**
-   *  transforms infix constructor application pattern into non-infix
-   * constructor application pattern.
-   * This function also perform elaboration.
-   *)
-  and resolveInfixPat env elist =
-      let
-        fun getLongsymbol (A.PATID (_, vid, _)) = SymbolWithLoc.toLongsymbol (toLongsymbol vid)
-          | getLongsymbol pat = raise Bug.Bug "getLongsymbol expects PATID"
-        fun elab (Fixity.APP (x, y, loc)) =
-            PC.PLPATCONSTRUCT (elab x, elab y, LOC loc)
-          | elab (Fixity.OP2 (f, (x, y), loc)) =
-            PC.PLPATCONSTRUCT
-              (elab f,
-               PC.PLPATRECORD
-                 (false, RecordLabel.tupleList [elab x, elab y], LOC loc),
-               LOC loc)
-          | elab (Fixity.TERM (A.PATID (false, longid, _), _)) =
-            PC.PLPATID (toLongsymbol longid)
-          | elab (Fixity.TERM (pat, _)) =
-            elabPat env pat
-        val src =
-            map (fn pat as A.PATID (false, longsymbol, loc) =>
-                    (findFixity env longsymbol, pat, loc)
-                  | pat => (NONFIX, pat, AbsynUtils.patLoc pat))
-                elist
-      in
-        elab (Fixity.parse (resolveInfixError getLongsymbol) src)
-      end
-
-  (**
-   * translate header of infix function declarations to nonfix declaration
-   * using "op" modifier.
-
-   (Case 1)  fun p1 id p2 = exp
-             ==>  fun (op id) (p1, p2) = exp
-   (Case 2)  fun (p1 id p2) p3 ... pn = exp
-             ==> fun (op id) (p1, p2) p3 ... pn = exp
-    
-   If both case 1 and case 2 apply, case 1 has priority over Case 2.
-   For example:
-     fun (x %% y) ## z = x + y + z;
-   This is interpreted as a definition of ##.
-
-*)
-  and resolveFunDecls env ((fdecls, loc) : A.fvalbind) =
-      let
-        fun assertPattern pat =
-            case pat of
-              A.PATID _ => pat
-            | A.PATTYPED(innerPat, ty, loc) => 
-              A.PATTYPED(assertPattern innerPat, ty, loc)
-            | A.PATPAREN (pat, _) => assertPattern pat
-            | pat => 
-              let
-                val loc = AbsynUtils.patLoc pat
-              in
-                (enqueueError(loc, E.IllegalFunctionSymbol);
-                 A.PATID (false, ([(Symbol.fromString "<dummy>", loc)], loc), loc))
-              end
-        fun longsymbolInPattern pat =
-            case pat of
-              A.PATID (_, longsymbol, _) => longsymbol
-            | A.PATTYPED(innerPat, _, _) => longsymbolInPattern innerPat
-            | _ => raise bug "impossible (longsymbolInPattern) (1)"
-        fun opPrefixInPattern pat =
-            case pat of
-              A.PATID (opPrefix, _, _) => opPrefix
-            | A.PATTYPED(innerPat, _, _) => opPrefixInPattern innerPat
-            | _ => raise bug "impossible (opPrefixInPattern)"
-
-        fun make2TuplePat (leftPat, rightPat) =
-            let
-              val leftLoc = AbsynUtils.patLoc leftPat
-              val rightLoc = AbsynUtils.patLoc rightPat
-            in
-              A.PATRECORD
-                ([A.PATROW((RecordLabel.fromInt 1, leftLoc), leftPat, leftLoc),
-                  A.PATROW((RecordLabel.fromInt 2, rightLoc), rightPat, rightLoc)],
-                 false,
-                 Loc.mergeRange (leftLoc, rightLoc))
-            end
-
-        fun getArg arg = 
-            case arg of 
-              A.PATID (opf, fid, loc) =>
-              if 
-                (case findFixity env fid of
-                   NONFIX => true | _ => opf)
-              then arg 
-              else
-                (
-                  enqueueError (loc, E.InfixUsedWithoutOP (SymbolWithLoc.toLongsymbol (toLongsymbol fid)));
-                  arg
-                )
-            | _ => arg
-                
-        (**
-          Picks up the function ID and asserts that it is nonfix id or infix
-          id with "op" modifier.
-          For other arguments, the resolveInfixPat will check that no infix
-          ID is used without "op".
-         *)
-        fun transNonfixForm (pats, tyOpt, exp, loc) =
-            case pats of
-              pat :: argPats =>
-              let
-                val loc = AbsynUtils.patLoc pat
-                val pat = assertPattern pat
-                val longsymbol = longsymbolInPattern pat
-                val opf = opPrefixInPattern pat
-              in
-                if
-                  (case findFixity env longsymbol of
-                     NONFIX => true | _ => opf)
-                then (opf, pat, map getArg argPats, tyOpt, exp, loc)
-                else
+  fun elabPat pat =
+      case pat of
+        A.PATWILD loc => PC.PLPATWILD (LOC loc)
+      | A.PATCONST (constant, loc) =>
+        (case constant of
+           A.REAL _ =>
+           (* According to syntactic restriction of ML Definition, real
+            * constant pattern is not allowed. *)
+           (enqueueError (loc, E.RealConstantInPattern);
+            PC.PLPATCONSTANT (constant, LOC loc))
+         | _ => PC.PLPATCONSTANT (constant, LOC loc))
+      | A.PATID (_, longvid, _) => PC.PLPATID (toLongsymbol longvid)
+      | A.PATAPP (pat1, pat2, loc) =>
+        PC.PLPATCONSTRUCT (elabPat pat1, elabPat pat2, LOC loc)
+      | A.PATINFIX (pat1, vid, pat2, loc) =>
+        PC.PLPATCONSTRUCT
+          (PC.PLPATID [toSymbol vid],
+           PC.PLPATRECORD
+             (false,
+              RecordLabel.tupleList [elabPat pat1, elabPat pat2],
+              LOC loc),
+           LOC loc)
+      | A.PATRECORD (pfields, flex, loc) =>
+        (
+          checkRecordLabelDuplication
+              getLabelOfPatRow pfields (LOC loc) E.DuplicateRecordLabelInPat;
+          PC.PLPATRECORD (flex, map elabPatRow pfields, LOC loc)
+        )
+      | A.PATTUPLE (plist, loc) =>
+        PC.PLPATRECORD (false, RecordLabel.tupleList (map elabPat plist), LOC loc)
+      | A.PATLIST (elist, loc) =>
+        let
+          val plexp =
+              foldr
+              (fn (x, y) =>
+                  PC.PLPATCONSTRUCT
                   (
-                   enqueueError
-                     (loc, E.InfixUsedWithoutOP (SymbolWithLoc.toLongsymbol (toLongsymbol longsymbol)));
-                   (opf, pat, argPats, tyOpt, exp, loc)
-                  )
-              end
-            | nil => raise bug "impossible nil args in transnonfix"
-
-        (**
-         * infix function header is converted to nonfix function header.
+                    PC.PLPATID(mkLongsymbol ["::"] (LOC loc)),
+                    PC.PLPATRECORD(false, RecordLabel.tupleList [elabPat x, y], LOC loc),
+                    LOC loc
+                  ))
+              (PC.PLPATID(mkLongsymbol ["nil"] (LOC loc)))
+              elist
+        in
+          plexp
+         (*
+          case plexp of
+            PC.PLPATID x => PC.PLPATID x
+          | PC.PLPATCONSTRUCT(x, y, l) => PC.PLPATCONSTRUCT(x, y, loc)
+          | _ => raise Bug.Bug "elab EXPLIST"
          *)
-        fun resolveCase2 (args, tyOpt, exp, loc) =
-             case args of
-               A.PATAPP
-                 (A.PATAPP (leftArg, pat as A.PATID (false, id, loc), _),
-                  rightArg, _)
-               :: otherArgs =>
-               (case findFixity env id of
-                  NONFIX => transNonfixForm (args, tyOpt, exp, loc)
-                | _ =>
-                  let val newArg = make2TuplePat(getArg leftArg, getArg rightArg)
-                  in (true, pat, newArg :: otherArgs, tyOpt, exp, loc)
-                  end)
-             | _ => transNonfixForm (args, tyOpt, exp, loc)
+        end
+      | A.PATTYPED (pat, ty, loc) => PC.PLPATTYPED(elabPat pat, ty, LOC loc)
+      | A.PATAS ((_, id, _), NONE, pat, loc) =>
+        (
+          checkReservedNameForValBind (toSymbol id);
+          PC.PLPATLAYERED(toSymbol id, NONE, elabPat pat, LOC loc)
+        )
+      | A.PATAS ((_, id, _), SOME ty, pat, loc) =>
+        let
+          val elabedPat = elabPat pat
+        in
+          checkReservedNameForValBind (toSymbol id);
+          PC.PLPATLAYERED(toSymbol id, SOME ty, elabedPat, LOC loc)
+        end
+      | A.PATPAREN (pat, loc) => elabPat pat
 
-        (**
-         * infix function header is converted to nonfix function header.
-         *)
-        fun resolveCase1 (args, tyOpt, exp, loc) =
-             case args of
-               [leftArg, pat as A.PATID (false, id, loc), rightArg]
-               =>
-               (case findFixity env id of
-                  NONFIX => resolveCase2 (args, tyOpt, exp, loc)
-                | _ =>
-                  let val newArg = make2TuplePat(getArg leftArg, getArg rightArg)
-                  in (true, pat, [newArg], tyOpt, exp, loc)
-                  end)
-             | _ => resolveCase2 (args, tyOpt, exp, loc)
+  and elabPatRow patrow =
+      case patrow of
+        (* label = pat *)
+        A.PATROW ((string, _), pat, loc) => (string, elabPat pat)
+        (* label < : ty > < as pat > *)
+      | A.PATROWVAR (vid, optTy, optPat, loc) =>
+        let
+          val symbol = toSymbol vid
+          val _ = checkReservedNameForValBind symbol
+          val pat =
+              case optPat of
+                SOME pat =>
+                PC.PLPATLAYERED(symbol, optTy, elabPat pat, LOC loc)
+              | _ =>
+                case optTy of
+                  SOME ty => PC.PLPATTYPED (PC.PLPATID [symbol], ty, LOC loc)
+                | _ => PC.PLPATID [symbol]
+        in
+          (RecordLabel.fromSymbol (#symbol symbol), pat)
+        end
 
-        fun resolveCase0 (args, tyOpt, exp, loc) =
-            resolveCase1 (patappSpine args nil, tyOpt, exp, loc)
-      in
-        {fdecl=map resolveCase0 fdecls, loc=loc}
-      end
+  fun patappSpine (A.PATAPP (x, y, _)) r = patappSpine x (y :: r)
+    | patappSpine x r = (x, r)
 
-  and elabFunDecls env {fdecl=fdecls, loc=loc} =
+  fun mustBeAtpat pat =
+      case pat of
+        A.PATAPP (_, _, loc) =>
+        enqueueError (loc, E.ImproperInfixPattern)
+      | A.PATINFIX (_, _, _, loc) =>
+        enqueueError (loc, E.ImproperInfixPattern)
+      | _ => ()
+
+  fun resolveFrule ((pat, tyOpt, exp, loc) : A.frule) =
       let
-        val (opfs, funPats, args, exps, locs) =
-            foldr
-                (fn ((opf, funPat, arg, optTy, exp, loc), (opfs, funPats, args, exps, locs)) =>
-                    let
-                      (* fun id pat .. pat : ty = exp
-                       * is a derived form equivalent to
-                       * fun id pat .. pat = exp : ty
-                       *)
-                      val typedExp =
-                          case optTy of
-                            NONE => exp
-                          | SOME ty => A.EXPTYPED(exp, ty, loc)
-                      val newExp = elabExp env typedExp
-                      val newArg = map (elabPat env) arg
-                    in
-                      (
-                       opf :: opfs,
-                       funPat :: funPats, 
-                       newArg :: args,
-                       newExp :: exps,
-                       loc :: locs
-                      )
-                    end)
-                (nil, nil, nil, nil, nil)
-                fdecls
-        fun longsymbolInPattern (pat, (ids,tyLocList)) =
-            case pat of
-              A.PATID (_, ([symbol], _), _) => (toSymbol symbol::ids, tyLocList)
-            | A.PATTYPED(innerPat, ty, loc) => longsymbolInPattern (innerPat, (ids, (ty,loc)::tyLocList))
-            | _ => raise bug "impossible (longsymbolInPattern) (2)"
-        fun longsymbolInPatterns patList =
-            foldr
-            longsymbolInPattern
-            (nil, nil)
-            patList
-        val (ids, tyLocList) = longsymbolInPatterns funPats
-        val fid = hd ids
-        val _ =
-            if List.all (fn x => eqSymbol(fid, x)) ids
-            then ()
-            else enqueueError (loc, E.NotAllHaveFunctionName)
-              (* ToDo : more specific location should be passed. *)
-        val argNum = length (hd args)
-        val _ =
-            if List.all (fn x => length x = argNum) args
-            then ()
-            else enqueueError (loc, E.NotAllHaveSameNumberPatterns)
-        val _ =
-            if 0 = argNum
-            then enqueueError (loc, E.FunctionParameterNotFound)
-            else ()
-        val _ =
-            checkReservedNameForValBind fid
-        val fpat = 
-            foldr
-            (fn ((ty,loc), fpat) => PC.PLPATTYPED(fpat, ty, LOC loc))
-            (PC.PLPATID [fid])
-            tyLocList
-        val fdecl = (fpat, map (fn ((x,y),z) => (x,y,LOC z))
-                               (ListPair.zip (ListPair.zip (args, exps), locs)))
+        val (id, idpat, typat, args) =
+            case patappSpine pat nil of
+              (* fun atpat vid atpat = ... *)
+              (A.PATINFIX (pat1, vid, pat2, loc), nil) =>
+              (mustBeAtpat pat1;
+               mustBeAtpat pat2;
+               (SOME vid,
+                A.PATID (false, ([vid], #2 vid), #2 vid),
+                fn x => x,
+                [A.PATTUPLE ([pat1, pat2], loc)]))
+            | (* fun (atpat vid atpat) ... = ... *)
+              (A.PATPAREN (A.PATINFIX (pat1, vid, pat2, loc), _), args) =>
+              (mustBeAtpat pat1;
+               mustBeAtpat pat2;
+               (SOME vid,
+                A.PATID (false, ([vid], #2 vid), #2 vid),
+                fn x => x,
+                A.PATTUPLE ([pat1, pat2], loc) :: args))
+            | (* fun (vid : ty) ... = ... (SML# extension) *)
+              (A.PATPAREN
+                 (A.PATTYPED (pat as A.PATID (_, ([id], _), _), ty, loc), _),
+               args) =>
+              (SOME id, pat, fn pat => A.PATTYPED (pat, ty, loc), args)
+            | (* fun vid ... = ... *)
+              (pat as A.PATID (_, ([id], _), _), args) =>
+              (SOME id, pat, fn x => x, args)
+            | (head, args) =>
+              (enqueueError (AbsynUtils.patLoc head, E.IllegalFunctionSymbol);
+               (NONE, head, fn x => x, args))
+        (* fun ... : ty = exp  ===>  fun ... = exp : ty *)
+        val exp =
+            case tyOpt of
+              NONE => exp
+            | SOME ty => A.EXPTYPED (exp, ty, loc)
       in
-        {fdecl=fdecl, loc=LOC loc}
+        {id = id, pat = idpat, ty = typat, args = args, exp = exp, loc = loc}
       end
 
-  and elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc) =
-      let
-        fun elabDataCon ((_, conSymbol, _), tyOpt, loc) = {symbol=toSymbol conSymbol, ty=tyOpt, loc = LOC loc}
-        fun elabDataBind (tvars, name, dataCons, loc) =
-            {tyvars=seq tvars, symbol=toSymbol name, conbind = map elabDataCon dataCons, loc=LOC loc}
-        val dataCons =
-            List.concat (map #3 dataBinds)
-        val boundTypeNames = 
-            (map (fn (_, x, _, _) => toSymbol x) dataBinds)
-            @ (map (fn (_, x, _, _) => toSymbol x) withTypeBinds)
-        fun id x = x
-        val _ =
-            checkSymbolDuplication
-              id boundTypeNames E.DuplicateTypeNameInDatatype
-        val _ =
-            checkSymbolDuplication
-              (fn ((_, x, _), _, _) => toSymbol x)
-              dataCons E.DuplicateConstructorNameInDatatype
-        val _ =
-            app
-              (fn dataCon =>
-                  checkReservedNameForConstructorBind
-                    (toSymbol (#2 (#1 dataCon)))
-              )
-              dataCons
-        val newDataBinds = map elabDataBind dataBinds
-        val _ = 
-            map (fn (tvars, name, ty, _) =>
-                    UserErrorUtils.checkSymbolDuplication
-                      (fn (isEq, id) => toSymbol id) (seq tvars) E.DuplicateTypParam)
-                withTypeBinds
-        val expandedDataBinds =
-            map (expandWithTypesInDataBind withTypeBinds) newDataBinds
-        val withTypeBinds =
-            map (fn (tyvars, tyConSymbol, ty, loc) =>
-                    (seq tyvars, toSymbol tyConSymbol, ty, LOC loc))
-                withTypeBinds
-      in
-        (expandedDataBinds, withTypeBinds)
-      end
-
-  and elabExp env ast = 
-      case ast of 
+  fun elabExp ast =
+      case ast of
         A.EXPCONST (const, loc) => PC.PLCONSTANT (const, LOC loc)
       | A.EXPSIZEOF (ty, loc) => PC.PLSIZEOF (ty, LOC loc)
-      | A.EXPID (true, longid, _) => PC.PLVAR (toLongsymbol longid)
-      | A.EXPID (false, longvid, _) =>
-        (case findFixity env longvid of
-           NONFIX => ()
-         | INFIX _ => beginWithInfixError longvid
-         | INFIXR _ => beginWithInfixError longvid;
-         PC.PLVAR (toLongsymbol longvid))
+      | A.EXPID (_, longid, _) => PC.PLVAR (toLongsymbol longid)
       | A.EXPRECORD (stringExpList, loc) =>
         (
           checkRecordLabelDuplication
               (fn ((label, _), _, _) => label)
               stringExpList (LOC loc) E.DuplicateRecordLabel;
-          PC.PLRECORD (elabLabeledSequence (elabExp env) stringExpList, LOC loc)
+          PC.PLRECORD (elabLabeledSequence elabExp stringExpList, LOC loc)
         )
       | A.EXPRECORD_UPDATE (exp, stringExpList, loc) =>
         (
@@ -731,33 +497,33 @@ struct
               stringExpList (LOC loc) E.DuplicateRecordLabel;
           PC.PLRECORD_UPDATE
           (
-            elabExp env exp,
-            elabLabeledSequence (elabExp env) stringExpList,
+            elabExp exp,
+            elabLabeledSequence elabExp stringExpList,
             LOC loc
           )
         )
       | A.EXPTUPLE_UPDATE (exp, expList, loc) =>
         PC.PLRECORD_UPDATE
-          (elabExp env exp,
-           RecordLabel.tupleList (map (elabExp env) expList),
+          (elabExp exp,
+           RecordLabel.tupleList (map elabExp expList),
            LOC loc)
       | A.EXPUPDATE1 (exp, exp2, loc) =>
         PC.PLRECORD_UPDATE2
           (
-            elabExp env exp,
-            elabExp env exp2,
+            elabExp exp,
+            elabExp exp2,
             LOC loc
           )
       | A.EXPUPDATE2 (exp, exp2, loc) =>
         PC.PLRECORD_UPDATE2
           (
-            elabExp env exp,
-            elabExp env exp2,
+            elabExp exp,
+            elabExp exp2,
             LOC loc
           )
       | A.EXPSELECT ((x, _), loc) => PC.PLRECORD_SELECTOR(x, LOC loc)
       | A.EXPTUPLE (elist, loc) =>
-        PC.PLRECORD(RecordLabel.tupleList(map (elabExp env) elist), LOC loc)
+        PC.PLRECORD(RecordLabel.tupleList(map elabExp elist), LOC loc)
       | A.EXPLIST (elist, loc) => 
 (*
         if !C.doListExpressionOptimization then
@@ -768,27 +534,27 @@ struct
           fun folder (x, y) =
               PC.PLAPPM
                 (PC.PLVAR(mkLongsymbol ["::"] (LOC loc)),
-                 [PC.PLRECORD(RecordLabel.tupleList [elabExp env x, y], LOC loc)],
+                 [PC.PLRECORD(RecordLabel.tupleList [elabExp x, y], LOC loc)],
                  LOC loc)
           val plexp = foldr folder (PC.PLVAR(mkLongsymbol ["nil"] (LOC loc))) elist
         in
           plexp
         end
       | A.EXPAPP (exp1, exp2, loc) =>
-        resolveInfixExp env (expappSpine exp1 [exp2])
+        PC.PLAPPM (elabExp exp1, [elabExp exp2], LOC loc)
       | A.EXPINFIX (exp1, vid, exp2, loc) =>
         PC.PLAPPM
           (PC.PLVAR [toSymbol vid],
            [PC.PLRECORD
-              (RecordLabel.tupleList [elabExp env exp1, elabExp env exp2],
+              (RecordLabel.tupleList [elabExp exp1, elabExp exp2],
                LOC loc)],
            LOC loc)
-      | A.EXPSEQ (elist, loc) => PC.PLSEQ(map (elabExp env) elist, LOC loc)
-      | A.EXPTYPED (exp, ty, loc) => PC.PLTYPED (elabExp env exp, ty, LOC loc)
+      | A.EXPSEQ (elist, loc) => PC.PLSEQ(map elabExp elist, LOC loc)
+      | A.EXPTYPED (exp, ty, loc) => PC.PLTYPED (elabExp exp, ty, LOC loc)
       | A.EXPANDALSO (e1, e2, loc) =>
         let
-          val ple1 = elabExp env e1
-          val ple2 = elabExp env e2
+          val ple1 = elabExp e1
+          val ple2 = elabExp e2
         in
           PC.PLCASEM
             (
@@ -803,8 +569,8 @@ struct
         end
       | A.EXPORELSE (e1, e2, loc) =>
         let
-          val ple1 = elabExp env e1
-          val ple2 = elabExp env e2
+          val ple1 = elabExp e1
+          val ple2 = elabExp e2
         in
           PC.PLCASEM
             (
@@ -821,16 +587,16 @@ struct
       | A.EXPHANDLE (e1, match, loc) =>
         PC.PLHANDLE
             (
-              elabExp env e1,
-              map (fn (x, y, loc) => (elabPat env x, elabExp env y, LOC loc)) match,
+              elabExp e1,
+              map (fn (x, y, loc) => (elabPat x, elabExp y, LOC loc)) match,
               LOC loc
             )
-      | A.EXPRAISE (e, loc) => PC.PLRAISE(elabExp env e, LOC loc)
+      | A.EXPRAISE (e, loc) => PC.PLRAISE(elabExp e, LOC loc)
       | A.EXPIF (e1, e2, e3, loc) =>
         let
-          val ple1 = elabExp env e1
-          val ple2 = elabExp env e2
-          val ple3 = elabExp env e3
+          val ple1 = elabExp e1
+          val ple2 = elabExp e2
+          val ple3 = elabExp e3
         in
           PC.PLCASEM
           ([ple1],
@@ -842,8 +608,8 @@ struct
       | A.EXPWHILE (condExp, bodyExp, loc) =>
         let
           val newid = SymbolWithLoc.generate ()
-          val condPl = elabExp env condExp
-          val bodyPl = elabExp env bodyExp
+          val condPl = elabExp condExp
+          val bodyPl = elabExp bodyExp
           (* (fn _ => newid ()) body *)
           val whbody =
               PC.PLAPPM
@@ -897,20 +663,19 @@ struct
       | A.EXPCASE (objectExp, match, loc) =>
         PC.PLCASEM
         (
-          [elabExp env objectExp],
-          map (fn (x, y, loc) => ([elabPat env x], elabExp env y, LOC loc)) match,
+          [elabExp objectExp],
+          map (fn (x, y, loc) => ([elabPat x], elabExp y, LOC loc)) match,
           PC.MATCH,
           LOC loc
         )
       | A.EXPFN (match, loc) =>
-        PC.PLFNM(map (fn (x, y, loc) => ([elabPat env x], elabExp env y, LOC loc)) match,
+        PC.PLFNM(map (fn (x, y, loc) => ([elabPat x], elabExp y, LOC loc)) match,
                  LOC loc)
-      | A.EXPLET (decs, elist, loc) => 
+      | A.EXPLET (decs, elist, loc) =>
         let
-          val (pdecs, env') = elabDecs env decs
-          val newEnv = extendFixEnv (env',env)
+          val pdecs = elabDecs decs
           val body =
-              case map (elabExp newEnv) elist of
+              case map elabExp elist of
                 [exp] => exp
               | expList => PC.PLSEQ (expList, LOC loc)
         in
@@ -919,361 +684,300 @@ struct
       | A.EXPIMPORT_NAME ((s, _), ty, loc) =>
         PC.PLFFIIMPORT (PC.PLFFIEXTERN s, elabFFITy ty, LOC loc)
       | A.EXPIMPORT_EXP (exp, ty, loc) =>
-        PC.PLFFIIMPORT (PC.PLFFIFUN (elabExp env exp), elabFFITy ty, LOC loc)
+        PC.PLFFIIMPORT (PC.PLFFIFUN (elabExp exp), elabFFITy ty, LOC loc)
       | A.EXPSQL sqlexp =>
         ElaborateSQL.elaborateExp
-          {elabExp = elabExp env,
-           elabPat = elabPat env}
-          env
+          {elabExp = elabExp, elabPat = elabPat}
           sqlexp
       | A.EXPFOREACH_ARRAY foreach =>
         ElaborateForeach.elaborateForeachArray
-          {elabExp = elabExp env, elabPat = elabPat env}
+          {elabExp = elabExp, elabPat = elabPat}
           foreach
       | A.EXPFOREACH_DATA foreach =>
         ElaborateForeach.elaborateForeachData
-          {elabExp = elabExp env, elabPat = elabPat env}
+          {elabExp = elabExp, elabPat = elabPat}
           foreach
-      | A.EXPJOIN (exp1, exp2, loc) => PC.PLJOIN (true, elabExp env exp1, elabExp env exp2, LOC loc)
-      | A.EXPEXTEND (exp1, exp2, loc) => PC.PLJOIN (false, elabExp env exp1, elabExp env exp2, LOC loc)
-      | A.EXPDYNAMIC_AS (exp, ty, loc) => PC.PLDYNAMIC (elabExp env exp, ty, LOC loc)
-      | A.EXPDYNAMIC_OF (exp, ty, loc) => PC.PLDYNAMICIS (elabExp env exp, ty, LOC loc)
+      | A.EXPJOIN (exp1, exp2, loc) => PC.PLJOIN (true, elabExp exp1, elabExp exp2, LOC loc)
+      | A.EXPEXTEND (exp1, exp2, loc) => PC.PLJOIN (false, elabExp exp1, elabExp exp2, LOC loc)
+      | A.EXPDYNAMIC_AS (exp, ty, loc) => PC.PLDYNAMIC (elabExp exp, ty, LOC loc)
+      | A.EXPDYNAMIC_OF (exp, ty, loc) => PC.PLDYNAMICIS (elabExp exp, ty, LOC loc)
       | A.EXPDYNAMICNULL (ty, loc) => PC.PLDYNAMICNULL (ty, LOC loc)
       | A.EXPDYNAMICTOP (ty, loc) => PC.PLDYNAMICTOP (ty, LOC loc)
-      | A.EXPDYNAMICVIEW (exp, ty, loc) => PC.PLDYNAMICVIEW (elabExp env exp, ty, LOC loc)
+      | A.EXPDYNAMICVIEW (exp, ty, loc) => PC.PLDYNAMICVIEW (elabExp exp, ty, LOC loc)
       | A.EXPDYNAMICCASE (exp, matches, loc) =>
-        PC.PLDYNAMICCASE 
-          (elabExp env exp, 
+        PC.PLDYNAMICCASE
+          (elabExp exp,
            map (fn (tyvars, x, y, loc) =>
-                   (seq' tyvars, elabPat env x, elabExp env y, LOC loc))
+                   (seq' tyvars, elabPat x, elabExp y, LOC loc))
                matches,
            LOC loc)
       | A.EXPREIFYTY (ty, loc) => PC.PLREIFYTY (ty, LOC loc)
-      | A.EXPPAREN (exp, loc) => elabExp env exp
+      | A.EXPPAREN (exp, loc) => elabExp exp
 
-  and elabPat env pat = 
-      case pat of
-        A.PATWILD loc => PC.PLPATWILD (LOC loc)
-      | A.PATCONST (constant, loc) =>
-        (case constant of
-           A.REAL _ =>
-           (* According to syntactic restriction of ML Definition, real
-            * constant pattern is not allowed. *)
-           (enqueueError (loc, E.RealConstantInPattern);
-            PC.PLPATCONSTANT (constant, LOC loc))
-         | _ => PC.PLPATCONSTANT (constant, LOC loc))
-      | A.PATID (true, longvid, _) => PC.PLPATID (toLongsymbol longvid)
-      | A.PATID (false, longvid, _) =>
-        (case findFixity env longvid of
-           NONFIX => ()
-         | INFIX _ => beginWithInfixError longvid
-         | INFIXR _ => beginWithInfixError longvid;
-         PC.PLPATID (toLongsymbol longvid))
-      | A.PATAPP (pat1, pat2, loc) =>
-        resolveInfixPat env (patappSpine pat1 [pat2])
-      | A.PATINFIX (pat1, vid, pat2, loc) =>
-        PC.PLPATCONSTRUCT
-          (PC.PLPATID [toSymbol vid],
-           PC.PLPATRECORD
-             (false,
-              RecordLabel.tupleList [elabPat env pat1, elabPat env pat2],
-              LOC loc),
-           LOC loc)
-      | A.PATRECORD (pfields, flex, loc) =>
+  and elabFvalbind ((frules, loc) : A.fvalbind) =
+      let
+        val frules = map resolveFrule frules
+        val first = hd frules handle _ => raise Bug.Bug "elabFvalbind"
+        val _ =
+            if checkAllEqual (Option.map #1 o #id) frules
+            then ()
+            else enqueueError (loc, E.NotAllHaveSameFunctionName)
+        val _ =
+            if checkAllEqual (length o #args) frules
+            then ()
+            else enqueueError (loc, E.NotAllHaveSameNumberPatterns)
+        val _ =
+            case #args first of
+              nil => enqueueError (loc, E.FunctionParameterNotFound)
+            | _ :: _ => ()
+        val symbol = Option.map toSymbol (#id first)
+        val _ = Option.app checkReservedNameForValBind symbol
+        val idpat = foldl (fn (x, z) => #ty x z) (#pat first) frules
+        val idpat = elabPat idpat
+        val rules = map (fn {args, exp, loc, ...} =>
+                            (map elabPat args, elabExp exp, LOC loc))
+                        frules
+      in
+        (symbol, {fdecl = (idpat, rules), loc = LOC loc})
+      end
+
+  and elabDataBindsWithTypeBinds (dataBinds, withTypeBinds, loc) =
+      let
+        fun elabDataCon ((_, conSymbol, _), tyOpt, loc) = {symbol=toSymbol conSymbol, ty=tyOpt, loc = LOC loc}
+        fun elabDataBind (tvars, name, dataCons, loc) =
+            {tyvars=seq tvars, symbol=toSymbol name, conbind = map elabDataCon dataCons, loc=LOC loc}
+        val dataCons =
+            List.concat (map #3 dataBinds)
+        val boundTypeNames =
+            (map (fn (_, x, _, _) => toSymbol x) dataBinds)
+            @ (map (fn (_, x, _, _) => toSymbol x) withTypeBinds)
+        fun id x = x
+        val _ =
+            checkSymbolDuplication
+              id boundTypeNames E.DuplicateTypeNameInDatatype
+        val _ =
+            checkSymbolDuplication
+              (fn ((_, x, _), _, _) => toSymbol x)
+              dataCons E.DuplicateConstructorNameInDatatype
+        val _ =
+            app
+              (fn dataCon =>
+                  checkReservedNameForConstructorBind
+                    (toSymbol (#2 (#1 dataCon)))
+              )
+              dataCons
+        val newDataBinds = map elabDataBind dataBinds
+        val _ =
+            map (fn (tvars, name, ty, _) =>
+                    UserErrorUtils.checkSymbolDuplication
+                      (fn (isEq, id) => toSymbol id) (seq tvars) E.DuplicateTypParam)
+                withTypeBinds
+        val expandedDataBinds =
+            map (expandWithTypesInDataBind withTypeBinds) newDataBinds
+        val withTypeBinds =
+            map (fn (tyvars, tyConSymbol, ty, loc) =>
+                    (seq tyvars, toSymbol tyConSymbol, ty, LOC loc))
+                withTypeBinds
+      in
+        (expandedDataBinds, withTypeBinds)
+      end
+
+  and elabDec dec =
+      case dec of
+        A.DECVAL (tyvs, valbinds, loc) =>
         (
-          checkRecordLabelDuplication
-              getLabelOfPatRow pfields (LOC loc) E.DuplicateRecordLabelInPat;
-          PC.PLPATRECORD (flex, map (elabPatRow env) pfields, LOC loc)
-        )
-      | A.PATTUPLE (plist, loc) =>
-        PC.PLPATRECORD (false, RecordLabel.tupleList (map (elabPat env) plist), LOC loc)
-      | A.PATLIST (elist, loc) =>
-        let
-          val plexp =
-              foldr
-              (fn (x, y) =>
-                  PC.PLPATCONSTRUCT
-                  (
-                    PC.PLPATID(mkLongsymbol ["::"] (LOC loc)),
-                    PC.PLPATRECORD(false, RecordLabel.tupleList [elabPat env x, y], LOC loc),
-                    LOC loc
-                  ))
-              (PC.PLPATID(mkLongsymbol ["nil"] (LOC loc)))
-              elist
-        in
-          plexp
-         (*
-          case plexp of
-            PC.PLPATID x => PC.PLPATID x
-          | PC.PLPATCONSTRUCT(x, y, l) => PC.PLPATCONSTRUCT(x, y, loc)
-          | _ => raise Bug.Bug "elab EXPLIST"
-         *)
-        end
-      | A.PATTYPED (pat, ty, loc) => PC.PLPATTYPED(elabPat env pat, ty, LOC loc)
-      | A.PATAS ((_, id, _), NONE, pat, loc) =>
-        (
-          checkReservedNameForValBind (toSymbol id);
-          PC.PLPATLAYERED(toSymbol id, NONE, elabPat env pat, LOC loc)
-        )
-      | A.PATAS ((_, id, _), SOME ty, pat, loc) =>
-        let
-          val elabedPat = elabPat env pat
-        in
-          checkReservedNameForValBind (toSymbol id);
-          PC.PLPATLAYERED(toSymbol id, SOME ty, elabedPat, LOC loc)
-        end
-      | A.PATPAREN (pat, loc) => elabPat env pat
-
-    and elabPatRow env patrow =
-        case patrow of
-          (* label = pat *)
-          A.PATROW ((string, _), pat, loc) => (string, elabPat env pat)
-        (* label < : ty > < as pat > *)
-        | A.PATROWVAR (vid, optTy, optPat, loc) =>
-          let
-            val symbol = toSymbol vid
-            val _ = checkReservedNameForValBind symbol
-            val pat =
-                case optPat of
-                  SOME pat =>
-                  PC.PLPATLAYERED(symbol, optTy, elabPat env pat, LOC loc)
-                | _ =>
-                  case optTy of
-                    SOME ty => PC.PLPATTYPED (PC.PLPATID [symbol], ty, LOC loc)
-                  | _ => PC.PLPATID [symbol]
-          in (RecordLabel.fromSymbol (#symbol symbol), pat)
-          end
-
-    and elabDec env dec = 
-        case dec of
-          A.DECVAL (tyvs, valbinds, loc) =>
-          (
-            case classifyValbinds valbinds of
-              (decls, nil) =>
-              let
-                val newDecls =
-                    map (fn (pat, e, loc) =>
-                            (elabPat env pat, elabExp env e, LOC loc))
-                        decls
-              in
-                ([PC.PDVAL (seq' tyvs, newDecls, LOC loc)],
-                 Symbol.Map.empty)
-              end
-            | (nil, recbinds) =>
-              let
-                val decls = flattenValbinds recbinds
-                (* right hand side of val rec must be "fn". *)
-                fun assertExp (A.EXPFN _) = ()
-                  (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
-                  | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
-                  | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
-                (* check pattern AFTER elaboration, because even single var pattern
-                 * is parsed as application pattern. *)
-                fun assertPattern pat =
-                    case pat of
-                      PC.PLPATWILD _ =>
-                      enqueueError(loc, E.NonVariablePatternInValRec)
-                    | PC.PLPATID _ => ()
-                    | PC.PLPATLAYERED(name, _, rightPat, _) =>
-                      enqueueError(loc, E.NonVariablePatternInValRec)
-                    | PC.PLPATTYPED(innerPat, _, _) => assertPattern innerPat
-                    | _ => enqueueError(loc, E.NonVariablePatternInValRec)
-                fun elabBind (pat, exp, loc) =
-                    let
-                      val elabedPat = elabPat env pat
-                      val elabedExp = elabExp env exp
-                    in
-                      assertPattern elabedPat; (* after elab *)
-                      assertExp exp; (* before elab *)
-                      (elabedPat, elabedExp, LOC loc)
-                    end
-                fun getNameOfBound (PC.PLPATID [symbol], _, _) =
-                    SOME symbol
-                  | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
-                    getNameOfBound (pat, exp, loc)
-                  | getNameOfBound (pat, _, _) =
-                    (* this case will be rejected by the above assertPat. *)
-                    NONE
-                val elabedBinds = map elabBind decls
-                val _ =
-                    (* NOTE: use primed version. a trick. *)
-                    checkSymbolDuplication'
-                      getNameOfBound
-                      elabedBinds
-                      E.DuplicateVarNameInValRec
-              in
-                ([PC.PDVALREC(seq' tyvs, elabedBinds, LOC loc)],
-                 Symbol.Map.empty)
-              end
-            | (valbinds, recbinds) =>
-              (* FIXME: not followed the definition *)
-              elabDecs env
-                       [A.DECVAL (tyvs, map A.VALBIND valbinds, loc),
-                        A.DECVAL (tyvs, recbinds, loc)]
-          )
-        | A.DECPOLYREC ( decls, loc) =>
-          let
-            (* right hand side of val rec must be "fn". *)
-            fun assertExp (A.EXPFN _) = ()
-              (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
-              | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
-              | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
-            fun elabBind (symbol, ty, exp, loc) =
-                let
-                  val elabedExp = elabExp env exp
-                in
-                  assertExp exp; (* before elab *)
-                  (toSymbol symbol, ty, elabedExp, LOC loc)
-                end
-            val elabedBinds = map elabBind decls
-            val _ =
-                checkSymbolDuplication
-                    (fn (f, ty, e, loc) => f)
+          case classifyValbinds valbinds of
+            (decls, nil) =>
+            let
+              val newDecls =
+                  map (fn (pat, e, loc) =>
+                          (elabPat pat, elabExp e, LOC loc))
+                      decls
+            in
+              [PC.PDVAL (seq' tyvs, newDecls, LOC loc)]
+            end
+          | (nil, recbinds) =>
+            let
+              val decls = flattenValbinds recbinds
+              (* right hand side of val rec must be "fn". *)
+              fun assertExp (A.EXPFN _) = ()
+                (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
+                | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
+                | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
+              (* check pattern AFTER elaboration, because even single var pattern
+               * is parsed as application pattern. *)
+              fun assertPattern pat =
+                  case pat of
+                    PC.PLPATWILD _ =>
+                    enqueueError(loc, E.NonVariablePatternInValRec)
+                  | PC.PLPATID _ => ()
+                  | PC.PLPATLAYERED(name, _, rightPat, _) =>
+                    enqueueError(loc, E.NonVariablePatternInValRec)
+                  | PC.PLPATTYPED(innerPat, _, _) => assertPattern innerPat
+                  | _ => enqueueError(loc, E.NonVariablePatternInValRec)
+              fun elabBind (pat, exp, loc) =
+                  let
+                    val elabedPat = elabPat pat
+                    val elabedExp = elabExp exp
+                  in
+                    assertPattern elabedPat; (* after elab *)
+                    assertExp exp; (* before elab *)
+                    (elabedPat, elabedExp, LOC loc)
+                  end
+              fun getNameOfBound (PC.PLPATID [symbol], _, _) =
+                  SOME symbol
+                | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
+                  getNameOfBound (pat, exp, loc)
+                | getNameOfBound (pat, _, _) =
+                  (* this case will be rejected by the above assertPat. *)
+                  NONE
+              val elabedBinds = map elabBind decls
+              val _ =
+                  (* NOTE: use primed version. a trick. *)
+                  checkSymbolDuplication'
+                    getNameOfBound
                     elabedBinds
                     E.DuplicateVarNameInValRec
-          in
-            ([PC.PDVALPOLYREC(elabedBinds, LOC loc)],
-             Symbol.Map.empty)
-          end
-        | A.DECFUN (tyvs, fbinds, loc) =>
-          let
-            val elabFBind = elabFunDecls env o resolveFunDecls env
-            val elabedFunBinds = map elabFBind fbinds
-            fun getNameOfBind {fdecl=(PC.PLPATID [symbol], _), loc} = symbol
-              | getNameOfBind {fdecl=(PC.PLPATTYPED(innerPat, ty, _), a), loc} = 
-                getNameOfBind {fdecl=(innerPat, a), loc=loc}
-              | getNameOfBind _ =
-                raise Bug.Bug "not PATID nor PATTYPED getNameOfBound"
-            val _ =
-                checkSymbolDuplication
-                    getNameOfBind
-                    elabedFunBinds
-                    E.DuplicateVarNameInValRec
-          in
-            ([PC.PDDECFUN (seq' tyvs, elabedFunBinds, LOC loc)],
-             Symbol.Map.empty)
-          end
-        | A.DECTYPE (tyBinds, loc) =>
-          let
-            fun elabTyBind (tvars, symbol, ty, loc) =
-                let
-                  val newTVars =
-                      map
-                        (fn (isEq, id) => (false, id))
-                        (seq tvars)
-                  val newTy =
-                      substTyVarInTy
-                          (fn (isEq, id) => A.TYVAR(false, id))
-                          ty
-                in
-                  (newTVars, toSymbol symbol, newTy, LOC loc)
-                end
-            val newTyBinds = map elabTyBind tyBinds
-          in
-            checkSymbolDuplication
-                #2
-                newTyBinds E.DuplicateTypeNameInType;
-            ([PC.PDTYPE (newTyBinds, LOC loc)], Symbol.Map.empty)
-          end
-        | A.DECDATATYPE (dataBinds, withTypeBinds, loc) =>
-          let
-            val (newDataBinds, newWithTypeBinds) =
-                elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc)
-          in
-            (
-              (PC.PDDATATYPE (newDataBinds, LOC loc))
-              :: (case newWithTypeBinds of
-                    [] => [] | _ => [PC.PDTYPE(newWithTypeBinds, LOC loc)]),
-              Symbol.Map.empty
-            )
-          end
-        | A.DECDATATYPEREP (defSymbol, refLongsymbol, loc) =>
-          ([PC.PDREPLICATEDAT (toSymbol defSymbol, toLongsymbol refLongsymbol, LOC loc)], Symbol.Map.empty)
-        | A.DECABSTYPE (dataBinds, withTypeBinds, decs, loc) =>
-          let
-            val (newDataBinds, newWithTypeBinds) =
-                elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc)
-            val (newDecs, newEnv) = elabDecs env decs
-            val newVisibleDecs =
-                case newWithTypeBinds of
-                  [] => newDecs
-                | _ => PC.PDTYPE(newWithTypeBinds, LOC loc) :: newDecs
-          in
-            ([PC.PDABSTYPE(newDataBinds, newVisibleDecs, LOC loc)], newEnv)
-          end
-        | A.DECEXCEPTION (exnBinds, loc) =>
-          let
-            fun elabExnBind (A.EXBIND ((_, conSymbol, _), NONE, loc)) =
-                PC.PLEXBINDDEF(toSymbol conSymbol, NONE, LOC loc)
-              | elabExnBind (A.EXBIND ((_, conSymbol, _), SOME ty, loc)) =
-                PC.PLEXBINDDEF(toSymbol conSymbol, SOME ty, LOC loc)
-              | elabExnBind
+            in
+              [PC.PDVALREC(seq' tyvs, elabedBinds, LOC loc)]
+            end
+          | (valbinds, recbinds) =>
+            (* FIXME: not followed the definition *)
+            elabDecs [A.DECVAL (tyvs, map A.VALBIND valbinds, loc),
+                      A.DECVAL (tyvs, recbinds, loc)]
+        )
+      | A.DECPOLYREC ( decls, loc) =>
+        let
+          (* right hand side of val rec must be "fn". *)
+          fun assertExp (A.EXPFN _) = ()
+            (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
+            | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
+            | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
+          fun elabBind (symbol, ty, exp, loc) =
+              let
+                val elabedExp = elabExp exp
+              in
+                assertExp exp; (* before elab *)
+                (toSymbol symbol, ty, elabedExp, LOC loc)
+              end
+          val elabedBinds = map elabBind decls
+          val _ =
+              checkSymbolDuplication
+                (fn (f, ty, e, loc) => f)
+                elabedBinds
+                E.DuplicateVarNameInValRec
+        in
+          [PC.PDVALPOLYREC(elabedBinds, LOC loc)]
+        end
+      | A.DECFUN (tyvs, fvalbinds, loc) =>
+        let
+          val elabedFunBinds = map elabFvalbind fvalbinds
+          val _ =
+              checkSymbolDuplication
+                (fn x => x)
+                (List.mapPartial #1 elabedFunBinds)
+                E.DuplicateVarNameInValRec
+        in
+          [PC.PDDECFUN (seq' tyvs, map #2 elabedFunBinds, LOC loc)]
+        end
+      | A.DECTYPE (tyBinds, loc) =>
+        let
+          fun elabTyBind (tvars, symbol, ty, loc) =
+              let
+                val newTVars =
+                    map
+                      (fn (isEq, id) => (false, id))
+                      (seq tvars)
+                val newTy =
+                    substTyVarInTy
+                      (fn (isEq, id) => A.TYVAR(false, id))
+                      ty
+              in
+                (newTVars, toSymbol symbol, newTy, LOC loc)
+              end
+          val newTyBinds = map elabTyBind tyBinds
+        in
+          checkSymbolDuplication
+            #2
+            newTyBinds E.DuplicateTypeNameInType;
+          [PC.PDTYPE (newTyBinds, LOC loc)]
+        end
+      | A.DECDATATYPE (dataBinds, withTypeBinds, loc) =>
+        let
+          val (newDataBinds, newWithTypeBinds) =
+              elabDataBindsWithTypeBinds (dataBinds, withTypeBinds, loc)
+        in
+          PC.PDDATATYPE (newDataBinds, LOC loc)
+          :: (case newWithTypeBinds of
+                nil => nil
+              | _ :: _ => [PC.PDTYPE(newWithTypeBinds, LOC loc)])
+        end
+      | A.DECDATATYPEREP (defSymbol, refLongsymbol, loc) =>
+        [PC.PDREPLICATEDAT
+           (toSymbol defSymbol, toLongsymbol refLongsymbol, LOC loc)]
+      | A.DECABSTYPE (dataBinds, withTypeBinds, decs, loc) =>
+        let
+          val (newDataBinds, newWithTypeBinds) =
+              elabDataBindsWithTypeBinds (dataBinds, withTypeBinds, loc)
+          val newDecs = elabDecs decs
+          val newVisibleDecs =
+              case newWithTypeBinds of
+                [] => newDecs
+              | _ => PC.PDTYPE(newWithTypeBinds, LOC loc) :: newDecs
+        in
+          [PC.PDABSTYPE(newDataBinds, newVisibleDecs, LOC loc)]
+        end
+      | A.DECEXCEPTION (exnBinds, loc) =>
+        let
+          fun elabExnBind (A.EXBIND ((_, conSymbol, _), NONE, loc)) =
+              PC.PLEXBINDDEF(toSymbol conSymbol, NONE, LOC loc)
+            | elabExnBind (A.EXBIND ((_, conSymbol, _), SOME ty, loc)) =
+              PC.PLEXBINDDEF(toSymbol conSymbol, SOME ty, LOC loc)
+            | elabExnBind
                 (A.EXBINDREP ((_, conSymbol, _), (_, refLongsymbol, _), loc)) =
-                PC.PLEXBINDREP(toSymbol conSymbol, toLongsymbol refLongsymbol, LOC loc)
-            fun getExnName (A.EXBIND ((_, conSymbol, _), _, _)) = toSymbol conSymbol
-              | getExnName (A.EXBINDREP ((_, conSymbol, _), _, _)) = toSymbol conSymbol
-            val _ =
-                checkSymbolDuplication
-                    getExnName exnBinds
-                    E.DuplicateConstructorNameInException
-            val _ =
-                app
-                  checkReservedNameForConstructorBind 
-                  (map getExnName exnBinds)
-          in
-            ([PC.PDEXD (map elabExnBind exnBinds, LOC loc)], Symbol.Map.empty)
-          end
-        | A.DECLOCAL (dec1, dec2, loc) => 
-          let
-            val (pdecs1, env1) = elabDecs env dec1
-            val (pdecs2, env2) = elabDecs (extendFixEnv (env1, env)) dec2
-          in
-            ([PC.PDLOCALDEC(pdecs1, pdecs2, LOC loc)], env2)
-          end
-        | A.DECOPEN(longids,loc) => ([PC.PDOPEN(map toLongsymbol longids, LOC loc)], Symbol.Map.empty)
-        | A.DECINFIX (n, idlist, loc) =>
-          let
-            val n = elabInfixPrec (getOpt (n, "0"), loc)
-            val idlist = map toSymbol idlist
-          in
-            (
-              [PC.PDINFIXDEC(n, idlist, LOC loc)],
-              foldr
-                (fn (x, env) => Symbol.Map.insert (env, #symbol x, (INFIX n, loc)))
-                Symbol.Map.empty
-                idlist
-            )
-          end
-        | A.DECINFIXR (n, idlist, loc) =>
-          let
-            val n = elabInfixPrec (getOpt (n, "0"), loc)
-            val idlist = map toSymbol idlist
-          in
-            (
-              [PC.PDINFIXRDEC(n, idlist, LOC loc)],
-              foldr
-                (fn (x, env) => Symbol.Map.insert (env, #symbol x, (INFIXR n, loc)))
-                Symbol.Map.empty
-                idlist
-            )
-          end
-        | A.DECNONFIX (idlist, loc) =>
-          (
-            [PC.PDNONFIXDEC(map toSymbol idlist, LOC loc)],
-            foldr
-                (fn (x, env) => Symbol.Map.insert (env, #1 x, (NONFIX, loc)))
-                Symbol.Map.empty
-                idlist
-          )
-        | A.DECSEMICOLON _ =>
-          (nil, Symbol.Map.empty)
+              PC.PLEXBINDREP(toSymbol conSymbol, toLongsymbol refLongsymbol, LOC loc)
+          fun getExnName (A.EXBIND ((_, conSymbol, _), _, _)) = toSymbol conSymbol
+            | getExnName (A.EXBINDREP ((_, conSymbol, _), _, _)) = toSymbol conSymbol
+          val _ =
+              checkSymbolDuplication
+                getExnName exnBinds
+                E.DuplicateConstructorNameInException
+          val _ =
+              app
+                checkReservedNameForConstructorBind
+                (map getExnName exnBinds)
+        in
+          [PC.PDEXD (map elabExnBind exnBinds, LOC loc)]
+        end
+      | A.DECLOCAL (dec1, dec2, loc) =>
+        let
+          val pdecs1 = elabDecs dec1
+          val pdecs2 = elabDecs dec2
+        in
+          [PC.PDLOCALDEC(pdecs1, pdecs2, LOC loc)]
+        end
+      | A.DECOPEN(longids,loc) =>
+        [PC.PDOPEN(map toLongsymbol longids, LOC loc)]
+      | A.DECINFIX (n, idlist, loc) =>
+        let
+          val n = elabInfixPrec (getOpt (n, "0"), loc)
+          val idlist = map toSymbol idlist
+        in
+          [PC.PDINFIXDEC(n, idlist, LOC loc)]
+        end
+      | A.DECINFIXR (n, idlist, loc) =>
+        let
+          val n = elabInfixPrec (getOpt (n, "0"), loc)
+          val idlist = map toSymbol idlist
+        in
+          [PC.PDINFIXRDEC(n, idlist, LOC loc)]
+        end
+      | A.DECNONFIX (idlist, loc) =>
+        [PC.PDNONFIXDEC(map toSymbol idlist, LOC loc)]
+      | A.DECSEMICOLON _ =>
+        nil
 
-    and elabDecs env decs = elabSequence elabDec env decs
-
-
-    fun elabDec' env dec =
-        elabDec env dec
-
-    val elabDec = elabDec'
+  and elabDecs decs =
+      List.concat (map elabDec decs)
 
 end

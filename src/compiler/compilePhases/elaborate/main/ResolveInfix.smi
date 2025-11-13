@@ -1,0 +1,18 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/util/main/CompileUtils.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynSQL.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynUtils.smi"
+_require "../../../compilerIRs/absyn/main/Fixity.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require local "./ElaborateError.ppg.smi"
+
+structure ResolveInfix =
+struct
+  type env = (Fixity.fixity * Absyn.loc) Symbol.Map.map
+  val resolveTopdecs : env -> Absyn.topdec list -> env * Absyn.topdec list
+  val resolveCompileUnit : env -> Absyn.compile_unit -> env * Absyn.compile_unit
+end

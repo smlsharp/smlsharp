@@ -1,15 +1,13 @@
 _require local "../../../../basis.smi"
-
-_require       "../../../compilerIRs/absyn/main/Absyn.smi"
-_require       "../../../compilerIRs/absyn/main/AbsynUtils.smi"
-_require       "../../../compilerIRs/absyn/main/Fixity.smi"
-_require       "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynUtils.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require       "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require       "../../../data/symbols/main/Symbol.smi"
-_require       "../../../data/symbols/main/Longsymbol.smi"
-_require       "../../../data/symbols/main/SymbolWithLoc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/Longsymbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require local "../../analyzefiles/main/Analyzers.smi"
@@ -18,15 +16,11 @@ _require local "./ElaborateSQL.smi"
 _require local "./ElaborateForeach.smi"
 
 structure ElaborateCore =
-  struct
-    val checkReservedNameForConstructorBind : SymbolWithLoc.symbol -> unit
-    val checkReservedNameForValBind : SymbolWithLoc.symbol -> unit
-    val elabFFITy : Absyn.ffi_ty -> PatternCalc.ffiTy
-    val elabExp : (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
-                  -> Absyn.exp
-                  -> PatternCalc.plexp
-    val elabDec : (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
-                  -> Absyn.dec
-                  -> PatternCalc.pdecl list * (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
-    val elabInfixPrec : string * (Loc.pos * Loc.pos) -> int
-  end
+struct
+  val checkReservedNameForConstructorBind : SymbolWithLoc.symbol -> unit
+  val checkReservedNameForValBind : SymbolWithLoc.symbol -> unit
+  val elabFFITy : Absyn.ffi_ty -> PatternCalc.ffiTy
+  val elabExp : Absyn.exp -> PatternCalc.plexp
+  val elabDec : Absyn.dec -> PatternCalc.pdecl list
+  val elabInfixPrec : string * Absyn.loc -> int
+end

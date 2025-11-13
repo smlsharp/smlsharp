@@ -5,6 +5,7 @@ _require local "./ElaborateError.ppg.smi"
 _require local "./ElaborateInterface.smi"
 _require local "./ElaborateModule.smi"
 _require local "./UserTvarScope.smi"
+_require local "./ResolveInfix.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Loc.smi"
