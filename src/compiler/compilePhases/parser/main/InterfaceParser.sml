@@ -16,7 +16,6 @@ struct
         case token of
           T.EOF => Tokens.EOF (pos1, pos2)
         | T.COMMENT => toParserToken lexer ()
-        | T.INVALID s => Tokens.INVALID (s, pos1, pos2)
         | T.ABSTYPE => Tokens.ABSTYPE (pos1, pos2)
         | T.AND => Tokens.AND (pos1, pos2)
         | T.ANDALSO => Tokens.ANDALSO (pos1, pos2)

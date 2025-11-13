@@ -10,7 +10,6 @@ struct
       case token of
       T.EOF => "EOF"
     | T.COMMENT => "COMMENT"
-    | T.INVALID _ => "INVALID"
     | T.ABSTYPE => "ABSTYPE"
     | T.AND => "AND"
     | T.ANDALSO => "ANDALSO"
@@ -113,7 +112,6 @@ fun toString token =
     case token of
       T.EOF => ""
     | T.COMMENT => ""
-    | T.INVALID _ => "?"
     | T.ABSTYPE => "abstype"
     | T.AND => "and"
     | T.ANDALSO => "andalso"

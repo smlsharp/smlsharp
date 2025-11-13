@@ -11,7 +11,6 @@ struct
   datatype token =
       EOF
     | COMMENT
-    | INVALID of string
       (* core keywords *)
     | ABSTYPE
     | AND

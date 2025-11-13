@@ -43,7 +43,6 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
 
 %term
     EOF
-  | INVALID of string
     (* core keywords *)
   | ABSTYPE
   | AND

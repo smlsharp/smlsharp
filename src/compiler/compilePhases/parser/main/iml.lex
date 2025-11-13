@@ -272,7 +272,10 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
   (* Unlike "(*", unmatched "*)" should not cause parse error. It should
    * be regarded as two tokens "*" and ")". *)
 );
-<INITIAL>. => ((T.INVALID yytext, loc yytext yypos arg));
+<INITIAL>. => (#error arg ("illegal character code "
+                           ^ Int.toString (ord (String.sub (yytext, 0))),
+                           loc yytext yypos arg);
+               continue ());
 
 <COMM>{eol} => (newline yypos yytext arg; continue ());
 <COMM>"(*"  => (startComment yypos arg; continue ());

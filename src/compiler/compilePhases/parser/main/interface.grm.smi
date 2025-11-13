@@ -131,7 +131,6 @@ val AS:  pos * pos -> token
 val ANDALSO:  pos * pos -> token
 val AND:  pos * pos -> token
 val ABSTYPE:  pos * pos -> token
-val INVALID: (string) *  pos * pos -> token
 val EOF:  pos * pos -> token
   end
 end
