@@ -1,4 +1,4 @@
-_require local "../../../../basis.smi"
+_require "../../../../basis.smi"
 _require local "../../list-utils/main/Snoc.smi"
 
 structure StringEscape =
@@ -7,4 +7,5 @@ struct
   val toCString : string -> string
   val toStringLiteral : string -> string
   val toCStringLiteral : string -> string
+  val getc : (substring, substring) StringCvt.reader
 end

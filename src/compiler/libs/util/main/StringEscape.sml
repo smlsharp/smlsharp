@@ -121,4 +121,9 @@ struct
   fun toStringLiteral s = concat (quoted chr3 s)
   fun toCStringLiteral s = concat (quoted oct3 s)
 
+  fun getc ss =
+      if Substring.isEmpty ss
+      then NONE
+      else SOME (Substring.splitAt (ss, Int.max (getUtf8 ss, 1)))
+
 end
