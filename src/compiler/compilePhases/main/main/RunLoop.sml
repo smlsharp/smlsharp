@@ -41,7 +41,8 @@ struct
   fun interactiveInput {lineCount, read} =
       Parser.setup {read = read,
                     source = Loc.INTERACTIVE,
-                    initialLineno = !lineCount}
+                    initialLineno = !lineCount,
+                    allowUtf8 = !Control.allowUtf8}
 
   fun handleError ({errorOutput, ...}:options) e =
       let

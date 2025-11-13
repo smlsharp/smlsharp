@@ -105,7 +105,8 @@ struct
                   Parser.setup
                     {source = Loc.FILE source,
                      read = fn (_, n) => TextIO.inputN (io, n),
-                     initialLineno = 1}
+                     initialLineno = 1,
+                     allowUtf8 = !Control.allowUtf8}
               val ({root={edges,fileType, mode},...},_) 
                   = Top.compile llvmOptions topOptions context input handle e => raise e
               val _ = TextIO.closeIn io

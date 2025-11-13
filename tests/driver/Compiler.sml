@@ -145,7 +145,8 @@ struct
         Parser.setup
           {source = source,
            read = fn _ => !buf before buf := "",
-           initialLineno = 1}
+           initialLineno = 1,
+           allowUtf8 = true}
       end
 
   fun fileInput source srcfile =
@@ -154,7 +155,8 @@ struct
         val input = Parser.setup
                       {source = source,
                        read = fn (_,n) => TextIO.inputN (io, n),
-                       initialLineno = 1}
+                       initialLineno = 1,
+                       allowUtf8 = true}
       in
         (io, input)
       end

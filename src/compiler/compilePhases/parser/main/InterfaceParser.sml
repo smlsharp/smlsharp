@@ -114,7 +114,7 @@ struct
         | T.WORD s => Tokens.WORD (s, pos1, pos2)
         | T.WORDX s => Tokens.WORDX (s, pos1, pos2)
 
-  type source = {read : int -> string, source : Loc.source}
+  type source = {read : int -> string, source : Loc.source, allowUtf8 : bool}
   type input =
       {
         streamRef : Parser.stream ref,
@@ -128,7 +128,7 @@ struct
         errors
         (Loc.LOC (lpos, rpos), ParserError.ParseError msg)
 
-  fun setup ({read, source}:source) =
+  fun setup ({read, source, allowUtf8}:source) =
       let
         val errors = UserError.createQueue ()
         val errorFn = parseError errors
@@ -137,7 +137,7 @@ struct
               {source = source,
                errorFn = errorFn,
                initialLineno = 1,
-               allowUtf8 = !Control.allowUtf8}
+               allowUtf8 = allowUtf8}
         val lexer = ImlLex.makeLexer read lexarg
         val tokensRef = ref NIL
         val lexer = ImlLex.UserDeclarations.setupLexer tokensRef lexer

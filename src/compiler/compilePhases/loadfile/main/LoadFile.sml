@@ -209,7 +209,8 @@ struct
        #2 (InterfaceParser.parse
              (InterfaceParser.setup
                 {read = fn n => TextIO.inputN (file, n),
-                 source = Loc.FILE source})))
+                 source = Loc.FILE source,
+                 allowUtf8 = !Control.allowUtf8})))
 
   fun parseSml (file, source as (_, filename)) =
       (if !Control.traceFileLoad
@@ -219,7 +220,8 @@ struct
          (Parser.setup
             {source = Loc.FILE source,
              read = fn (_, n) => TextIO.inputN (file, n),
-             initialLineno = 1}))
+             initialLineno = 1,
+             allowUtf8 = !Control.allowUtf8}))
 
   datatype allow_use =
       ALLOW_ALL

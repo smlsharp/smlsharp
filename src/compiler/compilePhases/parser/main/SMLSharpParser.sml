@@ -177,7 +177,8 @@ struct
       {
         source : Loc.source,
         read : bool * int -> string,
-        initialLineno : int
+        initialLineno : int,
+        allowUtf8 : bool
       }
 
   type input =
@@ -194,7 +195,7 @@ struct
 
   exception Error of (Absyn.loc * string) list
 
-  fun setup ({source, read, initialLineno}:source) =
+  fun setup ({source, read, initialLineno, allowUtf8}:source) =
       let
         val errors = ref nil
         val errorFn = fn (s, p1, p2) => errors := ((p1, p2), s) :: !errors
@@ -206,7 +207,7 @@ struct
               {source = source,
                errorFn = errorFn,
                initialLineno = initialLineno,
-               allowUtf8 = !Control.allowUtf8}
+               allowUtf8 = allowUtf8}
         fun input n =
             read (!first andalso ImlLex.UserDeclarations.isINITIAL lexarg, n)
         fun inputInteractive n =

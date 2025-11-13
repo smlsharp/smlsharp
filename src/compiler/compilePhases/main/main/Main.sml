@@ -377,7 +377,8 @@ struct
             Parser.setup
               {source = Loc.FILE (Loc.USERPATH, filename),
                read = fn (_, n) => TextIO.inputN (io, n),
-               initialLineno = 1}
+               initialLineno = 1,
+               allowUtf8 = !Control.allowUtf8}
 (*
        val _ = UserLevelPrimitive.initFind
                  {findId = NameEvalEnvPrims.findId,

@@ -420,8 +420,6 @@ src/compiler/libs/env/main/SSet.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
-src/compiler/data/control/main/PrintControl.o \
-src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
@@ -1285,8 +1283,6 @@ src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o \
 src/compiler/extensions/debug/main/Bug.o \
-src/compiler/data/control/main/PrintControl.o \
-src/compiler/data/control/main/Control.o \
 src/ml-yacc/lib/lrtable.o \
 src/ml-yacc/lib/stream.o \
 src/ml-yacc/lib/parser2.o \
@@ -3590,8 +3586,6 @@ src/compiler/libs/env/main/SSet.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/debug/main/Bug.o \
-src/compiler/data/control/main/PrintControl.o \
-src/compiler/data/control/main/Control.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
@@ -3616,6 +3610,8 @@ src/smlformat/generator/main/Main.o \
 src/smlformat/generator/main/call-main.o \
 src/config/main/SQLConfig.o \
 src/compiler/libs/config/main/Config.o \
+src/compiler/data/control/main/PrintControl.o \
+src/compiler/data/control/main/Control.o \
 src/smlnj-lib/Util/int-redblack-map.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \

@@ -27,7 +27,8 @@ in
           Parser.setup
             {source = Loc.FILE source,
              read = fn (_, n) => TextIO.inputN (io, n),
-             initialLineno = 1}
+             initialLineno = 1,
+             allowUtf8 = !Control.allowUtf8}
       val _ = IM.initRefMap ()
       val _ = IM.initDefMap ()
       val _ = AnalyzersImpl.pushSourceFileId (#fileId fileId)

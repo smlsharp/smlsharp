@@ -343,7 +343,8 @@ struct
             SMLSharpParser.setup
               {source = Loc.FILE (Loc.USERPATH, fname),
                read = fn _ => !source before source := "",
-               initialLineno = 1}
+               initialLineno = 1,
+               allowUtf8 = true}
         val (tokens, result) =
             SMLSharpParser.parse input
             handle SMLSharpParser.Error errors =>
