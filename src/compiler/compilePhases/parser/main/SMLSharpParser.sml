@@ -206,7 +206,7 @@ struct
               {source = source,
                errorFn = errorFn,
                initialLineno = initialLineno,
-               allow8bitId = !Control.allow8bitId}
+               allowUtf8 = !Control.allowUtf8}
         fun input n =
             read (!first andalso ImlLex.UserDeclarations.isINITIAL lexarg, n)
         fun inputInteractive n =

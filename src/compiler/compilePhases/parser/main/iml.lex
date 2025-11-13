@@ -27,19 +27,19 @@ type arg =
       string : {buf : string list ref,
                 startPos : Loc.at option ref,
                 ty : string_type ref},
-      allow8bitId : bool
+      allowUtf8 : bool
     }
 
 fun toPos source at1 : Loc.pos = {source = source, pos = at1}
 
-fun initArg {source, errorFn, initialLineno, allow8bitId} =
+fun initArg {source, errorFn, initialLineno, allowUtf8} =
     {
       source = source,
       line = ref {count = initialLineno, begin = INITIAL_POS_OF_LEXER},
       error = fn (msg, (s, p1, p2)) => errorFn (msg, toPos s p1, toPos s p2),
       comment = ref nil,
       string = {buf = ref nil, startPos = ref NONE, ty = ref STRING},
-      allow8bitId = allow8bitId
+      allowUtf8 = allowUtf8
     } : arg
 
 fun isINITIAL (arg : arg) =
@@ -99,11 +99,13 @@ fun eof ({source, string, comment, error, ...} : arg) =
      | nil => ();
      (T.EOF, (source, Loc.EOF, Loc.EOF)))
 
-
-fun check8bit yytext yypos (arg as {allow8bitId, error, ...} : arg) =
-    if allow8bitId orelse CharVector.all (fn x => ord x < 128) yytext
-    then ()
-    else error ("8 bit characters in ID is not permitted", loc yytext yypos arg)
+fun checkUtf8 yytext yypos (arg as {allowUtf8, error, ...} : arg) =
+    if allowUtf8 then () else
+    case CharVector.findi (fn (_, c) => ord c >= 127) yytext of
+      NONE => ()
+    | SOME (i, c) =>
+      error ("illegal character code " ^ Int.toString (ord c),
+             loc "_" (yypos + i) arg)
 
 fun setIndex (Loc.AT pos) index = Loc.AT (pos # {token = index})
   | setIndex Loc.EOF _ = Loc.EOF
@@ -126,14 +128,6 @@ fun setupLexer tokens lexer =
          end
     end
 
-(*
-以下の
-alpha=[A-Za-z\127-\255]
-は，
-alpha=[A-Za-z\128-\255]
-ではないのか？
-*)
-
 %%
 
 %full
@@ -141,24 +135,28 @@ alpha=[A-Za-z\128-\255]
 %structure ImlLex
 %arg (arg);
 
-underscore="\_";
-alpha=[A-Za-z\127-\255];
+utf8_t=[\128-\191];
+utf8_2=[\194-\223]{utf8_t};
+utf8_3=(\224[\160-\191]|\237[\128-\159]|[\225-\236\238\239]{utf8_t}){utf8_t};
+utf8_4=(\240[\144-\191]|\244[\128-\143]|[\241-\243]{utf8_t}){utf8_t}{utf8_t};
+utf8={utf8_2}|{utf8_3}|{utf8_4};
+
+alpha=[A-Za-z]|{utf8};
 digit=[0-9];
 xdigit=[0-9a-fA-F];
-alnum=({alpha}|{digit}|{underscore});
-tyvar=("'"({alnum}({alnum}|"'")*)?);
-eqtyvar=("''"({alnum}|"'")*);
-id=({alpha}({alnum}|"'")*);
-ws=("\012"|[\t\ ]);
-eol=("\013\010"|"\010"|"\013");
-symid=([-!%&$#+/:<=>?@\\~`^|*]+);
-int0=(0{digit}*);
-int=([1-9]{digit}*);
-
-num=[0-9]+;
-frac="."{num};
-exp=[eE](~?){num};
-real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
+alnum={alpha}|{digit}|"_";
+alnumq={alnum}|"'";
+ws="\012"|[\t\ ];
+eol="\013\010"|"\010"|"\013";
+tyvar="'"({alnum}{alnumq}*)?;
+eqtyvar="''"{alnumq}*;
+alnumid={alpha}{alnumq}*;
+symbolid=[-!%&$#+/:<=>?@\\~`^|*]+;
+intlab=[1-9]{digit}*;
+int="0"{digit}*|~{digit}+;
+frac="."{digit}+;
+exp=[eE]"~"?{digit}+;
+real="~"?{digit}+({frac}{exp}|{frac}|{exp});
 
 %%
 
@@ -251,19 +249,19 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>"_sqlserver" => ((T.U_SQLSERVER, loc yytext yypos arg));
 <INITIAL>"_use" => ((T.U_USE, loc yytext yypos arg));
 
-<INITIAL>"_''"({alnum}|"'")* => ((T.FREE_EQTYVAR yytext, loc yytext yypos arg));
-<INITIAL>"_'"({alnum}|"'")* => ((T.FREE_TYVAR yytext, loc yytext yypos arg));
+<INITIAL>"_"{eqtyvar} => ((T.FREE_EQTYVAR yytext, loc yytext yypos arg));
+<INITIAL>"_"{tyvar} => ((T.FREE_TYVAR yytext, loc yytext yypos arg));
 <INITIAL>{eqtyvar} => ((T.EQTYVAR yytext, loc yytext yypos arg));
 <INITIAL>{tyvar} => ((T.TYVAR yytext, loc yytext yypos arg));
-<INITIAL>{id} => (check8bit yytext yypos arg;
-                  (T.ALNUMID yytext, loc yytext yypos arg));
-<INITIAL>{symid} => ((T.SYMBOLID yytext, loc yytext yypos arg));
+<INITIAL>{alnumid} => (checkUtf8 yytext yypos arg;
+		       (T.ALNUMID yytext, loc yytext yypos arg));
+<INITIAL>{symbolid} => ((T.SYMBOLID yytext, loc yytext yypos arg));
 
-<INITIAL>"0w"{num} => ((T.WORD yytext, loc yytext yypos arg));
+<INITIAL>"0w"{digit}+ => ((T.WORD yytext, loc yytext yypos arg));
 <INITIAL>"~"?"0x"{xdigit}+ => ((T.INTX yytext, loc yytext yypos arg));
 <INITIAL>"0wx"{xdigit}+ => ((T.WORDX yytext, loc yytext yypos arg));
-<INITIAL>({int0}|~{num}) => ((T.INT yytext, loc yytext yypos arg));
-<INITIAL>{int} => ((T.INTLAB yytext, loc yytext yypos arg));
+<INITIAL>{int} => ((T.INT yytext, loc yytext yypos arg));
+<INITIAL>{intlab} => ((T.INTLAB yytext, loc yytext yypos arg));
 <INITIAL>{real} => ((T.REAL yytext, loc yytext yypos arg));
 <INITIAL>#\" => (startString yypos CHAR arg; YYBEGIN STR; continue ());
 <INITIAL>\" => (startString yypos STRING arg; YYBEGIN STR; continue ());
@@ -320,7 +318,7 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
                      (String.substring (yytext, 1, 3))
          in
            addString (str (chr (valOf c))) arg
-           handle _ => #error arg ("illegal ascii escape",
+           handle _ => #error arg ("illegal decimal escape sequence",
                                    loc yytext yypos arg);
            continue ()
          end);
@@ -335,23 +333,25 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
                String.str (Char.chr (Word.toInt x))
          in
            (* UTF-8 encoding *)
-           if x <= 0wx7f then
-             (addString (str (byte (x,  0w0, 0wx7f, 0wx00))) arg)
-           else if x <= 0wx7ff then
-             (addString (str (byte (x,  0w6, 0wx1f, 0wxc0))) arg;
-              addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg)
-           else
-             (addString (str (byte (x, 0w12, 0wx0f, 0wxe0))) arg;
-              addString (str (byte (x,  0w6, 0wx3f, 0wx80))) arg;
-              addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg);
-           continue()
+           if x <= 0wx7f
+           then (addString (str (byte (x,  0w0, 0wx7f, 0wx00))) arg)
+           else if x <= 0wx7ff
+           then (addString (str (byte (x,  0w6, 0wx1f, 0wxc0))) arg;
+                 addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg)
+           else (addString (str (byte (x, 0w12, 0wx0f, 0wxe0))) arg;
+                 addString (str (byte (x,  0w6, 0wx3f, 0wx80))) arg;
+                 addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg);
+           continue ()
         end);
-<STR>\\ => (#error arg ("illegal string escape", loc yytext yypos arg);
+<STR>\\ => (#error arg ("illegal escape sequence", loc yytext yypos arg);
             continue ());
-<STR>[^\000-\031\\\"\r\n]+ => (addString yytext arg; continue ());
-<STR>. => (#error arg ("illegal non-printing character in string",
+<STR>([^\000-\031\\\"\127-\255]|{utf8})+ =>
+        (checkUtf8 yytext yypos arg;
+         addString yytext arg; continue ());
+<STR>. => (#error arg ("illegal character code "
+                       ^ Int.toString (ord (String.sub (yytext, 0))),
                        loc yytext yypos arg);
-           continue());
+           continue ());
 
 <SKIP>{eol} => (newline yypos yytext arg; continue());
 <SKIP>{ws} => (continue());

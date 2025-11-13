@@ -115,7 +115,7 @@ struct
   val skipPrinter = ref false
 
   (* switches for parser *)
-  val allow8bitId = ref true
+  val allowUtf8 = ref true
 
   (* switches for elaboration *)
   val doListExpressionOptimization = ref true
@@ -172,8 +172,8 @@ struct
          BoolSwitch importAllExceptions),
         ("generateExnMessage", "generate exnMessage in ReifiedTerm at each interactive sesseion",
          BoolSwitch generateExnMessage),
-        ("8bitId", "allow 8 bit chars for identifier",
-         BoolSwitch allow8bitId),
+        ("allowUtf8", "allow UTF-8 characters in source code",
+         BoolSwitch allowUtf8),
         ("checkType", "do type checking of intermediate representations",
          BoolSwitch checkType),
         ("debugCodeGen", "switch for backend",

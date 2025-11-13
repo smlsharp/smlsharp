@@ -77,7 +77,7 @@ struct
   val dumpLLVMEmit : string ref
   val printWithType : bool ref
   val printVacuousBoundTvars : bool ref
-  val allow8bitId : bool ref
+  val allowUtf8 : bool ref
   val doNameAnalysis : bool ref
   val checkType : bool ref
   val doBitmapANormalReorder : bool ref

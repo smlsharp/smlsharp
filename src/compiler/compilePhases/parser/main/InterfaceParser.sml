@@ -137,7 +137,7 @@ struct
               {source = source,
                errorFn = errorFn,
                initialLineno = 1,
-               allow8bitId = !Control.allow8bitId}
+               allowUtf8 = !Control.allowUtf8}
         val lexer = ImlLex.makeLexer read lexarg
         val tokensRef = ref NIL
         val lexer = ImlLex.UserDeclarations.setupLexer tokensRef lexer

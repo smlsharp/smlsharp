@@ -11,7 +11,17 @@ open SMLUnit.Test SMLUnit.Assert
         val a0  = 1
         val a9  = 1
         val a'  = 1
-        val   = 1
+        val  = 1 (* U+0080 *)
+        val Ֆ = 1 (* U+0556 *)
+        val ߿ = 1 (* U+07FF *)
+        val ࠀa = 1 (* U+0800 *)
+        val 힣= 1 (* U+D7A3 *)
+        val ퟿ = 1 (* U+D7FF *)
+        val  = 1 (* U+E000 *)
+        val ￿ = 1 (* U+FFFF *)
+        val 𐀀 = 1 (* U+10000 *)
+        val 😀 = 1 (* U+1F600 *)
+        val 􏿿 = 1 (* U+10FFFF *)
       in
         ()
       end

@@ -14,7 +14,7 @@ struct
     val initArg : {source : Loc.source,
                    errorFn : string * Loc.pos * Loc.pos -> unit,
                    initialLineno : int,
-                   allow8bitId : bool} -> arg
+                   allowUtf8 : bool} -> arg
     val setupLexer
         : (Token.token * (Loc.at * Loc.at)) snoc ref
           -> (unit -> lexresult)
