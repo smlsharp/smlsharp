@@ -258,7 +258,6 @@ struct
   and tyvarsDecl btvEnv decl =
       case decl of
         P.PDVAL _ => empty  (* guard point *)
-      | P.PDVALREC _ => empty  (* guard point *)
       | P.PDVALPOLYREC _ => empty  (* guard point *)
       | P.PDDECFUN _ => empty  (* guard point *)
 (*
@@ -396,11 +395,16 @@ struct
   and decidePolyRecBind btvEnv (id, ty, exp, loc) =
       (id, ty, decideExp btvEnv exp, loc)
 
-  and decideValDec btvEnv (dec as (scoped, valbinds, loc)) =
+  and decideValDec btvEnv (scoped, valbinds, recbinds, loc) =
       let
-        val (btvEnv, scoped) = decideScope tyvarsValbindList btvEnv dec
+        val binds = valbinds @ recbinds
+        val (btvEnv, scoped) =
+            decideScope tyvarsValbindList btvEnv (scoped, binds, loc)
       in
-        (scoped, map (decideValbind btvEnv) valbinds, loc)
+        (scoped,
+         map (decideValbind btvEnv) valbinds,
+         map (decideValbind btvEnv) recbinds,
+         loc)
       end
 
   and decideFvalDec btvEnv (dec as (scoped, fvalbinds, loc)) =
@@ -413,7 +417,6 @@ struct
   and decideDecl btvEnv decl =
       case decl of
         P.PDVAL valdec => P.PDVAL (decideValDec btvEnv valdec)
-      | P.PDVALREC valdec => P.PDVALREC (decideValDec btvEnv valdec)
       | P.PDVALPOLYREC (polybinds, loc) => P.PDVALPOLYREC (map (decidePolyRecBind btvEnv) polybinds, loc)
       | P.PDDECFUN fvaldec => P.PDDECFUN (decideFvalDec btvEnv fvaldec)
 (*

@@ -655,7 +655,7 @@ struct
         in
           PC.PLLET
           (
-            [PC.PDVALREC(emptyTvars, [(PC.PLPATID [newid], body, LOC loc)], LOC loc)],
+            [PC.PDVAL(emptyTvars, nil, [(PC.PLPATID [newid], body, LOC loc)], LOC loc)],
             PC.PLAPPM(PC.PLVAR [newid], [unitExp loc], LOC loc),
             LOC loc
           )
@@ -785,67 +785,55 @@ struct
   and elabDec dec =
       case dec of
         A.DECVAL (tyvs, valbinds, loc) =>
-        (
-          case classifyValbinds valbinds of
-            (decls, nil) =>
-            let
-              val newDecls =
-                  map (fn (pat, e, loc) =>
-                          (elabPat pat, elabExp e, LOC loc))
-                      decls
-            in
-              [PC.PDVAL (seq' tyvs, newDecls, LOC loc)]
-            end
-          | (nil, recbinds) =>
-            let
-              val decls = flattenValbinds recbinds
-              (* right hand side of val rec must be "fn". *)
-              fun assertExp (A.EXPFN _) = ()
-                (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
-                | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
-                | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
-              (* check pattern AFTER elaboration, because even single var pattern
-               * is parsed as application pattern. *)
-              fun assertPattern pat =
-                  case pat of
-                    PC.PLPATWILD _ =>
-                    enqueueError(loc, E.NonVariablePatternInValRec)
-                  | PC.PLPATID _ => ()
-                  | PC.PLPATLAYERED(name, _, rightPat, _) =>
-                    enqueueError(loc, E.NonVariablePatternInValRec)
-                  | PC.PLPATTYPED(innerPat, _, _) => assertPattern innerPat
-                  | _ => enqueueError(loc, E.NonVariablePatternInValRec)
-              fun elabBind (pat, exp, loc) =
-                  let
-                    val elabedPat = elabPat pat
-                    val elabedExp = elabExp exp
-                  in
-                    assertPattern elabedPat; (* after elab *)
-                    assertExp exp; (* before elab *)
-                    (elabedPat, elabedExp, LOC loc)
-                  end
-              fun getNameOfBound (PC.PLPATID [symbol], _, _) =
-                  SOME symbol
-                | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
-                  getNameOfBound (pat, exp, loc)
-                | getNameOfBound (pat, _, _) =
-                  (* this case will be rejected by the above assertPat. *)
-                  NONE
-              val elabedBinds = map elabBind decls
-              val _ =
-                  (* NOTE: use primed version. a trick. *)
-                  checkSymbolDuplication'
-                    getNameOfBound
-                    elabedBinds
-                    E.DuplicateVarNameInValRec
-            in
-              [PC.PDVALREC(seq' tyvs, elabedBinds, LOC loc)]
-            end
-          | (valbinds, recbinds) =>
-            (* FIXME: not followed the definition *)
-            elabDecs [A.DECVAL (tyvs, map A.VALBIND valbinds, loc),
-                      A.DECVAL (tyvs, recbinds, loc)]
-        )
+        let
+          val (valbinds, recbinds) = classifyValbinds valbinds
+          val recbinds = flattenValbinds recbinds
+          val elabedValbinds =
+              map (fn (pat, e, loc) => (elabPat pat, elabExp e, LOC loc))
+                  valbinds
+
+          (* right hand side of val rec must be "fn". *)
+          fun assertExp (A.EXPFN _) = ()
+            (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
+            | assertExp (A.EXPPAREN (exp, _)) = assertExp exp
+            | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
+          (* check pattern AFTER elaboration, because even single var pattern
+           * is parsed as application pattern. *)
+          fun assertPattern pat =
+              case pat of
+                PC.PLPATWILD _ =>
+                enqueueError(loc, E.NonVariablePatternInValRec)
+              | PC.PLPATID _ => ()
+              | PC.PLPATLAYERED(name, _, rightPat, _) =>
+                enqueueError(loc, E.NonVariablePatternInValRec)
+              | PC.PLPATTYPED(innerPat, _, _) => assertPattern innerPat
+              | _ => enqueueError(loc, E.NonVariablePatternInValRec)
+          fun elabBind (pat, exp, loc) =
+              let
+                val elabedPat = elabPat pat
+                val elabedExp = elabExp exp
+              in
+                assertPattern elabedPat; (* after elab *)
+                assertExp exp; (* before elab *)
+                (elabedPat, elabedExp, LOC loc)
+              end
+          fun getNameOfBound (PC.PLPATID [symbol], _, _) =
+              SOME symbol
+            | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
+              getNameOfBound (pat, exp, loc)
+            | getNameOfBound (pat, _, _) =
+              (* this case will be rejected by the above assertPat. *)
+              NONE
+          val elabedRecbinds = map elabBind recbinds
+          val _ =
+              (* NOTE: use primed version. a trick. *)
+              checkSymbolDuplication'
+                getNameOfBound
+                elabedRecbinds
+                E.DuplicateVarNameInValRec
+        in
+          [PC.PDVAL (seq' tyvs, elabedValbinds, elabedRecbinds, LOC loc)]
+        end
       | A.DECPOLYREC ( decls, loc) =>
         let
           (* right hand side of val rec must be "fn". *)

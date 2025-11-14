@@ -455,11 +455,12 @@ local
                 (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
       : renameEnv * V.env * I.icdecl list =
       case pdecl of
-        P.PDVAL (scopedTvars, plpatPlexpList, loc) =>
+        P.PDVAL (scopedTvars, valbinds, recbinds, loc) =>
         let
+          (* VAL part *)
           val (tvarEnv, scopedTvars) =
               Ty.evalScopedTvars tvarEnv env scopedTvars
-          val (renameEnv, returnEnv, icpatIcexpListRev) =
+          val (renameEnv, returnEnv1, icpatIcexpListRev) =
               foldl
                 (fn ((plpat, plexp, loc), (renameEnv, returnEnv, icpatIcexpListRev)) =>
                     let
@@ -477,11 +478,45 @@ local
                     end
                 )
                 (renameEnv, V.emptyEnv, nil)
-                plpatPlexpList
-          val icdecls = if List.null icpatIcexpListRev then nil
-                        else [I.ICVAL (scopedTvars, List.rev icpatIcexpListRev, loc)]
+                valbinds
+
+          (* VALREC part *)
+          val recList =
+              map (fn (pat, exp, loc) => (generateFunVar path pat, exp, loc))
+                  recbinds
+          val _ = EU.checkSymbolDuplication
+                    (fn ({symbol, varInfo, tyList}, body, loc) => symbol)
+                    recList
+                    (fn s => E.DuplicateVarInRecDecl("110",s))
+          val returnEnv2 =
+              foldl
+                (fn (({symbol, varInfo, ...}, _, loc), returnEnv) =>
+                    VP.rebindId VP.BIND_FUNCTION (returnEnv, symbol, I.IDVAR (I.varInfoToIdInfo varInfo loc))
+                )
+                V.emptyEnv
+                recList
+          val evalEnv = VP.envWithEnv (env, returnEnv2)
+          val recbindList =
+              map
+                (fn ({symbol, varInfo, tyList}, body, loc) =>
+                    {varInfo = varInfo,
+                     tyList = map (Ty.evalTyWithFlex tvarEnv env) tyList,
+                     body = evalPlexp tvarEnv evalEnv body}
+                )
+                recList
+
+          (* making result *)
+          val returnEnv = VP.unionEnv "205" (returnEnv1, returnEnv2)
+          val valdecls =
+              if List.null icpatIcexpListRev
+              then nil
+              else [I.ICVAL (scopedTvars, List.rev icpatIcexpListRev, loc)]
+          val recdecls =
+              [I.ICVALREC {guard = scopedTvars,
+                           recbinds = recbindList,
+                           loc = loc}]
         in
-          (renameEnv, returnEnv, icdecls)
+          (renameEnv, returnEnv, valdecls @ recdecls)
         end
       | P.PDDECFUN (scopedTvars, fundeclList, loc) =>
         let
@@ -517,35 +552,6 @@ local
                 declList
         in
           (renameEnv, returnEnv, [I.ICDECFUN{guard=guard, funbinds=fundeclList, loc=loc}])
-        end
-      | P.PDVALREC (scopedTvars, plpatPlexpLocList, loc) =>
-        let
-          val (tvarEnv, guard) = Ty.evalScopedTvars tvarEnv env scopedTvars
-          val recList =
-              map (fn(pat, exp, loc) => (generateFunVar path pat, exp, loc)) 
-                  plpatPlexpLocList
-          val _ = EU.checkSymbolDuplication
-                    (fn ({symbol, varInfo, tyList}, body, loc) => symbol)
-                    recList
-                    (fn s => E.DuplicateVarInRecDecl("110",s))
-          val returnEnv =
-              foldl
-                (fn (({symbol, varInfo, ...}, _, loc), returnEnv) =>
-                    VP.rebindId VP.BIND_FUNCTION (returnEnv, symbol, I.IDVAR (I.varInfoToIdInfo varInfo loc))
-                )
-                V.emptyEnv
-                recList
-          val evalEnv = VP.envWithEnv (env, returnEnv)
-          val recbindList =
-              map
-                (fn ({symbol, varInfo, tyList}, body, loc) =>
-                    {varInfo = varInfo,
-                     tyList = map (Ty.evalTyWithFlex tvarEnv env) tyList,
-                     body = evalPlexp tvarEnv evalEnv body}
-                )
-                recList
-        in
-          (renameEnv, returnEnv, [I.ICVALREC {guard=guard, recbinds=recbindList, loc=loc}])
         end
       | P.PDVALPOLYREC (symbolTyPlexpLocList, loc) =>
         let

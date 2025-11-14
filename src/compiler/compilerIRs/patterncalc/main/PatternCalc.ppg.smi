@@ -8,6 +8,7 @@ _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatterUtils.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
@@ -74,9 +75,8 @@ struct
     | PLFFIEXTERN of string
 
   and pdecl 
-    = PDVAL of scopedTvars * (plpat * plexp * loc) list * loc 
+    = PDVAL of scopedTvars * (plpat * plexp * loc) list * (plpat * plexp * loc) list * loc
     | PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp * loc) list), loc:loc} list*loc
-    | PDVALREC of scopedTvars * (plpat * plexp * loc) list * loc
     | PDVALPOLYREC of (symbol * ty * plexp * loc) list * loc
     | PDTYPE of (tvar list * symbol * ty * loc) list * loc
     | PDDATATYPE of {tyvars: tvar list, 

@@ -11003,6 +11003,7 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o: \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \

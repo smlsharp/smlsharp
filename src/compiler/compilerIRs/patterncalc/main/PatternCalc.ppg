@@ -254,6 +254,8 @@ struct
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(fdecl) format_fdecl
    * @formatter(prepend) format_prepend
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(decs) AbsynFormatterUtils.decs
    *)
   datatype plexp =
       (*%
@@ -407,12 +409,19 @@ struct
 
   and pdecl =
       (*%
-       * @format(tyvars * bind binds * loc)
-       * !R0{ binds:prepend(bind)(, "val" +d tyvars, +1, "and" +d) }
-       * @format:bind(pat * exp * loc)
-       * !R0{ pat +d "=" 1[ +1 exp ] }
+       * @format(tyvars * valbind valbinds * recbind recbinds * loc)
+       * !R0{
+       *   "val" +d
+       *   valbinds:decs(valbind)(tyvars, +1 "and" +d,)
+       *   valbinds:ifcons()(recbinds:ifcons()(+1 "and" +d,),)
+       *   recbinds:decs(recbind)(
+       *     valbinds:ifcons()("rec" +d, tyvars "rec" +d),
+       *     +1 "and" +d,
+       *     "rec" +d
+       *   )
+       * }
        *)
-      PDVAL of scopedTvars * (plpat * plexp * loc) list * loc
+      PDVAL of scopedTvars * valbind list * valbind list * loc
     | (*%
        * @format(tyvars * bind binds * loc)
        * !R0{ binds:prepend(bind)(, "fun" +d tyvars, +1, "and" +d) }
@@ -424,13 +433,6 @@ struct
       PDDECFUN of scopedTvars
                   * {fdecl: plpat * (plpat list * plexp * loc) list, loc: loc} list
                   * loc
-    | (*%
-       * @format(tyvars * bind binds * loc)
-       * !R0{ binds:prepend(bind)(, "val" +d "rec" +d tyvars, +1, "and" +d) }
-       * @format:bind(pat * exp * loc)
-       * !R0{ pat +d "=" 1[ +1 exp ] }
-       *)
-      PDVALREC of scopedTvars * (plpat * plexp * loc) list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "val" +d "_polyrec" +d, +1, "and" +d) }
@@ -691,6 +693,13 @@ struct
        *)
       plpat * plexp * loc
 
+  and (*% @params(head) *) valbind =
+      (*%
+       * @format(pat * exp * loc)
+       * !R0 { head pat +d "=" +1 exp }
+       *)
+      plpat * plexp * loc
+
   fun getLocExp plexp =
       case plexp of
         PLCONSTANT x => #2 x
@@ -731,9 +740,8 @@ struct
       | PLPATTYPED x => #3 x
   fun getLocDec dec =
       case dec of
-        PDVAL (_, _, loc) => loc
+        PDVAL (_, _, _, loc) => loc
       | PDDECFUN (_, _, loc) => loc
-      | PDVALREC (_, _, loc) => loc
       | PDVALPOLYREC ( _, loc) => loc
       | PDTYPE (_, loc) => loc
       | PDABSTYPE (_, _, loc) => loc

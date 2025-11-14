@@ -554,8 +554,8 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o \
 src/compiler/libs/digest/main/SHA3.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
-src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.o \
+src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/data/types/main/TvarMap.o \
@@ -977,8 +977,8 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o \
 src/compiler/libs/digest/main/SHA3.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
-src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.o \
+src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/data/types/main/TvarMap.o \
@@ -1518,8 +1518,8 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o \
 src/compiler/libs/digest/main/SHA3.o \
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.o \
-src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.o \
+src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/data/types/main/TvarMap.o \
