@@ -48,10 +48,12 @@ struct
     | TYPBIND of Absyn.typbind
     | CONBIND of Absyn.conbind
     | DATBIND of Absyn.datbind
+    | WITHTY of Absyn.withty
     | EXP of Absyn.exp
     | VALBIND of Absyn.valbind
     | DEC of Absyn.dec
     | EXPROW of Absyn.exprow
+    | LET_BODY of Absyn.let_body
     | MRULE of Absyn.mrule
     | DYNAMIC_MRULE of Absyn.dynamic_mrule
     | FRULE of Absyn.frule
@@ -188,6 +190,7 @@ struct
       | TYPBIND _ => "TYPBIND"
       | CONBIND _ => "CONBIND"
       | DATBIND _ => "DATBIND"
+      | WITHTY _ => "WITHTY"
       | EXP (A.EXPCONST _) => "EXP:EXPCONST"
       | EXP (A.EXPID _) => "EXP:EXPID"
       | EXP (A.EXPRECORD _) => "EXP:EXPRECORD"
@@ -244,6 +247,7 @@ struct
       | DEC (A.DECNONFIX _) => "DEC:DECNONFIX"
       | DEC (A.DECPOLYREC _) => "DEC:DECPOLYREC"
       | EXPROW _ => "EXPROW"
+      | LET_BODY _ => "LET_BODY"
       | MRULE _ => "MRULE"
       | DYNAMIC_MRULE _ => "DYNAMIC_MRULE"
       | FRULE _ => "FRULE"
@@ -487,6 +491,7 @@ struct
       | TYPBIND (_, _, _, loc) => loc
       | CONBIND (_, _, loc) => loc
       | DATBIND (_, _, _, loc) => loc
+      | WITHTY (_, loc) => loc
       | EXP (A.EXPCONST (_, loc)) => loc
       | EXP (A.EXPID (_, _, loc)) => loc
       | EXP (A.EXPRECORD (_, loc)) => loc
@@ -543,6 +548,7 @@ struct
       | DEC (A.DECNONFIX (_, loc)) => loc
       | DEC (A.DECPOLYREC (_, loc)) => loc
       | EXPROW (_, _, loc) => loc
+      | LET_BODY (_, loc) => loc
       | MRULE (_, _, loc) => loc
       | DYNAMIC_MRULE (_, _, _, loc) => loc
       | FRULE (_, _, _, loc) => loc
@@ -809,6 +815,7 @@ struct
         TYCON tycon :: map CONBIND conbinds
       | DATBIND (SOME tyvarseq, tycon, conbinds, loc) =>
         TYVARSEQ tyvarseq :: TYCON tycon :: map CONBIND conbinds
+      | WITHTY (typbinds, loc) => map TYPBIND typbinds
       | EXP (A.EXPCONST _) => nil
       | EXP (A.EXPID id) => [OP_LONGVID id]
       | EXP (A.EXPRECORD (exprows, loc)) => map EXPROW exprows
@@ -816,7 +823,7 @@ struct
       | EXP (A.EXPTUPLE (exps, loc)) => map EXP exps
       | EXP (A.EXPLIST (exps, loc)) => map EXP exps
       | EXP (A.EXPSEQ (exps, loc)) => map EXP exps
-      | EXP (A.EXPLET (decs, exps, loc)) => map DEC decs @ map EXP exps
+      | EXP (A.EXPLET (decs, body, loc)) => map DEC decs @ [LET_BODY body]
       | EXP (A.EXPPAREN (exp, loc)) => [EXP exp]
       | EXP (A.EXPAPP (exp1, exp2, loc)) => [EXP exp1, EXP exp2]
       | EXP (A.EXPINFIX (exp1, vid, exp2, loc)) => [EXP exp1, VID vid, EXP exp2]
@@ -861,11 +868,14 @@ struct
       | DEC (A.DECFUN (SOME tyvarseq, fvalbinds, loc)) =>
         KINDED_TYVARSEQ tyvarseq :: map FVALBIND fvalbinds
       | DEC (A.DECTYPE (typbinds, loc)) => map TYPBIND typbinds
-      | DEC (A.DECDATATYPE (datbinds, typbinds, loc)) =>
-        map DATBIND datbinds @ map TYPBIND typbinds
+      | DEC (A.DECDATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds
+      | DEC (A.DECDATATYPE (datbinds, SOME withty, loc)) =>
+        map DATBIND datbinds @ [WITHTY withty]
       | DEC (A.DECDATATYPEREP (id, longid, loc)) => [TYCON id, LONGTYCON longid]
-      | DEC (A.DECABSTYPE (datbinds, typbinds, decs, loc)) =>
-        map DATBIND datbinds @ map TYPBIND typbinds @ map DEC decs
+      | DEC (A.DECABSTYPE (datbinds, NONE, decs, loc)) =>
+        map DATBIND datbinds @ map DEC decs
+      | DEC (A.DECABSTYPE (datbinds, SOME withty, decs, loc)) =>
+        map DATBIND datbinds @ WITHTY withty :: map DEC decs
       | DEC (A.DECEXCEPTION (exbinds, loc)) => map EXBIND exbinds
       | DEC (A.DECLOCAL (decs1, decs2, loc)) => map DEC (decs1 @ decs2)
       | DEC (A.DECOPEN (ids, loc)) => map LONGSTRID ids
@@ -875,6 +885,7 @@ struct
       | DEC (A.DECNONFIX (ids, loc)) => map VID ids
       | DEC (A.DECPOLYREC (pvalbinds, loc)) => map PVALBIND pvalbinds
       | EXPROW (lab, exp, loc) => [LAB lab, EXP exp]
+      | LET_BODY (exps, loc) => map EXP exps
       | MRULE (pat, exp, loc) => [PAT pat, EXP exp]
       | DYNAMIC_MRULE (NONE, pat, exp, loc) => [PAT pat, EXP exp]
       | DYNAMIC_MRULE (SOME exists, pat, exp, loc) =>
@@ -1101,8 +1112,9 @@ struct
               | I.TYPDESC typdesc => ITYPDESC typdesc)
             typbinds
       | IDEC (I.EQTYPE (typdescs, loc)) => map ITYPDESC typdescs
-      | IDEC (I.DATATYPE (datbinds, typbinds, loc)) =>
-        map DATBIND datbinds @ map TYPBIND typbinds
+      | IDEC (I.DATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds
+      | IDEC (I.DATATYPE (datbinds, SOME withty, loc)) =>
+        map DATBIND datbinds @ [WITHTY withty]
       | IDEC (I.DATATYPEREP (tycon, longtycon, loc)) =>
         [TYCON tycon, LONGTYCON longtycon]
       | IDEC (I.TYPEBUILTIN (tycon1, tycon2, loc)) =>

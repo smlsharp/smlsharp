@@ -654,7 +654,11 @@ atexp_noID
         | LBRACKET exps_comma RBRACKET
           (A.EXPLIST (Snoc.toList exps_comma, (LBRACKETleft, RBRACKETright)))
         | LET decs IN exps_semicolon END
-          (A.EXPLET (decs, Snoc.toList exps_semicolon, (LETleft, ENDright)))
+          (A.EXPLET
+             (decs,
+              (Snoc.toList exps_semicolon,
+               (exps_semicolonleft, exps_semicolonright)),
+              (LETleft, ENDright)))
         | U_REIFYTY LPAREN ty RPAREN
           (A.EXPREIFYTY (ty, (U_REIFYTYleft, RPARENright)))
         | U_SQL sqlparen
@@ -1426,15 +1430,22 @@ dec
         | TYPE typbind
           (A.DECTYPE (typbind, (TYPEleft, typbindright)))
         | DATATYPE datbind
-          (A.DECDATATYPE (datbind, nil, (DATATYPEleft, datbindright)))
+          (A.DECDATATYPE (datbind, NONE, (DATATYPEleft, datbindright)))
         | DATATYPE datbind WITHTYPE typbind
-          (A.DECDATATYPE (datbind, typbind, (DATATYPEleft, typbindright)))
+          (A.DECDATATYPE
+             (datbind,
+              SOME (typbind, (WITHTYPEleft, typbindright)),
+              (DATATYPEleft, typbindright)))
         | DATATYPE id_noEQSTAR EQ DATATYPE longid
           (A.DECDATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
         | ABSTYPE datbind WITH decs END
-          (A.DECABSTYPE (datbind, nil, decs, (ABSTYPEleft, ENDright)))
+          (A.DECABSTYPE (datbind, NONE, decs, (ABSTYPEleft, ENDright)))
         | ABSTYPE datbind WITHTYPE typbind WITH decs END
-          (A.DECABSTYPE (datbind, typbind, decs, (ABSTYPEleft, ENDright)))
+          (A.DECABSTYPE
+             (datbind,
+              SOME (typbind, (WITHTYPEleft, typbindright)),
+              decs,
+              (ABSTYPEleft, ENDright)))
         | EXCEPTION exbind
           (A.DECEXCEPTION (exbind, (EXCEPTIONleft, exbindright)))
         | OPEN longstrids

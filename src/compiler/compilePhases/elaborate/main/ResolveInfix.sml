@@ -470,13 +470,13 @@ struct
         A.EXPLIST (map (resolveExp env) exps, loc)
       | A.EXPSEQ (exps, loc) =>
         A.EXPSEQ (map (resolveExp env) exps, loc)
-      | A.EXPLET (decs, exps, loc) =>
+      | A.EXPLET (decs, (exps, loc1), loc) =>
         let
           val (ret, decs) = resolveDecs env decs
           val env = extendEnv (env, ret)
           val exps = map (resolveExp env) exps
         in
-          A.EXPLET (decs, exps, loc)
+          A.EXPLET (decs, (exps, loc1), loc)
         end
       | A.EXPPAREN (exp, loc) =>
         A.EXPPAREN (resolveExp env exp, loc)
@@ -574,9 +574,9 @@ struct
       | A.DECTYPE _ => (emptyEnv, dec)
       | A.DECDATATYPE _ => (emptyEnv, dec)
       | A.DECDATATYPEREP _ => (emptyEnv, dec)
-      | A.DECABSTYPE (datbinds, typbinds, decs, loc) =>
+      | A.DECABSTYPE (datbinds, withty, decs, loc) =>
         (emptyEnv,
-         A.DECABSTYPE (datbinds, typbinds, #2 (resolveDecs env decs), loc))
+         A.DECABSTYPE (datbinds, withty, #2 (resolveDecs env decs), loc))
       | A.DECEXCEPTION _ => (emptyEnv, dec)
       | A.DECLOCAL (decs1, decs2, loc) =>
         let

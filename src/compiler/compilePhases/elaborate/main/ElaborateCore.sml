@@ -671,7 +671,7 @@ struct
       | A.EXPFN (match, loc) =>
         PC.PLFNM(map (fn (x, y, loc) => ([elabPat x], elabExp y, LOC loc)) match,
                  LOC loc)
-      | A.EXPLET (decs, elist, loc) =>
+      | A.EXPLET (decs, (elist, _), loc) =>
         let
           val pdecs = elabDecs decs
           val body =
@@ -750,7 +750,7 @@ struct
             List.concat (map #3 dataBinds)
         val boundTypeNames =
             (map (fn (_, x, _, _) => toSymbol x) dataBinds)
-            @ (map (fn (_, x, _, _) => toSymbol x) withTypeBinds)
+            @ (map (fn (_, x, _, _) => toSymbol x) (seq withTypeBinds))
         fun id x = x
         val _ =
             checkSymbolDuplication
@@ -771,13 +771,13 @@ struct
             map (fn (tvars, name, ty, _) =>
                     UserErrorUtils.checkSymbolDuplication
                       (fn (isEq, id) => toSymbol id) (seq tvars) E.DuplicateTypParam)
-                withTypeBinds
+                (seq withTypeBinds)
         val expandedDataBinds =
-            map (expandWithTypesInDataBind withTypeBinds) newDataBinds
+            map (expandWithTypesInDataBind (seq withTypeBinds)) newDataBinds
         val withTypeBinds =
             map (fn (tyvars, tyConSymbol, ty, loc) =>
                     (seq tyvars, toSymbol tyConSymbol, ty, LOC loc))
-                withTypeBinds
+                (seq withTypeBinds)
       in
         (expandedDataBinds, withTypeBinds)
       end

@@ -46,10 +46,12 @@ struct
     | TYPBIND of Absyn.typbind
     | CONBIND of Absyn.conbind
     | DATBIND of Absyn.datbind
+    | WITHTY of Absyn.withty
     | EXP of Absyn.exp
     | VALBIND of Absyn.valbind
     | DEC of Absyn.dec
     | EXPROW of Absyn.exprow
+    | LET_BODY of Absyn.let_body
     | MRULE of Absyn.mrule
     | DYNAMIC_MRULE of Absyn.dynamic_mrule
     | FRULE of Absyn.frule

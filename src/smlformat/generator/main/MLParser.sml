@@ -173,7 +173,7 @@ struct
       S.DatatypeDec
         {formatComments = scanHeaderFormatComments c loc,
          datatycs = map (scanDb c) datatys,
-         withtycs = map (scanTb c) withtys,
+         withtycs = map (scanTb c) (getOpt (Option.map #1 withtys, nil)),
          region = locToRegion loc}
 
   fun scanDatatypeRep c ((defSymbol, defSymbolLoc), refLongsymbol, loc) =
@@ -193,7 +193,7 @@ struct
       S.AbstypeDec
         {formatComments = scanHeaderFormatComments c loc,
          abstycs = map (scanDb c) abstys,
-         withtycs = map (scanTb c) withtys,
+         withtycs = map (scanTb c) (getOpt (Option.map #1 withtys, nil)),
          bodyBeginPos =
            case body of
              nil => #2 (locToRegion loc) - 3

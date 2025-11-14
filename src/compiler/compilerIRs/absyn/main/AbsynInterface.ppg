@@ -166,9 +166,10 @@ struct
 
   (*%
    * @formatter(Absyn.datbind) AbsynFormatter.format_datbind
-   * @formatter(Absyn.typbind) AbsynFormatter.format_typbind
+   * @formatter(Absyn.withty) AbsynFormatter.format_withty
    * @formatter(decs) AbsynFormatterUtils.decs
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   datatype dec =
       (*%
@@ -187,14 +188,14 @@ struct
        *)
       EQTYPE of typdesc list * loc
     | (*%
-       * @format(datbind datbinds * typbind typbinds * loc)
+       * @format(datbind datbinds * withty withtyOpt * loc)
        * !N0{
        *   datbinds:decs(datbind)("datatype" +d, +1, "and" +d)
-       *   typbinds:ifcons()(+1,)
-       *   typbinds:decs(typbind)("withtype" +d, +1, "and" +d)
+       *   withtyOpt:ifsome()(+1,)
+       *   withtyOpt(withty)
        * }
        *)
-      DATATYPE of Absyn.datbind list * Absyn.typbind list * loc
+      DATATYPE of Absyn.datbind list * Absyn.withty option * loc
     | (*%
        * @format(tycon * longtycon * loc)
        * !N0{ "datatype" +d tycon +d "=" +1 "datatype" +d longtycon }

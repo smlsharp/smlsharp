@@ -261,6 +261,16 @@ struct
       tyvarseq option * tycon * conbind list * loc
 
   (*%
+   * @formatter(decs) AbsynFormatterUtils.decs
+   *)
+  type withty =
+      (*%
+       * @format(typbind typbinds * loc)
+       * !N0{ typbinds:decs(typbind)("withtype" +d, +1, "and" +d) }
+       *)
+      typbind list * loc
+
+  (*%
    * @formatter(AbsynSQL.top) AbsynSQLFormatter.format_top
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
@@ -304,18 +314,18 @@ struct
        *)
       EXPSEQ of exp list * loc
     | (*%
-       * @format(dec decs * exp exps * loc)
+       * @format(dec decs * (exp exps * loc1) * loc)
        * !N0{
        *   "let"
        *   decs:ifcons()(2[+1],)
        *   decs(dec)(2[+1])
        *   +1 "in"
        *   exps:ifcons()(2[+1],)
-       *   exps(exp)(";" 2[+1])
+       *   exps(exp)(2[+1])
        *   +1 "end"
        * }
        *)
-      EXPLET of dec list * exp list * loc
+      EXPLET of dec list * (exp list * loc) * loc
     | (*%
        * @format(exp * loc)
        * "(" !N0{ exp } ")"
@@ -542,31 +552,32 @@ struct
        *)
       DECTYPE of typbind list * loc
     | (*%
-       * @format(datbind datbinds * typbind typbinds * loc)
+       * @format(datbind datbinds * withty withtyOpt * loc)
        * !N0{
        *   datbinds:decs(datbind)("datatype" +d, +1, "and" +d)
-       *   typbinds:ifcons()(+1,)
-       *   typbinds:decs(typbind)("withtype" +d, +1, "and" +d)
+       *   withtyOpt:ifsome()(+1,)
+       *   withtyOpt(withty)
        * }
        *)
-      DECDATATYPE of datbind list * typbind list * loc
+      DECDATATYPE of datbind list * withty option * loc
     | (*%
        * @format(tycon * longtycon * loc)
        * !N0{ "datatype" +d tycon +d "=" +1 "datatype" +d longtycon }
        *)
       DECDATATYPEREP of tycon * longtycon * loc
     | (*%
-       * @format(datbind datbinds * typbind typbinds * dec decs * loc)
+       * @format(datbind datbinds * withty withtyOpt * dec decs * loc)
        * !N0{
        *   datbinds:decs(datbind)("abstype" +d, +1, "and" +d)
-       *   typbinds:decs(typbind)(+1 "withtype" +d, +1, "and" +d)
+       *   withtyOpt:ifsome()(+1,)
+       *   withtyOpt(withty)
        *   +1 "with"
        *   decs:ifcons()(2[+1],)
        *   decs(dec)(2[+1])
        *   +1 "end"
        * }
        *)
-      DECABSTYPE of datbind list * typbind list * dec list * loc
+      DECABSTYPE of datbind list * withty option * dec list * loc
     | (*%
        * @format(exbind exbinds * loc)
        * !N0{ "ex" exbinds:decs(exbind)("ception" +d, +1 "an", "d" +d) }
@@ -698,6 +709,8 @@ struct
        * !N0{ !N0{ head vid +1 ":" +d ty } +d "=" +1 exp }
        *)
       vid * ty * exp * loc
+
+  type let_body = exp list * loc
 
   (*% @params(head) *)
   type valdesc =

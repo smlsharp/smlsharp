@@ -308,7 +308,7 @@ struct
       | I.DATATYPE (datbind, withType, loc) =>
         (EU.checkSymbolDuplication
            (fn x => toSymbol x)
-           (map #2 datbind @ map #2 withType)
+           (map #2 datbind @ map #2 (seq withType))
            E.DuplicateTypeNameInDatatype;
          EU.checkSymbolDuplication
            (fn x => toSymbol x)
@@ -317,12 +317,12 @@ struct
          app ElaborateCore.checkReservedNameForValBind
              (map toSymbol (List.concat (map (map (#2 o #1) o #3) datbind)));
          P.PIDATATYPE
-           {datbind = map (substDatbind (tyconSubst withType)) datbind,
+           {datbind = map (substDatbind (tyconSubst (seq withType))) datbind,
             loc = LOC loc}
          :: map (fn (tyvars, id, ty, loc) =>
                     P.PITYPE {tyvars = seq tyvars, symbol = toSymbol id,
                               ty = ty, loc = LOC loc})
-                withType)
+                (seq withType))
       | I.DATATYPEREP (symbol, longsymbol, loc) =>
         [P.PITYPEREP {loc=LOC loc, longsymbol = toLongsymbol longsymbol, symbol= toSymbol symbol}]
       | I.TYPEBUILTIN (symbol, builtinSymbol, loc) =>

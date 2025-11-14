@@ -342,9 +342,12 @@ idec
         | EQTYPE itypdesc
           (I.EQTYPE (itypdesc, (EQTYPEleft, itypdescright)))
         | DATATYPE datbind
-          (I.DATATYPE (datbind, nil, (DATATYPEleft, datbindright)))
+          (I.DATATYPE (datbind, NONE, (DATATYPEleft, datbindright)))
         | DATATYPE datbind WITHTYPE typbind
-          (I.DATATYPE (datbind, typbind, (DATATYPEleft, typbindright)))
+          (I.DATATYPE
+             (datbind,
+              SOME (typbind, (WITHTYPEleft, typbindright)),
+              (DATATYPEleft, typbindright)))
         | DATATYPE id_noEQSTAR EQ DATATYPE longid
           (I.DATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
         | DATATYPE id_noEQSTAR EQ U_BUILTIN DATATYPE id_noSTAR

@@ -76,6 +76,8 @@ struct
 
   type datbind = tyvarseq option * tycon * conbind list * loc
 
+  type withty = typbind list * loc
+
   datatype exp =
       EXPCONST of constant * loc
     | EXPID of bool * longvid * loc
@@ -84,7 +86,7 @@ struct
     | EXPTUPLE of exp list * loc
     | EXPLIST of exp list * loc
     | EXPSEQ of exp list * loc
-    | EXPLET of dec list * exp list * loc
+    | EXPLET of dec list * (exp list * loc) * loc
     | EXPPAREN of exp * loc
     | EXPAPP of exp * exp * loc
     | EXPINFIX of exp * vid * exp * loc
@@ -127,9 +129,9 @@ struct
                 * ((pat * ty option * exp * loc) list * loc) list
                 * loc
     | DECTYPE of typbind list * loc
-    | DECDATATYPE of datbind list * typbind list * loc
+    | DECDATATYPE of datbind list * withty option * loc
     | DECDATATYPEREP of tycon * longtycon * loc
-    | DECABSTYPE of datbind list * typbind list * dec list * loc
+    | DECABSTYPE of datbind list * withty option * dec list * loc
     | DECEXCEPTION of exbind list * loc
     | DECLOCAL of dec list * dec list * loc
     | DECOPEN of longstrid list * loc
@@ -142,6 +144,8 @@ struct
   type sqlexp = (exp, pat, ty) AbsynSQL.top
 
   type exprow = lab * exp * loc
+
+  type let_body = exp list * loc
 
   type mrule = pat * exp * loc
 

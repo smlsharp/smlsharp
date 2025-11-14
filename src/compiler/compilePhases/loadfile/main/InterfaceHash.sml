@@ -59,7 +59,9 @@ struct
         List.concat (map (listNamesTypbindOrTypdesc prefix) typbinds)
       | A.EQTYPE (typdescs, loc) =>
         List.concat (map (listNamesTypdesc prefix) typdescs)
-      | A.DATATYPE (datbinds, typbinds, loc) =>
+      | A.DATATYPE (datbinds, NONE, loc) =>
+        List.concat (map (listNamesDatbind prefix) datbinds)
+      | A.DATATYPE (datbinds, SOME (typbinds, _), loc) =>
         List.concat (map (listNamesDatbind prefix) datbinds
                      @ map (listNamesTypbind prefix) typbinds)
       | A.DATATYPEREP (id, longtycon, loc) =>

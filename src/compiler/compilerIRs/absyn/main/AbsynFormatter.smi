@@ -25,6 +25,7 @@ struct
   val format_typbind : SMLFormat.format -> Absyn.typbind -> SMLFormat.format
   val format_conbind : Absyn.conbind -> SMLFormat.format
   val format_datbind : SMLFormat.format -> Absyn.datbind -> SMLFormat.format
+  val format_withty : Absyn.withty -> SMLFormat.format
   val format_exp : Absyn.exp -> SMLFormat.format
   val format_valbind : SMLFormat.format -> Absyn.valbind -> SMLFormat.format
   val format_dec : Absyn.dec -> SMLFormat.format

@@ -62,7 +62,7 @@ struct
       VAL of valbind * loc
     | TYPE of typbind list * loc
     | EQTYPE of typdesc list * loc
-    | DATATYPE of Absyn.datbind list * Absyn.typbind list * loc
+    | DATATYPE of Absyn.datbind list * Absyn.withty option * loc
     | DATATYPEREP of tycon * longtycon * loc
     | TYPEBUILTIN of tycon * tycon * loc
     | EXCEPTION of exbind list * loc
