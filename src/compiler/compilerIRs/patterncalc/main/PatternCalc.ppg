@@ -640,9 +640,9 @@ struct
 
   and pltopdec =
       (*%
-       * @format (strdec * loc) strdec
+       * @format (strdec) strdec
        *)
-      PLTOPDECSTR of plstrdec * loc
+      PLTOPDECSTR of plstrdec
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "signature" +d, +1, "and" +d) }
@@ -760,10 +760,5 @@ struct
         PLSIGEXPBASIC (plspec, loc) => loc
       | PLSIGID symbol => SymbolWithLoc.symbolToLoc symbol
       | PLSIGWHERE (plsigexp, tybind, loc) => loc
-  fun getLocTopDec topdec =
-      case topdec of
-        PLTOPDECSTR (plstrdec, loc) => loc
-      | PLTOPDECSIG (sigdecList, loc) => loc
-      | PLTOPDECFUN (fundeclList, loc) => loc
 
 end

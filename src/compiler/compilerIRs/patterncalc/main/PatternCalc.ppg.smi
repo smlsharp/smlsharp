@@ -139,7 +139,7 @@ struct
     | PLSPECSHARESTR of plspec list * longsymbol list * loc 
 
   and pltopdec 
-    = PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)
+    = PLTOPDECSTR of plstrdec (* structure-level declaration *)
     | PLTOPDECSIG of (symbol * plsigexp * loc) list * loc
     | PLTOPDECFUN of
       {name:symbol, argStrName:symbol, argSig:plsigexp, body:plstrexp, loc:loc}
@@ -178,7 +178,6 @@ struct
   val getLocExp : plexp -> Loc.loc
   val getLocPat : plpat -> Loc.loc
   val getLocDec : pdecl -> Loc.loc
-  val getLocTopDec : pltopdec -> Loc.loc
   val getLocSigexp : plsigexp -> Loc.loc
 
 end

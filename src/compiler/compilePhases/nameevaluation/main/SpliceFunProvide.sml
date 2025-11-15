@@ -36,7 +36,7 @@ in
 
   fun spliceTopdec (topdec, (topdecRev, fundeclEnv)) =
       case topdec of
-        PL.PLTOPDECSTR (plstrdec, loc) => (PI.TOPDECSTR (plstrdec, loc)::topdecRev, fundeclEnv)
+        PL.PLTOPDECSTR plstrdec => (PI.TOPDECSTR plstrdec::topdecRev, fundeclEnv)
       | PL.PLTOPDECSIG (sigdeclList, loc) =>
         (PI.TOPDECSIG (sigdeclList, loc)::topdecRev, fundeclEnv)
       | PL.PLTOPDECFUN (funbindList, loc) =>

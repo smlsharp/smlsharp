@@ -386,10 +386,7 @@ struct
           let
             val plstrdecs = elabStrDec strdec
           in
-            map
-              (fn plstrdec =>
-                  PC.PLTOPDECSTR(plstrdec, LOC (AbsynUtils.strdecLoc strdec)))
-              plstrdecs
+            map PC.PLTOPDECSTR plstrdecs
           end
       | A.TOPSIGNATURE(sigdecs, loc) =>
           let
@@ -418,8 +415,7 @@ struct
                     ElaborateCore.elabExp exp,
                     LOC loc)],
                   nil,
-                  LOC loc)),
-            LOC loc)]
+                  LOC loc)))]
 
     and elabTopDecs topdecs =
         List.concat (map elabTopDec topdecs)

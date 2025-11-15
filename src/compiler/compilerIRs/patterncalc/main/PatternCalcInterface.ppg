@@ -369,10 +369,10 @@ struct
    *)
   datatype topdec
     = (*%
-       * @format(plstrdec * loc) 
+       * @format(plstrdec)
        *   "TOPDECSTR(" plstrdec ")"
       *)
-      TOPDECSTR of PatternCalc.plstrdec * loc
+      TOPDECSTR of PatternCalc.plstrdec
     | (*%
        * @format(sigbind sigbinds * loc) "TOPDECSIG"
       *)

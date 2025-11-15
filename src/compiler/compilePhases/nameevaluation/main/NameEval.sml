@@ -2167,7 +2167,7 @@ val _ = U.print "\n"
 
   fun evalPltopdec (renameEnv:renameEnv) {topEnv, version} pltopdec =
       case pltopdec of
-        PI.TOPDECSTR (plstrdec, loc) =>
+        PI.TOPDECSTR plstrdec =>
         let
           val (renameEnv, env, icdeclList) = 
               evalPlstrdec (renameEnv:renameEnv) topEnv nilPath plstrdec

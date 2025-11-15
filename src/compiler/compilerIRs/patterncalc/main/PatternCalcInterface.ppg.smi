@@ -146,7 +146,7 @@ struct
       } 
 
   datatype topdec
-    = TOPDECSTR of PatternCalc.plstrdec * loc
+    = TOPDECSTR of PatternCalc.plstrdec
     | TOPDECSIG of (symbol * PatternCalc.plsigexp * loc) list * loc
     | TOPDECFUN of
       {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, 

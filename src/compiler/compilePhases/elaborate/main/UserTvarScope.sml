@@ -506,8 +506,8 @@ struct
 
   fun decideTopdec topdec =
       case topdec of
-        P.PLTOPDECSTR (strdec, loc) =>
-        P.PLTOPDECSTR (decideStrdec strdec, loc)
+        P.PLTOPDECSTR strdec =>
+        P.PLTOPDECSTR (decideStrdec strdec)
       | P.PLTOPDECSIG (sigbinds, loc) =>
         P.PLTOPDECSIG (map (fn (k,e,l) => (k, decideSigexp e, l)) sigbinds, loc)
       | P.PLTOPDECFUN (funbinds, loc) =>
