@@ -626,7 +626,7 @@ struct
       | A.STRCONSTRAINT (strexp, sigop, sigexp, loc) =>
         A.STRCONSTRAINT (resolveStrexp env strexp, sigop, sigexp, loc)
       | A.STRAPP (funid, funarg, loc) =>
-        A.STRAPP (funid, resolveFunarg env funarg, loc)
+        A.STRAPP (funid, Option.map (resolveFunarg env) funarg, loc)
       | A.STRLET (strdecs, strexp, loc) =>
         let
           val (ret, strdecs) = resolveStrdecs env strdecs
@@ -664,8 +664,8 @@ struct
       case funarg of
         A.FUNARG strexp =>
         A.FUNARG (resolveStrexp env strexp)
-      | A.FUNARG_DEC strdecs =>
-        A.FUNARG_DEC (#2 (resolveStrdecs env strdecs))
+      | A.FUNARG_DEC (strdecs, loc) =>
+        A.FUNARG_DEC (#2 (resolveStrdecs env strdecs), loc)
 
   and resolveStrbind env (strid, sigcon, strexp, loc) : A.strbind =
       (strid, sigcon, resolveStrexp env strexp, loc)

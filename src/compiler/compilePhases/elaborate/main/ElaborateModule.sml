@@ -232,9 +232,9 @@ struct
         | A.STRCONSTRAINT(strexp, A.OPAQUE, sigexp, loc) =>
           PC.PLSTROPAQCONSTRAINT
             (elabStrExp strexp, elabSigExp sigexp, LOC loc)
-        | A.STRAPP(funid, A.FUNARG (A.STRID longid), loc) =>
+        | A.STRAPP(funid, SOME (A.FUNARG (A.STRID longid)), loc) =>
           PC.PLFUNCTORAPP(toSymbol funid, toLongsymbol longid, LOC loc)
-        | A.STRAPP(funid, A.FUNARG strexp, loc) =>
+        | A.STRAPP(funid, SOME (A.FUNARG strexp), loc) =>
           let
             val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
             val newStrLong = SymbolWithLoc.mkLongsymbol [newStrid] (LOC loc)
@@ -245,8 +245,10 @@ struct
           in
             PC.PLSTRUCTLET(plstrDecs, plstrbody, LOC loc)
           end
-        | A.STRAPP (funid, A.FUNARG_DEC strdecs, loc) =>
-          elabStrExp (A.STRAPP (funid, A.FUNARG (A.STRBASIC (strdecs, loc)), loc))
+        | A.STRAPP (funid, SOME (A.FUNARG_DEC (strdecs, _)), loc) =>
+          elabStrExp (A.STRAPP (funid, SOME (A.FUNARG (A.STRBASIC (strdecs, loc))), loc))
+        | A.STRAPP (funid, NONE, loc) =>
+          elabStrExp (A.STRAPP (funid, SOME (A.FUNARG (A.STRBASIC (nil, loc))), loc))
 (*
       | A.FUNCTORAPP(funid, strexp, loc) =>
           PC.PLFUNCTORAPP(funid, elabStrExp env strexp, loc)
@@ -304,29 +306,27 @@ struct
       case funbind of
         (* functor F(A:sig1) : sig2 = str  =>
                    functor F(A:sig1) = str : sig2 *)
-        (funid, A.FUNPARAM (strid, argSigexp),
+        (funid, param as SOME (A.FUNPARAM _),
          SOME (A.TRANSPARENT, resSigexp, _),
          strexp, loc) =>
         let val newStrexp = A.STRCONSTRAINT(strexp, A.TRANSPARENT, resSigexp, loc)
         in
-          elabFunBind
-            (funid, A.FUNPARAM (strid, argSigexp), NONE, newStrexp, loc)
+          elabFunBind (funid, param, NONE, newStrexp, loc)
         end
           (* functor F(A:sig1) :> sig2 = str  =>
             functor F(A:sig1) = str :> sig2
            *)
-      | (funid, A.FUNPARAM (strid, argSigexp),
+      | (funid, param as SOME (A.FUNPARAM _),
          SOME (A.OPAQUE, resSigexp, _),
          strexp, loc) =>
         let val newStrexp = A.STRCONSTRAINT(strexp, A.OPAQUE, resSigexp, loc)
         in
-          elabFunBind
-            (funid, A.FUNPARAM (strid, argSigexp), NONE, newStrexp, loc)
+          elabFunBind (funid, param, NONE, newStrexp, loc)
         end
       (* functor F(spec) : sig = str  =>
          functor F('x:sig spec end) = let open 'X in str:sig end
        *)
-      | (funid, A.FUNPARAM_SPEC spec,
+      | (funid, SOME (A.FUNPARAM_SPEC specLoc),
          SOME (A.TRANSPARENT, resSigexp, _),
          strexp, loc) =>
         let
@@ -336,16 +336,16 @@ struct
                 ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
                  A.STRCONSTRAINT(strexp,A.TRANSPARENT,resSigexp,loc),
                  loc)
-          val argSigExp = A.SIGBASIC(spec, loc)
+          val argSigExp = A.SIGBASIC specLoc
           val newFunBind =
-              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
         in
           elabFunBind newFunBind
         end
       (* functor F(spec) :> sig = str  =>
          functor F('x:sig spec end) = let open 'X in str:>sig end
        *)
-      | (funid, A.FUNPARAM_SPEC spec,
+      | (funid, SOME (A.FUNPARAM_SPEC specLoc),
          SOME (A.OPAQUE, resSigexp, _),
          strexp, loc) =>
         let
@@ -355,29 +355,37 @@ struct
                 ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
                  A.STRCONSTRAINT(strexp,A.OPAQUE,resSigexp,loc),
                  loc)
-          val argSigExp = A.SIGBASIC(spec, loc)
+          val argSigExp = A.SIGBASIC specLoc
           val newFunBind =
-              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((Symbol.fromString newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
         in
           elabFunBind newFunBind
         end
       (* functor F(spec) = str  =>
          functor F('x:sig spec end) = let open 'X in str end
        *)
-      | (funid, A.FUNPARAM_SPEC spec, NONE, strexp, loc) =>
+      | (funid, SOME (A.FUNPARAM_SPEC specLoc), NONE, strexp, loc) =>
         let
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
               A.STRLET
                 ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))], strexp, loc)
           val newFunBind =
-              (funid, A.FUNPARAM ((Symbol.fromString newStrid, loc), A.SIGBASIC(spec, loc)), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((Symbol.fromString newStrid, loc), A.SIGBASIC specLoc, #2 specLoc)), NONE, newStrexp, loc)
+        in
+          elabFunBind newFunBind
+        end
+      | (funid, NONE, sigcon, strexp, loc) =>
+        let
+          val newStrid = Symbol.fromString NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+          val newFunBind =
+              (funid, SOME (A.FUNPARAM ((newStrid, loc), A.SIGBASIC (nil, loc), loc)), sigcon, strexp, loc)
         in
           elabFunBind newFunBind
         end
       (* functor F(A:sig) = str
        *)
-      | (funid, A.FUNPARAM (strid, argSigexp), NONE, strexp, loc) =>
+      | (funid, SOME (A.FUNPARAM (strid, argSigexp, _)), NONE, strexp, loc) =>
         let
           val newArgSigexp = elabSigExp argSigexp
           val newStrexp = elabStrExp strexp

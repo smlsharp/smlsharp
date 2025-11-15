@@ -254,10 +254,16 @@ struct
   (*% @params(head) *)
   type funbind =
       (*%
-       * @format(funid * param * strexp * loc)
-       * !N0{ head funid "(" 2[1] !N0{ param } 1 ")" +d "=" +1 strexp }
+       * @format(funid * param paramOpt * strexp * loc)
+       * !N0{
+       *   head
+       *   funid
+       *   "(" 2[1] !N0{ paramOpt(param) } 1 ")"
+       *   +d "=" +1
+       *   strexp
+       * }
        *)
-      funid * fun_param * strexp * loc
+      funid * fun_param option * strexp * loc
 
   (*%
    * @formatter(ifsome) AbsynFormatterUtils.ifsome

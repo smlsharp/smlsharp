@@ -245,7 +245,7 @@ structure I = AbsynInterface
   | exdesc of A.exdesc list
   | strdesc of A.strdesc list
   | sigbind of A.sigbind list
-  | funparam of A.fun_param
+  | funparam of A.fun_param option
 
 %start itop
 %eop EOF
@@ -1034,6 +1034,11 @@ strdesc
 
 funparam
         : alphabetic_id COLON sigexp
-          (A.FUNPARAM (alphabetic_id, sigexp))
+          (SOME
+             (A.FUNPARAM
+                (alphabetic_id, sigexp, (alphabetic_idleft, sigexpright))))
         | spec
-          (A.FUNPARAM_SPEC (Snoc.toList spec))
+          (case spec of
+             NIL => NONE
+           | _ ::> _ =>
+             SOME (A.FUNPARAM_SPEC (Snoc.toList spec, (specleft, specright))))

@@ -72,7 +72,9 @@ struct
     | SIGCONSTRAINT of Absyn.sigconstraint
     | STREXP of Absyn.strexp
     | STRDEC of Absyn.strdec
+    | FUN_ARG of Absyn.fun_arg
     | STRBIND of Absyn.strbind
+    | FUN_PARAM of Absyn.fun_param
     | FUNBIND of Absyn.funbind
     | TOPDEC of Absyn.topdec
     | TOP of Absyn.top
@@ -287,7 +289,11 @@ struct
       | STRDEC (A.STRUCTURE _) => "STRDEC:STRUCTURE"
       | STRDEC (A.STRLOCAL _) => "STRDEC:STRLOCAL"
       | STRDEC (A.STRSEMICOLON _) => "STRDEC:STRSEMICOLON"
+      | FUN_ARG (A.FUNARG _) => "FUN_ARG:FUNARG"
+      | FUN_ARG (A.FUNARG_DEC _) => "FUN_ARG:FUNARG_DEC"
       | STRBIND _ => "STRBIND"
+      | FUN_PARAM (A.FUNPARAM _) => "FUN_PARAM:FUNPARAM"
+      | FUN_PARAM (A.FUNPARAM_SPEC _) => "FUN_PARAM:FUNPARAM_SPEC"
       | FUNBIND _ => "FUNBIND"
       | TOPDEC (A.TOPSTRDEC _) => "TOPDEC:TOPSTRDEC"
       | TOPDEC (A.TOPSIGNATURE _) => "TOPDEC:TOPSIGNATURE"
@@ -588,7 +594,11 @@ struct
       | STRDEC (A.STRUCTURE (_, loc)) => loc
       | STRDEC (A.STRLOCAL (_, _, loc)) => loc
       | STRDEC (A.STRSEMICOLON loc) => loc
+      | FUN_ARG (A.FUNARG strexp) => getLoc (STREXP strexp)
+      | FUN_ARG (A.FUNARG_DEC (_, loc)) => loc
       | STRBIND (_, _, _, loc) => loc
+      | FUN_PARAM (A.FUNPARAM (_, _, loc)) => loc
+      | FUN_PARAM (A.FUNPARAM_SPEC (_, loc)) => loc
       | FUNBIND (_, _, _, _, loc) => loc
       | TOPDEC (A.TOPSTRDEC strdec) => getLoc (STRDEC strdec)
       | TOPDEC (A.TOPSIGNATURE (_, loc)) => loc
@@ -936,10 +946,8 @@ struct
       | STREXP (A.STRID id) => [LONGSTRID id]
       | STREXP (A.STRCONSTRAINT (strexp, sigop, sigexp, loc)) =>
         [STREXP strexp, SIGEXP sigexp]
-      | STREXP (A.STRAPP (funid, A.FUNARG strexp, loc)) =>
-        [FUNID funid, STREXP strexp]
-      | STREXP (A.STRAPP (funid, A.FUNARG_DEC strdecs, loc)) =>
-        FUNID funid :: map STRDEC strdecs
+      | STREXP (A.STRAPP (funid, NONE, loc)) => [FUNID funid]
+      | STREXP (A.STRAPP (funid, SOME arg, loc)) => [FUNID funid, FUN_ARG arg]
       | STREXP (A.STRLET (strdecs, strexp, loc)) =>
         map STRDEC strdecs @ [STREXP strexp]
       | STRDEC (A.STRDEC dec) => [DEC dec]
@@ -947,18 +955,22 @@ struct
       | STRDEC (A.STRLOCAL (strdecs1, strdecs2, loc)) =>
         map STRDEC (strdecs1 @ strdecs2)
       | STRDEC (A.STRSEMICOLON _) => nil
+      | FUN_ARG (A.FUNARG strexp) => [STREXP strexp]
+      | FUN_ARG (A.FUNARG_DEC (strdecs, loc)) => map STRDEC strdecs
       | STRBIND (strid, NONE, strexp, loc) => [STRID strid, STREXP strexp]
       | STRBIND (strid, SOME sigcon, strexp, loc) =>
         [STRID strid, SIGCONSTRAINT sigcon, STREXP strexp]
-      | FUNBIND (funid, A.FUNPARAM (strid, sigexp), NONE, strexp, loc) =>
-        [FUNID funid, STRID strid, SIGEXP sigexp, STREXP strexp]
-      | FUNBIND (funid, A.FUNPARAM (strid, sigexp), SOME sigcon, strexp, loc) =>
-        [FUNID funid, STRID strid, SIGEXP sigexp, SIGCONSTRAINT sigcon,
-         STREXP strexp]
-      | FUNBIND (funid, A.FUNPARAM_SPEC specs, NONE, strexp, loc) =>
-        FUNID funid :: map SPEC specs @ [STREXP strexp]
-      | FUNBIND (funid, A.FUNPARAM_SPEC specs, SOME sigcon, strexp, loc) =>
-        FUNID funid :: map SPEC specs @ [SIGCONSTRAINT sigcon, STREXP strexp]
+      | FUN_PARAM (A.FUNPARAM (strid, sigexp, loc)) =>
+        [STRID strid, SIGEXP sigexp]
+      | FUN_PARAM (A.FUNPARAM_SPEC (specs, loc)) => map SPEC specs
+      | FUNBIND (funid, NONE, NONE, strexp, loc) =>
+        [FUNID funid, STREXP strexp]
+      | FUNBIND (funid, NONE, SOME sigcon, strexp, loc) =>
+        [FUNID funid, SIGCONSTRAINT sigcon, STREXP strexp]
+      | FUNBIND (funid, SOME param, NONE, strexp, loc) =>
+        [FUNID funid, FUN_PARAM param, STREXP strexp]
+      | FUNBIND (funid, SOME param, SOME sigcon, strexp, loc) =>
+        [FUNID funid, FUN_PARAM param, SIGCONSTRAINT sigcon, STREXP strexp]
       | TOPDEC (A.TOPSTRDEC strdec) => [STRDEC strdec]
       | TOPDEC (A.TOPSIGNATURE (sigbinds, loc)) => map SIGBIND sigbinds
       | TOPDEC (A.TOPFUNCTOR (funbinds, loc)) => map FUNBIND funbinds
@@ -1126,10 +1138,9 @@ struct
       | ISTREXP (I.STRID id) => [LONGSTRID id]
       | ISTREXP (I.STRAPP (funid, strid, loc)) => [FUNID funid, LONGSTRID strid]
       | ISTRBIND (strid, strexp, loc) => [STRID strid, ISTREXP strexp]
-      | IFUNBIND (funid, A.FUNPARAM (strid, sigexp), strexp, loc) =>
-        [FUNID funid, STRID strid, SIGEXP sigexp, ISTREXP strexp]
-      | IFUNBIND (funid, A.FUNPARAM_SPEC specs, strexp, loc) =>
-        FUNID funid :: map SPEC specs @ [ISTREXP strexp]
+      | IFUNBIND (funid, NONE, strexp, loc) => [FUNID funid, ISTREXP strexp]
+      | IFUNBIND (funid, SOME param, strexp, loc) =>
+        [FUNID funid, FUN_PARAM param, ISTREXP strexp]
       | ITOPDEC (I.DEC dec) => [IDEC dec]
       | ITOPDEC (I.FUNCTOR (funbind, loc)) => [IFUNBIND funbind]
       | ITOPDEC (I.INFIX (prec, ids, loc)) => map VID ids

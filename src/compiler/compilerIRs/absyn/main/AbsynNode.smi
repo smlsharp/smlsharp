@@ -70,7 +70,9 @@ struct
     | SIGCONSTRAINT of Absyn.sigconstraint
     | STREXP of Absyn.strexp
     | STRDEC of Absyn.strdec
+    | FUN_ARG of Absyn.fun_arg
     | STRBIND of Absyn.strbind
+    | FUN_PARAM of Absyn.fun_param
     | FUNBIND of Absyn.funbind
     | TOPDEC of Absyn.topdec
     | TOP of Absyn.top

@@ -76,7 +76,7 @@ struct
 
   type strbind = strid * strexp * loc
 
-  type funbind = funid * fun_param * strexp * loc
+  type funbind = funid * fun_param option * strexp * loc
 
   datatype topdec =
       DEC of dec

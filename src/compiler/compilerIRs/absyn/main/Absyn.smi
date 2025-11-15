@@ -203,7 +203,7 @@ struct
       STRBASIC of strdec list * loc
     | STRID of longstrid
     | STRCONSTRAINT of strexp * sigop * sigexp * loc
-    | STRAPP of funid * fun_arg * loc
+    | STRAPP of funid * fun_arg option * loc
     | STRLET of strdec list * strexp * loc
 
   and strdec =
@@ -214,15 +214,15 @@ struct
 
   and fun_arg =
       FUNARG of strexp
-    | FUNARG_DEC of strdec list
+    | FUNARG_DEC of strdec list * loc
 
   type strbind = strid * sigconstraint option * strexp * loc
 
   datatype fun_param =
-      FUNPARAM of strid * sigexp
-    | FUNPARAM_SPEC of spec list
+      FUNPARAM of strid * sigexp * loc
+    | FUNPARAM_SPEC of spec list * loc
 
-  type funbind = funid * fun_param * sigconstraint option * strexp * loc
+  type funbind = funid * fun_param option * sigconstraint option * strexp * loc
 
   datatype topdec =
       TOPSTRDEC of strdec

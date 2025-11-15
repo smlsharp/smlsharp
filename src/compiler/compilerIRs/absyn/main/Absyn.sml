@@ -963,10 +963,10 @@ struct
        *)
       STRCONSTRAINT of strexp * sigop * sigexp * loc
     | (*%
-       * @format(funid * arg * loc)
-       * !N0{ funid "(" 2[1] !N0{ arg } 1 ")" }
+       * @format(funid * arg argOpt * loc)
+       * !N0{ funid "(" 2[1] !N0{ argOpt(arg) } 1 ")" }
        *)
-      STRAPP of funid * fun_arg * loc
+      STRAPP of funid * fun_arg option * loc
     | (*%
        * @format(strdec strdecs * strexp * loc)
        * !N0{
@@ -1017,10 +1017,10 @@ struct
        *)
       FUNARG of strexp
     | (*%
-       * @format(strdec strdecs)
+       * @format(strdec strdecs * loc)
        * !N0{ strdecs(strdec)(+1) }
        *)
-      FUNARG_DEC of strdec list
+      FUNARG_DEC of strdec list * loc
 
   withtype (*% @params(head) *) strbind =
       (*%
@@ -1042,32 +1042,34 @@ struct
   (*% *)
   datatype fun_param =
       (*%
-       * @format(strid * sigexp)
+       * @format(strid * sigexp * loc)
        * !N0{ strid +1 ":" +d sigexp }
        *)
-      FUNPARAM of strid * sigexp
+      FUNPARAM of strid * sigexp * loc
     | (*%
-       * @format(spec specs)
+       * @format(spec specs * loc)
        * !N0{ specs(spec)(+1) }
        *)
-      FUNPARAM_SPEC of spec list
+      FUNPARAM_SPEC of spec list * loc
 
   (*%
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   type (*% @params(head) *) funbind =
       (*%
-       * @format(funid * param * sigcon sigconOpt * strexp * loc)
+       * @format(funid * param paramOpt * sigcon sigconOpt * strexp * loc)
        * !N0{
        *   sigconOpt:ifsome()(
-       *     sigconOpt(sigcon()(head funid "(" 2[1] !N0{ param } 1 ")" +1)),
-       *     head funid "(" 2[1] !N0{ param } 1 ")"
+       *     sigconOpt(
+       *       sigcon()(head funid "(" 2[1] !N0{ paramOpt(param) } 1 ")" +1)
+       *     ),
+       *     head funid "(" 2[1] !N0{ paramOpt(param) } 1 ")"
        *   )
        *   +d "=" +1
        *   strexp
        * }
        *)
-      funid * fun_param * sigconstraint option * strexp * loc
+      funid * fun_param option * sigconstraint option * strexp * loc
 
   (*%
    * @formatter(decs) AbsynFormatterUtils.decs

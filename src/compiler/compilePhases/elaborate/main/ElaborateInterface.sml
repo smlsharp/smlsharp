@@ -349,9 +349,9 @@ struct
         val strexp = elabStrexp strexp
         val param =
             case param of
-              I.FUNPARAM (symbol, sigexp) =>
+              SOME (I.FUNPARAM (symbol, sigexp, loc)) =>
               {strSymbol = toSymbol symbol, sigexp = elabSigexp sigexp}
-            | I.FUNPARAM_SPEC spec =>
+            | _ =>
               let
                 val dummySym = SymbolWithLoc.mkSymbol "" (LOC loc)
               in
