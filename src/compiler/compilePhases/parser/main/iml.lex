@@ -338,7 +338,11 @@ real="~"?{digit}+({frac}{exp}|{frac}|{exp});
            else if x <= 0wx7ff
            then (addString (str (byte (x,  0w6, 0wx1f, 0wxc0))) arg;
                  addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg)
-           else (addString (str (byte (x, 0w12, 0wx0f, 0wxe0))) arg;
+           else (if 0wxd800 <= x andalso x <= 0wxdfff
+                 then #error arg ("invalid unicode escape sequence " ^ yytext,
+                                  loc yytext yypos arg)
+                 else ();
+                 addString (str (byte (x, 0w12, 0wx0f, 0wxe0))) arg;
                  addString (str (byte (x,  0w6, 0wx3f, 0wx80))) arg;
                  addString (str (byte (x,  0w0, 0wx3f, 0wx80))) arg);
            continue ()
