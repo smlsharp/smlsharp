@@ -144,7 +144,7 @@ struct
 
   fun checkSigexp sigexp =
       case sigexp of
-        PC.PLSIGEXPBASIC (spec, loc) => checkSpec spec
+        PC.PLSIGEXPBASIC (spec, loc) => app checkSpec spec
       | PC.PLSIGID symbol =>
         EU.enqueueError
           (SymbolWithLoc.symbolToLoc symbol,
@@ -162,11 +162,8 @@ struct
       | PC.PLSPECSTRUCT (strdecs, loc) =>
         app (fn (symbol, sigexp, loc) => checkSigexp sigexp) strdecs
       | PC.PLSPECINCLUDE (sigexp, loc) => checkSigexp sigexp
-      | PC.PLSPECSEQ (spec1, spec2) =>
-        (checkSpec spec1; checkSpec spec2)
-      | PC.PLSPECSHARE (spec, ids, loc) => checkSpec spec
-      | PC.PLSPECSHARESTR (spec, ids, loc) => checkSpec spec
-      | PC.PLSPECEMPTY => ()
+      | PC.PLSPECSHARE (spec, ids, loc) => app checkSpec spec
+      | PC.PLSPECSHARESTR (spec, ids, loc) => app checkSpec spec
 
   fun elabSigexp sigexp =
       let

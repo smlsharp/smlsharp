@@ -444,7 +444,7 @@ struct
   fun decideSigexp sigexp =
       case sigexp of 
         P.PLSIGEXPBASIC (spec, loc) =>
-        P.PLSIGEXPBASIC (decideSpec spec, loc)
+        P.PLSIGEXPBASIC (map decideSpec spec, loc)
       | P.PLSIGID _ => sigexp
       | P.PLSIGWHERE (sigexp, typbinds, loc) =>
         P.PLSIGWHERE (decideSigexp sigexp, typbinds, loc)
@@ -469,13 +469,10 @@ struct
         P.PLSPECSTRUCT (map (fn (k,e,l) => (k, decideSigexp e, l)) strdescs, loc)
       | P.PLSPECINCLUDE (sigexp, loc) =>
         P.PLSPECINCLUDE (decideSigexp sigexp, loc)
-      | P.PLSPECSEQ (spec1, spec2) =>
-        P.PLSPECSEQ (decideSpec spec1, decideSpec spec2)
       | P.PLSPECSHARE (spec, tycons, loc) =>
-        P.PLSPECSHARE (decideSpec spec, tycons, loc)
+        P.PLSPECSHARE (map decideSpec spec, tycons, loc)
       | P.PLSPECSHARESTR (spec, strids, loc) =>
-        P.PLSPECSHARESTR (decideSpec spec, strids, loc)
-      | P.PLSPECEMPTY => spec
+        P.PLSPECSHARESTR (map decideSpec spec, strids, loc)
 
   fun decideStrexp strexp =
       case strexp of

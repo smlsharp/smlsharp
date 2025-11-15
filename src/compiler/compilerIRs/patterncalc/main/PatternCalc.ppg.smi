@@ -120,7 +120,7 @@ struct
     | PLSTRUCTLET  of plstrdec list * plstrexp * loc (*local declaration*)
 
   and plsigexp 
-    = PLSIGEXPBASIC of plspec * loc (*basic*)
+    = PLSIGEXPBASIC of plspec list * loc (*basic*)
     | PLSIGID of symbol
     | PLSIGWHERE of plsigexp * (tvar list * longsymbol * ty) * loc
 
@@ -135,10 +135,8 @@ struct
     | PLSPECEXCEPTION of (symbol * ty option * loc) list * loc (* exception *)
     | PLSPECSTRUCT of (symbol * plsigexp * loc) list * loc (* structure *)
     | PLSPECINCLUDE of plsigexp * loc (* include *)
-    | PLSPECSEQ of plspec * plspec
-    | PLSPECSHARE of plspec * longsymbol list * loc 
-    | PLSPECSHARESTR of plspec * longsymbol list * loc 
-    | PLSPECEMPTY
+    | PLSPECSHARE of plspec list * longsymbol list * loc 
+    | PLSPECSHARESTR of plspec list * longsymbol list * loc 
 
   and pltopdec 
     = PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)

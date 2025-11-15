@@ -554,10 +554,10 @@ struct
 
   and plsigexp =
       (*%
-       * @format(spec * loc)
-       * !R0{ "sig" 1[ +1 spec ] +1 "end" }
+       * @format(spec specs * loc)
+       * !R0{ "sig" 1[ +1 specs(spec)(+1) ] +1 "end" }
        *)
-      PLSIGEXPBASIC of plspec * loc
+      PLSIGEXPBASIC of plspec list * loc
     | (*%
        * @format(symbol) symbol
        *)
@@ -618,24 +618,17 @@ struct
        *)
       PLSPECINCLUDE of plsigexp * loc
     | (*%
-       * @format(spec1 * spec2)
-       * spec1 +1 spec2
+       * @format(spec specs * name names * loc)
+       * specs(spec)(+1)
+       * +1 !R0{ "sharing" +d "type" 1[ +d names(name)(+1 "=" +d) ] }
        *)
-      PLSPECSEQ of plspec * plspec
+      PLSPECSHARE of plspec list * longsymbol list * loc
     | (*%
-       * @format(spec * name names * loc)
-       * spec +1 !R0{ "sharing" +d "type" 1[ +d names(name)(+1 "=" +d) ] }
+       * @format(spec specs * name names * loc)
+       * specs(spec)(+1)
+       * +1 !R0{ "sharing" 1[ +d names(name)(+1 "=" +d) ] }
        *)
-      PLSPECSHARE of plspec * longsymbol list * loc
-    | (*%
-       * @format(spec * name names * loc)
-       * spec +1 !R0{ "sharing" 1[ +d names(name)(+1 "=" +d) ] }
-       *)
-      PLSPECSHARESTR of plspec * longsymbol list * loc
-    | (*%
-       * @format "(*empty*)"
-       *)
-      PLSPECEMPTY
+      PLSPECSHARESTR of plspec list * longsymbol list * loc
 
   and pltopdec =
       (*%

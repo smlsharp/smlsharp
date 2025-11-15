@@ -719,7 +719,7 @@ local
           sigEntry # {env = specEnv}
         end
     end
-  and evalPlspec (topEnv as {Env=env, FunE, SigE}) path plspec : V.env =
+  and evalPlspec1 (topEnv as {Env=env, FunE, SigE}) path plspec : V.env =
       case plspec of
         (* val x : ty and y : ty ... *)
         P.PLSPECVAL (scopedTvars, symbol, ty, loc) =>
@@ -1057,17 +1057,6 @@ local
           specEnv
         end
 
-      (* spec; spec *)
-      | P.PLSPECSEQ (plspec1, plspec2) =>
-        let
-          val specEnv1 = evalPlspec topEnv path plspec1
-          val evalEnv = VP.topEnvWithEnv (topEnv,specEnv1)
-          val specEnv2 = evalPlspec evalEnv path plspec2
-          val specEnv = VP.unionEnv "220" (specEnv1,specEnv2)
-        in
-          specEnv
-        end
-
       (* <spec> sharing type path1 = path2 = path3 ... *)
       | P.PLSPECSHARE (plspec, longsymbolList, loc) =>
        let
@@ -1134,7 +1123,18 @@ local
           specEnv
         end
 
-      | P.PLSPECEMPTY => V.emptyEnv
+  and evalPlspec topEnv path plspecs : V.env =
+      foldl
+        (fn (plspec, specEnv1) =>
+            let
+              val evalEnv = VP.topEnvWithEnv (topEnv, specEnv1)
+              val specEnv2 = evalPlspec1 evalEnv path plspec
+              val specEnv = VP.unionEnv "220" (specEnv1, specEnv2)
+            in
+              specEnv
+            end)
+        V.emptyEnv
+        plspecs
 
 in
   val refreshSpecEnv = fn specEnv => refreshSpecEnv nil specEnv

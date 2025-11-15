@@ -49,15 +49,6 @@ struct
   fun elabBinds elaborator elements =
       map (fn (label, element, loc) => (toSymbol label, elaborator element, LOC loc)) elements
 
-  fun specListToSpecSeq specList =
-      let
-        fun makeSeqSpec [] = raise Bug.Bug "nilspec found in elaborate"
-          | makeSeqSpec [spec] = spec
-          | makeSeqSpec (spec :: specs) =
-            PC.PLSPECSEQ(spec, makeSeqSpec specs)
-      in makeSeqSpec specList
-      end
-
     fun elabSpec spec =
         case spec of
           A.SPECVAL(valBinds, loc) =>
@@ -74,7 +65,7 @@ struct
                 map (fn (vid, ty, _) => PC.PLSPECVAL (emptyTvars, toSymbol vid, ty, LOC loc))
                     valBinds
           in
-            specListToSpecSeq specs
+            specs
           end
         | A.SPECTYPE(tydescs, loc) =>
           let
@@ -83,7 +74,7 @@ struct
                   (toSymbol o #2) tydescs E.DuplicateTypDesc
             val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
           in
-            PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=LOC loc}
+            [PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=LOC loc}]
           end
         (*
       | A.SPECTYPE(tydescs, loc) =>
@@ -104,7 +95,7 @@ struct
             fun elabTypeEquation (tvars, symbol, ty, _) =
                 PC.PLSPECTYPEEQUATION ((seq tvars, toSymbol symbol, ty), LOC loc)
           in
-            specListToSpecSeq (map elabTypeEquation maniftypedescs)
+            map elabTypeEquation maniftypedescs
           end
         | A.SPECEQTYPE(tydescs, loc) =>
           let
@@ -114,7 +105,7 @@ struct
                   tydescs E.DuplicateTypDesc
             val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
           in
-            PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=LOC loc}
+            [PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=LOC loc}]
           end
 (*
       | A.SPECEQTYPE(tydescs, loc) =>
@@ -145,15 +136,15 @@ struct
                 )
             val _ = map check dataDescs
           in
-            PC.PLSPECDATATYPE
-              (map (fn (tyvars, symbol, con, loc) =>
-                       {tyvars = seq tyvars, loc = LOC loc, symbol = toSymbol symbol,
-                        conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=LOC loc}) con})
-                   dataDescs,
-               LOC loc)
+            [PC.PLSPECDATATYPE
+               (map (fn (tyvars, symbol, con, loc) =>
+                        {tyvars = seq tyvars, loc = LOC loc, symbol = toSymbol symbol,
+                         conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=LOC loc}) con})
+                    dataDescs,
+                LOC loc)]
           end
         | A.SPECDATATYPEREP(tyCon, longTyCon, loc) =>
-          PC.PLSPECREPLIC(toSymbol tyCon, toLongsymbol longTyCon, LOC loc)
+          [PC.PLSPECREPLIC(toSymbol tyCon, toLongsymbol longTyCon, LOC loc)]
         | A.SPECEXCEPTION(exnDescs, loc) =>
           let
             val _ =
@@ -168,39 +159,32 @@ struct
             val exnDescs =
                 map (fn (symbol, tyOpt, loc) => (toSymbol symbol, tyOpt, LOC loc)) exnDescs
           in
-            PC.PLSPECEXCEPTION(exnDescs, LOC loc)
+            [PC.PLSPECEXCEPTION(exnDescs, LOC loc)]
           end
         | A.SPECSTRUCTURE(strdescs, loc) =>
           let
             val _ = checkSymbolDuplication (toSymbol o #1) strdescs E.DuplicateStrDesc
           in
-            PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs,
-                             LOC loc)
+            [PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs,
+                              LOC loc)]
           end
         | A.SPECINCLUDE(sigexp, loc)=>
-          PC.PLSPECINCLUDE(elabSigExp sigexp, LOC loc)
+          [PC.PLSPECINCLUDE(elabSigExp sigexp, LOC loc)]
         | A.SPECINCLUDE_ID(sigids, loc) =>
           let
             fun elabSigID sigid =
                 PC.PLSPECINCLUDE(PC.PLSIGID (toSymbol sigid), LOC loc)
           in
-            specListToSpecSeq (map elabSigID sigids)
+            map elabSigID sigids
           end
         | A.SPECSHARINGTYPE(spec, longTyCons, loc) =>
-          PC.PLSPECSHARE (elabSpecList spec, map toLongsymbol longTyCons, LOC loc)
+          [PC.PLSPECSHARE (elabSpecList spec, map toLongsymbol longTyCons, LOC loc)]
         | A.SPECSHARING(spec, longstrids, loc) =>
-          PC.PLSPECSHARESTR (elabSpecList spec, map toLongsymbol longstrids, LOC loc)
-        | A.SPECSEMICOLON _ => PC.PLSPECEMPTY
+          [PC.PLSPECSHARESTR (elabSpecList spec, map toLongsymbol longstrids, LOC loc)]
+        | A.SPECSEMICOLON _ => nil
 
     and elabSpecList specs =
-        foldl
-          (fn (spec, z) =>
-              case (z, elabSpec spec) of
-                (z, PC.PLSPECEMPTY) => z
-              | (PC.PLSPECEMPTY, spec) => spec
-              | (z, spec) => PC.PLSPECSEQ (z, spec))
-          PC.PLSPECEMPTY
-          specs
+        List.concat (map elabSpec specs)
 
     and elabSigExp sigexp =
         case sigexp of
