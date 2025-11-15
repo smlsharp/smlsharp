@@ -125,7 +125,7 @@ struct
     | PLSIGWHERE of plsigexp * (tvar list * longsymbol * ty) * loc
 
   and plspec 
-    = PLSPECVAL of scopedTvars * symbol * ty * loc (* value *)
+    = PLSPECVAL of (scopedTvars * symbol * ty * loc) list (* value *)
     | PLSPECTYPE of {tydecls:(tvar list * symbol) list, eq:bool, loc:loc}
     | PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
     | PLSPECDATATYPE of

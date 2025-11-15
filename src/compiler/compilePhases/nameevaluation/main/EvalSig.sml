@@ -722,23 +722,31 @@ local
   and evalPlspec1 (topEnv as {Env=env, FunE, SigE}) path plspec : V.env =
       case plspec of
         (* val x : ty and y : ty ... *)
-        P.PLSPECVAL (scopedTvars, symbol, ty, loc) =>
-        let
-          val (tvarEnv, kindedTyars) =
-              Ty.evalScopedTvars Ty.emptyTvarEnv env scopedTvars
-          val ty = Ty.evalTy tvarEnv env ty
-          val ty = 
-              case kindedTyars of
-                nil => ty
-              | _ => I.TYPOLY(kindedTyars,ty)
-          val specEnv = 
-              VP.rebindId VP.BIND_SIG
-                (V.emptyEnv, 
-                 symbol, 
-                 I.IDSPECVAR {ty=ty, symbol=symbol, defRange = loc})
-        in
-          specEnv
-        end
+        P.PLSPECVAL valdescs =>
+        (
+          EU.checkSymbolDuplication
+            (fn (_, symbol, _, _) => symbol)
+            valdescs
+            (fn s => E.DuplicateTypInSpec("Sig-055", s));
+          foldl
+            (fn ((scopedTvars, symbol, ty, loc), specEnv) =>
+                let
+                  val (tvarEnv, kindedTyars) =
+                      Ty.evalScopedTvars Ty.emptyTvarEnv env scopedTvars
+                  val ty = Ty.evalTy tvarEnv env ty
+                  val ty =
+                      case kindedTyars of
+                        nil => ty
+                      | _ => I.TYPOLY(kindedTyars,ty)
+                in
+                  VP.rebindId VP.BIND_SIG
+                    (specEnv,
+                     symbol,
+                     I.IDSPECVAR {ty=ty, symbol=symbol, defRange = loc})
+                end)
+            V.emptyEnv
+            valdescs
+        )
 
       | P.PLSPECTYPE {tydecls=tvarListStringList, eq, loc} =>
       (* type 'a foo and ...*)

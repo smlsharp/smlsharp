@@ -62,10 +62,10 @@ struct
                           (toSymbol vid))
                     valBinds
             val specs =
-                map (fn (vid, ty, _) => PC.PLSPECVAL (emptyTvars, toSymbol vid, ty, LOC loc))
+                map (fn (vid, ty, _) => (emptyTvars, toSymbol vid, ty, LOC loc))
                     valBinds
           in
-            specs
+            [PC.PLSPECVAL specs]
           end
         | A.SPECTYPE(tydescs, loc) =>
           let

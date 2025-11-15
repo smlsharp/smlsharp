@@ -449,14 +449,17 @@ struct
       | P.PLSIGWHERE (sigexp, typbinds, loc) =>
         P.PLSIGWHERE (decideSigexp sigexp, typbinds, loc)
 
+  and decideValdesc (scope, symbol, ty, loc) =
+      let
+        val (_, scoped) = decideScope tyvarsTy emptyEnv (scope, ty, loc)
+      in
+        (scoped, symbol, ty, loc)
+      end
+
   and decideSpec spec =
       case spec of
-        P.PLSPECVAL (scope, symbol, ty, loc) =>
-        let
-          val (_, scoped) = decideScope tyvarsTy emptyEnv (scope, ty, loc)
-        in
-          P.PLSPECVAL (scoped, symbol, ty, loc)
-        end
+        P.PLSPECVAL valdescs =>
+        P.PLSPECVAL (map decideValdesc valdescs)
       | P.PLSPECTYPE _ => spec
       | P.PLSPECTYPEEQUATION _ => spec
 (*

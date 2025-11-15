@@ -245,6 +245,14 @@ struct
         loc:loc
       }
 
+  (*% *)
+  type valdesc =
+      (*%
+       * @format(tyvars * symbol * ty * loc)
+       * L4{ tyvars symbol +1 ":" +d ty }
+       *)
+      scopedTvars * symbol * ty * loc
+
   (*%
    * @formatter(ifnone) format_ifnone
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -572,10 +580,10 @@ struct
 
   and plspec =
       (*%
-       * @format(tyvars * symbol * ty * loc)
-       * !R0{ "val" +d L4{ tyvars symbol +1 ":" +d ty } }
+       * @format(valdesc valdescs)
+       * !R0{ "val" +d valdescs(valdesc)(+1 "and" +d) }
        *)
-      PLSPECVAL of scopedTvars * symbol * ty * loc
+      PLSPECVAL of valdesc list
     | (*%
        * @format({tydecls: bind binds, eq, loc})
        * !R0{ binds:prepend(bind)(, eq()("eqtype","type") +d, +1, "and" +d) }
