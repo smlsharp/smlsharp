@@ -1,7 +1,17 @@
-NODE {tests/data/loadfile/013_require/013_require3.smi INTERFACE}
-NODE {tests/data/loadfile/013_require/013_require2.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/013_require/013_require2.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/013_require/013_require2.smi INTERFACE
-  9397bba76b32c63b
-  REQUIRE {USERPATH tests/data/loadfile/013_require/013_require3.smi INTERFACE
-   632922146942cb5a}}}
+allNodes:
+- fileName: tests/data/loadfile/013_require/013_require3.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 632922146942cb5a
+  edges: []
+- fileName: tests/data/loadfile/013_require/013_require2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 9397bba76b32c63b
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/013_require/013_require3.smi
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/013_require/013_require2.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/013_require/013_require2.smi

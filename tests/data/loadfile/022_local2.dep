@@ -1,6 +1,17 @@
-NODE {tests/data/loadfile/022_local4.smi INTERFACE}
-NODE {tests/data/loadfile/022_local2.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/022_local2.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/022_local2.smi INTERFACE b3b09ffa2a62de6f
-  LOCAL_REQUIRE {USERPATH tests/data/loadfile/022_local4.smi INTERFACE
-   20b649fe6ad59ea8}}}
+allNodes:
+- fileName: tests/data/loadfile/022_local4.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 20b649fe6ad59ea8
+  edges: []
+- fileName: tests/data/loadfile/022_local2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE b3b09ffa2a62de6f
+  edges:
+  - type: LOCAL_REQUIRE
+    node: tests/data/loadfile/022_local4.smi
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/022_local2.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/022_local2.smi

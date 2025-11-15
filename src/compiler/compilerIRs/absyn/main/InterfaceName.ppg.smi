@@ -1,8 +1,6 @@
-_require local "../../../libs/digest/main/SHA3.smi"
-(* _require local "../../../libs/env/main/SEnv.smi" *)
-
-_require "../../../../smlformat-lib.smi"
 _require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../../libs/digest/main/SHA3.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
 _require "../../../extensions/debug/main/Bug.smi"
 _require "../../../data/symbols/main/Loc.smi"
@@ -19,11 +17,7 @@ struct
   type source =
       Loc.file_place * Filename.filename
 
-  type interface_name =
-      {
-        hash: hash,
-        source: source
-      }
+  type interface_name = {hash: hash, source: source}
 
   datatype provider =
       STEP of int
@@ -52,11 +46,9 @@ struct
     | PROVIDE
 
   datatype file_dependency_node =
-      FILE of {
-        source : source,
-        fileType : file_type,
-        edges : file_dependency_edge list
-      }
+      FILE of {source : source,
+               fileType : file_type,
+               edges : file_dependency_edge list}
 
   withtype file_dependency_edge =
       file_dependency_edge_type * file_dependency_node * Loc.loc
@@ -71,64 +63,32 @@ struct
        edges : file_dependency_edge list}
 
   type file_dependency =
-      {allNodes : file_dependency_node list, root : file_dependency_root}
+      {allNodes : file_dependency_node list,
+       root : file_dependency_root}
 
   datatype init_requisite =
       INIT_ALWAYS
     | INIT_IFNEEDED
 
   type toplevel_prelude =
-      {
-        toplevelName : interface_name option,
-        initRequisites : (init_requisite * interface_name) list
-      }
+      {toplevelName : interface_name option,
+       initRequisites : (init_requisite * interface_name) list}
 
-(*
-  type dependRel = 
-       {sourceFile : source, sourceHash : hash, dependType:string, dependFile : source} list
-*)
-
-  val format_hash
-      : hash -> SMLFormat.FormatExpression.expression list
-  val format_file_type
-      : file_type -> SMLFormat.FormatExpression.expression list
-
-  val format_file_dependency_root_file_type
-      : file_dependency_root_file_type -> SMLFormat.FormatExpression.expression list
-
-  val format_source
-      : source -> SMLFormat.FormatExpression.expression list
-  val sourceToString
-      : source -> string
-  val format_interface_name
-      : interface_name -> SMLFormat.FormatExpression.expression list
-  val interface_nameToString
-      : interface_name -> string
-  val format_short_interface_name
-      : interface_name -> SMLFormat.FormatExpression.expression list
-  val format_provider
-      : provider -> SMLFormat.FormatExpression.expression list
-  val format_file_load_mode
-      : file_load_mode -> SMLFormat.FormatExpression.expression list
+  val format_hash : hash -> SMLFormat.format
+  val format_source : source -> SMLFormat.format
+  val format_interface_name : interface_name -> SMLFormat.format
+  val format_provider : provider -> SMLFormat.format
+  val format_file_load_mode : file_load_mode -> SMLFormat.format
+  val format_file_type : file_type -> SMLFormat.format
   val format_file_dependency_edge_type
-      : file_dependency_edge_type -> SMLFormat.FormatExpression.expression list
-  val format_short_file_dependency_node
-      : file_dependency_node -> SMLFormat.FormatExpression.expression list
-  val format_file_dependency_node
-      : file_dependency_node -> SMLFormat.FormatExpression.expression list
-  val format_file_dependency_edge
-      : file_dependency_edge -> SMLFormat.FormatExpression.expression list
-  val format_file_dependency_root
-      : file_dependency_root -> SMLFormat.FormatExpression.expression list
-  val format_file_dependency
-      : file_dependency -> SMLFormat.FormatExpression.expression list
-  val format_init_requisite
-      : init_requisite -> SMLFormat.FormatExpression.expression list
-  val format_toplevel_prelude
-      : toplevel_prelude -> SMLFormat.FormatExpression.expression list
-(*
-  val format_dependRel
-      : dependRel -> SMLFormat.FormatExpression.expression list
-*)
+      : file_dependency_edge_type -> SMLFormat.format
+  val format_file_dependency_node : file_dependency_node -> SMLFormat.format
+  val format_file_dependency_edge : file_dependency_edge -> SMLFormat.format
+  val format_file_dependency_root_file_type
+      : file_dependency_root_file_type -> SMLFormat.format
+  val format_file_dependency_root : file_dependency_root -> SMLFormat.format
+  val format_file_dependency : file_dependency -> SMLFormat.format
+  val format_init_requisite : init_requisite -> SMLFormat.format
+  val format_toplevel_prelude : toplevel_prelude -> SMLFormat.format
 
 end

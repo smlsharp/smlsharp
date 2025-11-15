@@ -1,4 +1,11 @@
-NODE {tests/data/loadfile/071_include6.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/071_include6.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/071_include6.smi INTERFACE
-  9439da6bd89e76fe}}
+allNodes:
+- fileName: tests/data/loadfile/071_include6.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 9439da6bd89e76fe
+  edges: []
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/071_include6.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/071_include6.smi

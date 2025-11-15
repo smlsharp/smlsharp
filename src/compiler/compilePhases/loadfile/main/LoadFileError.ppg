@@ -9,7 +9,7 @@ struct
    * @formatter(Filename.filename) Filename.format_filename
    * @formatter(RequirePath.path) RequirePath.format_path
    * @formatter(InterfaceName.interface_name)
-   *   InterfaceName.format_short_interface_name
+   * InterfaceName.format_interface_name
    *)
   exception
 

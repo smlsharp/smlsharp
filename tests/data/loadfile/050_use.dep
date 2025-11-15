@@ -1,6 +1,19 @@
-NODE {tests/data/loadfile/050_use2.use SML}
-NODE {tests/data/loadfile/050_use.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/050_use.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/050_use.smi INTERFACE 518c08c4ba71032c
-  LOCAL_USE {USERPATH tests/data/loadfile/050_use2.use SML}}
- USE {USERPATH tests/data/loadfile/050_use2.use SML}}
+allNodes:
+- fileName: tests/data/loadfile/050_use2.use
+  filePlace: USERPATH
+  fileType: SML
+  edges: []
+- fileName: tests/data/loadfile/050_use.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 518c08c4ba71032c
+  edges:
+  - type: LOCAL_USE
+    node: tests/data/loadfile/050_use2.use
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/050_use.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/050_use.smi
+  - type: USE
+    node: tests/data/loadfile/050_use2.use

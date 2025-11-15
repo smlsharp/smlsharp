@@ -1,9 +1,29 @@
-NODE {tests/data/loadfile/084_sig2.sig INCLUDES}
-NODE {tests/data/loadfile/084_sig4.sig INCLUDES}
-NODE {tests/data/loadfile/084_sig3.smi INTERFACE}
-NODE {tests/data/loadfile/084_sig.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/084_sig.smi INTERFACE 0cfa575a4f476ebd
-  REQUIRE {USERPATH tests/data/loadfile/084_sig2.sig INCLUDES}
-  REQUIRE {USERPATH tests/data/loadfile/084_sig3.smi INTERFACE 69cbad55b1dc7fc6
-   REQUIRE {USERPATH tests/data/loadfile/084_sig4.sig INCLUDES}}}}
+allNodes:
+- fileName: tests/data/loadfile/084_sig2.sig
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges: []
+- fileName: tests/data/loadfile/084_sig4.sig
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges: []
+- fileName: tests/data/loadfile/084_sig3.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 69cbad55b1dc7fc6
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/084_sig4.sig
+- fileName: tests/data/loadfile/084_sig.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 0cfa575a4f476ebd
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/084_sig2.sig
+  - type: REQUIRE
+    node: tests/data/loadfile/084_sig3.smi
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/084_sig.smi

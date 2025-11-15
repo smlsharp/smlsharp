@@ -1,4 +1,11 @@
-NODE {tests/data/loadfile/001_interface2.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/001_interface.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/001_interface2.smi INTERFACE
-  0bf2f5640e89f8c9}}
+allNodes:
+- fileName: tests/data/loadfile/001_interface2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 0bf2f5640e89f8c9
+  edges: []
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/001_interface.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/001_interface2.smi

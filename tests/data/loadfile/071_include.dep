@@ -1,19 +1,43 @@
-NODE {tests/data/loadfile/071_include4.smi INTERFACE}
-NODE {tests/data/loadfile/071_include5.smi INTERFACE}
-NODE {tests/data/loadfile/071_include2.smi INCLUDES}
-NODE {tests/data/loadfile/071_include6.smi INTERFACE}
-NODE {tests/data/loadfile/071_include3.smi INCLUDES}
-NODE {tests/data/loadfile/071_include.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/071_include.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/071_include.smi INTERFACE
-  1fceec7175a92cdf
-  REQUIRE {USERPATH tests/data/loadfile/071_include2.smi INCLUDES
-   INCLUDE {USERPATH tests/data/loadfile/071_include4.smi INTERFACE
-    f94dfb6c371d4c5f}
-   INCLUDE {USERPATH tests/data/loadfile/071_include5.smi INTERFACE
-    c08121f7c2c0f2b0}}
-  REQUIRE {USERPATH tests/data/loadfile/071_include3.smi INCLUDES
-   INCLUDE {USERPATH tests/data/loadfile/071_include5.smi INTERFACE
-    c08121f7c2c0f2b0}
-   INCLUDE {USERPATH tests/data/loadfile/071_include6.smi INTERFACE
-    9439da6bd89e76fe}}}}
+allNodes:
+- fileName: tests/data/loadfile/071_include4.smi
+  filePlace: USERPATH
+  fileType: INTERFACE f94dfb6c371d4c5f
+  edges: []
+- fileName: tests/data/loadfile/071_include5.smi
+  filePlace: USERPATH
+  fileType: INTERFACE c08121f7c2c0f2b0
+  edges: []
+- fileName: tests/data/loadfile/071_include2.smi
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/071_include4.smi
+  - type: INCLUDE
+    node: tests/data/loadfile/071_include5.smi
+- fileName: tests/data/loadfile/071_include6.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 9439da6bd89e76fe
+  edges: []
+- fileName: tests/data/loadfile/071_include3.smi
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/071_include5.smi
+  - type: INCLUDE
+    node: tests/data/loadfile/071_include6.smi
+- fileName: tests/data/loadfile/071_include.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 1fceec7175a92cdf
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/071_include2.smi
+  - type: REQUIRE
+    node: tests/data/loadfile/071_include3.smi
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/071_include.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/071_include.smi

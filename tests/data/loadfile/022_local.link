@@ -1,12 +1,29 @@
-NODE {tests/data/loadfile/022_local4.smi INTERFACE}
-NODE {tests/data/loadfile/022_local2.smi INTERFACE}
-NODE {tests/data/loadfile/022_local3.smi INTERFACE}
-NODE {tests/data/loadfile/022_local.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/022_local.smi INTERFACE d1bf986fd9386fac
-  LOCAL_REQUIRE {USERPATH tests/data/loadfile/022_local2.smi INTERFACE
-   b3b09ffa2a62de6f
-   LOCAL_REQUIRE {USERPATH tests/data/loadfile/022_local4.smi INTERFACE
-    20b649fe6ad59ea8}}
-  REQUIRE {USERPATH tests/data/loadfile/022_local3.smi INTERFACE
-   d0f827cddfebc210}}}
+allNodes:
+- fileName: tests/data/loadfile/022_local4.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 20b649fe6ad59ea8
+  edges: []
+- fileName: tests/data/loadfile/022_local2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE b3b09ffa2a62de6f
+  edges:
+  - type: LOCAL_REQUIRE
+    node: tests/data/loadfile/022_local4.smi
+- fileName: tests/data/loadfile/022_local3.smi
+  filePlace: USERPATH
+  fileType: INTERFACE d0f827cddfebc210
+  edges: []
+- fileName: tests/data/loadfile/022_local.smi
+  filePlace: USERPATH
+  fileType: INTERFACE d1bf986fd9386fac
+  edges:
+  - type: LOCAL_REQUIRE
+    node: tests/data/loadfile/022_local2.smi
+  - type: REQUIRE
+    node: tests/data/loadfile/022_local3.smi
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/022_local.smi

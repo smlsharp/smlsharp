@@ -1,4 +1,11 @@
-NODE {tests/data/loadfile/001_interface2.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/001_interface2.smi INTERFACE
-  0bf2f5640e89f8c9}}
+allNodes:
+- fileName: tests/data/loadfile/001_interface2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 0bf2f5640e89f8c9
+  edges: []
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/001_interface2.smi

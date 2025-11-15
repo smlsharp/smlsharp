@@ -1,15 +1,31 @@
-NODE {tests/data/loadfile/012_require4.smi INTERFACE}
-NODE {tests/data/loadfile/012_require2.smi INTERFACE}
-NODE {tests/data/loadfile/012_require3.smi INTERFACE}
-NODE {tests/data/loadfile/012_require.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/012_require.smi INTERFACE
-  2918c9b10ff8b6f7
-  REQUIRE {USERPATH tests/data/loadfile/012_require2.smi INTERFACE
-   43fcdf955fefc64a
-   REQUIRE {USERPATH tests/data/loadfile/012_require4.smi INTERFACE
-    99ec7a35c0f115cd}}
-  REQUIRE {USERPATH tests/data/loadfile/012_require3.smi INTERFACE
-   e37908065cb95232
-   REQUIRE {USERPATH tests/data/loadfile/012_require4.smi INTERFACE
-    99ec7a35c0f115cd}}}}
+allNodes:
+- fileName: tests/data/loadfile/012_require4.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 99ec7a35c0f115cd
+  edges: []
+- fileName: tests/data/loadfile/012_require2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 43fcdf955fefc64a
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/012_require4.smi
+- fileName: tests/data/loadfile/012_require3.smi
+  filePlace: USERPATH
+  fileType: INTERFACE e37908065cb95232
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/012_require4.smi
+- fileName: tests/data/loadfile/012_require.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 2918c9b10ff8b6f7
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/012_require2.smi
+  - type: REQUIRE
+    node: tests/data/loadfile/012_require3.smi
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/012_require.smi

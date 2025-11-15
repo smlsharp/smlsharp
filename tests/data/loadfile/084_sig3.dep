@@ -1,5 +1,17 @@
-NODE {tests/data/loadfile/084_sig4.sig INCLUDES}
-NODE {tests/data/loadfile/084_sig3.smi INTERFACE}
-ROOT {ROOT_SML USERPATH tests/data/loadfile/084_sig3.sml COMPILE
- PROVIDE {USERPATH tests/data/loadfile/084_sig3.smi INTERFACE 69cbad55b1dc7fc6
-  REQUIRE {USERPATH tests/data/loadfile/084_sig4.sig INCLUDES}}}
+allNodes:
+- fileName: tests/data/loadfile/084_sig4.sig
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges: []
+- fileName: tests/data/loadfile/084_sig3.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 69cbad55b1dc7fc6
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/084_sig4.sig
+root:
+  mode: COMPILE
+  fileType: ROOT_SML tests/data/loadfile/084_sig3.sml
+  edges:
+  - type: PROVIDE
+    node: tests/data/loadfile/084_sig3.smi

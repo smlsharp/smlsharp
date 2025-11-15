@@ -1,5 +1,17 @@
-NODE {tests/data/loadfile/080_sig2.sig INCLUDES}
-NODE {tests/data/loadfile/080_sig.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/080_sig.smi INTERFACE 30238d43aeba4499
-  REQUIRE {USERPATH tests/data/loadfile/080_sig2.sig INCLUDES}}}
+allNodes:
+- fileName: tests/data/loadfile/080_sig2.sig
+  filePlace: USERPATH
+  fileType: INCLUDES
+  edges: []
+- fileName: tests/data/loadfile/080_sig.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 30238d43aeba4499
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/080_sig2.sig
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/080_sig.smi

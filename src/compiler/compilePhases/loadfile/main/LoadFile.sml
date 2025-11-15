@@ -266,7 +266,7 @@ struct
         CYCLE => [Term "CYCLE"]
       | SML {node, ...} =>
         Term "SML" :: ind_d
-        :: InterfaceName.format_short_file_dependency_node node
+        :: InterfaceName.format_file_dependency_node node
       | SMI {node, requires, dec, ...} =>
         Term "SMI" :: ind_d
         :: F.Sequence
@@ -277,7 +277,7 @@ struct
         :: F.Sequence (SMLFormat.BasicFormatters.format_list
                          (InterfaceID.format_id o #interfaceId o #1, [ind_d])
                          (Assoc.listItems requires))
-        :: ind_d :: InterfaceName.format_short_file_dependency_node node
+        :: ind_d :: InterfaceName.format_file_dependency_node node
 
   fun visitAndParseSmi loaded loader (filePathLoc as (_, loc)) =
       let

@@ -1,10 +1,21 @@
-NODE {tests/data/loadfile/041_alias/041_alias2.smi INTERFACE}
-NODE {tests/data/loadfile/041_alias.smi INTERFACE}
-ROOT {ROOT_INCLUDES LINK
- INCLUDE {USERPATH tests/data/loadfile/041_alias.smi INTERFACE b7ccb569e5bde9f8
-  REQUIRE {USERPATH tests/data/loadfile/041_alias/041_alias2.smi INTERFACE
-   1536950275b93e5b}
-  REQUIRE {USERPATH tests/data/loadfile/041_alias/041_alias2.smi INTERFACE
-   1536950275b93e5b}
-  REQUIRE {USERPATH tests/data/loadfile/041_alias/041_alias2.smi INTERFACE
-   1536950275b93e5b}}}
+allNodes:
+- fileName: tests/data/loadfile/041_alias/041_alias2.smi
+  filePlace: USERPATH
+  fileType: INTERFACE 1536950275b93e5b
+  edges: []
+- fileName: tests/data/loadfile/041_alias.smi
+  filePlace: USERPATH
+  fileType: INTERFACE b7ccb569e5bde9f8
+  edges:
+  - type: REQUIRE
+    node: tests/data/loadfile/041_alias/041_alias2.smi
+  - type: REQUIRE
+    node: tests/data/loadfile/041_alias/041_alias2.smi
+  - type: REQUIRE
+    node: tests/data/loadfile/041_alias/041_alias2.smi
+root:
+  mode: LINK
+  fileType: ROOT_INCLUDES
+  edges:
+  - type: INCLUDE
+    node: tests/data/loadfile/041_alias.smi
