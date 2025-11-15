@@ -1341,5 +1341,13 @@ in
    *)
   BindReservedName of symbol
 
+  and
+  (*%
+   * @format(sigid)
+   * "signature" +d "is" +d "referenced" +d "by" +d "ID" +d "from" +d
+   * "functor" +d "interface:" +d sigid
+   *)
+  SigIDFoundInInterfaceFunArg of symbol
+
 end
 end

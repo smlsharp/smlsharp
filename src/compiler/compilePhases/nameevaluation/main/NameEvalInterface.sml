@@ -12,7 +12,7 @@ local
   structure VP = NameEvalEnvPrims
   structure BT = BuiltinTypes
   structure PI = PatternCalcInterface
-  (* structure PC = PatternCalc *)
+  structure P = PatternCalc
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
@@ -1195,6 +1195,39 @@ in
                           param={strSymbol, sigexp=argSig},
                           strexp=bodyStr, loc} =
       let
+        fun checkSigexp sigexp =
+            case sigexp of
+              P.PLSIGEXPBASIC (spec, loc) =>
+              P.PLSIGEXPBASIC (map checkSpec spec, loc)
+            | P.PLSIGID symbol =>
+              (UserErrorUtils.enqueueError
+                 (SymbolWithLoc.symbolToLoc symbol,
+                  E.SigIDFoundInInterfaceFunArg (#symbol symbol));
+               P.PLSIGEXPBASIC (nil, SymbolWithLoc.symbolToLoc symbol))
+            | P.PLSIGWHERE (sigexp, typbinds, loc) =>
+              P.PLSIGWHERE (checkSigexp sigexp, typbinds, loc)
+        and checkSpec spec =
+            case spec of
+              P.PLSPECVAL _ => spec
+            | P.PLSPECTYPE _ => spec
+            | P.PLSPECTYPEEQUATION _ => spec
+            | P.PLSPECDATATYPE _ => spec
+            | P.PLSPECREPLIC _ => spec
+            | P.PLSPECEXCEPTION _ => spec
+            | P.PLSPECSTRUCT (strdecs, loc) =>
+              P.PLSPECSTRUCT
+                (map (fn (strid, sigexp, loc) =>
+                         (strid, checkSigexp sigexp, loc))
+                     strdecs,
+                 loc)
+            | P.PLSPECINCLUDE (sigexp, loc) =>
+              P.PLSPECINCLUDE (checkSigexp sigexp, loc)
+            | P.PLSPECSHARE (spec, ids, loc) =>
+              P.PLSPECSHARE (map checkSpec spec, ids, loc)
+            | P.PLSPECSHARESTR (spec, ids, loc) =>
+              P.PLSPECSHARESTR (map checkSpec spec, ids, loc)
+
+        val argSig = checkSigexp argSig
         val 
         {
          argSigEnv=argSigEnv,
