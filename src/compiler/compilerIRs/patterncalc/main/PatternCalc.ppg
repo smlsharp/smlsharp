@@ -509,9 +509,9 @@ struct
 
   and plstrdec =
       (*%
-       * @format(dec * loc) dec
+       * @format(dec) dec
        *)
-      PLCOREDEC of pdecl * loc
+      PLCOREDEC of pdecl
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "structure" +d, +1, "and" +d) }

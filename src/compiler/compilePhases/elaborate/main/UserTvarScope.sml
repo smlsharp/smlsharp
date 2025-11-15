@@ -493,8 +493,8 @@ struct
 
   and decideStrdec strdec =
       case strdec of
-        P.PLCOREDEC (pdecl, loc) =>
-        P.PLCOREDEC (decideDecl emptyEnv pdecl, loc)
+        P.PLCOREDEC pdecl =>
+        P.PLCOREDEC (decideDecl emptyEnv pdecl)
       | P.PLSTRUCTBIND (strbinds, loc) =>
         P.PLSTRUCTBIND
           (map (fn (strid, strexp,loc) => 

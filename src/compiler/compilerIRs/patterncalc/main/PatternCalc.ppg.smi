@@ -107,7 +107,7 @@ struct
     | PLPATTYPED of plpat * ty * loc
  
   and plstrdec 
-    = PLCOREDEC of pdecl * loc
+    = PLCOREDEC of pdecl
     | PLSTRUCTBIND of (symbol * plstrexp * loc) list * loc
     | PLSTRUCTLOCAL of plstrdec list * plstrdec list * loc
 

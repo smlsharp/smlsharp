@@ -269,8 +269,7 @@ struct
         let
           val pldecs = ElaborateCore.elabDec dec
         in
-          map (fn pldec => PC.PLCOREDEC(pldec, LOC (AbsynUtils.decLoc dec)))
-              pldecs
+          map PC.PLCOREDEC pldecs
         end
       | A.STRUCTURE(strbinds,loc) =>
         [PC.PLSTRUCTBIND(map elabStrBind strbinds, LOC loc)]
@@ -419,8 +418,7 @@ struct
                     ElaborateCore.elabExp exp,
                     LOC loc)],
                   nil,
-                  LOC loc),
-               LOC loc),
+                  LOC loc)),
             LOC loc)]
 
     and elabTopDecs topdecs =

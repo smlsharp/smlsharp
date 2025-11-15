@@ -1138,7 +1138,7 @@ local
   fun evalPlstrdec (renameEnv:renameEnv) (topEnv:V.topEnv) path plstrdec 
       : renameEnv * V.env * I.icdecl list =
       case plstrdec of
-        P.PLCOREDEC (pdecl, loc) => 
+        P.PLCOREDEC pdecl =>
         evalPdecl (renameEnv:renameEnv) path Ty.emptyTvarEnv (#Env topEnv) pdecl
       | P.PLSTRUCTBIND (symbolPlstrexpLocList, loc) =>
         let
