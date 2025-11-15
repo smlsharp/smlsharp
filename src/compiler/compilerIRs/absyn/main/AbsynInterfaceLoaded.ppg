@@ -13,6 +13,7 @@ struct
   type loc = Absyn.loc
 
   (*%
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
    * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(InterfaceName.interface_name)
    * InterfaceName.format_interface_name
@@ -22,14 +23,17 @@ struct
       (*%
        * @format({interfaceId, interfaceName, requiredIds: req reqs,
        *          provideTopdecs: dec decs})
-       * "interface" +d interfaceId 2[
-       * reqs(req)()
-       * +1 "provide" +d interfaceName
-       * decs(dec)()
-       * +1 "end"
-       * ]
-       * @format:req({id, loc}) +1 "require" +d id
-       * @format:dec(dec) +1 dec
+       * !N0{
+       *   "_interface" +d interfaceId
+       *   2[+1] "as" +d interfaceName
+       *   reqs:ifcons()(2[+1],)
+       *   reqs(req)(2[+1])
+       *   decs:ifcons()(2[+1],)
+       *   decs(dec)(2[+1])
+       *   +1 "end"
+       * }
+       * @format:req({id, loc})
+       * !N0{ "_require" +1 id }
        *)
       {
         interfaceId: InterfaceID.id,
@@ -39,26 +43,37 @@ struct
       }
 
   (*%
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
    * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(AbsynInterface.topdec) AbsynInterface.format_topdec
    * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
   type 'loc interface =
       (*%
-       * @format({interfaceDecs: bind binds, provide})
-       * binds(bind)()
-       * "provide" +d "interface" 2[ +1 provide ] "end"
-       * @format:bind(bind) bind +1
+       * @format({interfaceDecs: dec decs, provide})
+       * !N0{
+       *   decs(dec)(+1)
+       *   decs:ifcons()(+1,)
+       *   provide
+       * }
        * @format:provide({requiredIds: req reqs, locallyRequiredIds: lreq lreqs,
        *                  provideTopdecs: dec decs, topdecsInclude: inc incs})
-       * reqs(req)()
-       * lreqs(lreq)()
-       * decs(dec)()
-       * incs(inc)()
-       * @format:req({id, loc}) +1 "require" +d id
-       * @format:lreq({id, loc}) +1 "local" +d "require" +d id
-       * @format:dec(dec) +1 dec
-       * @format:inc(inc) +1 "include" +d inc
+       * !N0{
+       *   "_provide"
+       *   reqs:ifcons()(2[+1],)
+       *   reqs(req)(2[+1])
+       *   lreqs:ifcons()(2[+1],)
+       *   lreqs(req)(2[+1])
+       *   decs:ifcons()(2[+1],)
+       *   decs(dec)(2[+1])
+       *   incs:ifcons()(2[+1],)
+       *   incs(inc)(2[+1])
+       *   +1 "end"
+       * }
+       * @format:req({id, loc})
+       * !N0{ "_require" +1 id }
+       * @format:lreq({id, loc})
+       * !N0{ "_require" +d "local" +d id }
        *)
       {
         interfaceDecs : interface_dec list,
@@ -70,17 +85,18 @@ struct
       }
 
   (*%
-   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(ifsome) AbsynFormatterUtils.ifsome
    * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
   type compile_unit =
       (*%
        * @format({interface:i interface interfaceOpt, topdecsSource: dec decs})
-       * "interface"
-       * 2[ +1 interfaceOpt(interface()) ]
-       * +1 "topdecsSource"
-       * 2[ decs:decList(dec)(+1, +1) ]
-       * +1 "end"
+       * !N0{
+       *   interfaceOpt(interface())
+       *   interfaceOpt:ifsome()(decs:ifcons()(+1,),)
+       *   decs(dec)(+1)
+       * }
        *)
       {
         interface : loc interface option,
@@ -89,23 +105,29 @@ struct
 
   (* an interface loaded as if it is "_require"-ed *)
   (*%
-   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
-   * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
   type interface_unit =
       (*%
-       * @format({interfaceDecs: bind binds,
+       * @format({interfaceDecs: dec decs,
        *          requiredIds: req reqs,
        *          topdecsInclude: inc incs})
-       * "interfaces"
-       * 2[ binds:ifcons()(+1,) binds(bind)(+1) ]
-       * +1 "requires"
-       * 2[ reqs:ifcons()(+1,) reqs(req)(+1) ]
-       * +1 "topdecsInclude"
-       * 2[ incs:ifcons()(+1,) incs(inc)(+1) ]
-       * +1 "end"
-       * @format:req({id, loc}) "require" +d id
+       * !N0{
+       *   decs(dec)(+1)
+       *   decs:ifcons()(+1,)
+       *   !N0{
+       *     "_provide"
+       *     reqs:ifcons()(2[+1],)
+       *     reqs(req)(2[+1])
+       *     incs:ifcons()(2[+1],)
+       *     incs(inc)(2[+1])
+       *     +1 "end"
+       *   }
+       * }
+       * @format:req({id, loc})
+       * !N0{ "_require" +1 id }
        *)
       {
         interfaceDecs : interface_dec list,

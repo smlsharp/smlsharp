@@ -17426,20 +17426,15 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/util/main/TermFormat.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -18060,9 +18055,6 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilePhases/loadfile/main/InterfaceHash.smi \
  src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
  src/compiler/compilePhases/loadfile/main/LoadFile.smi \
  $(SMLSHARP_DEP)
@@ -19038,9 +19030,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateInterface.o: \
  src/compiler/compilePhases/elaborate/main/ElaborateModule.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
@@ -19523,9 +19512,6 @@ src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \

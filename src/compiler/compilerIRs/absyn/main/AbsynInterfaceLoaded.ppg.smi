@@ -1,8 +1,6 @@
 _require local "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../libs/util/main/TermFormat.smi"
 _require "./Absyn.smi"
 _require "./AbsynInterface.ppg.smi"
 _require local "./AbsynFormatter.smi"
