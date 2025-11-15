@@ -2363,8 +2363,8 @@ topuse
           (A.USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
                   (USEleft, STRINGright)))
         | U_USE STRING
-          (A.USE' ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-                   (U_USEleft, STRINGright)))
+          (A.U_USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
+                    (U_USEleft, STRINGright)))
 
 tops
         : topdecs

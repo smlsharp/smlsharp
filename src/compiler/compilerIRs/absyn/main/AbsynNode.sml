@@ -301,7 +301,7 @@ struct
       | TOPDEC (A.TOPEXP _) => "TOPDEC:TOPEXP"
       | TOP (A.TOPDEC _) => "TOP:TOPDEC"
       | TOP (A.USE _) => "TOP:USE"
-      | TOP (A.USE' _) => "TOP:USE'"
+      | TOP (A.U_USE _) => "TOP:U_USE"
       | TOP (A.TOPSEMICOLON _) => "TOP:TOPSEMICOLON"
       | INTERFACE _ => "INTERFACE"
       | COMPILE_UNIT _ => "COMPILE_UNIT"
@@ -606,7 +606,7 @@ struct
       | TOPDEC (A.TOPEXP (_, loc)) => loc
       | TOP (A.TOPDEC (_, loc)) => loc
       | TOP (A.USE (_, loc)) => loc
-      | TOP (A.USE' (_, loc)) => loc
+      | TOP (A.U_USE (_, loc)) => loc
       | TOP (A.TOPSEMICOLON loc) => loc
       | INTERFACE (_, loc) => loc
       | COMPILE_UNIT (_, _, loc) => loc
@@ -977,7 +977,7 @@ struct
       | TOPDEC (A.TOPEXP (exp, loc)) => [EXP exp]
       | TOP (A.TOPDEC (topdecs, loc)) => map TOPDEC topdecs
       | TOP (A.USE (path, loc)) => [REQUIRE_PATH path]
-      | TOP (A.USE' (path, loc)) => [REQUIRE_PATH path]
+      | TOP (A.U_USE (path, loc)) => [REQUIRE_PATH path]
       | TOP (A.TOPSEMICOLON _) => nil
       | INTERFACE (path, loc) => [REQUIRE_PATH path]
       | COMPILE_UNIT (NONE, tops, loc) => map TOP tops

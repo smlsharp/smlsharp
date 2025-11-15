@@ -330,7 +330,7 @@ struct
             else raiseError (loc, E.UseNotAllowed path);
           (loaded, {edge = SOME (N.USE, node, Loc.LOC loc), topdecs = topdecs})
         end
-      | A.USE' (path, loc) =>
+      | A.U_USE (path, loc) =>
         evalTop loaded loader allow (A.USE (path, loc))
       | A.TOPSEMICOLON _ =>
         (loaded, {edge = NONE, topdecs = nil})

@@ -700,7 +700,7 @@ struct
           (ret, A.TOPDEC (topdecs, loc))
         end
       | A.USE _ => (emptyEnv, top)
-      | A.USE' _ => (emptyEnv, top)
+      | A.U_USE _ => (emptyEnv, top)
       | A.TOPSEMICOLON _ => (emptyEnv, top)
 
   fun resolveTops env tops =

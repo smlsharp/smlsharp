@@ -293,7 +293,7 @@ struct
       case top of
         A.TOPDEC (topdecs, loc) => List.concat (map (scanTopdec c) topdecs)
       | A.USE (path, loc) => nil
-      | A.USE' (path, loc) => nil
+      | A.U_USE (path, loc) => nil
       | A.TOPSEMICOLON _ => nil
 
   and scanUnitparseresult c result =

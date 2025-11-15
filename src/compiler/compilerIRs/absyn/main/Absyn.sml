@@ -1112,7 +1112,7 @@ struct
        * @format(path * loc)
        * "_use" +d path
        *)
-      USE' of require_path * loc
+      U_USE of require_path * loc
     | (*%
        * @format
        * ";"

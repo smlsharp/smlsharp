@@ -233,7 +233,7 @@ struct
   datatype top =
       TOPDEC of topdec list * loc
     | USE of require_path * loc
-    | USE' of require_path * loc
+    | U_USE of require_path * loc
     | TOPSEMICOLON of loc
 
   type interface = require_path * loc
