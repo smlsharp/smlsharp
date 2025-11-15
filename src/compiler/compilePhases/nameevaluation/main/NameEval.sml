@@ -35,7 +35,6 @@ local
   fun mkLongsymbol s = SymbolWithLoc.mkLongsymbol s Loc.noloc
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
-
   fun printStrKind strkind =
       case strkind of
       V.SIGENV id => print ("SIGENV" ^ SignatureID.toString id ^ "\n")
@@ -168,6 +167,10 @@ local
              (case VP.findCon(env, refLongsymbol) of
                 NONE =>
                 let
+                  val _ = Ty.checkReservedName
+                            Ty.isReservedName
+                            (fn x => x)
+                            [symbol]
                   val varId = VarID.generate()
                   val newLongsymbol = SymbolWithLoc.concatPath(path, refLongsymbol)
                   val varInfo = {longsymbol=newLongsymbol, id=varId}
@@ -331,6 +334,10 @@ local
                      (SymbolWithLoc.symbolToLoc symbol,
                       E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol [symbol]}));
                    VarID.generate())
+            val _ = Ty.checkReservedName
+                      Ty.isReservedName
+                      (fn x => x)
+                      [symbol]
             val longsymbol =  SymbolWithLoc.prefixPath (path, symbol)
             val rangeLoc = case defRange of
                              NONE => loc
@@ -488,6 +495,10 @@ local
                     (fn ({symbol, varInfo, tyList}, body, loc) => symbol)
                     recList
                     (fn s => E.DuplicateVarInRecDecl("110",s))
+          val _ = Ty.checkReservedName
+                    Ty.isReservedName
+                    (fn ({symbol, ...}, _, _) => symbol)
+                    recList
           val returnEnv2 =
               foldl
                 (fn (({symbol, varInfo, ...}, _, loc), returnEnv) =>
@@ -529,6 +540,10 @@ local
                     (fn {fdecl=({symbol, varInfo, tyList}, rules), loc} => symbol)
                     declList
                     (fn s => E.DuplicateFunVarInFunDecl("100",s))
+          val _ = Ty.checkReservedName
+                    Ty.isReservedName
+                    (fn {fdecl=({symbol, ...}, _), ...} => symbol)
+                    declList
           val returnEnv =
               foldl
                 (fn ({fdecl=({symbol, varInfo, ...}, _), loc}, returnEnv) =>
@@ -756,11 +771,16 @@ local
 
       | P.PDEXD (plexbindList, loc) =>
         let
+          fun getSymbol (P.PLEXBINDDEF (symbol, _,_)) = symbol
+            | getSymbol (P.PLEXBINDREP (symbol, _,_)) = symbol
           val _ = EU.checkSymbolDuplication
-                    (fn P.PLEXBINDDEF (symbol, _,_) => symbol
-                      | P.PLEXBINDREP (symbol, _,_) => symbol)
+                    getSymbol
                     plexbindList
                     (fn s => E.DuplicateExnName("150",s))
+          val _ = Ty.checkReservedName
+                    Ty.isReservedConName
+                    getSymbol
+                    plexbindList
           val (exEnv, exdeclList) =
               foldl
                 (fn (plexbind, (exEnv, exdeclList)) =>

@@ -247,38 +247,32 @@ struct
   fun elabValbind (valbind, loc) =
       case valbind of
         I.VAL_EXTERN (id, ty, loc) =>
-        (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
-                  symbol = toSymbol id,
-                  body = P.VAL_EXTERN {ty = ty},
-                  loc = LOC loc})
+        P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
+                 symbol = toSymbol id,
+                 body = P.VAL_EXTERN {ty = ty},
+                 loc = LOC loc}
       | I.VAL_ALIAS (id, longid, loc) =>
-        (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
-                  symbol = toSymbol id,
-                  body = P.VALALIAS_EXTERN (toLongsymbol longid),
-                  loc = LOC loc})
+        P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
+                 symbol = toSymbol id,
+                 body = P.VALALIAS_EXTERN (toLongsymbol longid),
+                 loc = LOC loc}
       | I.VAL_BUILTIN (id, name, ty, loc) =>
-        (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
-                  symbol = toSymbol id,
-                  body = P.VAL_BUILTIN {builtinSymbol = toSymbol name, ty = ty},
-                  loc = LOC loc})
+        P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
+                 symbol = toSymbol id,
+                 body = P.VAL_BUILTIN {builtinSymbol = toSymbol name, ty = ty},
+                 loc = LOC loc}
       | I.VAL_OVERLOAD (id, exp, loc) =>
-        (ElaborateCore.checkReservedNameForValBind (toSymbol id);
-         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
-                  symbol = toSymbol id,
-                  body = P.VAL_OVERLOAD (elabOverloadCase exp),
-                  loc = LOC loc})
+        P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
+                 symbol = toSymbol id,
+                 body = P.VAL_OVERLOAD (elabOverloadCase exp),
+                 loc = LOC loc}
 
   fun elabExbind exbind =
       case exbind of
         I.EXBIND ((_, id, _), ty, loc) =>
-        (ElaborateCore.checkReservedNameForConstructorBind (toSymbol id);
-         P.PIEXCEPTION {symbol=toSymbol id, ty=ty, loc=LOC loc})
+        P.PIEXCEPTION {symbol=toSymbol id, ty=ty, loc=LOC loc}
       | I.EXBINDREP ((_, id, _), (_, longid, _), loc) =>
-        (ElaborateCore.checkReservedNameForConstructorBind (toSymbol id);
-         P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=toLongsymbol longid, loc=LOC loc})
+        P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=toLongsymbol longid, loc=LOC loc}
 
   fun elabOpaqueImpl impl =
       case impl of
@@ -311,8 +305,6 @@ struct
            (fn x => toSymbol x)
            (List.concat (map (map (#2 o #1) o #3) datbind))
            E.DuplicateConstructorNameInDatatype;
-         app ElaborateCore.checkReservedNameForValBind
-             (map toSymbol (List.concat (map (map (#2 o #1) o #3) datbind)));
          P.PIDATATYPE
            {datbind = map (substDatbind (tyconSubst (seq withType))) datbind,
             loc = LOC loc}

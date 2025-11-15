@@ -56,11 +56,6 @@ struct
             val _ = checkSymbolDuplication
                       (toSymbol o #1)
                       valBinds E.DuplicateValDesc
-            val _ =
-                app (fn (vid, ty, _) =>
-                        ElaborateCore.checkReservedNameForValBind
-                          (toSymbol vid))
-                    valBinds
             val specs =
                 map (fn (vid, ty, _) => (emptyTvars, toSymbol vid, ty, LOC loc))
                     valBinds
@@ -128,10 +123,6 @@ struct
                   UserErrorUtils.checkSymbolDuplication
                     (fn (con, ty, loc) => toSymbol con)
                     conDescs E.DuplicateConstructorNameInDatatype;
-                  app (fn (con, ty, loc) =>
-                          ElaborateCore.checkReservedNameForConstructorBind
-                            (toSymbol con))
-                      conDescs;
                   ()
                 )
             val _ = map check dataDescs
@@ -151,11 +142,6 @@ struct
                 checkSymbolDuplication
                   (toSymbol o #1)
                   exnDescs E.DuplicateConstructorNameInException
-            val _ =
-                app (fn (con, ty, loc) =>
-                        ElaborateCore.checkReservedNameForConstructorBind
-                          (toSymbol con))
-                    exnDescs;
             val exnDescs =
                 map (fn (symbol, tyOpt, loc) => (toSymbol symbol, tyOpt, LOC loc)) exnDescs
           in

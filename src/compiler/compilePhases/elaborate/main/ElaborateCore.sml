@@ -95,27 +95,6 @@ struct
     | checkAllEqual f [x] = true
     | checkAllEqual f (h :: t) = case f h of k => List.all (fn x => f x = k) t
 
-  local
-    fun isReservedConstructorName name =
-        case SymbolWithLoc.symbolToString name of
-          "true" => true
-        | "false" => true
-        | "nil" => true
-        | "::" => true
-        | "ref" => true
-        | _ => false
-  in
-    fun checkReservedNameForConstructorBind name =
-      if isReservedConstructorName name
-         orelse (SymbolWithLoc.symbolToString name) = "it"
-        then EU.enqueueError(SymbolWithLoc.symbolToLoc name, E.BindReservedName (#symbol name))
-      else ()
-    fun checkReservedNameForValBind name =
-      if isReservedConstructorName name
-        then EU.enqueueError(SymbolWithLoc.symbolToLoc name, E.BindReservedName (#symbol name))
-      else ()
-  end
-
   fun getLabelOfPatRow (A.PATROW((label, _), _, _)) = label
     | getLabelOfPatRow (A.PATROWVAR(label, _, _, _)) =
       RecordLabel.fromSymbol (#1 label)
@@ -393,15 +372,11 @@ struct
         end
       | A.PATTYPED (pat, ty, loc) => PC.PLPATTYPED(elabPat pat, ty, LOC loc)
       | A.PATAS ((_, id, _), NONE, pat, loc) =>
-        (
-          checkReservedNameForValBind (toSymbol id);
-          PC.PLPATLAYERED(toSymbol id, NONE, elabPat pat, LOC loc)
-        )
+        PC.PLPATLAYERED(toSymbol id, NONE, elabPat pat, LOC loc)
       | A.PATAS ((_, id, _), SOME ty, pat, loc) =>
         let
           val elabedPat = elabPat pat
         in
-          checkReservedNameForValBind (toSymbol id);
           PC.PLPATLAYERED(toSymbol id, SOME ty, elabedPat, LOC loc)
         end
       | A.PATPAREN (pat, loc) => elabPat pat
@@ -414,7 +389,6 @@ struct
       | A.PATROWVAR (vid, optTy, optPat, loc) =>
         let
           val symbol = toSymbol vid
-          val _ = checkReservedNameForValBind symbol
           val pat =
               case optPat of
                 SOME pat =>
@@ -731,7 +705,6 @@ struct
               nil => enqueueError (loc, E.FunctionParameterNotFound)
             | _ :: _ => ()
         val symbol = Option.map toSymbol (#id first)
-        val _ = Option.app checkReservedNameForValBind symbol
         val idpat = foldl (fn (x, z) => #ty x z) (#pat first) frules
         val idpat = elabPat idpat
         val rules = map (fn {args, exp, loc, ...} =>
@@ -759,13 +732,6 @@ struct
             checkSymbolDuplication
               (fn ((_, x, _), _, _) => toSymbol x)
               dataCons E.DuplicateConstructorNameInDatatype
-        val _ =
-            app
-              (fn dataCon =>
-                  checkReservedNameForConstructorBind
-                    (toSymbol (#2 (#1 dataCon)))
-              )
-              dataCons
         val newDataBinds = map elabDataBind dataBinds
         val _ =
             map (fn (tvars, name, ty, _) =>
@@ -930,10 +896,6 @@ struct
               checkSymbolDuplication
                 getExnName exnBinds
                 E.DuplicateConstructorNameInException
-          val _ =
-              app
-                checkReservedNameForConstructorBind
-                (map getExnName exnBinds)
         in
           [PC.PDEXD (map elabExnBind exnBinds, LOC loc)]
         end

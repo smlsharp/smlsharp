@@ -162,4 +162,5 @@ structure NameEvalError =
     exception InvalidKindName of code * string
     exception FlexRecordNotAllowed of code * AbsynTy.ty
     exception LIFTEDPropNotAllowedInOpaqueInterface of code * {symbol:Symbol.symbol}
+    exception BindReservedName of Symbol.symbol
   end

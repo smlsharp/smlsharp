@@ -728,6 +728,10 @@ local
             (fn (_, symbol, _, _) => symbol)
             valdescs
             (fn s => E.DuplicateTypInSpec("Sig-055", s));
+          Ty.checkReservedName
+            Ty.isReservedName
+            (fn (_, symbol, _, _) => symbol)
+            valdescs;
           foldl
             (fn ((scopedTvars, symbol, ty, loc), specEnv) =>
                 let
@@ -827,6 +831,10 @@ local
                        nil
                        datadeclList)
                     (fn s => E.DuplicateConNameInDty("Sig-190",s))
+          val _ = Ty.checkReservedName
+                    Ty.isReservedConName
+                    (fn {symbol, ...} => symbol)
+                    (List.concat (map #conbind datadeclList))
           val (specEnv, datadeclListRev) =
               foldl
                 (fn ({tyvars=tvarList,symbol,
@@ -1001,6 +1009,10 @@ local
                     #1
                     symbolTyOptionList
                     (fn symbol =>  E.DuplicateIdInSpec("054",symbol))
+          val _ = Ty.checkReservedName
+                    Ty.isReservedConName
+                    #1
+                    symbolTyOptionList
           val specEnv =
               foldl
                 (fn ((symbol, tyOption, loc), specEnv) =>

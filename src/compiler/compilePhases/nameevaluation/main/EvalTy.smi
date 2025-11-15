@@ -19,7 +19,7 @@ _require local "./SetLiftedTys.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/Symbol.smi"
-_require local "../../../data/symbols/main/SymbolWithLoc.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
@@ -50,4 +50,9 @@ struct
                         -> PatternCalc.datbind list * Loc.loc
                         -> NameEvalEnv.env * IDCalc.icdecl list
   val resetFreeTvarEnv : unit -> unit
+
+  val isReservedName : string -> bool
+  val isReservedConName : string -> bool
+  val checkReservedName
+      : (string -> bool) -> ('a -> SymbolWithLoc.symbol) -> 'a list -> unit
 end

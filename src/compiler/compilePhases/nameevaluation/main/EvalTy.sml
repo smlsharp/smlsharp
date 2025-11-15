@@ -120,6 +120,31 @@ in
         foldr checkTvarKind nil tvarKindList
       end
 
+  fun isReservedName name =
+      case name of
+        "true" => true
+      | "false" => true
+      | "nil" => true
+      | "::" => true
+      | "ref" => true
+      | _ => false
+
+  fun isReservedConName name =
+      case name of
+        "it" => true
+      | _ => isReservedName name
+
+  fun checkReservedName checker getSymbol nil = ()
+    | checkReservedName checker getSymbol (item :: items) =
+      let
+        val symbol = getSymbol item
+      in
+        if checker (SymbolWithLoc.symbolToString symbol)
+        then EU.enqueueError (SymbolWithLoc.symbolToLoc symbol,
+                              E.BindReservedName (#symbol symbol))
+        else ();
+        checkReservedName checker getSymbol items
+      end
 
   (* type variable evaluators *)
   fun evalTvar (tvarEnv:tvarEnv) ((isEq, symbol) : A.tyvar) : I.tvar =
@@ -506,6 +531,10 @@ in
                      nil
                      datbindList)
                   (fn s => E.DuplicateConNameInDty("Ty-130",s))
+        val _ = checkReservedName
+                  isReservedConName
+                  (fn {symbol, ...} => symbol)
+                  (List.concat (map #conbind datbindList))
         val (newEnv, datbindListRev) =
             foldl
               (fn ({tyvars=tvarList,symbol,conbind, loc=datBindLoc},

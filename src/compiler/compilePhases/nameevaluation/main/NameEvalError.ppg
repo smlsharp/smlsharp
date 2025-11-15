@@ -1326,5 +1326,12 @@ in
    *)
   LIFTEDPropNotAllowedInOpaqueInterface of code * {symbol:symbol}
 
+  and
+  (*%
+   * @format(name)
+   * "Binding" +d "reserved" +d "name:" + name
+   *)
+  BindReservedName of symbol
+
 end
 end
