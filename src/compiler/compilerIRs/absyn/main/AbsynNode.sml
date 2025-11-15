@@ -587,7 +587,7 @@ struct
       | SIGCONSTRAINT (_, _, loc) => loc
       | STREXP (A.STRBASIC (_, loc)) => loc
       | STREXP (A.STRID (_, loc)) => loc
-      | STREXP (A.STRCONSTRAINT (_, _, _, loc)) => loc
+      | STREXP (A.STRCONSTRAINT (_, _, loc)) => loc
       | STREXP (A.STRAPP (_, _, loc)) => loc
       | STREXP (A.STRLET (_, _, loc)) => loc
       | STRDEC (A.STRDEC dec) => getLoc (DEC dec)
@@ -944,8 +944,8 @@ struct
       | SIGCONSTRAINT (sigop, sigexp, loc) => [SIGEXP sigexp]
       | STREXP (A.STRBASIC (strdecs, loc)) => map STRDEC strdecs
       | STREXP (A.STRID id) => [LONGSTRID id]
-      | STREXP (A.STRCONSTRAINT (strexp, sigop, sigexp, loc)) =>
-        [STREXP strexp, SIGEXP sigexp]
+      | STREXP (A.STRCONSTRAINT (strexp, sigcon, loc)) =>
+        [STREXP strexp, SIGCONSTRAINT sigcon]
       | STREXP (A.STRAPP (funid, NONE, loc)) => [FUNID funid]
       | STREXP (A.STRAPP (funid, SOME arg, loc)) => [FUNID funid, FUN_ARG arg]
       | STREXP (A.STRLET (strdecs, strexp, loc)) =>

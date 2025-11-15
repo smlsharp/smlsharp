@@ -255,7 +255,7 @@ struct
         A.STRBASIC (strdecList, loc) =>
         S.BaseStr (scanStrdecList c strdecList)
       | A.STRID (id, loc) => S.VarStr
-      | A.STRCONSTRAINT (strexp, _, sigexp, loc) =>
+      | A.STRCONSTRAINT (strexp, (_, sigexp, _), loc) =>
         S.ConstrainedStr (scanStrexp c strexp)
       | A.STRAPP (id, funarg, loc) => S.AppStr
       | A.STRLET (strdecList, strexp, loc) =>

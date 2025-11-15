@@ -226,10 +226,10 @@ struct
             PC.PLSTREXPBASIC(plstrdecs, LOC loc)
           end
         | A.STRID longid => PC.PLSTRID (toLongsymbol longid)
-        | A.STRCONSTRAINT(strexp, A.TRANSPARENT, sigexp, loc) =>
+        | A.STRCONSTRAINT(strexp, (A.TRANSPARENT, sigexp, _), loc) =>
           PC.PLSTRTRANCONSTRAINT
             (elabStrExp strexp, elabSigExp sigexp, LOC loc)
-        | A.STRCONSTRAINT(strexp, A.OPAQUE, sigexp, loc) =>
+        | A.STRCONSTRAINT(strexp, (A.OPAQUE, sigexp, _), loc) =>
           PC.PLSTROPAQCONSTRAINT
             (elabStrExp strexp, elabSigExp sigexp, LOC loc)
         | A.STRAPP(funid, SOME (A.FUNARG (A.STRID longid)), loc) =>
@@ -309,7 +309,7 @@ struct
         (funid, param as SOME (A.FUNPARAM _),
          SOME (A.TRANSPARENT, resSigexp, _),
          strexp, loc) =>
-        let val newStrexp = A.STRCONSTRAINT(strexp, A.TRANSPARENT, resSigexp, loc)
+        let val newStrexp = A.STRCONSTRAINT(strexp, (A.TRANSPARENT, resSigexp, loc), loc)
         in
           elabFunBind (funid, param, NONE, newStrexp, loc)
         end
@@ -319,7 +319,7 @@ struct
       | (funid, param as SOME (A.FUNPARAM _),
          SOME (A.OPAQUE, resSigexp, _),
          strexp, loc) =>
-        let val newStrexp = A.STRCONSTRAINT(strexp, A.OPAQUE, resSigexp, loc)
+        let val newStrexp = A.STRCONSTRAINT(strexp, (A.OPAQUE, resSigexp, loc), loc)
         in
           elabFunBind (funid, param, NONE, newStrexp, loc)
         end
@@ -334,7 +334,7 @@ struct
           val newStrexp =
               A.STRLET
                 ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
-                 A.STRCONSTRAINT(strexp,A.TRANSPARENT,resSigexp,loc),
+                 A.STRCONSTRAINT(strexp,(A.TRANSPARENT,resSigexp,loc),loc),
                  loc)
           val argSigExp = A.SIGBASIC specLoc
           val newFunBind =
@@ -353,7 +353,7 @@ struct
           val newStrexp =
               A.STRLET
                 ([A.STRDEC(A.DECOPEN([([(Symbol.fromString newStrid, loc)], loc)], loc))],
-                 A.STRCONSTRAINT(strexp,A.OPAQUE,resSigexp,loc),
+                 A.STRCONSTRAINT(strexp,(A.OPAQUE,resSigexp,loc),loc),
                  loc)
           val argSigExp = A.SIGBASIC specLoc
           val newFunBind =

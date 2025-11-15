@@ -2048,10 +2048,14 @@ strexp
           (strexpbasic)
         | strexp COLON sigexp
           (A.STRCONSTRAINT
-             (strexp, A.TRANSPARENT, sigexp, (strexpleft, sigexpright)))
+             (strexp,
+              (A.TRANSPARENT, sigexp, (COLONleft, sigexpright)),
+              (strexpleft, sigexpright)))
         | strexp OPAQUE sigexp
           (A.STRCONSTRAINT
-             (strexp, A.OPAQUE, sigexp, (strexpleft, sigexpright)))
+             (strexp,
+              (A.OPAQUE, sigexp, (OPAQUEleft, sigexpright)),
+              (strexpleft, sigexpright)))
 
 strexp_AND
         : strexpbasic AND
@@ -2059,13 +2063,14 @@ strexp_AND
         | strexp COLON sigexp_AND
           (A.STRCONSTRAINT
              (strexp,
-              A.TRANSPARENT,
-              #1 sigexp_AND,
+              (A.TRANSPARENT, #1 sigexp_AND, (COLONleft, #2 sigexp_AND)),
               (strexpleft, #2 sigexp_AND)),
            #2 sigexp_AND)
         | strexp OPAQUE sigexp_AND
           (A.STRCONSTRAINT
-             (strexp, A.OPAQUE, #1 sigexp_AND, (strexpleft, #2 sigexp_AND)),
+             (strexp,
+              (A.OPAQUE, #1 sigexp_AND, (OPAQUEleft, #2 sigexp_AND)),
+              (strexpleft, #2 sigexp_AND)),
            #2 sigexp_AND)
 
 strdecs

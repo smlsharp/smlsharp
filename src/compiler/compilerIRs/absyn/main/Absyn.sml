@@ -958,10 +958,10 @@ struct
        *)
       STRID of longstrid
     | (*%
-       * @format(strexp * sigop * sigexp * loc)
-       * !N0{ strexp +1 sigop +d sigexp }
+       * @format(strexp * sigcon * loc)
+       * sigcon()(strexp +1)
        *)
-      STRCONSTRAINT of strexp * sigop * sigexp * loc
+      STRCONSTRAINT of strexp * sigconstraint * loc
     | (*%
        * @format(funid * arg argOpt * loc)
        * !N0{ funid "(" 2[1] !N0{ argOpt(arg) } 1 ")" }

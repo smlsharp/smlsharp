@@ -623,8 +623,8 @@ struct
         A.STRBASIC (strdecs, loc) =>
         A.STRBASIC (#2 (resolveStrdecs env strdecs), loc)
       | A.STRID _ => strexp
-      | A.STRCONSTRAINT (strexp, sigop, sigexp, loc) =>
-        A.STRCONSTRAINT (resolveStrexp env strexp, sigop, sigexp, loc)
+      | A.STRCONSTRAINT (strexp, sigcon, loc) =>
+        A.STRCONSTRAINT (resolveStrexp env strexp, sigcon, loc)
       | A.STRAPP (funid, funarg, loc) =>
         A.STRAPP (funid, Option.map (resolveFunarg env) funarg, loc)
       | A.STRLET (strdecs, strexp, loc) =>

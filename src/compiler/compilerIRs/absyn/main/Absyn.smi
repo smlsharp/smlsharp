@@ -202,7 +202,7 @@ struct
   datatype strexp =
       STRBASIC of strdec list * loc
     | STRID of longstrid
-    | STRCONSTRAINT of strexp * sigop * sigexp * loc
+    | STRCONSTRAINT of strexp * sigconstraint * loc
     | STRAPP of funid * fun_arg option * loc
     | STRLET of strdec list * strexp * loc
 
