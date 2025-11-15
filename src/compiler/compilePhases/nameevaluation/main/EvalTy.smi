@@ -47,7 +47,9 @@ struct
       -> tvarEnv * IDCalc.kindedTvar list
   val evalDatatype :
       Longsymbol.longsymbol -> NameEvalEnv.env
-                        -> PatternCalc.datbind list * Loc.loc
+                        -> PatternCalc.datbind list
+                           * PatternCalc.typbind list
+                           * Loc.loc
                         -> NameEvalEnv.env * IDCalc.icdecl list
   val resetFreeTvarEnv : unit -> unit
 

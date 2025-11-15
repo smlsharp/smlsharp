@@ -13,8 +13,6 @@
    (2) datatype withtype t = ty => datatype[ty/t] + type t = ty
    (3) while term
    (4) if term
- 3. error checking
-   (1) record label duplication
 
  A note on infix resolution
   About infix identifier, the Definition of Standard ML describes:
@@ -79,9 +77,6 @@ struct
   val getErrors = EU.getErrors
   val getWarnings = EU.getWarnings
   fun enqueueError (loc, exn) = EU.enqueueError (LOC loc, exn)
-  val checkRecordLabelDuplication = UserErrorUtils.checkRecordLabelDuplication
-  val checkSymbolDuplication = UserErrorUtils.checkSymbolDuplication
-  val checkSymbolDuplication' = UserErrorUtils.checkSymbolDuplication'
   val emptyTvars = (nil, Loc.NOLOC) : PC.scopedTvars
 
   fun bug s = Bug.Bug ("ElaborateCore: " ^ s)
@@ -283,9 +278,6 @@ struct
       | A.FFITYRECORD (labelTys, loc) =>
         let val newLabelTys = elabLabeledSequence elabFFITy labelTys
         in
-          checkRecordLabelDuplication
-              (fn ((label, _), _, _) => label)
-              labelTys (LOC loc) E.DuplicateRecordLabelInRawType;
           PC.FFIRECORDTY (newLabelTys, loc)
         end
       | A.FFITYCON (argTys, tyConPath, loc) =>
@@ -341,11 +333,7 @@ struct
               LOC loc),
            LOC loc)
       | A.PATRECORD (pfields, flex, loc) =>
-        (
-          checkRecordLabelDuplication
-              getLabelOfPatRow pfields (LOC loc) E.DuplicateRecordLabelInPat;
-          PC.PLPATRECORD (flex, map elabPatRow pfields, LOC loc)
-        )
+        PC.PLPATRECORD (flex, map elabPatRow pfields, LOC loc)
       | A.PATTUPLE (plist, loc) =>
         PC.PLPATRECORD (false, RecordLabel.tupleList (map elabPat plist), LOC loc)
       | A.PATLIST (elist, loc) =>
@@ -458,24 +446,14 @@ struct
       | A.EXPSIZEOF (ty, loc) => PC.PLSIZEOF (ty, LOC loc)
       | A.EXPID (_, longid, _) => PC.PLVAR (toLongsymbol longid)
       | A.EXPRECORD (stringExpList, loc) =>
-        (
-          checkRecordLabelDuplication
-              (fn ((label, _), _, _) => label)
-              stringExpList (LOC loc) E.DuplicateRecordLabel;
-          PC.PLRECORD (elabLabeledSequence elabExp stringExpList, LOC loc)
-        )
+        PC.PLRECORD (elabLabeledSequence elabExp stringExpList, LOC loc)
       | A.EXPRECORD_UPDATE (exp, stringExpList, loc) =>
-        (
-          checkRecordLabelDuplication
-              (fn ((label, _), _, _) => label)
-              stringExpList (LOC loc) E.DuplicateRecordLabel;
-          PC.PLRECORD_UPDATE
+        PC.PLRECORD_UPDATE
           (
             elabExp exp,
             elabLabeledSequence elabExp stringExpList,
             LOC loc
           )
-        )
       | A.EXPTUPLE_UPDATE (exp, expList, loc) =>
         PC.PLRECORD_UPDATE
           (elabExp exp,
@@ -724,20 +702,7 @@ struct
         val boundTypeNames =
             (map (fn (_, x, _, _) => toSymbol x) dataBinds)
             @ (map (fn (_, x, _, _) => toSymbol x) (seq withTypeBinds))
-        fun id x = x
-        val _ =
-            checkSymbolDuplication
-              id boundTypeNames E.DuplicateTypeNameInDatatype
-        val _ =
-            checkSymbolDuplication
-              (fn ((_, x, _), _, _) => toSymbol x)
-              dataCons E.DuplicateConstructorNameInDatatype
         val newDataBinds = map elabDataBind dataBinds
-        val _ =
-            map (fn (tvars, name, ty, _) =>
-                    UserErrorUtils.checkSymbolDuplication
-                      (fn (isEq, id) => toSymbol id) (seq tvars) E.DuplicateTypParam)
-                (seq withTypeBinds)
         val expandedDataBinds =
             map (expandWithTypesInDataBind (seq withTypeBinds)) newDataBinds
         val withTypeBinds =
@@ -783,20 +748,7 @@ struct
                 assertExp exp; (* before elab *)
                 (elabedPat, elabedExp, LOC loc)
               end
-          fun getNameOfBound (PC.PLPATID [symbol], _, _) =
-              SOME symbol
-            | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
-              getNameOfBound (pat, exp, loc)
-            | getNameOfBound (pat, _, _) =
-              (* this case will be rejected by the above assertPat. *)
-              NONE
           val elabedRecbinds = map elabBind recbinds
-          val _ =
-              (* NOTE: use primed version. a trick. *)
-              checkSymbolDuplication'
-                getNameOfBound
-                elabedRecbinds
-                E.DuplicateVarNameInValRec
         in
           [PC.PDVAL (seq' tyvs, elabedValbinds, elabedRecbinds, LOC loc)]
         end
@@ -815,22 +767,12 @@ struct
                 (toSymbol symbol, ty, elabedExp, LOC loc)
               end
           val elabedBinds = map elabBind decls
-          val _ =
-              checkSymbolDuplication
-                (fn (f, ty, e, loc) => f)
-                elabedBinds
-                E.DuplicateVarNameInValRec
         in
           [PC.PDVALPOLYREC(elabedBinds, LOC loc)]
         end
       | A.DECFUN (tyvs, fvalbinds, loc) =>
         let
           val elabedFunBinds = map elabFvalbind fvalbinds
-          val _ =
-              checkSymbolDuplication
-                (fn x => x)
-                (List.mapPartial #1 elabedFunBinds)
-                E.DuplicateVarNameInValRec
         in
           [PC.PDDECFUN (seq' tyvs, map #2 elabedFunBinds, LOC loc)]
         end
@@ -851,9 +793,6 @@ struct
               end
           val newTyBinds = map elabTyBind tyBinds
         in
-          checkSymbolDuplication
-            #2
-            newTyBinds E.DuplicateTypeNameInType;
           [PC.PDTYPE (newTyBinds, LOC loc)]
         end
       | A.DECDATATYPE (dataBinds, withTypeBinds, loc) =>
@@ -861,7 +800,7 @@ struct
           val (newDataBinds, newWithTypeBinds) =
               elabDataBindsWithTypeBinds (dataBinds, withTypeBinds, loc)
         in
-          PC.PDDATATYPE (newDataBinds, LOC loc)
+          PC.PDDATATYPE (newDataBinds, newWithTypeBinds, LOC loc)
           :: (case newWithTypeBinds of
                 nil => nil
               | _ :: _ => [PC.PDTYPE(newWithTypeBinds, LOC loc)])
@@ -873,13 +812,15 @@ struct
         let
           val (newDataBinds, newWithTypeBinds) =
               elabDataBindsWithTypeBinds (dataBinds, withTypeBinds, loc)
+          val typeNames = map (fn (tvars, symbol, _, _) => (tvars, symbol))
+                              newWithTypeBinds
           val newDecs = elabDecs decs
           val newVisibleDecs =
               case newWithTypeBinds of
                 [] => newDecs
               | _ => PC.PDTYPE(newWithTypeBinds, LOC loc) :: newDecs
         in
-          [PC.PDABSTYPE(newDataBinds, newVisibleDecs, LOC loc)]
+          [PC.PDABSTYPE(newDataBinds, newWithTypeBinds, newVisibleDecs, LOC loc)]
         end
       | A.DECEXCEPTION (exnBinds, loc) =>
         let
@@ -890,12 +831,6 @@ struct
             | elabExnBind
                 (A.EXBINDREP ((_, conSymbol, _), (_, refLongsymbol, _), loc)) =
               PC.PLEXBINDREP(toSymbol conSymbol, toLongsymbol refLongsymbol, LOC loc)
-          fun getExnName (A.EXBIND ((_, conSymbol, _), _, _)) = toSymbol conSymbol
-            | getExnName (A.EXBINDREP ((_, conSymbol, _), _, _)) = toSymbol conSymbol
-          val _ =
-              checkSymbolDuplication
-                getExnName exnBinds
-                E.DuplicateConstructorNameInException
         in
           [PC.PDEXD (map elabExnBind exnBinds, LOC loc)]
         end

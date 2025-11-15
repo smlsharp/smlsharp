@@ -474,9 +474,12 @@ in
         | P.FFITYVAR (tvar, loc) =>
           I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), LOC loc)
         | P.FFIRECORDTY (stringFfityList, loc) =>
-          I.FFIRECORDTY
-            (map (fn (l, ty) => (l, evalFfity ty)) stringFfityList,
-             LOC loc)
+          (EU.checkRecordLabelDuplication
+             (fn (label, _) => label) stringFfityList (Loc.LOC loc)
+             (fn s => E.DuplicateRecordLabelInRawType("Ty-020",s));
+           I.FFIRECORDTY
+             (map (fn (l, ty) => (l, evalFfity ty)) stringFfityList,
+              LOC loc))
         | P.FFICONTY (argTyList, typath, loc) =>
           let
             val tfun =
@@ -510,18 +513,22 @@ in
 
   val emptyScopedTvars = nil : I.scopedTvars
   fun evalScopedTvars (tvarEnv:tvarEnv) (env:V.env) (tvars:P.scopedTvars) =
-      evalKindedTvarList false tvarEnv env tvars
+      (EU.checkSymbolDuplication
+         (fn ((_, id), _, _) => toSymbol id)
+         (#1 tvars)
+         (fn s => E.DuplicateUserTvar ("Ty-115", s));
+       evalKindedTvarList false tvarEnv env tvars)
  
   fun evalDatatype 
         (path:Longsymbol.longsymbol)
         (env:V.env) 
-        (datbindList:PatternCalc.datbind list, loc:Loc.loc) 
+        (datbindList:PatternCalc.datbind list, typbindList, loc:Loc.loc)
        : NameEvalEnv.env * IDCalc.icdecl list
        =
       let
         val _ = EU.checkSymbolDuplication
-                  (fn {tyvars, symbol, conbind, loc} => symbol)
-                  datbindList
+                  (fn x => x)
+                  (map #symbol datbindList @ map #2 typbindList)
                   (fn s => E.DuplicateTypInDty("Ty-120",s))
         val _ = EU.checkSymbolDuplication
                   (fn {symbol, ty=tyOption, loc} => symbol)

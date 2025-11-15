@@ -22,9 +22,6 @@ struct
   structure E = ElaborateError
   datatype loc = datatype Loc.loc
 
-  val checkSymbolDuplication = EU.checkSymbolDuplication
-  val checkSymbolDuplication' = EU.checkSymbolDuplication'
-
   structure A = Absyn
   structure PC = PatternCalc
 
@@ -53,9 +50,6 @@ struct
         case spec of
           A.SPECVAL(valBinds, loc) =>
           let
-            val _ = checkSymbolDuplication
-                      (toSymbol o #1)
-                      valBinds E.DuplicateValDesc
             val specs =
                 map (fn (vid, ty, _) => (emptyTvars, toSymbol vid, ty, LOC loc))
                     valBinds
@@ -64,9 +58,6 @@ struct
           end
         | A.SPECTYPE(tydescs, loc) =>
           let
-            val _ =
-                UserErrorUtils.checkSymbolDuplication
-                  (toSymbol o #2) tydescs E.DuplicateTypDesc
             val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
           in
             [PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=LOC loc}]
@@ -83,10 +74,6 @@ struct
 *)
         | A.SPECTYPEINC(maniftypedescs, loc) =>
           let
-            val _ =
-                checkSymbolDuplication
-                  (toSymbol o #2)
-                  maniftypedescs E.DuplicateTypDesc
             fun elabTypeEquation (tvars, symbol, ty, _) =
                 PC.PLSPECTYPEEQUATION ((seq tvars, toSymbol symbol, ty), LOC loc)
           in
@@ -94,10 +81,6 @@ struct
           end
         | A.SPECEQTYPE(tydescs, loc) =>
           let
-            val _ =
-                UserErrorUtils.checkSymbolDuplication
-                  (toSymbol o #2)
-                  tydescs E.DuplicateTypDesc
             val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
           in
             [PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=LOC loc}]
@@ -113,47 +96,23 @@ struct
           end
 *)
         | A.SPECDATATYPE(dataDescs, loc) =>
-          let
-            val _ =
-                checkSymbolDuplication
-                  (toSymbol o #2)
-                  dataDescs E.DuplicateTypDesc
-            fun check (tvar, name, conDescs, loc) =
-                (
-                  UserErrorUtils.checkSymbolDuplication
-                    (fn (con, ty, loc) => toSymbol con)
-                    conDescs E.DuplicateConstructorNameInDatatype;
-                  ()
-                )
-            val _ = map check dataDescs
-          in
-            [PC.PLSPECDATATYPE
-               (map (fn (tyvars, symbol, con, loc) =>
-                        {tyvars = seq tyvars, loc = LOC loc, symbol = toSymbol symbol,
-                         conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=LOC loc}) con})
-                    dataDescs,
-                LOC loc)]
-          end
+          [PC.PLSPECDATATYPE
+             (map (fn (tyvars, symbol, con, loc) =>
+                      {tyvars = seq tyvars, loc = LOC loc, symbol = toSymbol symbol,
+                       conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=LOC loc}) con})
+                  dataDescs,
+              LOC loc)]
         | A.SPECDATATYPEREP(tyCon, longTyCon, loc) =>
           [PC.PLSPECREPLIC(toSymbol tyCon, toLongsymbol longTyCon, LOC loc)]
         | A.SPECEXCEPTION(exnDescs, loc) =>
           let
-            val _ =
-                checkSymbolDuplication
-                  (toSymbol o #1)
-                  exnDescs E.DuplicateConstructorNameInException
             val exnDescs =
                 map (fn (symbol, tyOpt, loc) => (toSymbol symbol, tyOpt, LOC loc)) exnDescs
           in
             [PC.PLSPECEXCEPTION(exnDescs, LOC loc)]
           end
         | A.SPECSTRUCTURE(strdescs, loc) =>
-          let
-            val _ = checkSymbolDuplication (toSymbol o #1) strdescs E.DuplicateStrDesc
-          in
-            [PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs,
-                              LOC loc)]
-          end
+          [PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs, LOC loc)]
         | A.SPECINCLUDE(sigexp, loc)=>
           [PC.PLSPECINCLUDE(elabSigExp sigexp, LOC loc)]
         | A.SPECINCLUDE_ID(sigids, loc) =>

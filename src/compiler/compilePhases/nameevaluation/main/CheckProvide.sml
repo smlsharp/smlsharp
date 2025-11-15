@@ -1164,7 +1164,7 @@ val _ = U.print "\n"
         ) (* exception foo = barPath *)
 
       | (* datatype foo = ... *)
-        PI.PIDATATYPE {datbind, loc} =>
+        PI.PIDATATYPE {datbind, withty, loc} =>
         (exnSet,
          checkDatbindList path evalEnv env datbind,
          {exportDecls=nil, bindDecls=nil}

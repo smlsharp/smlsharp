@@ -83,12 +83,16 @@ struct
                      symbol: symbol,
                      loc:loc,
                      conbind: {symbol: symbol, ty: ty option, loc:loc} list} 
-                      list * loc
+                      list
+                    * (tvar list * symbol * ty * loc) list
+                    * loc
     | PDREPLICATEDAT of symbol * longsymbol * loc (* replication *)
     | PDABSTYPE of {tyvars: tvar list, symbol: symbol,
                     loc:loc,
                     conbind: {symbol: symbol, ty: ty option, loc:loc} list} list
-                   * pdecl list * loc
+                   * (tvar list * symbol * ty * loc) list
+                   * pdecl list
+                   * loc
     | PDEXD of plexbind list * loc
     | PDLOCALDEC of pdecl list * pdecl list * loc
     | PDOPEN of longsymbol list * loc
@@ -151,6 +155,8 @@ struct
     = {tyvars: tvar list, symbol: symbol,
        loc:loc,
        conbind: {symbol: symbol, ty: ty option, loc:loc} list}
+  type typbind
+    = tvar list * symbol * ty * loc
 
   val format_caseKind
       : caseKind -> SMLFormat.format

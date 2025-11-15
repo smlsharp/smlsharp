@@ -307,6 +307,9 @@ struct
            E.DuplicateConstructorNameInDatatype;
          P.PIDATATYPE
            {datbind = map (substDatbind (tyconSubst (seq withType))) datbind,
+            withty = map (fn (tyvars, id, ty, loc) =>
+                             (seq tyvars, toSymbol id, ty, LOC loc))
+                         (seq withType),
             loc = LOC loc}
          :: map (fn (tyvars, id, ty, loc) =>
                     P.PITYPE {tyvars = seq tyvars, symbol = toSymbol id,

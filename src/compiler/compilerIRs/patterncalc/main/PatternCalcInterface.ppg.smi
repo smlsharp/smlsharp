@@ -90,7 +90,9 @@ struct
         builtinSymbol: symbol,
         loc: loc
       }
-    | PIDATATYPE of {datbind: datbind list, loc: loc}
+    | PIDATATYPE of {datbind: datbind list,
+                     withty: PatternCalc.typbind list,
+                     loc: loc}
     | PITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
     | PIEXCEPTION of {symbol: symbol, 
                       ty: ty option, 

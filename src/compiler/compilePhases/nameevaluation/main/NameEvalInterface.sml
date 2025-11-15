@@ -497,7 +497,7 @@ in
              (renameEnv, externSet, env, nil)
            end
         )
-      | PI.PIDATATYPE {datbind, loc} => 
+      | PI.PIDATATYPE {datbind, withty, loc} =>
         let
 (*
           val datbind =
@@ -512,7 +512,7 @@ in
                   )
               datbind
 *)
-          val (env, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datbind, loc)
+          val (env, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datbind, withty, loc)
         in
           (renameEnv, externSet, env, icdecls)
         end

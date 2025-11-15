@@ -56,12 +56,8 @@ struct
 
   fun toBtvEnv (kindedTvars:A.kinded_tyvar list) : btvEnv =
       foldl (fn ((tvar as (isEq, (symbol, loc)), kind, _), btvEnv) =>
-                (if Symbol.Map.inDomain (btvEnv, symbol)
-                 then EU.enqueueError
-                        (LOC loc, E.DuplicateUserTvar {tvar = tvar})
-                 else ();
-                 Symbol.Map.insert
-                   (btvEnv, symbol, {isEq = isEq, kind = kind})))
+                Symbol.Map.insert
+                  (btvEnv, symbol, {isEq = isEq, kind = kind}))
             Symbol.Map.empty
             kindedTvars
 
@@ -265,10 +261,10 @@ struct
 *)
       | P.PDTYPE (typbinds, loc) =>
         tyvarsList (tyvarsTypbind btvEnv) typbinds
-      | P.PDDATATYPE (datbinds, loc) =>
+      | P.PDDATATYPE (datbinds, typenames, loc) =>
         tyvarsList (tyvarsDatbind btvEnv) datbinds
       | P.PDREPLICATEDAT _ => empty
-      | P.PDABSTYPE (datbinds, decls, loc) =>
+      | P.PDABSTYPE (datbinds, typenames, decls, loc) =>
         union (tyvarsList (tyvarsDatbind btvEnv) datbinds,
                tyvarsList (tyvarsDecl btvEnv) decls)
       | P.PDEXD (exbinds, loc) =>
@@ -429,8 +425,8 @@ struct
       | P.PDTYPE _ => decl
       | P.PDDATATYPE _ => decl
       | P.PDREPLICATEDAT _ => decl
-      | P.PDABSTYPE (datbinds, decls, loc) =>
-        P.PDABSTYPE (datbinds, map (decideDecl btvEnv) decls, loc)
+      | P.PDABSTYPE (datbinds, typenames, decls, loc) =>
+        P.PDABSTYPE (datbinds, typenames, map (decideDecl btvEnv) decls, loc)
       | P.PDEXD _ => decl
       | P.PDLOCALDEC (decls1, decls2, loc) =>
         P.PDLOCALDEC (map (decideDecl btvEnv) decls1,
@@ -585,7 +581,7 @@ struct
     | PI.PITYPE {tyvars, symbol, ty, loc} => pidec
     | PI.PIOPAQUE_TYPE {eq, tyvars, symbol, runtimeTy, loc} => pidec
     | PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} => pidec
-    | PI.PIDATATYPE {datbind, loc} => pidec
+    | PI.PIDATATYPE {datbind, withty, loc} => pidec
     | PI.PITYPEREP {symbol, longsymbol, loc} => pidec
     | PI.PIEXCEPTION {symbol, ty, loc} => pidec
     | PI.PIEXCEPTIONREP {symbol, longsymbol, loc} => pidec

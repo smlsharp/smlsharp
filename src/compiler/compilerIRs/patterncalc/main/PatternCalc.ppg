@@ -454,22 +454,22 @@ struct
        *)
       PDTYPE of typbind list * loc
     | (*%
-       * @format(bind binds * loc)
+       * @format(bind binds * withty * loc)
        * !R0{ binds:prepend(bind)(, "datatype" +d, +1, "and" +d) }
        *)
-      PDDATATYPE of datbind list * loc
+      PDDATATYPE of datbind list * typbind list * loc
     | (*%
        * @format(symbol * longsymbol * loc)
        * !R0{ "datatype" +d symbol +d "=" +d "datatype" +d longsymbol }
        *)
       PDREPLICATEDAT of symbol * longsymbol * loc
     | (*%
-       * @format(bind binds * dec decs * loc)
+       * @format(bind binds * withty * dec decs * loc)
        * !R0{ binds:prepend(bind)(, "abstype" +d, +1, "and" +d)
        *      +1 "with" 2[ decs:decl(dec)(+1, +1) ]
        *      +1 "end" }
        *)
-      PDABSTYPE of datbind list * pdecl list * loc
+      PDABSTYPE of datbind list * typbind list * pdecl list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "exception" +d, +1, "and" +d) }
@@ -745,8 +745,8 @@ struct
       | PDDECFUN (_, _, loc) => loc
       | PDVALPOLYREC ( _, loc) => loc
       | PDTYPE (_, loc) => loc
-      | PDABSTYPE (_, _, loc) => loc
-      | PDDATATYPE (_, loc) => loc
+      | PDABSTYPE (_, _, _, loc) => loc
+      | PDDATATYPE (_, _, loc) => loc
       | PDREPLICATEDAT (_, _, loc) => loc
       | PDEXD (_, loc) => loc
       | PDLOCALDEC (_, _, loc) => loc

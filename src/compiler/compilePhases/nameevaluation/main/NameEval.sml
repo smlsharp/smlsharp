@@ -653,9 +653,9 @@ local
           (renameEnv, returnEnv, nil)
         end
 
-      | P.PDDATATYPE (datadeclList, loc) =>
+      | P.PDDATATYPE (datadeclList, withty, loc) =>
         let
-          val (returnEnv, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, loc)
+          val (returnEnv, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, withty, loc)
         in
           (renameEnv, returnEnv, icdecls)
         end
@@ -707,7 +707,7 @@ local
              (renameEnv, returnEnv, nil)
            end
         )
-      | P.PDABSTYPE (datadeclList, pdeclList, loc) =>
+      | P.PDABSTYPE (datadeclList, withty, pdeclList, loc) =>
         let
           fun abstractTfun tfun tfvSubst =
               case tfun of
@@ -757,7 +757,7 @@ local
                   abstractTstr tstr tfvSubst)
               tfvSubst
               tyE
-          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, loc)
+          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, withty, loc)
           val evalEnv = VP.envWithEnv (env, env1)
           val (renameEnv, newEnv, icdeclList) = evalPdeclList (renameEnv:renameEnv)  path tvarEnv evalEnv pdeclList
           val absEnv = V.ENV{varE=SymbolWithLocEnv.empty, tyE=tyE, strE=V.STR SymbolWithLocEnv.empty}

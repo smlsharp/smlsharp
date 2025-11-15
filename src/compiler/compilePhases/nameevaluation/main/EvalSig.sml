@@ -727,7 +727,7 @@ local
           EU.checkSymbolDuplication
             (fn (_, symbol, _, _) => symbol)
             valdescs
-            (fn s => E.DuplicateTypInSpec("Sig-055", s));
+            (fn s => E.DuplicateVarInSpec("Sig-055", s));
           Ty.checkReservedName
             Ty.isReservedName
             (fn (_, symbol, _, _) => symbol)
@@ -1008,7 +1008,7 @@ local
           val _ = EU.checkSymbolDuplication
                     #1
                     symbolTyOptionList
-                    (fn symbol =>  E.DuplicateIdInSpec("054",symbol))
+                    (fn symbol =>  E.DuplicateConInSpec("054",symbol))
           val _ = Ty.checkReservedName
                     Ty.isReservedConName
                     #1

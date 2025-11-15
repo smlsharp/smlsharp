@@ -131,6 +131,7 @@ structure NameEvalError =
     exception DuplicateVarInRecDecl of code * Symbol.symbol
     exception DuplicateFunVarInFunDecl of code * Symbol.symbol
     exception DuplicateTypParms of code * Symbol.symbol
+    exception DuplicateUserTvar of code * Symbol.symbol
     exception DuplicateVarInPattern of code * Symbol.symbol
     exception DuplicateTypName of code * Symbol.symbol
     exception DuplicateFunctor of code * Symbol.symbol

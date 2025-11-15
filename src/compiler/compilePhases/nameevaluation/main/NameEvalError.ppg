@@ -258,6 +258,14 @@ in
 
   and
   (*%
+   * @format(code * name)
+   * "(name evaluation" +d code ")" +d
+   * "duplicate" +d "user" +d "type" +d "variable:" +d name
+   *)
+    DuplicateUserTvar of code * symbol
+
+  and
+  (*%
      @format((code * name))
      "(name evaluation" +d code ")" +d
      "duplicate" +d "function" +d "names" +d "in" +d 

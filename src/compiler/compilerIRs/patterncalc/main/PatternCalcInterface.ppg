@@ -184,10 +184,15 @@ struct
         loc: loc
       }
     | (*%
-       * @format({datbind: bind binds, loc})
+       * @format({datbind: bind binds, withty, loc})
        * "datatype" +d binds(bind)(+1 "and" +d)
        *)
-      PIDATATYPE of {datbind: datbind list, loc: loc}
+      PIDATATYPE of
+      {
+        datbind: datbind list,
+        withty: PatternCalc.typbind list,
+        loc: loc
+      }
     | (*%
        * @format({symbol, longsymbol, loc})
        * "datatype" +d symbol +d "="

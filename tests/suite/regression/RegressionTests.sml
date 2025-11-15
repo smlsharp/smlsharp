@@ -848,8 +848,8 @@ val tests = TestList [
      fn () => (compile ["regression/200_record.sml"];
                fail "must cause a compile error")
               handle CompileError
-                       (_, [(_,_,E.DuplicateRecordLabel _),
-                            (_,_,E.DuplicateRecordLabel _)])
+                       (_, [(_,_,N.DuplicateRecordLabelInExp _),
+                            (_,_,N.DuplicateRecordLabelInExp _)])
                      => ()),
   Test
     ("202_bigrecord",
