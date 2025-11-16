@@ -166,6 +166,14 @@ struct
       : Loc.loc -> Types.conInfo
   val REIFY_conInfo_WORD32ty
       : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_ENV
+      : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_EXEXN
+      : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_EXEXNREP
+      : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_EXVAR
+      : Loc.loc -> Types.conInfo
 
   val REIFY_exExnInfo_NaturalJoin
       : Loc.loc -> Types.exExnInfo
@@ -189,16 +197,6 @@ struct
   val REIFY_exInfo_dynamicTypeCase
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_dynamicExistInstance
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_mkENVenv
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_mkEXEXNIdstatus
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_mkEXEXNREPIdstatus
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_mkEXVarIdstatus
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_mkTopEnv
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_naturalJoin
       : Loc.loc -> Types.exVarInfo

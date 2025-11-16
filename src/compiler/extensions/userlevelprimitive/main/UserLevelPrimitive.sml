@@ -364,6 +364,14 @@ struct
       getCon ["ReifiedTy", "WORD8ty"]
   val REIFY_conInfo_WORD32ty =
       getCon ["ReifiedTy", "WORD32ty"]
+  val REIFY_conInfo_ENV =
+      getCon ["ReifiedTerm", "ENV"]
+  val REIFY_conInfo_EXEXN =
+      getCon ["ReifiedTerm", "EXEXN"]
+  val REIFY_conInfo_EXEXNREP =
+      getCon ["ReifiedTerm", "EXEXNREP"]
+  val REIFY_conInfo_EXVAR =
+      getCon ["ReifiedTerm", "EXVAR"]
 
   val REIFY_exExnInfo_NaturalJoin =
       getExExnInfo ["NaturalJoin", "NaturalJoin"]
@@ -391,16 +399,6 @@ struct
       getExVar ["PartialDynamic", "dynamicTypeCase"]
   val REIFY_exInfo_dynamicExistInstance =
       getExVar ["PartialDynamic", "dynamicExistInstance"]
-  val REIFY_exInfo_mkENVenv =
-      getExVar ["ReifiedTerm", "mkENVenv"]
-  val REIFY_exInfo_mkEXEXNIdstatus =
-      getExVar ["ReifiedTerm", "mkEXEXNIdstatus"]
-  val REIFY_exInfo_mkEXEXNREPIdstatus =
-      getExVar ["ReifiedTerm", "mkEXEXNREPIdstatus"]
-  val REIFY_exInfo_mkEXVarIdstatus =
-      getExVar ["ReifiedTerm", "mkEXVarIdstatus"]
-  val REIFY_exInfo_mkTopEnv =
-      getExVar ["ReifiedTerm", "mkTopEnv"]
   val REIFY_exInfo_naturalJoin =
       getExVar ["NaturalJoin", "naturalJoin"]
   val REIFY_exInfo_extend =

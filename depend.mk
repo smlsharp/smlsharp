@@ -31166,10 +31166,6 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -31188,6 +31184,10 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/smlnj-lib/Util/ord-key-sig.sml \
@@ -44151,10 +44151,6 @@ src/sql/main/PGSQLDynamic.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -45007,10 +45003,6 @@ src/compiler/compilePhases/analyzefiles/main/SourceMap.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -45252,10 +45244,6 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -45287,6 +45275,7 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o: \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDMap.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
@@ -45615,10 +45604,6 @@ src/compiler/compilePhases/analyzefiles/main/InfoMaps.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -45643,6 +45628,7 @@ src/compiler/compilePhases/analyzefiles/main/InfoMaps.o: \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDMap.smi \
  src/compiler/compilePhases/analyzefiles/main/SourceMap.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.smi \
@@ -45898,10 +45884,6 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -45921,8 +45903,12 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/reify.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46053,10 +46039,6 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -46074,6 +46056,10 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/data/control/main/PrintControl.smi \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46231,10 +46217,6 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -46257,13 +46239,17 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/compilePhases/analyzefiles/main/FileIDMap.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilePhases/analyzefiles/main/SourceMap.smi \
  src/compiler/compilePhases/analyzefiles/main/AnalyzerTy.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46732,8 +46718,6 @@ src/compiler/smlsharp.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
@@ -46747,7 +46731,9 @@ src/compiler/smlsharp.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -48338,8 +48324,6 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -48351,7 +48335,9 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -48658,8 +48644,6 @@ tests/suite/regression/RegressionTests.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -48671,7 +48655,9 @@ tests/suite/regression/RegressionTests.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -48988,8 +48974,6 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -49001,7 +48985,9 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49306,8 +49292,6 @@ tests/suite/example/ExampleTests.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -49319,7 +49303,9 @@ tests/suite/example/ExampleTests.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49624,8 +49610,6 @@ tests/suite/document/DocumentTests.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -49637,7 +49621,9 @@ tests/suite/document/DocumentTests.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49951,8 +49937,6 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -49964,7 +49948,9 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -58274,8 +58260,6 @@ tests/driver/dotest.o: \
  src/foreach/main/ForeachCommon.smi \
  src/foreach/main/ForeachArray.smi \
  src/foreach.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -58287,7 +58271,9 @@ tests/driver/dotest.o: \
  src/compiler/extensions/reflection/main/Dynamic.smi \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \

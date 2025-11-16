@@ -60,9 +60,15 @@ in
         val ReifyFun = InstVar loc {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint loc, instTy = #ty InstVarExp}
         val ReifiedTerm = ApplyList loc ReifyFun [Int loc (!PrintControl.printMaxDepth), InstVarExp]
                           handle exn as TypeMismatch => raise exn
-        val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXVarIdstatus loc) 
-        val ReifiedTerm = ApplyList loc IdstatusFun [Name, ReifiedTerm, TyTerm]
-                          handle exn as TypeMismatch => raise exn
+        val ReifiedTerm =
+            Con loc
+                (UP.REIFY_conInfo_EXVAR loc)
+                (SOME (Record
+                         loc
+                         [("name", Name),
+                          ("term", ReifiedTerm),
+                          ("ty", TyTerm)]))
+            handle exn as TypeMismatch => raise exn
       in
         SOME ReifiedTerm
       end
@@ -77,8 +83,12 @@ in
         val ReifyFun = InstVar loc {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint loc, instTy = #ty InstVarExp}
         val Term = ApplyList loc ReifyFun [Int loc (!PrintControl.printMaxDepth), InstVarExp]
             handle exn as TypeMismatch => raise exn
-        val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXVarIdstatus loc) 
-        val ReifiedTerm = ApplyList loc IdstatusFun [Name, Term, TyTerm]
+        val ReifiedTerm =
+            Con loc
+                (UP.REIFY_conInfo_EXVAR loc)
+                (SOME (Record
+                         loc
+                         [("name", Name), ("term", Term), ("ty", TyTerm)]))
             handle exn as TypeMismatch => raise exn
       in
         SOME ReifiedTerm
@@ -90,8 +100,12 @@ in
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val Name = String loc (SymbolWithLoc.symbolToString symbol)
         val Term = Con loc (UP.REIFY_conInfo_BUILTIN loc) NONE
-        val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXVarIdstatus defRange) 
-        val ReifiedTerm = ApplyList loc IdstatusFun [Name, Term, TyTerm]
+        val ReifiedTerm =
+            Con loc
+                (UP.REIFY_conInfo_EXVAR loc)
+                (SOME (Record
+                         loc
+                         [("name", Name), ("term", Term), ("ty", TyTerm)]))
             handle exn as TypeMismatch => raise exn
       in
         SOME ReifiedTerm
@@ -115,8 +129,10 @@ in
                       (sname envList)
                       (EvalIty.evalIty EvalIty.emptyContext argTy)))))
         val Name = String loc (SymbolWithLoc.symbolToString symbol)
-        val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXEXNIdstatus loc) 
-        val ReifiedTerm = ApplyList loc IdstatusFun [Name, ArgTyTerm]
+        val ReifiedTerm =
+            Con loc
+                (UP.REIFY_conInfo_EXEXN loc)
+                (SOME (Record loc [("name", Name), ("ty", ArgTyTerm)]))
             handle exn as TypeMismatch => raise exn
       in
         SOME ReifiedTerm
@@ -125,8 +141,10 @@ in
       let
         val Path = String loc (SymbolWithLoc.longsymbolToString longsymbol)
         val Name = String loc (SymbolWithLoc.symbolToString symbol)
-        val IdstatusFun = MonoVar loc (UP.REIFY_exInfo_mkEXEXNREPIdstatus loc) 
-        val ReifiedTerm = ApplyList loc IdstatusFun [Name, Path]
+        val ReifiedTerm =
+            Con loc
+                (UP.REIFY_conInfo_EXEXNREP loc)
+                (SOME (Record loc [("name", Name), ("path", Path)]))
             handle exn as TypeMismatch => raise exn
       in
         SOME ReifiedTerm
@@ -240,10 +258,10 @@ in
             varE
         val VarE = List loc (IdstatusTy loc) varE
       in
-        ApplyList
-          loc 
-          (MonoVar loc (UP.REIFY_exInfo_mkENVenv loc))
-          [VarE, TyE, StrE]
+        Con
+          loc
+          (UP.REIFY_conInfo_ENV loc)
+          (SOME (Record loc [("varE", VarE), ("tyE", TyE), ("strE", StrE)]))
         handle exn as TypeMismatch => raise exn
       end
 
@@ -348,12 +366,8 @@ in
         val Env = reifyEnv [ReferenceEnv]  Loc.noloc StaticEnv
         val SigE = reifySigE [ReferenceEnv] Loc.noloc StaticSigE
         val FunE = reifyFunE [ReferenceEnv] Loc.noloc StaticFunE
-        val TopEnvExp = 
-            ApplyList 
-              Loc.noloc 
-              (MonoVar Loc.noloc (UP.REIFY_exInfo_mkTopEnv Loc.noloc))
-              [Env, FunE, SigE]
-            handle exn as TypeMismatch => raise exn
+        val TopEnvExp =
+            Record Loc.noloc [("Env", Env), ("FunE", FunE), ("SigE", SigE)]
       in
         TopEnvExp
       end
