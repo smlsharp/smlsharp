@@ -62,15 +62,15 @@ struct
       {comp = RecordLayout.newComputationAccum (),
        subst = ref VarID.Map.empty}
 
-  fun toVarInfo {id, path} : BitmapCalc2.varInfo =
-      {id = id, path = path, ty = BuiltinTypes.word32Ty}
+  fun toVarInfo id : BitmapCalc2.varInfo =
+      {id = id, path = NONE, ty = BuiltinTypes.word32Ty}
 
   fun toBcexp ({subst, ...}:accum) loc value =
       case value of
         RecordLayoutCalc.WORD n =>
         B.BCCONSTANT {const = R.INT (R.WORD32 n), loc = loc}
       | RecordLayoutCalc.VAR v =>
-        case VarID.Map.find (!subst, #id v) of
+        case VarID.Map.find (!subst, v) of
           NONE => B.BCVAR {varInfo = toVarInfo v, loc = loc}
         | SOME exp => exp loc
 
@@ -110,7 +110,7 @@ struct
                                       loc = loc}
         in
           subst := VarID.Map.insert (!subst, id, e);
-          RecordLayoutCalc.VAR {id = id, path = path}
+          RecordLayoutCalc.VAR id
         end
       | _ => raise Bug.Bug "toValue"
 

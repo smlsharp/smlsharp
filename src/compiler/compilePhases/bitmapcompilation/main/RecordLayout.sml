@@ -31,18 +31,11 @@ struct
         maxShift
       end
 
-  fun newVar () =
-      let
-        val id = VarID.generate ()
-      in
-        {id = id, path = NONE} : var
-      end
-
   datatype value = datatype RecordLayoutCalc.value
 
   fun compareValue (v1, v2) =
       case (v1, v2) of
-        (VAR {id=id1,...}, VAR {id=id2,...}) => VarID.compare (id1, id2)
+        (VAR id1, VAR id2) => VarID.compare (id1, id2)
       | (VAR _, WORD _) => LESS
       | (WORD n1, WORD n2) => Word32.compare (n1, n2)
       | (WORD _, VAR _) => GREATER
@@ -150,7 +143,7 @@ struct
           SOME var => VAR var
         | NONE =>
           let
-            val var = newVar ()
+            val var = VarID.generate ()
           in
             comp := (ExpMap.insert (map, exp, var), VAL (var, exp) :: decs);
             VAR var

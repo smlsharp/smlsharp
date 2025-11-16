@@ -1,14 +1,11 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-
-_require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 
 structure RecordLayoutCalc =
 struct
 
-  type var =
-      {path : Longsymbol.longsymbol option, id : VarID.id}
+  type var = VarID.id
 
   datatype value =
       VAR of var

@@ -577,10 +577,10 @@ struct
       case value of
         RecordLayoutCalc.WORD n =>
         wordConst n loc
-      | RecordLayoutCalc.VAR {id, path} =>
+      | RecordLayoutCalc.VAR id =>
         case VarID.Map.find (!subst, id) of
           NONE =>
-          C.CCVAR {varInfo = {id = id, path = path, ty = BuiltinTypes.word32Ty},
+          C.CCVAR {varInfo = {id = id, path = NONE, ty = BuiltinTypes.word32Ty},
                    loc = loc}
         | SOME exp => exp loc
 
@@ -600,9 +600,9 @@ struct
 
   fun extractDecls (accum, mainExp, loc) =
       foldr
-        (fn (RecordLayoutCalc.VAL ({id, path}, exp), z) =>
+        (fn (RecordLayoutCalc.VAL (id, exp), z) =>
             C.CCLET
-              {boundVar = {id = id, path = path, ty = BuiltinTypes.word32Ty},
+              {boundVar = {id = id, path = NONE, ty = BuiltinTypes.word32Ty},
                boundExp =
                  case exp of
                    RecordLayoutCalc.VALUE value =>
@@ -634,7 +634,7 @@ struct
                                loc = loc}
         in
           subst := VarID.Map.insert (!subst, id, e);
-          RecordLayoutCalc.VAR {id = id, path = path}
+          RecordLayoutCalc.VAR id
         end
 
   fun checkNoExtraComputation ({comp, ...}:accum) =

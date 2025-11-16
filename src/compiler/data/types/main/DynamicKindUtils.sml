@@ -56,8 +56,7 @@ struct
                                 (Word.fromInt (RuntimeTypes.getSize size)),
                        tag = RecordLayoutCalc.WORD 0w0}
                     | _ =>
-                      {size = RecordLayoutCalc.VAR
-                                {id = VarID.generate (), path = NONE},
+                      {size = RecordLayoutCalc.VAR (VarID.generate ()),
                        tag = RecordLayoutCalc.WORD 0w0})
                 (RecordLabel.Map.listItems record)
           val accum = RecordLayout.newComputationAccum ()
