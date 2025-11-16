@@ -119,10 +119,10 @@ declare void@_SML_main03d87556ec7f64b2_List()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3a60343781315c1e_Option()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3446b7b079949ccf_text_io()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main5bfd1d1579faec9b_binary_map_fn()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina1dd66ed49f3a8fe_DynamicKindUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main7833b15b41d4b824_TypesBasics()local_unnamed_addr#2 gc"smlsharp"
@@ -139,10 +139,10 @@ declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load3a60343781315c1e_Option(i8*)local_unnamed_addr
 declare void@_SML_load3446b7b079949ccf_text_io(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
-declare void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*)local_unnamed_addr
-declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_load5bfd1d1579faec9b_binary_map_fn(i8*)local_unnamed_addr
+declare void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
+declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
 declare void@_SML_loada1dd66ed49f3a8fe_DynamicKindUtils(i8*)local_unnamed_addr
 declare void@_SML_load7833b15b41d4b824_TypesBasics(i8*)local_unnamed_addr
@@ -170,10 +170,10 @@ tail call void@_SML_load03d87556ec7f64b2_List(i8*%a)#0
 tail call void@_SML_load3a60343781315c1e_Option(i8*%a)#0
 tail call void@_SML_load3446b7b079949ccf_text_io(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
-tail call void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*%a)#0
-tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_load5bfd1d1579faec9b_binary_map_fn(i8*%a)#0
+tail call void@_SML_load04b3f7ee9fcfa2b4_binary_set_fn(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
+tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
 tail call void@_SML_loada1dd66ed49f3a8fe_DynamicKindUtils(i8*%a)#0
 tail call void@_SML_load7833b15b41d4b824_TypesBasics(i8*%a)#0
@@ -212,10 +212,10 @@ tail call void@_SML_main03d87556ec7f64b2_List()#2
 tail call void@_SML_main3a60343781315c1e_Option()#2
 tail call void@_SML_main3446b7b079949ccf_text_io()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
-tail call void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()#2
-tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
 tail call void@_SML_main5bfd1d1579faec9b_binary_map_fn()#2
+tail call void@_SML_main04b3f7ee9fcfa2b4_binary_set_fn()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
+tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
 tail call void@_SML_maina1dd66ed49f3a8fe_DynamicKindUtils()#2
 tail call void@_SML_main7833b15b41d4b824_TypesBasics()#2

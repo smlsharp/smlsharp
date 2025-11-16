@@ -68,7 +68,7 @@ declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"sml
 declare void@_SML_mainb370edab64b2932f_NormalizeTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4693131be06a1f6f_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb6dd219206362ccf_TypedElaborationError_ppg()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
@@ -77,7 +77,7 @@ declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
 declare void@_SML_loadb370edab64b2932f_NormalizeTy(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
 declare void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*)local_unnamed_addr
-declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
+declare void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_loadb6dd219206362ccf_TypedElaborationError_ppg(i8*)local_unnamed_addr
 define private void@_SML_tabb7fd4df22d713a048_TypedElaboration()#3{
 unreachable
@@ -97,7 +97,7 @@ tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
 tail call void@_SML_loadb370edab64b2932f_NormalizeTy(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
 tail call void@_SML_loadc86a8a57f9dc856e_UserErrorUtils(i8*%a)#0
-tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
+tail call void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_loadb6dd219206362ccf_TypedElaborationError_ppg(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb7fd4df22d713a048_TypedElaboration,i8*@_SML_ftab7fd4df22d713a048_TypedElaboration,i8*null)#0
 ret void
@@ -118,7 +118,7 @@ tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
 tail call void@_SML_mainb370edab64b2932f_NormalizeTy()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
 tail call void@_SML_mainc86a8a57f9dc856e_UserErrorUtils()#2
-tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
+tail call void@_SML_main4693131be06a1f6f_UserLevelPrimitive()#2
 tail call void@_SML_mainb6dd219206362ccf_TypedElaborationError_ppg()#2
 br label%d
 }

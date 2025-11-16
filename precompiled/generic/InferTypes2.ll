@@ -939,10 +939,10 @@ declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp
 declare void@_SML_mainf05fe994141c896f_DummyTyID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maincf2656e90c9ab770_ExistTyID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainfe3e21425e4479c1_Types_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maine545d96575812f41_ReifiedTyData()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4394281096f91016_ReifiedTyData()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main8a8dbcb270d3a574_TvarMap()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4693131be06a1f6f_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainb0bfb5fbb6f14d35_ConstantTypes()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maindd2219ad180c9f83_TypedCalcUtils()local_unnamed_addr#2 gc"smlsharp"
@@ -976,10 +976,10 @@ declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_loadf05fe994141c896f_DummyTyID(i8*)local_unnamed_addr
 declare void@_SML_loadcf2656e90c9ab770_ExistTyID(i8*)local_unnamed_addr
 declare void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*)local_unnamed_addr
-declare void@_SML_loade545d96575812f41_ReifiedTyData(i8*)local_unnamed_addr
+declare void@_SML_load4394281096f91016_ReifiedTyData(i8*)local_unnamed_addr
 declare void@_SML_load8a8dbcb270d3a574_TvarMap(i8*)local_unnamed_addr
 declare void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*)local_unnamed_addr
-declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
+declare void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
 declare void@_SML_loadb0bfb5fbb6f14d35_ConstantTypes(i8*)local_unnamed_addr
 declare void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*)local_unnamed_addr
@@ -1024,10 +1024,10 @@ tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_loadf05fe994141c896f_DummyTyID(i8*%a)#0
 tail call void@_SML_loadcf2656e90c9ab770_ExistTyID(i8*%a)#0
 tail call void@_SML_loadfe3e21425e4479c1_Types_ppg(i8*%a)#0
-tail call void@_SML_loade545d96575812f41_ReifiedTyData(i8*%a)#0
+tail call void@_SML_load4394281096f91016_ReifiedTyData(i8*%a)#0
 tail call void@_SML_load8a8dbcb270d3a574_TvarMap(i8*%a)#0
 tail call void@_SML_loaddd7ac0235f3a2d21_IDCalc_ppg(i8*%a)#0
-tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
+tail call void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
 tail call void@_SML_loadb0bfb5fbb6f14d35_ConstantTypes(i8*%a)#0
 tail call void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*%a)#0
@@ -1078,10 +1078,10 @@ tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_mainf05fe994141c896f_DummyTyID()#2
 tail call void@_SML_maincf2656e90c9ab770_ExistTyID()#2
 tail call void@_SML_mainfe3e21425e4479c1_Types_ppg()#2
-tail call void@_SML_maine545d96575812f41_ReifiedTyData()#2
+tail call void@_SML_main4394281096f91016_ReifiedTyData()#2
 tail call void@_SML_main8a8dbcb270d3a574_TvarMap()#2
 tail call void@_SML_maindd7ac0235f3a2d21_IDCalc_ppg()#2
-tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
+tail call void@_SML_main4693131be06a1f6f_UserLevelPrimitive()#2
 tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
 tail call void@_SML_mainb0bfb5fbb6f14d35_ConstantTypes()#2
 tail call void@_SML_maindd2219ad180c9f83_TypedCalcUtils()#2

@@ -63,9 +63,6 @@ struct
     | EXVAR of {name:string, term:reifiedTerm, ty:string}
     | EXVARTY of {name:string, ty:string}
 
-  val mkEXEXNIdstatus : string -> string option -> idstatus
-  val mkEXEXNREPIdstatus : string -> string -> idstatus
-  val mkEXVarIdstatus : string -> reifiedTerm -> string -> idstatus
   type tstr = string * string
   type varE = idstatus list
   type tyE = tstr list
@@ -73,12 +70,9 @@ struct
     = ENV of {strE:(string * env) list, tyE:tyE, varE:varE}
   type strentry = string * env
   type strE = strentry list
-  val mkENVenv : varE -> tyE -> strE -> env
   type funE = string list
   type sigE = string
   type topEnv = {Env:env, FunE:funE, SigE:sigE}
-
-  val mkTopEnv : env ->  funE -> sigE -> topEnv
 
   val format_path : string list -> SMLFormat.format
   val format_reifiedTerm : reifiedTerm -> SMLFormat.format

@@ -30,13 +30,13 @@ declare void@_SML_main03d87556ec7f64b2_List()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maincf2656e90c9ab770_ExistTyID()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4693131be06a1f6f_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main7833b15b41d4b824_TypesBasics()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
 declare void@_SML_loadcf2656e90c9ab770_ExistTyID(i8*)local_unnamed_addr
-declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
+declare void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_load7833b15b41d4b824_TypesBasics(i8*)local_unnamed_addr
 define private void@_SML_tabb169d2fa3426ad727_DynamicExistInstance()#3{
 unreachable
@@ -53,7 +53,7 @@ tail call void@_SML_load03d87556ec7f64b2_List(i8*%a)#0
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
 tail call void@_SML_loadcf2656e90c9ab770_ExistTyID(i8*%a)#0
-tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
+tail call void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_load7833b15b41d4b824_TypesBasics(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb169d2fa3426ad727_DynamicExistInstance,i8*@_SML_ftab169d2fa3426ad727_DynamicExistInstance,i8*null)#0
 ret void
@@ -71,7 +71,7 @@ tail call void@_SML_main03d87556ec7f64b2_List()#2
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_maina142c315f12317c0_RecordLabel()#2
 tail call void@_SML_maincf2656e90c9ab770_ExistTyID()#2
-tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
+tail call void@_SML_main4693131be06a1f6f_UserLevelPrimitive()#2
 tail call void@_SML_main7833b15b41d4b824_TypesBasics()#2
 br label%d
 }

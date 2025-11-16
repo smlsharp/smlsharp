@@ -128,9 +128,9 @@ declare void@_SML_main13f997e47c947049_FFIAttributes_ppg()local_unnamed_addr#2 g
 declare void@_SML_maindd2219ad180c9f83_TypedCalcUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main3a400f8d2ac28205_TypedCalcCon()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maine545d96575812f41_ReifiedTyData()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main9698ee3d6ec0ab2b_ReifyUtils()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4693131be06a1f6f_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4394281096f91016_ReifiedTyData()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main08dce4fecd26210a_ReifyUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loaddaa180c1799f3810_Bool(i8*)local_unnamed_addr
 declare void@_SML_load03d87556ec7f64b2_List(i8*)local_unnamed_addr
 declare void@_SML_load7aa263535439ee1c_ListPair(i8*)local_unnamed_addr
@@ -142,9 +142,9 @@ declare void@_SML_load13f997e47c947049_FFIAttributes_ppg(i8*)local_unnamed_addr
 declare void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*)local_unnamed_addr
 declare void@_SML_load3a400f8d2ac28205_TypedCalcCon(i8*)local_unnamed_addr
 declare void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*)local_unnamed_addr
-declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
-declare void@_SML_loade545d96575812f41_ReifiedTyData(i8*)local_unnamed_addr
-declare void@_SML_load9698ee3d6ec0ab2b_ReifyUtils(i8*)local_unnamed_addr
+declare void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*)local_unnamed_addr
+declare void@_SML_load4394281096f91016_ReifiedTyData(i8*)local_unnamed_addr
+declare void@_SML_load08dce4fecd26210a_ReifyUtils(i8*)local_unnamed_addr
 define private void@_SML_tabbbbd01a34013b468e_FFICompilation()#3{
 unreachable
 }
@@ -167,9 +167,9 @@ tail call void@_SML_load13f997e47c947049_FFIAttributes_ppg(i8*%a)#0
 tail call void@_SML_loaddd2219ad180c9f83_TypedCalcUtils(i8*%a)#0
 tail call void@_SML_load3a400f8d2ac28205_TypedCalcCon(i8*%a)#0
 tail call void@_SML_loadda6ffe0fd6b6ac21_BuiltinTypes(i8*%a)#0
-tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
-tail call void@_SML_loade545d96575812f41_ReifiedTyData(i8*%a)#0
-tail call void@_SML_load9698ee3d6ec0ab2b_ReifyUtils(i8*%a)#0
+tail call void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*%a)#0
+tail call void@_SML_load4394281096f91016_ReifiedTyData(i8*%a)#0
+tail call void@_SML_load08dce4fecd26210a_ReifyUtils(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbbbd01a34013b468e_FFICompilation,i8*@_SML_ftabbbd01a34013b468e_FFICompilation,i8*null)#0
 ret void
 }
@@ -193,9 +193,9 @@ tail call void@_SML_main13f997e47c947049_FFIAttributes_ppg()#2
 tail call void@_SML_maindd2219ad180c9f83_TypedCalcUtils()#2
 tail call void@_SML_main3a400f8d2ac28205_TypedCalcCon()#2
 tail call void@_SML_mainda6ffe0fd6b6ac21_BuiltinTypes()#2
-tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
-tail call void@_SML_maine545d96575812f41_ReifiedTyData()#2
-tail call void@_SML_main9698ee3d6ec0ab2b_ReifyUtils()#2
+tail call void@_SML_main4693131be06a1f6f_UserLevelPrimitive()#2
+tail call void@_SML_main4394281096f91016_ReifiedTyData()#2
+tail call void@_SML_main08dce4fecd26210a_ReifyUtils()#2
 br label%d
 }
 define internal fastcc i8*@_SMLLLN14FFICompilation13explodeRecordE_200(i8*inreg%a)#2 gc"smlsharp"{

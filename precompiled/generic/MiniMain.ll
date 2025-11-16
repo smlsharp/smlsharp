@@ -549,7 +549,7 @@ declare void@_SML_main3acd53cad8d59eda_PrintControl()local_unnamed_addr#2 gc"sml
 declare void@_SML_main7b57a7f19eafb22a_Control()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main9819e87a662a442e_Counter()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainadeb402e3568875f_UserError_ppg()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main3abdd57177808839_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main4693131be06a1f6f_UserLevelPrimitive()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainbda7a2fa42fa5d88_CoreUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_maina043b859f1fb75d4_ShellUtils()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainca0e9aa4897964a8_TempFile()local_unnamed_addr#2 gc"smlsharp"
@@ -582,7 +582,7 @@ declare void@_SML_load3acd53cad8d59eda_PrintControl(i8*)local_unnamed_addr
 declare void@_SML_load7b57a7f19eafb22a_Control(i8*)local_unnamed_addr
 declare void@_SML_load9819e87a662a442e_Counter(i8*)local_unnamed_addr
 declare void@_SML_loadadeb402e3568875f_UserError_ppg(i8*)local_unnamed_addr
-declare void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*)local_unnamed_addr
+declare void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*)local_unnamed_addr
 declare void@_SML_loadbda7a2fa42fa5d88_CoreUtils(i8*)local_unnamed_addr
 declare void@_SML_loada043b859f1fb75d4_ShellUtils(i8*)local_unnamed_addr
 declare void@_SML_loadca0e9aa4897964a8_TempFile(i8*)local_unnamed_addr
@@ -626,7 +626,7 @@ tail call void@_SML_load3acd53cad8d59eda_PrintControl(i8*%a)#0
 tail call void@_SML_load7b57a7f19eafb22a_Control(i8*%a)#0
 tail call void@_SML_load9819e87a662a442e_Counter(i8*%a)#0
 tail call void@_SML_loadadeb402e3568875f_UserError_ppg(i8*%a)#0
-tail call void@_SML_load3abdd57177808839_UserLevelPrimitive(i8*%a)#0
+tail call void@_SML_load4693131be06a1f6f_UserLevelPrimitive(i8*%a)#0
 tail call void@_SML_loadbda7a2fa42fa5d88_CoreUtils(i8*%a)#0
 tail call void@_SML_loada043b859f1fb75d4_ShellUtils(i8*%a)#0
 tail call void@_SML_loadca0e9aa4897964a8_TempFile(i8*%a)#0
@@ -671,7 +671,7 @@ tail call void@_SML_main3acd53cad8d59eda_PrintControl()#2
 tail call void@_SML_main7b57a7f19eafb22a_Control()#2
 tail call void@_SML_main9819e87a662a442e_Counter()#2
 tail call void@_SML_mainadeb402e3568875f_UserError_ppg()#2
-tail call void@_SML_main3abdd57177808839_UserLevelPrimitive()#2
+tail call void@_SML_main4693131be06a1f6f_UserLevelPrimitive()#2
 tail call void@_SML_mainbda7a2fa42fa5d88_CoreUtils()#2
 tail call void@_SML_maina043b859f1fb75d4_ShellUtils()#2
 tail call void@_SML_mainca0e9aa4897964a8_TempFile()#2

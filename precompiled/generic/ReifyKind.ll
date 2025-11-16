@@ -27,14 +27,14 @@ declare i8*@_SMLFN7ReifyTy15TyRepWithLookUpE(i8*inreg)local_unnamed_addr#2 gc"sm
 declare void@_SML_maineaa0aca8fbe4101a_Bug()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_main7833b15b41d4b824_TypesBasics()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_maina005ce1f4fb2368a_TyToReifiedTy()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main972a18c2d8c2c40c_ReifyTy()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main29511f48a55245eb_TyToReifiedTy()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_main28eccbb07b237d48_ReifyTy()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_mainba6f91a4b5bbe1e6_DatatypeCompilation()local_unnamed_addr#2 gc"smlsharp"
 declare void@_SML_loadeaa0aca8fbe4101a_Bug(i8*)local_unnamed_addr
 declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load7833b15b41d4b824_TypesBasics(i8*)local_unnamed_addr
-declare void@_SML_loada005ce1f4fb2368a_TyToReifiedTy(i8*)local_unnamed_addr
-declare void@_SML_load972a18c2d8c2c40c_ReifyTy(i8*)local_unnamed_addr
+declare void@_SML_load29511f48a55245eb_TyToReifiedTy(i8*)local_unnamed_addr
+declare void@_SML_load28eccbb07b237d48_ReifyTy(i8*)local_unnamed_addr
 declare void@_SML_loadba6f91a4b5bbe1e6_DatatypeCompilation(i8*)local_unnamed_addr
 define private void@_SML_tabbff64188d21513a09_ReifyKind()#3{
 unreachable
@@ -50,8 +50,8 @@ store i8 1,i8*@h,align 1
 tail call void@_SML_loadeaa0aca8fbe4101a_Bug(i8*%a)#0
 tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load7833b15b41d4b824_TypesBasics(i8*%a)#0
-tail call void@_SML_loada005ce1f4fb2368a_TyToReifiedTy(i8*%a)#0
-tail call void@_SML_load972a18c2d8c2c40c_ReifyTy(i8*%a)#0
+tail call void@_SML_load29511f48a55245eb_TyToReifiedTy(i8*%a)#0
+tail call void@_SML_load28eccbb07b237d48_ReifyTy(i8*%a)#0
 tail call void@_SML_loadba6f91a4b5bbe1e6_DatatypeCompilation(i8*%a)#0
 tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbff64188d21513a09_ReifyKind,i8*@_SML_ftabff64188d21513a09_ReifyKind,i8*null)#0
 ret void
@@ -68,8 +68,8 @@ store i8 3,i8*@h,align 1
 tail call void@_SML_maineaa0aca8fbe4101a_Bug()#2
 tail call void@_SML_main22c101bff228a4a9_LocalID()#2
 tail call void@_SML_main7833b15b41d4b824_TypesBasics()#2
-tail call void@_SML_maina005ce1f4fb2368a_TyToReifiedTy()#2
-tail call void@_SML_main972a18c2d8c2c40c_ReifyTy()#2
+tail call void@_SML_main29511f48a55245eb_TyToReifiedTy()#2
+tail call void@_SML_main28eccbb07b237d48_ReifyTy()#2
 tail call void@_SML_mainba6f91a4b5bbe1e6_DatatypeCompilation()#2
 br label%d
 }

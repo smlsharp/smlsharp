@@ -639,40 +639,12 @@ struct
       end
     | getConstructTy tyRep = tyRep
 
-  fun stringReifiedTyListToRecordTy _ = raise Bug.Bug "placeholder for bootstrap: stringReifiedTyListToRecordTy"
-
-  fun stringReifiedTyOptionListToConSet _ = raise Bug.Bug "placeholder for bootstrap: stringReifiedTyOptionListToConSet"
-
-  fun typIdConSetListToConSetEnv _ = raise Bug.Bug "placeholder for bootstrap: typIdConSetListToConSetEnv"
-
   fun makeConSetEnv datatypes =
       foldl
         (fn ((typid, constructors), conSetEnv) =>
             TypID.Map.insert (conSetEnv, typid, mkConSet constructors))
         TypID.Map.empty
         datatypes
-
-  fun btvIdBtvIdListToBoundenv _ = raise Bug.Bug "placeholder for bootstrap: btvIdBtvIdListToBoundenv"
-
-  fun boundenvReifiedTyToPolyTy _ = raise Bug.Bug "placeholder for bootstrap: boundenvReifiedTyToPolyTy"
-
-  fun makeDummyTy _ = raise Bug.Bug "placeholder for bootstrap: makeDummyTy"
-
-  fun makeExistTy _ = raise Bug.Bug "placeholder for bootstrap: makeExistTy"
-
-  fun makeFUNMty _ = raise Bug.Bug "placeholder for bootstrap: makeFUNMty"
-
-  fun stringIntListToTagMap _ = raise Bug.Bug "placeholder for bootstrap: stringintListToTagMap"
-
-  fun tagMapToTagMapRecord _ = raise Bug.Bug "placeholder for bootstrap: tagMapToTagMapRecord"
-
-  fun tagMapStringToTagMapNullNameRecord _ = raise Bug.Bug "placeholder for bootstrap: tagMapStringToTagMapNullNameRecord"
-
-  fun stringToFalseNameRecord _ = raise Bug.Bug "placeholder for bootstrap: stringToFalseNameRecord"
-
-  fun boolToWrapRecord _ = raise Bug.Bug "placeholder for bootstrap: boolToWrapRecord"
-
-  fun TyRep _ = raise Bug.Bug "placeholder for bootstrap: TyRep"
 
   fun MergeConSetEnvWithTyRepList conSetEnv tyRepList =
       let
@@ -685,11 +657,6 @@ struct
       in
         conSetEnv
       end
-  fun TyRepToReifiedTy _ = raise Bug.Bug "placeholder for bootstrap: TyRepToReifiedTy"
-
-  fun longsymbolIdArgsLayoutListToDatatypeTy _ = raise Bug.Bug "placeholder for bootstrap: longsymbolIdArgsLayoutListToDatatypeTy"
-
-  fun longsymbolIdArgsToOpaqueTy _ = raise Bug.Bug "placeholder for bootstrap: longsymbolIdArgsToOpaqueTy"
 
   fun isBaseTy reifiedTy =
       case reifiedTy of

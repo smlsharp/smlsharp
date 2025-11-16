@@ -501,12 +501,6 @@ struct
        *)
       EXEXNREP of {name:string, path:string}
 
-  fun mkEXEXNIdstatus _ = raise Fail "placeholder for bootstrap: mkEXEXNIdstatus"
-
-  fun mkEXEXNREPIdstatus _ = raise Fail "placeholder for bootstrap: mkEXEXNREPIdstatus"
-
-  fun mkEXVarIdstatus _ = raise Fail "placeholder for bootstrap: mkEXVarIdstatus"
-
   (*%
    * @formatter(split) split
    *)
@@ -560,7 +554,6 @@ struct
      string * env
 
   type strE = strentry list
-  fun mkENVenv _ = raise Fail "placeholder for bootstrap: mkENVenv"
 
   (*%
    * @formatter(split) split
@@ -592,8 +585,6 @@ struct
        * u:join()( u:join()( u:join()( FunE, \n, SigE ), \n, Env ), \n, "" )
        *)
        {Env:env, FunE:funE, SigE:sigE}
-
-  fun mkTopEnv _ = raise Fail "placeholder for bootstrap: mkTopEnv"
 
   val printTopEnvOutput = ref NONE
 

@@ -104,25 +104,8 @@ struct
   val getConSet : tyRep -> conSet
   val instantiate : reifiedTy * reifiedTy list -> reifiedTy
 
-  val stringReifiedTyListToRecordTy : (string * reifiedTy) list -> reifiedTy
-  val stringReifiedTyOptionListToConSet : (string * reifiedTy option) list -> conSet
-  val typIdConSetListToConSetEnv : (TypID.id * conSet) list -> conSetEnv
   val makeConSetEnv : (TypID.id * (string * reifiedTy option) list) list -> conSetEnv
-  val TyRep : conSetEnv -> reifiedTy -> tyRep
-  val TyRepToReifiedTy : tyRep -> reifiedTy 
   val MergeConSetEnvWithTyRepList : conSetEnv -> tyRep list -> conSetEnv
-  val btvIdBtvIdListToBoundenv : (btvId * btvId) list -> btvId BoundTypeVarID.Map.map
-  val boundenvReifiedTyToPolyTy : btvId BoundTypeVarID.Map.map -> reifiedTy -> reifiedTy
-  val makeDummyTy : bool -> word -> reifiedTy
-  val makeExistTy : bool option -> word option -> int -> reifiedTy
-  val makeFUNMty : reifiedTy list -> reifiedTy -> reifiedTy
-  val boolToWrapRecord : bool -> {wrap:bool}
-  val stringToFalseNameRecord : string -> {falseName:string}
-  val stringIntListToTagMap : (string * int) list -> int SEnv.map
-  val tagMapStringToTagMapNullNameRecord : (int SEnv.map) -> string -> {tagMap:int SEnv.map, nullName:string}
-  val tagMapToTagMapRecord : (int SEnv.map) -> {tagMap:int SEnv.map}
-  val longsymbolIdArgsLayoutListToDatatypeTy : string -> TypID.id -> reifiedTy list -> layout -> int -> reifiedTy
-  val longsymbolIdArgsToOpaqueTy : string -> TypID.id -> reifiedTy list -> int -> bool -> reifiedTy
 
   val sizeOf : reifiedTy -> word
   val isGroundTy : reifiedTy -> bool
