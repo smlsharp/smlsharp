@@ -381,10 +381,8 @@ struct
 
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
       getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
-  val REIFY_exInfo_stringReifiedTyOptionListToConSet =
-      getExVar ["ReifiedTy", "stringReifiedTyOptionListToConSet"]
-  val REIFY_exInfo_typIdConSetListToConSetEnv =
-      getExVar ["ReifiedTy", "typIdConSetListToConSetEnv"]
+  val REIFY_exInfo_makeConSetEnv =
+      getExVar ["ReifiedTy", "makeConSetEnv"]
   val REIFY_exInfo_coerceTermGeneric =
       getExVar ["PartialDynamic", "coerceTermGeneric"]
   val REIFY_exInfo_checkTermGeneric =

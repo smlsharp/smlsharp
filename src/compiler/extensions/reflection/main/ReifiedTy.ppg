@@ -641,19 +641,16 @@ struct
 
   fun stringReifiedTyListToRecordTy _ = raise Bug.Bug "placeholder for bootstrap: stringReifiedTyListToRecordTy"
 
-  fun stringReifiedTyOptionListToConSet stringReifiedTyOptionList =
-      foldr
-      (fn ((string, reifiedTyOpt), conSet) =>
-          SEnv.insert(conSet, string, reifiedTyOpt))
-      SEnv.empty
-      stringReifiedTyOptionList
+  fun stringReifiedTyOptionListToConSet _ = raise Bug.Bug "placeholder for bootstrap: stringReifiedTyOptionListToConSet"
 
-  fun typIdConSetListToConSetEnv typIdConSetList =
-      foldr
-      (fn ((typId, conSet), conSetEnv) =>
-          TypID.Map.insert(conSetEnv, typId, conSet))
-      TypID.Map.empty
-      typIdConSetList
+  fun typIdConSetListToConSetEnv _ = raise Bug.Bug "placeholder for bootstrap: typIdConSetListToConSetEnv"
+
+  fun makeConSetEnv datatypes =
+      foldl
+        (fn ((typid, constructors), conSetEnv) =>
+            TypID.Map.insert (conSetEnv, typid, mkConSet constructors))
+        TypID.Map.empty
+        datatypes
 
   fun btvIdBtvIdListToBoundenv _ = raise Bug.Bug "placeholder for bootstrap: btvIdBtvIdListToBoundenv"
 

@@ -378,10 +378,8 @@ struct
                                     (Option.map (ReifiedTy loc) reifiedTyOpt))
                    )
                    stringRieifedTyOptionList)
-        val StringReifiedTyListToConSet = 
-            MonoVar loc (UP.REIFY_exInfo_stringReifiedTyOptionListToConSet loc)
       in
-        Apply loc StringReifiedTyListToConSet StringRieifedTyOptionList
+        StringRieifedTyOptionList
       end
 
   fun ConSetEnv loc conSetEnv = 
@@ -390,14 +388,14 @@ struct
         val TypIdConSetList =
             List 
               loc
-              (TypIdTy loc ** ConSetTy loc)
+              (TypIdTy loc ** ListTy (StringTy ** OptionTy (ReifiedTyTy loc)))
               (map (fn (typid, conSet) => 
                        (Pair loc (TypId loc typid) (ConSet loc conSet)))
                    typIdConSetList)
       in
         Apply
           loc
-          (MonoVar loc (UP.REIFY_exInfo_typIdConSetListToConSetEnv loc))
+          (MonoVar loc (UP.REIFY_exInfo_makeConSetEnv loc))
           TypIdConSetList
       end
   fun TyRep loc {conSetEnv, reifiedTy} =

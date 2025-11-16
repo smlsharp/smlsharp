@@ -180,6 +180,8 @@ struct
 
   val REIFY_exInfo_MergeConSetEnvWithTyRepList
       : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_makeConSetEnv
+      : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_coerceTermGeneric
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_checkTermGeneric
@@ -202,13 +204,9 @@ struct
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_reifiedTermToML
       : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_stringReifiedTyOptionListToConSet
-      : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_toReifiedTerm
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_toReifiedTermPrint
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_typIdConSetListToConSetEnv
       : Loc.loc -> Types.exVarInfo
 
   val initAnalyze

@@ -40,7 +40,6 @@ struct
   val LongsymbolTy : unit -> ty
   val PosTy : unit -> ty
 *)
-  val ConSetTy : loc -> ty
   val ConSetEnvTy : loc -> ty
   val TyRepTy : loc -> ty
   val ReifiedTyTy : loc -> ty
