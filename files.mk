@@ -952,8 +952,6 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
-src/compiler/data/symbols/main/Longsymbol.o \
-src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
@@ -961,6 +959,7 @@ src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
@@ -980,6 +979,7 @@ src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
+src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/extensions/usererror/main/UserErrorUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -1493,8 +1493,6 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
-src/compiler/data/symbols/main/Longsymbol.o \
-src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
@@ -1502,6 +1500,7 @@ src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
@@ -1521,6 +1520,7 @@ src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
+src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/extensions/usererror/main/UserErrorUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \

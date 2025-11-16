@@ -27448,12 +27448,8 @@ src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/StringEscape.smi \
@@ -27562,12 +27558,8 @@ src/compiler/extensions/reflection/main/ReifiedTy.ppg.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \
@@ -27681,12 +27673,8 @@ src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \

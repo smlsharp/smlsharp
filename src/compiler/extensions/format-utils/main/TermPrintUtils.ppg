@@ -309,43 +309,6 @@ in
       if TypID.Map.isEmpty map then nil
       else exp
 
-
- (*%
-  * @params(labelsep)
-  * @formatter(list)  SMLFormat.BasicFormatters.format_list
-  * @formatter(RecordLabel.label)  RecordLabel.format_label
-  *)
- type 'a fieldList =
-     (*%
-        @format(field fields)
-          fields(field)(","+1) 
-
-        @format:field(label * elem) 
-          { 2[label labelsep elem] }
-      *)
-     (RecordLabel.label * 'a) list
-
- (*%
-  * @params(labelsep)
-  * @formatter(list)  SMLFormat.BasicFormatters.format_list
-  * @formatter(RecordLabel.label)  RecordLabel.format_label
-  *)
- type 'a fieldListForJson =
-     (*%
-        @format(field fields)
-          fields(field)(","+1) 
-
-        @format:field(label * elem) 
-          { 2["\"" label "\"" labelsep elem] }
-      *)
-     (RecordLabel.label * 'a) list
-
-  fun formatRecordLabelMap (formatter, labelsep) env =
-      format_fieldList(formatter,labelsep) (RecordLabel.Map.listItemsi env)
-
-  fun formatRecordLabelMapForJSON (formatter, labelsep) env =
-      format_fieldListForJson(formatter,labelsep) (RecordLabel.Map.listItemsi env)
-
  (*%
   * @params(labelsep)
   * @formatter(list)  SMLFormat.BasicFormatters.format_list
