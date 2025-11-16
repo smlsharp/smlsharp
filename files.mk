@@ -955,8 +955,6 @@ src/compiler/libs/util/main/StringEscape.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
-src/compiler/libs/toolchain/main/Filename.o \
-src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
 src/compiler/data/symbols/main/Longsymbol.o \
@@ -976,6 +974,8 @@ src/smlnj-lib/JSON/json-source.o \
 src/smlnj-lib/JSON/json-parser.o \
 src/compiler/extensions/reflection/main/Dynamic.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
+src/compiler/libs/toolchain/main/Filename.o \
+src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
@@ -1496,8 +1496,6 @@ src/compiler/libs/util/main/StringEscape.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
-src/compiler/libs/toolchain/main/Filename.o \
-src/compiler/data/symbols/main/Loc.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
 src/compiler/data/symbols/main/Longsymbol.o \
@@ -1517,6 +1515,8 @@ src/smlnj-lib/JSON/json-source.o \
 src/smlnj-lib/JSON/json-parser.o \
 src/compiler/extensions/reflection/main/Dynamic.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
+src/compiler/libs/toolchain/main/Filename.o \
+src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \

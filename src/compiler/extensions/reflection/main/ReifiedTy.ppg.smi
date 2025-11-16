@@ -4,11 +4,9 @@ _require local "../../debug/main/Bug.smi"
 _require local "../../../libs/util/main/StringEscape.smi"
 _require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
 _require "../../../libs/env/main/IEnv.smi"
-_require local "../../../libs/toolchain/main/Filename.smi"
 
 structure ReifiedTy =
 struct
