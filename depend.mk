@@ -28181,29 +28181,9 @@ src/compiler/extensions/reflection/main/ReifyTerm.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/util/main/TermFormat.smi \
- src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/extensions/debug/main/Bug.smi \
- src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
- src/compiler/data/types/main/TvarMap.smi \
- src/compiler/data/types/main/DummyTyID.smi \
- src/compiler/data/types/main/ExistTyID.smi \
- src/compiler/data/types/main/DynamicKind.ppg.smi \
- src/compiler/data/types/main/Types.ppg.smi \
- src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
- src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTermToML.smi \
@@ -44494,6 +44474,12 @@ src/compiler/compilePhases/main/main/RunLoop.o: \
  src/compiler/compilePhases/elaborate/main/Elaborator.smi \
  src/compiler/compilePhases/toplevel/main/TopData.ppg.smi \
  src/compiler/compilePhases/toplevel/main/Top.smi \
+ src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.smi \
+ src/smlnj-lib/Util/int-redblack-map.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
+ src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
+ src/compiler/extensions/reflection/main/ReifyTerm.smi \
  src/compiler/compilePhases/main/main/SignalHandler.smi \
  src/compiler/compilePhases/main/main/Interactive.smi \
  src/compiler/compilePhases/main/main/RunLoop.smi \

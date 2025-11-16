@@ -13,6 +13,9 @@ _require local "../../../extensions/reflection/main/InteractiveEnv.smi"
 *)
 (* _require "../../../libs/toolchain/main/Filename.smi" *)
 _require "../../../compilePhases/toplevel/main/Top.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../extensions/reflection/main/ReifyTerm.smi"
 _require local "./SignalHandler.smi"
 _require "./Interactive.smi"
 

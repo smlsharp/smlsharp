@@ -11,7 +11,6 @@ struct
     structure P = Pointer
     structure R = ReifiedTerm
     structure RTy = ReifiedTy 
-    structure U = UserLevelPrimitive
     exception ELLIP
   in
     fun bug s = raise Bug.Bug ("ReifyTerm: " ^ s)
@@ -97,20 +96,6 @@ struct
           (conName, tyOpt)
         end
 
-    val SQLtyConList =
-        [
-         U.SQL_tyCon_exp,
-         U.SQL_tyCon_whr,
-         U.SQL_tyCon_from,
-         U.SQL_tyCon_orderby,
-         U.SQL_tyCon_offset,
-         U.SQL_tyCon_limit,
-         U.SQL_tyCon_select,
-         U.SQL_tyCon_query,
-         U.SQL_tyCon_command,
-         U.SQL_tyCon_db
-        ]
-
     fun ** (ty1, ty2) = RTy.RECORDty [("1", ty1), ("2", ty2)]
     infix 5 **
 
@@ -144,7 +129,7 @@ struct
     fun decDepth NONE = NONE
       | decDepth (SOME x) = SOME (x - 1)
 
-    val unprintableDatatypeTyConList = SQLtyConList
+    val isUnprintableDatatypeTypId = ref (fn _ => false)
     fun dynamicToReifiedTerm toPrint (dynamic as {tyRep, obj}) = 
         if (case toPrint of NONE => false | SOME x => x <= 0) then R.ELLIPSIS
         else
@@ -179,8 +164,7 @@ struct
           | RTy.CHARty => R.CHAR (getChar obj)
           | RTy.CODEPTRty => R.CODEPTR (getWord64 obj)
           | RTy.CONSTRUCTty {longsymbol, id, args, layout, conSet, size} =>
-            if (List.exists (fn x => TypID.eq(#id (x Loc.noloc),id)) unprintableDatatypeTyConList 
-                handle U.UserLevelPrimError _ => false | Bug.Bug _ => false)
+            if !isUnprintableDatatypeTypId id
             then R.UNPRINTABLE
             else
             (case layout of

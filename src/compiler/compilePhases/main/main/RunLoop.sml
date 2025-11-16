@@ -9,6 +9,23 @@ struct
 
   val isatty = _import "isatty" : int -> int
 
+  fun isUnprintableType id =
+      List.exists
+        (fn con => #id (con Loc.noloc) = id
+                   handle UserLevelPrimitive.UserLevelPrimError _ => false)
+        [
+          UserLevelPrimitive.SQL_tyCon_exp,
+          UserLevelPrimitive.SQL_tyCon_whr,
+          UserLevelPrimitive.SQL_tyCon_from,
+          UserLevelPrimitive.SQL_tyCon_orderby,
+          UserLevelPrimitive.SQL_tyCon_offset,
+          UserLevelPrimitive.SQL_tyCon_limit,
+          UserLevelPrimitive.SQL_tyCon_select,
+          UserLevelPrimitive.SQL_tyCon_query,
+          UserLevelPrimitive.SQL_tyCon_command,
+          UserLevelPrimitive.SQL_tyCon_db
+        ]
+
   exception Failed
 
   type options =
@@ -90,6 +107,7 @@ struct
         val session = Interactive.start (#options options)
         val _ = Interactive.loadObjectFiles session preload
                 handle e => (handleError options e; raise Failed)
+        val _ = ReifyTerm.isUnprintableDatatypeTypId := isUnprintableType
         val state = initInteractive ()
         fun error context e =
             (handleError options e;
