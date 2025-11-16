@@ -8,6 +8,9 @@
 structure FFIAttributes =
 struct
 
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+
   (*% *)
   datatype callingConvention =
       (*% @format "cdecl" *) FFI_CDECL
@@ -15,16 +18,16 @@ struct
     | (*% @format "fastcc" *) FFI_FASTCC
 
   (*%
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(iftrue) iftrue
    *)
   type attributes =
       (*%
        * @format({isPure, fast, unsafe, causeGC, callingConvention: cc ccopt})
        * "__attr__(("
-       * isPure()("pure,",)
-       * fast()("fast,",)
-       * unsafe()("unsafe,",)
-       * causeGC()("gc,",)
+       * isPure:iftrue()("pure,",)
+       * fast:iftrue()("fast,",)
+       * unsafe:iftrue()("unsafe,",)
+       * causeGC:iftrue()("gc,",)
        * ccopt(cc)
        * "))"
        *)

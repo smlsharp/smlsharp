@@ -1,6 +1,4 @@
 _require local "../../../../basis.smi"
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-
 _require "../../../../smlformat-lib.smi"
 
 structure FFIAttributes =

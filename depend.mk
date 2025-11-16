@@ -10133,15 +10133,6 @@ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o: \
