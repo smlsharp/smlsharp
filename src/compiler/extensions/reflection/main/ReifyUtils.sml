@@ -275,9 +275,6 @@ struct
   fun LabelAsString loc label =
       String loc (RecordLabel.toString label)
 
-  fun SymbolAsString loc symbol =
-      String loc (Symbol.toString symbol)
-
   fun BtvId loc btvid =
       TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy loc)
   fun TypId loc typid =

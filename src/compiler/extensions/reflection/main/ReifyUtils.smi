@@ -98,7 +98,6 @@ struct
   val ** : ty * ty -> ty
 
   val LabelAsString : loc -> RecordLabel.label -> {exp:exp, ty:ty}
-  val SymbolAsString : loc -> Symbol.symbol -> {exp:exp, ty:ty}
 (*
   val Loc : loc -> {exp:exp, ty:ty}
 *)

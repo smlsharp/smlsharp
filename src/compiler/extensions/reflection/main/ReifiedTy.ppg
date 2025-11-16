@@ -786,16 +786,6 @@ struct
       FUNMty (reifiedTyList, reifiedTy)
       
   fun stringIntListToTagMap stringIntList =
-      let
-        val tagMap = 
-            foldl (fn ((s, i), tagMap) => SEnv.insert(tagMap, s, i))
-                  SEnv.empty
-                  stringIntList
-      in
-        tagMap
-      end
-
-  fun stringIntListToTagMap stringIntList =
       foldl (fn ((s, i), tagMap) => SEnv.insert(tagMap, s, i))
             SEnv.empty
             stringIntList
