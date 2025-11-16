@@ -168,7 +168,7 @@ struct
           (map (fn (lab, ty) => (RecordLabel.toString lab, toReifiedTy loc ty))
                (RecordLabel.Map.listItemsi tyFields))
       | T.POLYty {boundtvars, constraints, body} =>
-        R.POLYty {boundenv = BoundTypeVarID.Map.mapi (fn (i,_) => i) boundtvars,
+        R.POLYty {boundenv = BoundTypeVarID.Map.listKeys boundtvars,
                   body = toReifiedTy loc body}
       | T.FUNMty (argTyList, resultTy) => 
         R.FUNMty (map (toReifiedTy loc) argTyList, toReifiedTy loc resultTy)

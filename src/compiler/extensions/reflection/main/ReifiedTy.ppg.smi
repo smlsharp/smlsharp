@@ -48,7 +48,7 @@ struct
     | LISTty of reifiedTy
     | OPAQUEty of {longsymbol: string, id:TypID.id, args:reifiedTy list, boxed:bool, size:int}
     | OPTIONty of reifiedTy
-    | POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body:reifiedTy}
+    | POLYty of {boundenv: btvId list, body:reifiedTy}
     | PTRty of reifiedTy
     | REAL32ty
     | REAL64ty

@@ -20,17 +20,15 @@ struct
 
   fun Boundenv loc btvIdtypIdMap =
       let
-        val btvIdBtvIdList = BoundTypeVarID.Map.listItemsi btvIdtypIdMap
+        val btvIdBtvIdList = btvIdtypIdMap
         val BtvIdBtvIdList =
-            List 
+            List
               loc
-              (BtvIdTy loc ** BtvIdTy loc)
-              (map (fn (btvId1, btvId2) => Pair loc (BtvId loc btvId1) (BtvId loc btvId2))
+              (BtvIdTy loc)
+              (map (fn btvId1 => BtvId loc btvId1)
                    btvIdBtvIdList)
-        val BtvIdBtvIdListToBoundenv = 
-            MonoVar loc (UP.REIFY_exInfo_btvIdBtvIdListToBoundenv loc)
       in
-        Apply loc BtvIdBtvIdListToBoundenv BtvIdBtvIdList
+        BtvIdBtvIdList
       end
 
   fun TagMap loc tagMap =

@@ -41,21 +41,6 @@ struct
 
   type typId = TypID.id
 
-   (*%
-    * @params(labelsep)
-    * @formatter(list)  SMLFormat.BasicFormatters.format_list
-    *)
-   type  btvList =
-     (*%
-        @format(field fields)
-          fields(field)(","+1) 
-        @format:field(label * elem) label
-      *)
-     (btvId * btvId) list
-
-  fun formatBtvenv (labelsep) env =
-      format_btvList(labelsep) (BoundTypeVarID.Map.listItemsi env)
-
   datatype tagged_layout = datatype RuntimeTypes.tagged_layout
   (*% @formatter(RuntimeTypes.layout) RuntimeTypes.format_layout *)
   datatype layout = datatype RuntimeTypes.layout
@@ -71,10 +56,8 @@ struct
       | LAYOUT_REF => true
 
   (*%
-     @formatter(BoundTypeVarID.Map.map) formatBtvenv
      @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
      @formatter(TypID.id) TypID.format_id
-     @formatter(btvenv) formatBtvenv
      @formatter(list) SMLFormat.BasicFormatters.format_list
      @formatter(option) TermPrintUtils.formatPrependedOpt
      @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
@@ -165,9 +148,9 @@ struct
       OPTIONty of reifiedTy
     | (*% 
          @format({boundenv:btv env, body:ty}) 
-         "["env(btv)(",") "." + ty "]"
+         "["env(btv)("," +1) "." + ty "]"
        *)
-      POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body: reifiedTy}
+      POLYty of {boundenv: btvId list, body: reifiedTy}
     | (*% @format(arg) arg + "ptr" *)
       PTRty of reifiedTy
     | (*% @format "real" *)
@@ -396,8 +379,8 @@ struct
             ListPair.foldlEq 
               (fn (i, j, map) => BoundTypeVarID.Map.insert(map, i, j))
               equivEnv
-              (BoundTypeVarID.Map.listKeys btvenv1,
-               BoundTypeVarID.Map.listKeys btvenv2)
+              (btvenv1,
+               btvenv2)
             handle ListPair.UnequalLengths => equivEnv
         fun btvIdEq equivEnv (id1, id2) = 
             BoundTypeVarID.eq(id1, id2) 
@@ -609,7 +592,7 @@ struct
 
   fun instantiate (ty as (POLYty {boundenv, body}), args) =
       let
-        val idList = BoundTypeVarID.Map.listKeys boundenv
+        val idList = boundenv
         val idTyPairs = 
             if length args = length idList then ListPair.zip (idList, args)
             else 
@@ -672,13 +655,8 @@ struct
       TypID.Map.empty
       typIdConSetList
 
-  fun btvIdBtvIdListToBoundenv btvIdBtvIdList =
-      foldr
-      (fn ((btvid1, btvid2), boundenv) =>
-          BoundTypeVarID.Map.insert(boundenv, btvid1, btvid2))
-      BoundTypeVarID.Map.empty 
-      btvIdBtvIdList
-      
+  fun btvIdBtvIdListToBoundenv _ = raise Bug.Bug "placeholder for bootstrap: btvIdBtvIdListToBoundenv"
+
   fun boundenvReifiedTyToPolyTy _ = raise Bug.Bug "placeholder for bootstrap: boundenvReifiedTyToPolyTy"
 
   fun makeDummyTy _ = raise Bug.Bug "placeholder for bootstrap: makeDummyTy"

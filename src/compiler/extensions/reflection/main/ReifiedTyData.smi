@@ -49,6 +49,5 @@ struct
 
   val SENVMAPTY : loc -> ty -> ty
   val TypIDMapMapTy : loc -> ty -> ty
-  val BounTypeVarIDMapMapTy : loc -> ty -> ty
 
 end

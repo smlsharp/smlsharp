@@ -447,8 +447,7 @@ struct
                     elemTy)
           | RTy.POLYty {boundenv, body} => 
             let
-              val btvList = BoundTypeVarID.Map.listItems boundenv
-              val instTyList = map (fn x => RTy.UNITty) btvList
+              val instTyList = map (fn _ => RTy.UNITty) boundenv
               val instBodyTy = RTy.instantiate (reifiedTy, instTyList)
               val tyRep = {reifiedTy = instBodyTy, conSetEnv = conSetEnv}
             in

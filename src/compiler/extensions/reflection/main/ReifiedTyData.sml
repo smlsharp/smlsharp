@@ -46,8 +46,6 @@ struct
 
   fun SENVMAPTY loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_SENVMAPty loc, args=[ty]}
   fun TypIDMapMapTy loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_TypIDMapMap loc, args = [ty]}
-  fun BounTypeVarIDMapMapTy loc ty =
-      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_BoundTypeVarIDMapMap loc, args = [ty]}
   fun IdstatusTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_idstatus loc, args = []}
   fun EnvTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_env loc, args = []}
 

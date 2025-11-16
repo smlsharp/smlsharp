@@ -237,8 +237,6 @@ struct
   val SQL_tyCon_whr =
       getTyCon ["SMLSharp_SQL_Prim", "whr"]
 
-  val REIFY_tyCon_BoundTypeVarIDMapMap =
-      getTyCon ["BoundTypeVarID", "Map", "map"]
   val REIFY_tyCon_SENVMAPty =
       getTyCon ["SEnv", "map"]
   val REIFY_tyCon_IENVMAPty =
@@ -383,8 +381,10 @@ struct
 
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
       getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
-  val REIFY_exInfo_btvIdBtvIdListToBoundenv =
-      getExVar ["ReifiedTy", "btvIdBtvIdListToBoundenv"]
+  val REIFY_exInfo_stringReifiedTyOptionListToConSet =
+      getExVar ["ReifiedTy", "stringReifiedTyOptionListToConSet"]
+  val REIFY_exInfo_typIdConSetListToConSetEnv =
+      getExVar ["ReifiedTy", "typIdConSetListToConSetEnv"]
   val REIFY_exInfo_coerceTermGeneric =
       getExVar ["PartialDynamic", "coerceTermGeneric"]
   val REIFY_exInfo_checkTermGeneric =
@@ -407,13 +407,9 @@ struct
       getExVar ["ReifiedTerm", "printTopEnv"]
   val REIFY_exInfo_reifiedTermToML =
       getExVar ["ReifiedTermToML", "reifiedTermToML"]
-  val REIFY_exInfo_stringReifiedTyOptionListToConSet =
-      getExVar ["ReifiedTy", "stringReifiedTyOptionListToConSet"]
   val REIFY_exInfo_toReifiedTerm =
       getExVar ["ReifyTerm", "toReifiedTerm"]
   val REIFY_exInfo_toReifiedTermPrint =
       getExVar ["ReifyTerm", "toReifiedTermPrint"]
-  val REIFY_exInfo_typIdConSetListToConSetEnv =
-      getExVar ["ReifiedTy", "typIdConSetListToConSetEnv"]
 
 end

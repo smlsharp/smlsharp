@@ -39,8 +39,6 @@ struct
   val SQL_tyCon_db
       : Loc.loc -> Types.tyCon
 
-  val REIFY_tyCon_BoundTypeVarIDMapMap
-      : Loc.loc -> Types.tyCon
   val REIFY_tyCon_SENVMAPty
       : Loc.loc -> Types.tyCon
   val REIFY_tyCon_IENVMAPty
@@ -181,8 +179,6 @@ struct
       : Loc.loc -> Types.exExnInfo
 
   val REIFY_exInfo_MergeConSetEnvWithTyRepList
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_btvIdBtvIdListToBoundenv
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_coerceTermGeneric
       : Loc.loc -> Types.exVarInfo
