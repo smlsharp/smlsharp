@@ -220,8 +220,6 @@ struct
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_reifiedTermToML
       : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_stringIntListToTagMap
-      : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_stringReifiedTyListToRecordTy
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_stringReifiedTyOptionListToConSet

@@ -41,6 +41,7 @@ struct
         | RTy.LAYOUT_SINGLE_ARG _ => BOXED
         | RTy.LAYOUT_CHOICE _ => UNBOXED
         | RTy.LAYOUT_SINGLE => UNBOXED
+        | RTy.LAYOUT_REF => BOXED
 
     fun constTag reifiedTy =
         case reifiedTy of
@@ -127,6 +128,14 @@ struct
         end
         handle Undetermined => (print "computeRecordLayout\n"; raise Undetermined)
 
+    fun findTag (tagMap, con) =
+        let
+          fun loop i nil = NONE
+            | loop i (h::t) = if con = h then SOME i else loop (i + 1) t
+        in
+          loop 0 tagMap
+        end
+
     fun toML (reifiedTerm, {conSetEnv, reifiedTy}) = 
         let
           fun getConstructTy reifiedTy = 
@@ -169,7 +178,7 @@ struct
               case layout of
                 RTy.LAYOUT_TAGGED (RTy.TAGGED_RECORD {tagMap}) =>
                 let
-                  val tag = SEnv.find (tagMap, con)
+                  val tag = findTag (tagMap, con)
                   val argTy = SEnv.find (conSet, con)
                 in
                   case (termopt, tag, argTy) of
@@ -184,7 +193,7 @@ struct
                 then toMLValue (nullTerm,  nullTy)
                 else
                   let
-                    val tag = SEnv.find (tagMap, con)
+                    val tag = findTag (tagMap, con)
                     val argTy = SEnv.find (conSet, con)
                   in
                     case (termopt, tag, argTy) of
@@ -193,7 +202,7 @@ struct
                     | _ => raise bug "RTy.LAYOUT_TAGGED RTy.TAGGED_OR_NULL"
                   end
               | RTy.LAYOUT_TAGGED (RTy.TAGGED_TAGONLY {tagMap}) =>
-                (case SEnv.find (tagMap, con) of
+                (case findTag (tagMap, con) of
                    SOME tag => toMLValue (R.WORD32 (Word32.fromInt tag),RTy.WORD32ty)
                  | NONE => raise bug "RTy.LAYOUT_TAGGED RTy.TAGGED_ONLY"
                 )
@@ -228,7 +237,9 @@ struct
                 toMLValue (R.WORD32 (if con = falseName then 0w0 else 0w1), RTy.WORD32ty)
               | RTy.LAYOUT_SINGLE =>
                 toMLValue (R.WORD32 0w0, RTy.WORD32ty)
-        
+              | RTy.LAYOUT_REF =>
+                raise Bug.Bug "RTy.LAYOUT_REF"
+
           and toMLList (l, elemTy) =
               let
                 (* LAYOUT_ARG_OR_NULL {wrap=false} *)

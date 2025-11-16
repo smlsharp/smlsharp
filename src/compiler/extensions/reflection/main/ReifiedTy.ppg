@@ -41,113 +41,19 @@ struct
   fun formatBtvenv (labelsep) env =
       format_btvList(labelsep) (BoundTypeVarID.Map.listItemsi env)
 
-  (*%
-     @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
-   *)
-  datatype taggedLayout 
-    = (*% 
-         @format({tagMap:tag map})
-          !N0{ "TAGGED_RECORD{tagMap:{" 
-                2[1 map(tag)(":") ] "}" 1 "}" }
-       *)
-      TAGGED_RECORD of {tagMap: int SEnv.map}
-    | (*% 
-          @format({tagMap: tag map, nullName:name})
-          !N0{ "TAGGED_OR_NULL{tagMap:{" 
-                2[1 map(tag)(":") ] "}," + "nullName:" name 1 "}" }
-       *)
-      TAGGED_OR_NULL of {tagMap: int SEnv.map, nullName: string}
-    | (*% 
-          @format({tagMap:tag map})
-          !N0{ "TAGGED_TAGONLY{tagMap:{" 2[1 map(tag)(":") ] "}" 1 "}" }
-       *)
-      TAGGED_TAGONLY of {tagMap: int SEnv.map}
-  fun taggedLayoutToString reifiedTy =
-      SMLFormat.prettyPrint nil (format_taggedLayout reifiedTy)
-  fun taggedLayoutEq (TAGGED_RECORD {tagMap=map1}, TAGGED_RECORD {tagMap=map2}) =
-      SEnv.isEmpty
-        (SEnv.mergeWith 
-           (fn (SOME a, SOME b) => if a = b then NONE else SOME (SOME a,SOME b)
-             | (SOME a, NONE) => SOME (SOME a, NONE)
-             | (NONE, SOME b) => SOME (NONE, SOME b)
-             | (NONE, NONE) => NONE
-           )
-           (map1,map2)
-        )
-    | taggedLayoutEq (TAGGED_OR_NULL {tagMap=map1, nullName = name1},
-                      TAGGED_OR_NULL {tagMap=map2, nullName = name2}) =
-      name1 = name2 andalso
-      SEnv.isEmpty
-        (SEnv.mergeWith 
-           (fn (SOME a, SOME b) => if a = b then NONE else SOME (SOME a,SOME b)
-             | (SOME a, NONE) => SOME (SOME a, NONE)
-             | (NONE, SOME b) => SOME (NONE, SOME b)
-             | (NONE, NONE) => NONE
-           )
-           (map1, map2)
-        )
-    | taggedLayoutEq(TAGGED_TAGONLY {tagMap=map1},TAGGED_TAGONLY {tagMap=map2}) =
-      SEnv.isEmpty
-        (SEnv.mergeWith 
-           (fn (SOME a, SOME b) => if a = b then NONE else SOME (SOME a,SOME b)
-             | (SOME a, NONE) => SOME (SOME a, NONE)
-             | (NONE, SOME b) => SOME (NONE, SOME b)
-             | (NONE, NONE) => NONE
-           )
-           (map1, map2)
-        )
-    | taggedLayoutEq _ = false
-
-  (*%
-     @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
-   *)
-  datatype layout
-    = (*%
-         @format(taggedLayout)
-           "LAYOUT_TAGGED(" taggedLayout ")"
-       *)
-      LAYOUT_TAGGED of taggedLayout
-    | (*% 
-          @format({wrap})
-         "LAYOUT_ARG_OR_NULL{wrap:" wrap "}"
-       *)
-      LAYOUT_ARG_OR_NULL of {wrap: bool}
-    | (*% 
-          @format({wrap})
-           "LAYOUT_SINGLE_ARG{wrap:" wrap  "}"
-       *)
-      LAYOUT_SINGLE_ARG of {wrap: bool}
-    | (*% 
-          @format({falseName})
-           "LAYOUT_CHOICE{falseName:" falseName  "}"
-       *)
-      LAYOUT_CHOICE of {falseName: string}
-    | (*% 
-          @format  "LAYOUT_SINGLE"
-       *)
-      LAYOUT_SINGLE
+  datatype tagged_layout = datatype RuntimeTypes.tagged_layout
+  (*% @formatter(RuntimeTypes.layout) RuntimeTypes.format_layout *)
+  datatype layout = datatype RuntimeTypes.layout
 
   (* check this *)
   fun isBoxedLayout layout =
       case layout of
-      LAYOUT_TAGGED _ => true
-    | LAYOUT_ARG_OR_NULL  _ => true
-    | LAYOUT_SINGLE_ARG _ => true
-    | LAYOUT_CHOICE  _ => false
-    | LAYOUT_SINGLE => false
-
-  fun layoutToString reifiedTy =
-      SMLFormat.prettyPrint nil (format_layout reifiedTy)
-  fun layoutEq (LAYOUT_TAGGED taggedLayout1, LAYOUT_TAGGED taggedLayout2) = 
-      taggedLayoutEq (taggedLayout1, taggedLayout2)
-    | layoutEq (LAYOUT_ARG_OR_NULL{wrap=wrap1}, LAYOUT_ARG_OR_NULL{wrap=wrap2}) =
-      wrap1 = wrap2
-    | layoutEq (LAYOUT_SINGLE_ARG {wrap =wrap1}, LAYOUT_SINGLE_ARG {wrap =wrap2}) =
-      wrap1 = wrap2
-    | layoutEq (LAYOUT_CHOICE {falseName=name1}, LAYOUT_CHOICE {falseName=name2}) =
-      name1 = name2
-    | layoutEq (LAYOUT_SINGLE, LAYOUT_SINGLE) = true
-    | layoutEq _ = false
+        LAYOUT_TAGGED _ => true
+      | LAYOUT_ARG_OR_NULL  _ => true
+      | LAYOUT_SINGLE_ARG _ => true
+      | LAYOUT_CHOICE  _ => false
+      | LAYOUT_SINGLE => false
+      | LAYOUT_REF => true
 
   (*%
      @formatter(BoundTypeVarID.Map.map) formatBtvenv
@@ -781,11 +687,8 @@ struct
 
   fun makeFUNMty _ = raise Bug.Bug "placeholder for bootstrap: makeFUNMty"
 
-  fun stringIntListToTagMap stringIntList =
-      foldl (fn ((s, i), tagMap) => SEnv.insert(tagMap, s, i))
-            SEnv.empty
-            stringIntList
-      
+  fun stringIntListToTagMap _ = raise Bug.Bug "placeholder for bootstrap: stringintListToTagMap"
+
   fun tagMapToTagMapRecord _ = raise Bug.Bug "placeholder for bootstrap: tagMapToTagMapRecord"
 
   fun tagMapStringToTagMapNullNameRecord _ = raise Bug.Bug "placeholder for bootstrap: tagMapStringToTagMapNullNameRecord"

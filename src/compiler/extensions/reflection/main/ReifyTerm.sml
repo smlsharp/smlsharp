@@ -89,10 +89,8 @@ struct
 
     fun tagMapToConNameTy (tagMap, tag, conSet) =
         let
-          val conName =         
-              case (SEnv.listItemsi (SEnv.filter (fn x => x =  tag) tagMap)) of
-                [(name, tag)] => name
-              | _ => raise bug "tagMapToConName"
+          val conName = List.nth (tagMap, tag)
+                        handle Subscript => raise bug "tagMapToConName"
           val tyOpt = case SEnv.find(conSet, conName) of
                         NONE => raise bug "tagMapToConName"
                       | SOME tyOpt => tyOpt
@@ -334,6 +332,8 @@ struct
                in
                  R.DATATYPE (conName, NONE, reifiedTy)
                end
+             | RTy.LAYOUT_REF =>
+               raise Bug.Bug "Rty.LAYOUT_REF"
             )
           | RTy.DATATYPEty _ => raise bug "RTy.DATATYPEty"
           | RTy.DYNAMICty ty => R.DYNAMIC (ty, getBoxed obj)

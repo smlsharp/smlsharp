@@ -34,18 +34,7 @@ struct
       end
 
   fun TagMap loc tagMap =
-      let
-        val stringIntList = SEnv.listItemsi tagMap
-        val StringIntList =
-            List 
-              loc 
-              (StringTy ** Int32Ty) 
-              (map (fn (l,i) => Pair loc (String loc l) (Int loc i)) stringIntList)
-        val StringIntListToTagMap = 
-            MonoVar loc (UP.REIFY_exInfo_stringIntListToTagMap loc)
-      in
-        Apply loc StringIntListToTagMap StringIntList
-      end
+      List loc StringTy (map (String loc) tagMap)
 
   fun TaggedLayout loc taggedLayout = 
       case taggedLayout of 
@@ -98,6 +87,8 @@ struct
         Con loc 
             (UP.REIFY_conInfo_LAYOUT_SINGLE loc)
             NONE
+      | LAYOUT_REF =>
+        raise Bug.Bug "LAYOUT_REF"
 
   fun ReifiedTy loc reifeidTy = 
       case reifeidTy of

@@ -27580,6 +27580,8 @@ src/compiler/extensions/reflection/main/ReifiedTy.ppg.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -27700,6 +27702,8 @@ src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -27943,6 +27947,8 @@ src/compiler/extensions/reflection/main/PartialDynamic.o: \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -28058,6 +28064,8 @@ src/compiler/extensions/reflection/main/NaturalJoin.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -28323,6 +28331,8 @@ src/compiler/extensions/reflection/main/RecordUtils.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -29256,6 +29266,8 @@ src/compiler/extensions/reflection/main/Dynamic.o: \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -31182,6 +31194,8 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -31198,8 +31212,6 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/smlnj-lib/Util/ord-key-sig.sml \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/data/types/main/DummyTyID.smi \
  src/compiler/data/types/main/ExistTyID.smi \
@@ -44167,6 +44179,8 @@ src/sql/main/PGSQLDynamic.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -45021,6 +45035,8 @@ src/compiler/compilePhases/analyzefiles/main/SourceMap.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -45264,6 +45280,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -45625,6 +45643,8 @@ src/compiler/compilePhases/analyzefiles/main/InfoMaps.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -45906,6 +45926,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -45923,8 +45945,6 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -46061,6 +46081,8 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -46090,8 +46112,6 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/data/types/main/DummyTyID.smi \
@@ -46239,6 +46259,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -46264,8 +46286,6 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -46734,6 +46754,8 @@ src/compiler/smlsharp.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -46748,8 +46770,6 @@ src/compiler/smlsharp.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
@@ -48340,6 +48360,8 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -48352,8 +48374,6 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -48660,6 +48680,8 @@ tests/suite/regression/RegressionTests.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -48672,8 +48694,6 @@ tests/suite/regression/RegressionTests.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -48990,6 +49010,8 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -49002,8 +49024,6 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -49308,6 +49328,8 @@ tests/suite/example/ExampleTests.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -49320,8 +49342,6 @@ tests/suite/example/ExampleTests.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -49626,6 +49646,8 @@ tests/suite/document/DocumentTests.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -49638,8 +49660,6 @@ tests/suite/document/DocumentTests.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -49953,6 +49973,8 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -49965,8 +49987,6 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -58276,6 +58296,8 @@ tests/driver/dotest.o: \
  src/foreach.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi \
  src/compiler/extensions/reflection/main/NaturalJoin.smi \
@@ -58288,8 +58310,6 @@ tests/driver/dotest.o: \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
- src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
- src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \

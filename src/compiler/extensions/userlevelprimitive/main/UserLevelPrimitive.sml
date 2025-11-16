@@ -421,8 +421,6 @@ struct
       getExVar ["ReifiedTerm", "printTopEnv"]
   val REIFY_exInfo_reifiedTermToML =
       getExVar ["ReifiedTermToML", "reifiedTermToML"]
-  val REIFY_exInfo_stringIntListToTagMap =
-      getExVar ["ReifiedTy", "stringIntListToTagMap"]
   val REIFY_exInfo_stringReifiedTyListToRecordTy =
       getExVar ["ReifiedTy", "stringReifiedTyListToRecordTy"]
   val REIFY_exInfo_stringReifiedTyOptionListToConSet =

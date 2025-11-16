@@ -30,23 +30,6 @@ struct
   fun isOpaqueTycon ({dtyKind = T.DTY _, ...}:T.tyCon) = false
     | isOpaqueTycon _ = true
 
-  fun convertLayout layout =
-      case layout of
-      BN.LAYOUT_TAGGED taggedLayout => R.LAYOUT_TAGGED (convertTaggedLayout taggedLayout)
-    | BN.LAYOUT_ARG_OR_NULL {wrap = wrap} => R.LAYOUT_ARG_OR_NULL {wrap = wrap}
-    | BN.LAYOUT_SINGLE_ARG {wrap} => R.LAYOUT_SINGLE_ARG {wrap = wrap}
-    | BN.LAYOUT_CHOICE {falseName = name} => R.LAYOUT_CHOICE {falseName = name}
-    | BN.LAYOUT_SINGLE => R.LAYOUT_SINGLE
-    | BN.LAYOUT_REF => raise Bug.Bug "LAYOUT_REF to convertLayout"
-  and convertTaggedLayout taggedLayout = 
-      case taggedLayout of
-      BN.TAGGED_RECORD {tagMap} =>
-      R.TAGGED_RECORD {tagMap = tagMapToSEnv tagMap}
-    | BN.TAGGED_OR_NULL {tagMap, nullName} =>
-      R.TAGGED_OR_NULL {tagMap = tagMapToSEnv tagMap, nullName = nullName}
-    | BN.TAGGED_TAGONLY {tagMap} =>
-      R.TAGGED_TAGONLY {tagMap = tagMapToSEnv tagMap}
-
   fun oneArg [argTy] = argTy
     | oneArg _ = raise Bug.Bug "Datatype Arity"
 
@@ -172,11 +155,10 @@ struct
           R.DATATYPEty 
             {longsymbol = #longsymbol tyCon, 
              id = #id tyCon, 
-             layout = convertLayout
-                        (case tyCon of
-                           {dtyKind = T.DTY {rep = BN.DATA layout, ...}, ...} =>
-                           layout
-                         | _ => raise Bug.Bug "toReifiedTy: CONSTRUCTty"),
+             layout = case tyCon of
+                        {dtyKind = T.DTY {rep = BN.DATA layout, ...}, ...} =>
+                        layout
+                      | _ => raise Bug.Bug "toReifiedTy: CONSTRUCTty",
              args = map (toReifiedTy loc) args,
              size = sizeOf ty
             }
