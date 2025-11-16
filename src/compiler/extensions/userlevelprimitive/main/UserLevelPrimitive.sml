@@ -383,8 +383,6 @@ struct
 
   val REIFY_exInfo_RecordLabelFromString =
       getExVar ["RecordLabel", "fromString"]
-  val REIFY_exInfo_LongsymbolFromStringList =
-      getExVar ["Longsymbol", "fromStringList"]
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
       getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
   val REIFY_exInfo_btvIdBtvIdListToBoundenv =

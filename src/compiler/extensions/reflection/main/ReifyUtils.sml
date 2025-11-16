@@ -317,14 +317,6 @@ struct
       TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy loc)
   fun TypId loc typid =
       TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy loc)
-  fun Longsymbol loc longsymbol =
-      let
-        val stringList = Longsymbol.toStringList longsymbol
-        val stringListExp = List loc StringTy (map (String loc) stringList)
-        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_LongsymbolFromStringList loc)
-      in
-        Apply loc mkLongsymbolExp stringListExp
-      end
   fun RecordLabelFromString loc string =
       Apply
         loc

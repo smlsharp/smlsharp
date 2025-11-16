@@ -106,7 +106,7 @@ struct
           (UP.REIFY_conInfo_DATATYPEty loc)
           (SOME (Record
                    loc
-                   [("longsymbol", Longsymbol loc longsymbol),
+                   [("longsymbol", String loc longsymbol),
                      ("id", TypId loc id),
                      ("args", List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args)),
                      ("layout", Layout loc layout),
@@ -157,7 +157,7 @@ struct
           (UP.REIFY_conInfo_OPAQUEty loc)
           (SOME (Record
                    loc
-                   [("longsymbol", Longsymbol loc longsymbol),
+                   [("longsymbol", String loc longsymbol),
                     ("id", TypId loc id),
                     ("args", List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args)),
                     ("size", Int loc size),
@@ -273,7 +273,7 @@ struct
           (UP.REIFY_conInfo_DATATYPEty loc)
           (SOME (Record
                    loc
-                   [("longsymbol", Longsymbol loc longsymbol),
+                   [("longsymbol", String loc longsymbol),
                      ("id", TypId loc id),
                      ("args", List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args)),
                      ("layout", Layout loc layout),
@@ -326,7 +326,7 @@ struct
           (UP.REIFY_conInfo_OPAQUEty loc)
           (SOME (Record
                    loc
-                   [("longsymbol", Longsymbol loc longsymbol),
+                   [("longsymbol", String loc longsymbol),
                     ("id", TypId loc id),
                     ("args", List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args)),
                     ("size", Int loc size),

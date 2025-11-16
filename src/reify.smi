@@ -1,6 +1,4 @@
 include "./compiler/libs/ids/main/LocalID.smi"
-include "./compiler/data/symbols/main/Symbol.smi"
-include "./compiler/data/symbols/main/Longsymbol.smi"
 include "./compiler/data/symbols/main/RecordLabel.smi"
 include "./compiler/libs/env/main/SEnv.smi"
 include "./compiler/libs/env/main/IEnv.smi"

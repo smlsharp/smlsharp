@@ -31185,8 +31185,8 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -44170,8 +44170,8 @@ src/sql/main/PGSQLDynamic.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -45026,8 +45026,8 @@ src/compiler/compilePhases/analyzefiles/main/SourceMap.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -45271,8 +45271,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzerDB.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -45634,8 +45634,8 @@ src/compiler/compilePhases/analyzefiles/main/InfoMaps.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -45917,8 +45917,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -46072,8 +46072,8 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
@@ -46250,8 +46250,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \

@@ -950,9 +950,9 @@ src/foreach/main/ForeachCommon.o \
 src/foreach/main/ForeachData.o \
 src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
@@ -1491,9 +1491,9 @@ src/foreach/main/ForeachCommon.o \
 src/foreach/main/ForeachData.o \
 src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \

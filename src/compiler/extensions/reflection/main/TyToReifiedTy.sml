@@ -153,7 +153,7 @@ struct
         else if not (isOpaqueTycon tyCon) andalso 
                 not (Symbol.Map.isEmpty (#conSet tyCon)) then
           R.DATATYPEty 
-            {longsymbol = #longsymbol tyCon, 
+            {longsymbol = Longsymbol.toString (#longsymbol tyCon),
              id = #id tyCon, 
              layout = case tyCon of
                         {dtyKind = T.DTY {rep = BN.DATA layout, ...}, ...} =>
@@ -164,7 +164,7 @@ struct
             }
         else
           R.OPAQUEty
-              {longsymbol = #longsymbol tyCon, 
+              {longsymbol = Longsymbol.toString (#longsymbol tyCon),
                id = #id tyCon, 
                args = map (toReifiedTy loc) args,
                boxed = tagOf ty,
