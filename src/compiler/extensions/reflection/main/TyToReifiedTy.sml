@@ -138,12 +138,6 @@ struct
         else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_SENVMAPty loc)) 
                  handle U.UserLevelPrimError _ => false) then 
           R.SENVMAPty (toReifiedTy loc (oneArg args))
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RECORDLABELty loc)) 
-                 handle U.UserLevelPrimError _ => false) then 
-          R.RECORDLABELty
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RecordLabelMapMap loc)) 
-                 handle U.UserLevelPrimError _ => false) then 
-          R.RECORDLABELMAPty (toReifiedTy loc (oneArg args))
         else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_IENVMAPty loc)) 
                  handle U.UserLevelPrimError _ => false) then 
           R.IENVMAPty (toReifiedTy loc (oneArg args))
@@ -170,7 +164,9 @@ struct
                boxed = tagOf ty,
                size = sizeOf ty}
       | T.RECORDty tyFields =>
-        R.RECORDty (RecordLabel.Map.map (toReifiedTy loc) tyFields)
+        R.RECORDty
+          (map (fn (lab, ty) => (RecordLabel.toString lab, toReifiedTy loc ty))
+               (RecordLabel.Map.listItemsi tyFields))
       | T.POLYty {boundtvars, constraints, body} =>
         R.POLYty {boundenv = BoundTypeVarID.Map.mapi (fn (i,_) => i) boundtvars,
                   body = toReifiedTy loc body}
@@ -254,11 +250,9 @@ struct
         traverseReifiedTy reifiedTy templateConSetEnv
       | R.SENVMAPty reifiedTy =>
         traverseReifiedTy reifiedTy templateConSetEnv
-      | R.RECORDLABELMAPty reifiedTy =>
-        traverseReifiedTy reifiedTy templateConSetEnv
       | R.RECORDty reifiedTyMap =>
-        RecordLabel.Map.foldr 
-        (fn (reifiedTy, templateConSetEnv) =>
+        foldr
+        (fn ((_, reifiedTy), templateConSetEnv) =>
             traverseReifiedTy reifiedTy templateConSetEnv)
         templateConSetEnv
         reifiedTyMap

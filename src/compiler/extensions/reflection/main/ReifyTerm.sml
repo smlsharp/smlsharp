@@ -67,7 +67,6 @@ struct
     fun getReal64 obj = D.readReal64 (align (obj, RTy.REAL64ty))
     fun getReal32 obj = D.readReal32 (align (obj, RTy.REAL32ty))
     fun getString obj = D.readString (align (obj, RTy.STRINGty))
-    fun getLabel obj = RecordLabel.fromString (D.readString (align (obj, RTy.STRINGty)))
     fun getChar obj = D.readChar (align (obj, RTy.CHARty))
     fun getWord32 obj = D.readWord32 (align (obj, RTy.WORD32ty))
     fun getWord8 obj = D.readWord8 (align (obj, RTy.WORD8ty))
@@ -77,7 +76,7 @@ struct
 
     fun isNull obj = P.isNull (getPtr obj)
     fun car obj = obj
-    fun cdr (ty, obj) = align (offset(obj, RTy.sizeOf ty), RTy.RECORDty RecordLabel.Map.empty)
+    fun cdr (ty, obj) = align (offset(obj, RTy.sizeOf ty), RTy.RECORDty nil)
 
     fun getExn exnObj =
         let
@@ -112,7 +111,7 @@ struct
          U.SQL_tyCon_db
         ]
 
-    fun ** (ty1, ty2) = RTy.RECORDty (RecordLabel.tupleMap [ty1, ty2])
+    fun ** (ty1, ty2) = RTy.RECORDty [("1", ty1), ("2", ty2)]
     infix 5 **
 
     val SEnvListItemsInt = SEnv.listItemsi : int SEnv.map -> (string * int) list
@@ -132,15 +131,15 @@ struct
     val ienvb = 
      fn x => BP.refToBoxed (ref (IEnvListItemsBoxed (BP.castFromBoxed x : boxed IEnv.map)))
 
-    val RecordMapListItemsInt = RecordLabel.Map.listItemsi : int RecordLabel.Map.map -> (RecordLabel.label * int) list
-    val RecordMapListItemsReal = RecordLabel.Map.listItemsi : real RecordLabel.Map.map -> (RecordLabel.label * real) list
-    val RecordMapListItemsBoxed = RecordLabel.Map.listItemsi : boxed RecordLabel.Map.map -> (RecordLabel.label * boxed) list
+    val RecordMapListItemsInt = SEnv.listItemsi : int SEnv.map -> (string * int) list
+    val RecordMapListItemsReal = SEnv.listItemsi : real SEnv.map -> (string * real) list
+    val RecordMapListItemsBoxed = SEnv.listItemsi : boxed SEnv.map -> (string * boxed) list
     val recordMapi = 
-     fn x => BP.refToBoxed (ref (RecordMapListItemsInt (BP.castFromBoxed x : int RecordLabel.Map.map)))
+     fn x => BP.refToBoxed (ref (RecordMapListItemsInt (BP.castFromBoxed x : int SEnv.map)))
     val recordMapr = 
-     fn x => BP.refToBoxed (ref (RecordMapListItemsReal (BP.castFromBoxed x : real RecordLabel.Map.map)))
+     fn x => BP.refToBoxed (ref (RecordMapListItemsReal (BP.castFromBoxed x : real SEnv.map)))
     val recordMapb = 
-     fn x => BP.refToBoxed (ref (RecordMapListItemsBoxed (BP.castFromBoxed x : boxed RecordLabel.Map.map)))
+     fn x => BP.refToBoxed (ref (RecordMapListItemsBoxed (BP.castFromBoxed x : boxed SEnv.map)))
 
     fun decDepth NONE = NONE
       | decDepth (SOME x) = SOME (x - 1)
@@ -384,7 +383,7 @@ struct
                       val (label, term) =
                           case keyValue of
                             R.RECORD map => 
-                            (case RecordLabel.Map.listItemsi map of
+                            (case map of
                                [(l1,R.STRING key), (l2, value)] =>
                                (key, value)
                              | [(l1, R.ELLIPSIS), _] => raise ELLIP
@@ -399,43 +398,6 @@ struct
             in
               R.SENVMAP (List.rev (getTail (obj, nil)))
             end
-          | RTy.RECORDLABELMAPty elementTy =>
-           (let
-              val tyRep = {reifiedTy = RTy.RECORDLABELty ** elementTy, conSetEnv = conSetEnv}
-              val converter = if ReifiedTermToML.isBoxed elementTy then recordMapb
-                              else case RTy.sizeOf elementTy of
-                                     0w8 => recordMapr
-                                   | _ => recordMapi
-              val (boxed,word) = deref obj
-              val obj = (converter boxed, 0w0)
-              fun getTail (obj, listRev) = 
-                  if isNull obj then listRev
-                  else 
-                    let
-                      val obj = deref obj
-                      val keyValue =
-                          dynamicToReifiedTerm 
-                            (decDepth toPrint)
-                            {tyRep = tyRep, obj = car obj}
-                      val (label, term) =
-                          case keyValue of
-                            R.RECORD map => 
-                            (case RecordLabel.Map.listItemsi map of
-                               [(l1,R.RECORDLABEL key), (l2, value)] =>
-                               (key, value)
-                             | [(l1, R.ELLIPSIS), _] => raise ELLIP
-                             | [_, (_, R.ELLIPSIS)] => raise ELLIP
-                             | _ => raise bug "illegal RecordLabel.Map entry (1)")
-                          | R.ELLIPSIS =>  raise ELLIP
-                          | _ => raise bug "illegal RecordLabel.Map entry (2)"
-                    in
-                      getTail (cdr (reifiedTy, obj), 
-                               (label, term)::listRev)
-                    end
-            in
-              R.RECORDLABELMAP (List.rev (getTail (obj, nil)))
-            end
-            handle ELLIP => R.ELLIPSIS)
           | RTy.IENVMAPty elementTy =>
            (let
               val tyRep = {reifiedTy = RTy.INT32ty ** elementTy, conSetEnv = conSetEnv}
@@ -458,7 +420,7 @@ struct
                       val (key, term) =
                           case keyValue of
                             R.RECORD map => 
-                            (case RecordLabel.Map.listItemsi map of
+                            (case map of
                                [(l1,R.INT32 key), (l2, value)] =>
                                (key, value)
                              | [(l1, R.ELLIPSIS), _] => raise ELLIP
@@ -500,12 +462,11 @@ struct
           | RTy.EXISTty _ => R.UNPRINTABLE
           | RTy.REAL32ty  => R.REAL32 (getReal32 obj)
           | RTy.REAL64ty => R.REAL64 (getReal64 obj)
-          | RTy.RECORDLABELty => R.RECORDLABEL (getLabel obj)
           | RTy.RECORDty fieldsTy =>
             let
               val (_, fields) =
-                  RecordLabel.Map.foldli
-                    (fn (l, ty, (obj, map)) =>
+                  foldl
+                    (fn ((l, ty), (obj, map)) =>
                         let
                           val obj = align(obj, ty)
                           val term = dynamicToReifiedTerm 
@@ -514,13 +475,13 @@ struct
                                         obj = obj}
                           val obj = offset(obj, RTy.sizeOf ty)
                         in
-                          (obj, RecordLabel.Map.insert(map,l,term))
+                          (obj, SEnv.insert(map,l,term))
                         end
                     )
-                    (deref obj, RecordLabel.Map.empty)
+                    (deref obj, SEnv.empty)
                     fieldsTy
             in
-              R.RECORD fields
+              R.RECORD (SEnv.listItemsi fields)
             end
           | RTy.REFty elemTy => 
             if isSome toPrint then

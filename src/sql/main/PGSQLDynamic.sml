@@ -7,7 +7,7 @@ local
   structure P = SMLSharp_Builtin.Pointer
   fun quoteSQLString s = "\"" ^ s ^ "\""
   fun recordLabelToSqlString l =
-      quoteSQLString (RecordLabel.toString l)
+      quoteSQLString l
       
   val schemeQuery =
       " WITH res as (\n"
@@ -115,21 +115,21 @@ in
             | (D.LISTty tupleTy1, D.LISTty tupleTy2) =>
               match (tupleTy1, tupleTy2)
             | (D.RECORDty fields1, D.RECORDty fields2) => 
-              (RecordLabel.Map.mergeWithi
+              (SEnv.mergeWithi
                  (fn (label, SOME ty1, SOME ty2) => 
                      if Rty.reifiedTyEq (ty1,ty2) then NONE
                      else (print ( "Type of table " 
-                                  ^ RecordLabel.toString label 
+                                  ^ label
                                   ^ " do not agree\n");
                            fail := true;
                            NONE)
                    | (label, SOME _, NONE) => NONE
                    | (label, NONE, SOME _) => 
-                     (print ("Table " ^ RecordLabel.toString label ^ " does not exists\n");
+                     (print ("Table " ^ label ^ " does not exists\n");
                       fail := true;
                       NONE)
                    | _ => NONE)
-                 (fields1, fields2);
+                 (Rty.toSEnv fields1, Rty.toSEnv fields2);
                ()
               )
             | _ => (print "Record type expected\n";
@@ -156,7 +156,7 @@ in
         val (label, tableValueTy) = 
             case valueTy of
               D.RECORDty fields => 
-              (case RecordLabel.Map.listItemsi fields of
+              (case fields of
                  [(label, tableTy)] => (label, tableTy)
                | _ => 
                  (print ("table list expected:"
@@ -169,24 +169,24 @@ in
                raise IlleagalTableTy)
         val _ = case serverTy of
                   D.RECORDty fields => 
-                  (case RecordLabel.Map.find(fields, label) of
-                    SOME tableTy => if ReifiedTy.reifiedTyEq (tableTy, tableValueTy) then ()
+                  (case List.find (fn (l, _) => l = label) fields of
+                     SOME (_, tableTy) => if ReifiedTy.reifiedTyEq (tableTy, tableValueTy) then ()
                                     else 
-                                      (print (   "type of table " ^ RecordLabel.toString label 
+                                      (print (   "type of table " ^ label
                                                ^ " does not agree.\n"
                                                ^ "serverTy:" ^ D.tyToString tableTy ^ "\n" 
                                                ^ "valuesTy:" ^ D.tyToString tableValueTy ^ "\n");
                                        raise DynamicTypeMismatch)
                   | _ => 
-                    (print ("table " ^ RecordLabel.toString label ^ "does not exists in server\n");
+                    (print ("table " ^ label ^ "does not exists in server\n");
                      raise DynamicTypeMismatch))
                 | _ => raise DynamicTypeMismatch
         val keyList = 
             case tableValueTy of
               D.LISTty (D.RECORDty fields) => 
-              map recordLabelToSqlString (RecordLabel.Map.listKeys fields)
+              map recordLabelToSqlString (map #1 fields)
             | _ => raise DynamicTypeMismatch
-        val table = RecordLabel.toString label
+        val table = label
         val tableValue = Dynamic.dynamicToTerm (Dynamic.## table (Dynamic.dynamic namedeRel))
         val rowList = case tableValue of
                         Dynamic.LIST rowList => rowList
@@ -212,8 +212,8 @@ in
             case ty of
               D.RECORDty tables => 
               if List.exists
-                   (fn x => x = string) 
-                   (map RecordLabel.toString (RecordLabel.Map.listKeys tables))
+                   (fn (x, _) => x = string)
+                   tables
               then ()
               else raise DropTable
             | D.UNITty => raise DropTable
@@ -234,7 +234,7 @@ in
         val tableNames = 
             case ty of
               D.RECORDty tables => 
-              map RecordLabel.toString (RecordLabel.Map.listKeys tables)
+              map #1 tables
             | D.UNITty => nil
             | _ => nil
         val queryList = map (fn x => "DROP TABLE " ^ quoteSQLString x) tableNames
@@ -258,7 +258,7 @@ in
               D.RECORDty tables => 
               map
                 (fn (l, tb) => (recordLabelToSqlString l, tb))
-                (RecordLabel.Map.listItemsi tables)
+                tables
             | _ => raise IlleagalTableTy
         fun columString tb = 
               case tb of
@@ -269,7 +269,7 @@ in
                          ^ reifiedTyToSqlTy t
                          ^ " NOT NULL")
                     )
-                    (RecordLabel.Map.listItemsi fields)
+                    fields
               | _ => raise IlleagalColumTy
         val keyConst = 
             case map quoteSQLString keys of

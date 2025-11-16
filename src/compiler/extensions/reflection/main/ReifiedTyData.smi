@@ -43,8 +43,6 @@ struct
   val ConSetTy : loc -> ty
   val ConSetEnvTy : loc -> ty
   val TyRepTy : loc -> ty
-  val LabelTy : loc -> ty
-  val ReifiedTyLabelMapTy : loc -> ty
   val ReifiedTyTy : loc -> ty
   val IdstatusTy : loc -> ty
   val EnvTy : loc -> ty
@@ -52,6 +50,5 @@ struct
   val SENVMAPTY : loc -> ty -> ty
   val TypIDMapMapTy : loc -> ty -> ty
   val BounTypeVarIDMapMapTy : loc -> ty -> ty
-  val RecordLabelMapMapTy : loc -> ty -> ty
 
 end

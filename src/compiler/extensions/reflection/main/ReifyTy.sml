@@ -175,9 +175,6 @@ struct
       | PTRty reifiedTy => Con loc (UP.REIFY_conInfo_PTRty loc) (SOME  (ReifiedTy loc reifiedTy))
       | REAL32ty => Con loc (UP.REIFY_conInfo_REAL32ty loc) NONE
       | REAL64ty => Con loc (UP.REIFY_conInfo_REAL64ty loc) NONE
-      | RECORDLABELty => Con loc (UP.REIFY_conInfo_RECORDLABELty loc) NONE
-      | RECORDLABELMAPty reifiedTy => Con loc (UP.REIFY_conInfo_RECORDLABELMAPty loc) 
-                                          (SOME  (ReifiedTy loc reifiedTy))
       | RECORDty reifiedTyMap => RecordTy loc reifiedTyMap
       | REFty reifiedTy => Con loc (UP.REIFY_conInfo_REFty loc) 
                                (SOME (ReifiedTy loc reifiedTy))
@@ -193,20 +190,17 @@ struct
       | WORD64ty => Con loc (UP.REIFY_conInfo_WORD64ty loc) NONE
       | WORD8ty => Con loc (UP.REIFY_conInfo_WORD8ty loc) NONE
       | WORD32ty => Con loc (UP.REIFY_conInfo_WORD32ty loc) NONE
-  and RecordTy loc (labelMap : reifiedTy RecordLabel.Map.map)  =
+  and RecordTy loc (labelMap : (string * reifiedTy) list)  =
       let
         val StringRieifedTyList =
             List 
               loc
               (StringTy ** ReifiedTyTy loc) 
               (map (fn (label, reifiedTy) => 
-                       Pair loc (LabelAsString loc label) (ReifiedTy loc reifiedTy))
-                   (RecordLabel.Map.listItemsi labelMap))
+                       Pair loc (String loc label) (ReifiedTy loc reifiedTy))
+                   labelMap)
       in
-        Apply 
-          loc
-          (MonoVar loc (UP.REIFY_exInfo_stringReifiedTyListToRecordTy loc))
-          StringRieifedTyList
+        Con loc (UP.REIFY_conInfo_RECORDty loc) (SOME StringRieifedTyList)
       end
 
   fun tyExpList loc visited lookup (reifeidTy, btvMap)  =
@@ -241,7 +235,7 @@ struct
       | OPAQUEty {longsymbol, id, args, size, boxed} => 
         foldl (tyExpList visited lookup) btvMap args
       | RECORDty reifiedTyMap =>
-        RecordLabel.Map.foldl (tyExpList visited lookup) btvMap reifiedTyMap
+        foldl (tyExpList visited lookup) btvMap (map #2 reifiedTyMap)
       | _ => btvMap
       end
 
@@ -345,9 +339,6 @@ struct
         Con loc (UP.REIFY_conInfo_PTRty loc) (SOME  (ReifiedTyWithLookUp lookup loc reifiedTy))
       | REAL32ty => Con loc (UP.REIFY_conInfo_REAL32ty loc) NONE
       | REAL64ty => Con loc (UP.REIFY_conInfo_REAL64ty loc) NONE
-      | RECORDLABELty => Con loc (UP.REIFY_conInfo_RECORDLABELty loc) NONE
-      | RECORDLABELMAPty reifiedTy => 
-        Con loc (UP.REIFY_conInfo_RECORDLABELMAPty loc) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
       | RECORDty reifiedTyMap => RecordTyWithLookUp lookup loc reifiedTyMap
       | REFty reifiedTy => 
         Con loc (UP.REIFY_conInfo_REFty loc) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
@@ -361,20 +352,17 @@ struct
       | WORD64ty => Con loc (UP.REIFY_conInfo_WORD64ty loc) NONE
       | WORD8ty => Con loc (UP.REIFY_conInfo_WORD8ty loc) NONE
       | WORD32ty => Con loc (UP.REIFY_conInfo_WORD32ty loc) NONE
-  and RecordTyWithLookUp lookup loc (labelMap : reifiedTy RecordLabel.Map.map)  =
+  and RecordTyWithLookUp lookup loc (labelMap : (string * reifiedTy) list) =
       let
         val StringRieifedTyList =
             List 
               loc
               (StringTy ** ReifiedTyTy loc) 
               (map (fn (label, reifiedTy) => 
-                       Pair loc (LabelAsString loc label) (ReifiedTyWithLookUp lookup loc reifiedTy))
-                   (RecordLabel.Map.listItemsi labelMap))
+                       Pair loc (String loc label) (ReifiedTyWithLookUp lookup loc reifiedTy))
+                   labelMap)
       in
-        Apply 
-          loc
-          (MonoVar loc (UP.REIFY_exInfo_stringReifiedTyListToRecordTy loc))
-          StringRieifedTyList
+        Con loc (UP.REIFY_conInfo_RECORDty loc) (SOME StringRieifedTyList)
       end
 
   fun ConSet loc (conSet:conSet) =

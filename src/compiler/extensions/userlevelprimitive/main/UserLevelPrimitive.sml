@@ -239,10 +239,6 @@ struct
 
   val REIFY_tyCon_BoundTypeVarIDMapMap =
       getTyCon ["BoundTypeVarID", "Map", "map"]
-  val REIFY_tyCon_RecordLabelMapMap =
-      getTyCon ["RecordLabel", "Map", "map"]
-  val REIFY_tyCon_RECORDLABELty =
-      getTyCon ["RecordLabel", "label"]
   val REIFY_tyCon_SENVMAPty =
       getTyCon ["SEnv", "map"]
   val REIFY_tyCon_IENVMAPty =
@@ -259,8 +255,6 @@ struct
       getTyCon ["ReifiedTerm", "env"]
   val REIFY_tyCon_idstatus =
       getTyCon ["ReifiedTerm", "idstatus"]
-  val REIFY_tyCon_label =
-      getTyCon ["RecordLabel", "label"]
   val REIFY_tyCon_reifiedTerm =
       getTyCon ["ReifiedTerm", "reifiedTerm"]
   val REIFY_tyCon_reifiedTy =
@@ -338,14 +332,12 @@ struct
       getCon ["ReifiedTy", "POLYty"]
   val REIFY_conInfo_PTRty =
       getCon ["ReifiedTy", "PTRty"]
-  val REIFY_conInfo_RECORDLABELty =
-      getCon ["ReifiedTy", "RECORDLABELty"]
-  val REIFY_conInfo_RECORDLABELMAPty =
-      getCon ["ReifiedTy", "RECORDLABELMAPty"]
   val REIFY_conInfo_REAL32ty =
       getCon ["ReifiedTy", "REAL32ty"]
   val REIFY_conInfo_REAL64ty =
       getCon ["ReifiedTy", "REAL64ty"]
+  val REIFY_conInfo_RECORDty =
+      getCon ["ReifiedTy", "RECORDty"]
   val REIFY_conInfo_REFty =
       getCon ["ReifiedTy", "REFty"]
   val REIFY_conInfo_STRINGty =
@@ -381,8 +373,6 @@ struct
   val SQL_icexp_toyServer =
       getIcexp ["SMLSharp_SQL_Prim", "toyServer"]
 
-  val REIFY_exInfo_RecordLabelFromString =
-      getExVar ["RecordLabel", "fromString"]
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
       getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
   val REIFY_exInfo_btvIdBtvIdListToBoundenv =
@@ -419,8 +409,6 @@ struct
       getExVar ["ReifiedTerm", "printTopEnv"]
   val REIFY_exInfo_reifiedTermToML =
       getExVar ["ReifiedTermToML", "reifiedTermToML"]
-  val REIFY_exInfo_stringReifiedTyListToRecordTy =
-      getExVar ["ReifiedTy", "stringReifiedTyListToRecordTy"]
   val REIFY_exInfo_stringReifiedTyOptionListToConSet =
       getExVar ["ReifiedTy", "stringReifiedTyOptionListToConSet"]
   val REIFY_exInfo_toReifiedTerm =

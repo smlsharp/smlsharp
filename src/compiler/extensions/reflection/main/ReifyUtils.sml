@@ -20,7 +20,7 @@ struct
   type exnCon = TC.exnCon
   type exp = TC.tpexp
   type decl = TC.tpdecl
-  type label = RecordLabel.label
+  type label = string
 
   exception TyConNotDefined of string
   exception TypeMismatch
@@ -310,17 +310,9 @@ struct
   fun TypeCast loc {ty, exp} ty2 =
       {ty = ty2, exp = TC.TPCAST ((exp, ty), ty2, loc)}
 
-  fun LabelAsString loc label =
-      String loc (RecordLabel.toString label)
-
   fun BtvId loc btvid =
       TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy loc)
   fun TypId loc typid =
       TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy loc)
-  fun RecordLabelFromString loc string =
-      Apply
-        loc
-        (MonoVar loc (U.REIFY_exInfo_RecordLabelFromString loc))
-        (String loc string)
 
 end

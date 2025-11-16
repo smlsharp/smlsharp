@@ -48,15 +48,11 @@ struct
   fun TypIDMapMapTy loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_TypIDMapMap loc, args = [ty]}
   fun BounTypeVarIDMapMapTy loc ty =
       T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_BoundTypeVarIDMapMap loc, args = [ty]}
-  fun RecordLabelMapMapTy loc ty = 
-      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_RecordLabelMapMap loc, args = [ty]}
-  fun LabelTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_label loc, args = []}
   fun IdstatusTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_idstatus loc, args = []}
   fun EnvTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_env loc, args = []}
 
   fun ReifiedTermTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTerm loc, args = []}
   fun ReifiedTyTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTy loc, args = []}
-  fun ReifiedTyLabelMapTy loc = RecordLabelMapMapTy loc (ReifiedTyTy loc)
   fun ConSetTy loc =  SENVMAPTY loc (OptionTy (ReifiedTyTy loc))
   fun ConSetEnvTy loc = TypIDMapMapTy loc (ConSetTy loc)
   fun TyRepTy loc = RecordTy [("conSetEnv", ConSetEnvTy loc), ("reifiedTy", ReifiedTyTy loc)]

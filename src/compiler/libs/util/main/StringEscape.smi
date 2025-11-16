@@ -7,5 +7,5 @@ struct
   val toCString : string -> string
   val toStringLiteral : string -> string
   val toCStringLiteral : string -> string
-  val getc : (substring, substring) StringCvt.reader
+  val isAlphaNumUtf8Id : string -> bool
 end

@@ -41,10 +41,6 @@ struct
 
   val REIFY_tyCon_BoundTypeVarIDMapMap
       : Loc.loc -> Types.tyCon
-  val REIFY_tyCon_RecordLabelMapMap
-      : Loc.loc -> Types.tyCon
-  val REIFY_tyCon_RECORDLABELty
-      : Loc.loc -> Types.tyCon
   val REIFY_tyCon_SENVMAPty
       : Loc.loc -> Types.tyCon
   val REIFY_tyCon_IENVMAPty
@@ -60,8 +56,6 @@ struct
   val REIFY_tyCon_env
       : Loc.loc -> Types.tyCon
   val REIFY_tyCon_idstatus
-      : Loc.loc -> Types.tyCon
-  val REIFY_tyCon_label
       : Loc.loc -> Types.tyCon
   val REIFY_tyCon_reifiedTerm
       : Loc.loc -> Types.tyCon
@@ -138,13 +132,11 @@ struct
       : Loc.loc -> Types.conInfo
   val REIFY_conInfo_PTRty
       : Loc.loc -> Types.conInfo
-  val REIFY_conInfo_RECORDLABELty
-      : Loc.loc -> Types.conInfo
-  val REIFY_conInfo_RECORDLABELMAPty
-      : Loc.loc -> Types.conInfo
   val REIFY_conInfo_REAL32ty
       : Loc.loc -> Types.conInfo
   val REIFY_conInfo_REAL64ty
+      : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_RECORDty
       : Loc.loc -> Types.conInfo
   val REIFY_conInfo_REFty
       : Loc.loc -> Types.conInfo
@@ -180,8 +172,6 @@ struct
   val REIFY_exExnInfo_RuntimeTypeError
       : Loc.loc -> Types.exExnInfo
 
-  val REIFY_exInfo_RecordLabelFromString
-      : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_MergeConSetEnvWithTyRepList
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_btvIdBtvIdListToBoundenv
@@ -217,8 +207,6 @@ struct
   val REIFY_exInfo_printTopEnv
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_reifiedTermToML
-      : Loc.loc -> Types.exVarInfo
-  val REIFY_exInfo_stringReifiedTyListToRecordTy
       : Loc.loc -> Types.exVarInfo
   val REIFY_exInfo_stringReifiedTyOptionListToConSet
       : Loc.loc -> Types.exVarInfo

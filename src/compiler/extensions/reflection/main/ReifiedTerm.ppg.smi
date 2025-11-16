@@ -1,7 +1,7 @@
 _require "../../../../basis.smi"
-_require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../libs/util/main/StringEscape.smi"
+_require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 _require "./ReifiedTy.ppg.smi"
 
 structure ReifiedTerm =
@@ -36,9 +36,7 @@ struct
     | PTR of word64
     | REAL64 of real
     | REAL32 of real32
-    | RECORDLABEL of RecordLabel.label
-    | RECORDLABELMAP of (RecordLabel.label * reifiedTerm) list
-    | RECORD of reifiedTerm RecordLabel.Map.map
+    | RECORD of (string * reifiedTerm) list
     | REF of ReifiedTy.reifiedTy * boxed
     | REF_PRINT of reifiedTerm
     | SENVMAP of (string * reifiedTerm) list

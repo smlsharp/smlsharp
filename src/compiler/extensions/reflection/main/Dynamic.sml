@@ -29,18 +29,14 @@ struct
   fun voidWithTy reifiedTy =
       termToDynamic(VOID_WITHTy reifiedTy)
   fun Record stringTermList = 
-      RECORD (foldl
-                (fn ((string, term), fields) => 
-                    RecordLabel.Map.insert(fields, RecordLabel.fromString string, term))
-                RecordLabel.Map.empty
-              stringTermList)
+      RECORD stringTermList
 
   fun RecordTermToKeyListValueList term =
       case term of
         RECORD termMap =>
-        RecordLabel.Map.foldri 
-          (fn (label, term, (LabelStringList,TermStringList)) =>
-              (RecordLabel.toString label :: LabelStringList,
+        foldr
+          (fn ((label, term), (LabelStringList,TermStringList)) =>
+              (label :: LabelStringList,
                termToString term :: TermStringList))
           (nil,nil)
           termMap
@@ -63,8 +59,8 @@ struct
       in            
         case term of
           RECORD termMap =>
-          RecordLabel.Map.foldri 
-            (fn (label, term, TermStringList) =>
+          foldr
+            (fn ((label, term), TermStringList) =>
                 termToSqlValue term :: TermStringList)
             nil
             termMap
@@ -72,17 +68,13 @@ struct
       end
 
   fun RecordTy stringTyList = 
-      RECORDty (foldl
-                  (fn ((string, ty), fields) => 
-                      RecordLabel.Map.insert(fields, RecordLabel.fromString string, ty))
-                  RecordLabel.Map.empty
-                  stringTyList)
+      RECORDty stringTyList
   fun ## string dynamic = 
       termToDynamic
         (case dynamicToTerm dynamic of
            RECORD termMap => 
-           (case RecordLabel.Map.find(termMap, RecordLabel.fromString string) of
-              SOME term => term
+           (case List.find (fn (l, _) => l = string) termMap of
+              SOME (_, term) => term
             | NONE => NULL)
          | _ => NULL)
 
@@ -90,8 +82,8 @@ struct
       termToDynamic
         (case dynamicToTerm dynamic of
            RECORD termMap => 
-           RECORD (RecordLabel.Map.insert
-                     (termMap, RecordLabel.fromString string, dynamicToTerm elem))
+           RECORD (SEnv.listItemsi (SEnv.insert
+                     (ReifiedTy.toSEnv termMap, string, dynamicToTerm elem)))
          | _ => VOID)
 
   fun join (d1, d2) = 
@@ -136,11 +128,7 @@ struct
       | JSON.ARRAY jsonList => ReifiedTerm.LIST (map jsonToReifiedTerm jsonList)
       | JSON.OBJECT stringJsonList =>
         ReifiedTerm.RECORD
-          (foldl (fn ((l, json), map) =>
-                     RecordLabel.Map.insert
-                       (map, RecordLabel.fromString l, jsonToReifiedTerm json))
-                 RecordLabel.Map.empty
-                 stringJsonList)
+          (map (fn (l, json) => (l, jsonToReifiedTerm json)) stringJsonList)
 
   fun jsonToDynamic json =
       ReifiedTerm.toDynamic (jsonToReifiedTerm json)
@@ -155,14 +143,13 @@ struct
 
   fun ('a#reify#{},'b#reify) ### (label:string) (record:'a)  =
       let
-        val label = RecordLabel.fromString label
         val ty = #reifiedTy (_reifyTy('a))
         val elemTySpec = #reifiedTy (_reifyTy('b))
         val elemTy = 
              case ty of
                ReifiedTy.RECORDty fieldTy =>
-               (case RecordLabel.Map.find(fieldTy, label) of
-                  SOME ty => ty
+               (case List.find (fn (l,_) => l = label) fieldTy of
+                  SOME (_, ty) => ty
                 | _ =>  raise RuntimeTypeError)
              | _ => raise RuntimeTypeError 
         val _ = if ReifiedTy.reifiedTyEq(elemTySpec, elemTy) then ()
@@ -174,8 +161,8 @@ struct
         val term = dynamicToTerm (dynamic record)
         val value = case term of 
                       RECORD fields =>
-                      (case RecordLabel.Map.find (fields, label) of
-                         SOME term => term
+                      (case List.find (fn (l,_) => l = label) fields of
+                         SOME (_, term) => term
                        | _ => raise RuntimeTypeError)
                     |  _ => raise RuntimeTypeError
       in

@@ -31,25 +31,28 @@ struct
             (String.fields (fn x => x = #"\n") s)
   val u = ()
 
-  fun isTuple (x, y) map = if RecordLabel.isTupleMap map then x else y
+  fun isTuple nil = false
+    | isTuple [_] = false
+    | isTuple fields =
+      let
+        fun check n nil = true
+          | check n ((lab, _) :: t) =
+            Int.toString n = lab andalso check (n + 1) t
+      in
+        check 1 fields
+      end
 
-  fun format_RecordLabelMap args map =
-      format_list args (RecordLabel.Map.listItemsi map)
+  fun istuple (x, y) map = if isTuple map then x else y
 
-  fun format_RecordOrTuple (format_value, format_keyValue, sep) map =
-      if RecordLabel.isTupleMap map
-      then format_list (format_value, sep) (RecordLabel.Map.listItems map)
-      else format_list (format_keyValue, sep) (RecordLabel.Map.listItemsi map)
+  fun term s = [Term (size s, s)]
 
-  fun quotedLabel l =
-      TermPrintUtils.format_string (RecordLabel.toString l)
+  fun format_jsonlabel l =
+      term (StringEscape.toCStringLiteral l)
+
   end
 
   (*%
-   * @formatter(recordExp) format_RecordOrTuple
    * @formatter(recordField) format_format_recordField
-   * @formatter(RecordLabel.Map.map) format_RecordLabelMap
-   * @formatter(RecordLabel.label) RecordLabel.format_label
    * @formatter(quotedLabel) quotedLabel
    * @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
    * @formatter(int) TermPrintUtils.format_int
@@ -67,13 +70,12 @@ struct
    * @formatter(intInf) TermPrintUtils.format_IntInf
    * @formatter(iftrue) iftrue
    * @formatter(ifsome) ifsome
-   * @formatter(isTuple) isTuple
+   * @formatter(istuple) istuple
+   * @formatter(label) ReifiedTy.format_label
    *)
   (*%
    * @prefix toJSON_
    * @formatter(recordField) toJSON_format_recordField
-   * @formatter(RecordLabel.Map.map) format_RecordLabelMap
-   * @formatter(RecordLabel.label) RecordLabel.format_label
    * @formatter(quotedLabel) quotedLabel
    * @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
    * @formatter(int) TermPrintUtils.format_intJson
@@ -91,7 +93,7 @@ struct
    * @formatter(intInf) TermPrintUtils.format_IntInf
    * @formatter(iftrue) iftrue
    * @formatter(ifsome) ifsome
-   * @formatter(isTuple) isTuple
+   * @formatter(label) format_jsonlabel
    *)
   datatype reifiedTerm
     = (*%
@@ -281,24 +283,18 @@ struct
       REAL64 of real
     | (*% 
        * @format(term terms)
-       * !N0{
-       *   terms:isTuple()("(", "{")
-       *   2[ 1 terms:recordExp(term,term:recordField(term))("," +2) ]
-       *   1 terms:isTuple()(")", "}")
-       * }
+       * terms:istuple()(
+       *   !N0{ "(" 2[ 1 terms(term)("," +1) ] 1 ")" },
+       *   !N0{ "{" 2[ 1 terms(term:recordField)("," +1) ] 1 "}" }
+       * )
+       * @format:term(lab * term)
+       * term
        *)
       (*% @prefix toJSON_
        * @format(term terms)
-       * !N0{ "{" 2[ 1 terms(term:recordField(term))("," +1) ] 1 "}" }
+       * !N0{ "{" 2[ 1 terms(term:recordField)("," +1) ] 1 "}" }
        *)
-      RECORD of reifiedTerm RecordLabel.Map.map
-    | (*% 
-       * @format(label) "#" label
-       *)
-      (*% @prefix toJSON_
-       * @format(label) "RECORDLABEL"
-       *)
-      RECORDLABEL of RecordLabel.label
+      RECORD of (string * reifiedTerm) list
     | (*%
        * @format(term) 
        * L6{ "ref" 2[ +1 term ] }
@@ -324,16 +320,6 @@ struct
        * @format(keyValue terms) "SENVMAP"
        *)
       SENVMAP of (string * reifiedTerm) list
-    | (*%
-       * @format(keyValue terms)
-       * !N0{ "{" 2[ 1 terms(keyValue)("," +2) ] 1 "}" }
-       * @format:keyValue(key * value)
-       * { "#" key +1 "=>" +d value }
-       *)
-      (*% @prefix toJSON_
-       * @format(term terms) "RECORDLABELMAP"
-       *)
-      RECORDLABELMAP of (RecordLabel.label * reifiedTerm) list
     | (*%
        * @format(keyValue terms)
        * !N0{ "{" 2[ 1 terms(keyValue)("," +2) ] 1 "}" }
@@ -447,16 +433,16 @@ struct
        *)
       BUILTIN
 
-  withtype 'a format_recordField
+  withtype format_recordField
     = (*%
        * @format(label * value)
-       * { label +d "=" 2[ +1 value ] }
+       * { label:label +d "=" 2[ +1 value ] }
        *)
       (*% @prefix toJSON_
        * @format(label * value)
-       * { label:quotedLabel +d ":" 2[ +1 value ] }
+       * { label:label +d ":" 2[ +1 value ] }
        *)
-      RecordLabel.label * 'a
+      string * reifiedTerm
 
   (*% *)
   (*% @prefix toJSON_ *)

@@ -27586,9 +27586,6 @@ src/compiler/extensions/reflection/main/ReifiedTy.ppg.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o: \
@@ -27808,19 +27805,18 @@ src/compiler/extensions/reflection/main/ReifiedTermToML.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/libs/env/main/SOrd.smi \
+ src/compiler/libs/env/main/SEnv.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -27936,12 +27932,8 @@ src/compiler/extensions/reflection/main/PartialDynamic.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -28060,17 +28052,13 @@ src/compiler/extensions/reflection/main/NaturalJoin.o: \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/libs/env/main/SOrd.smi \
+ src/compiler/libs/env/main/SEnv.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/extensions/reflection/main/ReifiedTy.ppg.smi \
@@ -28191,14 +28179,14 @@ src/compiler/extensions/reflection/main/ReifyTerm.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -28318,18 +28306,14 @@ src/compiler/extensions/reflection/main/RecordUtils.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/libs/env/main/SOrd.smi \
+ src/compiler/libs/env/main/SEnv.smi \
  src/smlformat/formatlib/main/FormatExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/env/main/SOrd.smi \
- src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -29261,10 +29245,6 @@ src/compiler/extensions/reflection/main/Dynamic.o: \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \

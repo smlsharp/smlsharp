@@ -1,14 +1,13 @@
 _require local "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require local "../../debug/main/Bug.smi"
+_require local "../../../libs/util/main/StringEscape.smi"
 _require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
 _require "../../../libs/env/main/IEnv.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
 _require local "../../../libs/toolchain/main/Filename.smi"
 
 structure ReifiedTy =
@@ -53,9 +52,7 @@ struct
     | PTRty of reifiedTy
     | REAL32ty
     | REAL64ty
-    | RECORDLABELMAPty of reifiedTy
-    | RECORDLABELty 
-    | RECORDty of reifiedTy RecordLabel.Map.map
+    | RECORDty of (string * reifiedTy) list
     | REFty of reifiedTy
     | SENVMAPty of reifiedTy
     | STRINGty
@@ -70,6 +67,7 @@ struct
 
   type conSet = reifiedTy option SEnv.map
   datatype void = void
+  val format_label : string -> SMLFormat.format
   val format_reifiedTy : reifiedTy -> SMLFormat.format
   val reifiedTyToString : reifiedTy -> string
   val printTy : reifiedTy -> unit
@@ -129,4 +127,5 @@ struct
   val isGroundTy : reifiedTy -> bool
   val isBaseTy : reifiedTy -> bool
 
+  val toSEnv : (string * 'a) list -> 'a SEnv.map
 end

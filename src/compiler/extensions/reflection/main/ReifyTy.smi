@@ -6,7 +6,6 @@ _require local "../../../libs/env/main/SEnv.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"

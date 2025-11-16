@@ -963,7 +963,6 @@ src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
-src/compiler/libs/util/main/TermFormat.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
@@ -971,6 +970,7 @@ src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
 src/compiler/extensions/reflection/main/PartialDynamic.o \
 src/compiler/extensions/reflection/main/NaturalJoin.o \
+src/compiler/libs/util/main/TermFormat.o \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/ConstFormat.o \
@@ -1504,7 +1504,6 @@ src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
-src/compiler/libs/util/main/TermFormat.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
@@ -1512,6 +1511,7 @@ src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
 src/compiler/extensions/reflection/main/PartialDynamic.o \
 src/compiler/extensions/reflection/main/NaturalJoin.o \
+src/compiler/libs/util/main/TermFormat.o \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.o \
 src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/ConstFormat.o \

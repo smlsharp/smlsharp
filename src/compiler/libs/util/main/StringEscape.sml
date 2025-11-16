@@ -126,4 +126,18 @@ struct
       then NONE
       else SOME (Substring.splitAt (ss, Int.max (getUtf8 ss, 1)))
 
+  fun isAlphaNumUtf8String ss =
+      case getc ss of
+        NONE => true
+      | SOME (s, ss) =>
+        (Substring.size s > 1 orelse Char.isAlphaNum (Substring.sub (s, 0)))
+        andalso isAlphaNumUtf8String ss
+
+  fun isAlphaNumUtf8Id ss =
+      case getc (Substring.full ss) of
+        NONE => false
+      | SOME (s, ss) =>
+        (Substring.size s > 1 orelse Char.isAlpha (Substring.sub (s, 0)))
+        andalso isAlphaNumUtf8String ss
+
 end

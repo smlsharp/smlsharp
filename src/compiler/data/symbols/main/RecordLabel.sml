@@ -38,25 +38,11 @@ struct
 
   fun fromLongsymbol longsymbol = fromString (Longsymbol.toString longsymbol)
 
-  fun isAlphaNumUtf8String ss =
-      case StringEscape.getc ss of
-        NONE => true
-      | SOME (s, ss) =>
-        (Substring.size s > 1 orelse Char.isAlphaNum (Substring.sub (s, 0)))
-        andalso isAlphaNumUtf8String ss
-
-  fun isAlphaNumUtf8Label ss =
-      case StringEscape.getc ss of
-        NONE => false
-      | SOME (s, ss) =>
-        (Substring.size s > 1 orelse Char.isAlpha (Substring.sub (s, 0)))
-        andalso isAlphaNumUtf8String ss
-
   fun term s = [SMLFormat.FormatExpression.Term (size s, s)]
 
   fun format_label (digits, "") = term digits
     | format_label ("", label) =
-      if isAlphaNumUtf8Label (Substring.full label)
+      if StringEscape.isAlphaNumUtf8Id label
       then term label
       else term (StringEscape.toStringLiteral label)
     | format_label (digits, label) =

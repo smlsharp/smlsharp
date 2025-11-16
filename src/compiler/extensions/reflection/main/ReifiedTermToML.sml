@@ -78,8 +78,6 @@ struct
         | RTy.REAL32ty => UNBOXED
         | RTy.REAL64ty => UNBOXED
         | RTy.RECORDty reifiedTyLabelMap => BOXED
-        | RTy.RECORDLABELty => BOXED
-        | RTy.RECORDLABELMAPty _ => BOXED
         | RTy.REFty reifiedTy => BOXED
         | RTy.SENVMAPty _ => BOXED
         | RTy.STRINGty => BOXED
@@ -127,6 +125,8 @@ struct
           (fieldSizes, ret)
         end
         handle Undetermined => (print "computeRecordLayout\n"; raise Undetermined)
+
+    fun tupleMap _ = raise Fail "FIXME"
 
     fun findTag (tagMap, con) =
         let
@@ -247,8 +247,8 @@ struct
                 val (term, reifiedTy) = 
                     List.foldr
                       (fn (rt, (nextTerm, nextTy)) => 
-                          (R.RECORD (RecordLabel.tupleMap [rt, nextTerm]),
-                           RTy.RECORDty  (RecordLabel.tupleMap [elemTy, nextTy])))
+                          (R.RECORD [("1", rt), ("2", nextTerm)],
+                           RTy.RECORDty [("1", elemTy), ("2", nextTy)]))
                       (nullTerm, nullTy)
                       l
               in
@@ -261,8 +261,8 @@ struct
                   NONE => toMLValue (nullTerm,  nullTy)
                 | SOME rt => 
                   (* LAYOUT_ARG_OR_NULL {wrap=true} *)
-                  toMLValue (R.RECORD (RecordLabel.tupleMap [rt]), 
-                             RTy.RECORDty (RecordLabel.Map.singleton (RecordLabel.fromInt 1,ty2)))
+                  toMLValue (R.RECORD [("1", rt)],
+                             RTy.RECORDty [("1", ty2)])
               else 
                 (print "case option\n";
                  print (RTy.reifiedTyToString reifiedTy);
@@ -299,10 +299,9 @@ struct
               | (R.PTR address, RTy.PTRty ty) => toBoxed address
               | (R.REAL32 r, RTy.REAL32ty) => toBoxed r
               | (R.REAL64 r, RTy.REAL64ty) => toBoxed r
-              | (R.RECORDLABEL l, RTy.RECORDLABELty) => toBoxed l
               | (R.RECORD termFields, RTy.RECORDty tyFields) =>
-                makeRecord (RecordLabel.Map.listItems termFields, 
-                            RecordLabel.Map.listItems tyFields)
+                makeRecord (map #2 termFields,
+                            map #2 tyFields)
               | (R.REF (ty, boxed), RTy.REFty reifiedTy) => toBoxed boxed
               | (R.REF_PRINT term, RTy.REFty reifiedTy) => toBoxed (toMLValue (term, reifiedTy))
               | (R.STRING s, RTy.STRINGty) => toBoxed s

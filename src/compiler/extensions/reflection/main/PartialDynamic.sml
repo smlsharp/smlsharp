@@ -19,11 +19,13 @@ struct
       case (ty1, ty2) of
         (RTy.RECORDty fl1, RTy.RECORDty fl2) => 
         let
+          val fl1 = RTy.toSEnv fl1
+          val fl2 = RTy.toSEnv fl2
           exception Fail
         in
-          (RecordLabel.Map.appi
+          (SEnv.appi
              (fn (label, ty2) =>
-                 case RecordLabel.Map.find(fl1, label) of
+                 case SEnv.find(fl1, label) of
                    SOME ty1 => if matchTy (ty1, ty2) then ()
                                else raise Fail
                  | NONE => raise Fail
@@ -45,13 +47,13 @@ struct
         let
           exception Fail
         in
-          (RecordLabel.Map.mergeWith 
+          (SEnv.mergeWith
              (fn (SOME ty1, SOME ty2) => (if subsumeTy (ty1, ty2) then ()
                                           else raise Fail; NONE)
                | (NONE, NONE) => NONE
                | _ => (raise Fail; NONE)
              )
-             (fl1, fl2);
+             (RTy.toSEnv fl1, RTy.toSEnv fl2);
            true)
           handle Fail => false
         end
@@ -74,11 +76,12 @@ struct
         | _ => RTy.BOTTOMty
 
   and glbFieldTys (fl1, fl2) =
-      RecordLabel.Map.mergeWith 
-      (fn (NONE, _) => NONE
-        | (_, NONE) => NONE
-        | (SOME ty1, SOME ty2) => SOME (glbTy (ty1, ty2)))
-      (fl1, fl2)
+      SEnv.listItemsi
+        (SEnv.mergeWith
+           (fn (NONE, _) => NONE
+             | (_, NONE) => NONE
+             | (SOME ty1, SOME ty2) => SOME (glbTy (ty1, ty2)))
+           (RTy.toSEnv fl1, RTy.toSEnv fl2))
 
   fun lubTy (ty1, ty2) = 
       if RTy.reifiedTyEq (ty1,ty2) then ty1
@@ -92,12 +95,13 @@ struct
         | _ => RTy.VOIDty
 
   and lubFieldTys (fl1, fl2) =
-      RecordLabel.Map.mergeWith 
-      (fn (NONE, x as SOME _) => x
-        | (x as SOME _, NONE) => x
-        | (SOME ty1, SOME ty2) => SOME (lubTy (ty1, ty2))
-        | (NONE, NONE) => NONE)
-      (fl1, fl2)
+      SEnv.listItemsi
+      (SEnv.mergeWith
+         (fn (NONE, x as SOME _) => x
+           | (x as SOME _, NONE) => x
+           | (SOME ty1, SOME ty2) => SOME (lubTy (ty1, ty2))
+           | (NONE, NONE) => NONE)
+         (RTy.toSEnv fl1, RTy.toSEnv fl2))
 
   fun glbTyList nil = RTy.VOIDty
     | glbTyList (ty::tyList) = List.foldl (fn (ty, res) => glbTy (ty, res)) ty tyList
@@ -134,9 +138,7 @@ struct
     | RTm.PTR word64 => RTy.PTRty RTy.WORD64ty
     | RTm.REAL64 real => RTy.REAL64ty
     | RTm.REAL32 real32 => RTy.REAL32ty
-    | RTm.RECORD fields => RTy.RECORDty (RecordLabel.Map.map inferTy fields)
-    | RTm.RECORDLABEL l => RTy.RECORDLABELty
-    | RTm.RECORDLABELMAP map => raise Bug.Bug "RECORDLABELMAP to inferTy"
+    | RTm.RECORD fields => RTy.RECORDty (map (fn (l,t) => (l,inferTy t)) fields)
     | RTm.REF (elemTy, boxed) => RTy.REFty elemTy
     | RTm.REF_PRINT _ => raise Bug.Bug "REF_PRINT to inferTy"
     | RTm.SENVMAP _ => raise Bug.Bug "SENVMAP to inferTy"
@@ -157,12 +159,13 @@ struct
       case (term, ty) of
         (RTm.RECORD fields, RTy.RECORDty tyFields) =>
         RTm.RECORD
-          (RecordLabel.Map.mergeWith
-             (fn (SOME term, SOME ty) => SOME (projectTerm (term, ty))
-               | (SOME term, NONE) => NONE
-               | (NONE, SOME _) =>  raise Bug.Bug "projectTerm impossible (1)"
-               | (NONE, NONE) =>  NONE)
-             (fields, tyFields)
+          (SEnv.listItemsi
+             (SEnv.mergeWith
+                (fn (SOME term, SOME ty) => SOME (projectTerm (term, ty))
+                  | (SOME term, NONE) => NONE
+                  | (NONE, SOME _) =>  raise Bug.Bug "projectTerm impossible (1)"
+                  | (NONE, NONE) =>  NONE)
+                (RTy.toSEnv fields, RTy.toSEnv tyFields))
           )
         | (RTm.RECORD fields, _) => raise RuntimeTypeError
         | (RTm.LIST termList, RTy.LISTty elemTy) => 
@@ -271,14 +274,14 @@ struct
   fun genNull ty =
       case ty of
         RTy.RECORDty tyFields => 
-        RTm.RECORD (RecordLabel.Map.map genNull tyFields)
+        RTm.RECORD (map (fn (l, ty) => (l, genNull ty)) tyFields)
       | RTy.LISTty elemTy  => RTm.LIST [genNull elemTy]
       | _ => RTm.NULL_WITHTy ty
 
   fun genVoid ty =
       case ty of
         RTy.RECORDty tyFields => 
-        RTm.RECORD (RecordLabel.Map.map genVoid tyFields)
+        RTm.RECORD (map (fn (l, ty) => (l, genVoid ty)) tyFields)
       | RTy.LISTty elemTy  => RTm.LIST []
       | _ => RTm.VOID_WITHTy ty
 

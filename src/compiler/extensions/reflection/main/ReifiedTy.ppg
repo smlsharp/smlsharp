@@ -17,6 +17,21 @@ struct
 
   fun Undetermined string = raise Bug.Bug (string ^ " size undetremnined")
 
+  fun toSEnv items =
+      foldl (fn ((lab, elem), z) => SEnv.insert (z, lab, elem)) SEnv.empty items
+
+  fun isNumericLabel "" = false
+    | isNumericLabel "0" = true
+    | isNumericLabel s =
+      String.sub (s, 0) <> #"0" andalso CharVector.all Char.isDigit s
+
+  fun term s = [SMLFormat.FormatExpression.Term (size s, s)]
+
+  fun format_label s =
+      if isNumericLabel s orelse StringEscape.isAlphaNumUtf8Id s
+      then term s
+      else term (StringEscape.toStringLiteral s)
+
   (*%
      @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
    *)
@@ -63,7 +78,7 @@ struct
      @formatter(list) SMLFormat.BasicFormatters.format_list
      @formatter(option) TermPrintUtils.formatPrependedOpt
      @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
-     @formatter(recordTy) TermFormat.formatRecordTy
+     @formatter(label) format_label
    *)
   datatype reifiedTy
     = (*% @format(arg) arg + "array" *)
@@ -159,15 +174,13 @@ struct
       REAL64ty
     | (*% @format "real32" *)
       REAL32ty
-    | (*% @format "label" *)
-      RECORDLABELty 
-    | (*% @format(arg) arg + "RecordLabel.Map.map" *)
-      RECORDLABELMAPty of reifiedTy
     | (*% 
         @format(ty tys) 
-         !N0{ 2[1 tys:recordTy(ty) ] }
+        "{" !N0{ tys(ty)("," +1) } "}"
+        @format:ty(lab * ty)
+        !N0{ lab:label +d "=" +1 ty }
        *)
-      RECORDty of reifiedTy RecordLabel.Map.map
+      RECORDty of (string * reifiedTy) list
     | (*% @format(arg) arg + "ref" *)
       REFty of reifiedTy
     | (*% @format(arg) arg + "SEnv.map" *)
@@ -270,8 +283,6 @@ struct
       | PTRty reifiedTy  => ptrSize
       | REAL32ty  => real32Size
       | REAL64ty => realSize
-      | RECORDLABELty => ptrSize
-      | RECORDLABELMAPty _ => ptrSize
       | RECORDty reifiedTyLabelMap => ptrSize
       | REFty reifiedTy => ptrSize
       | SENVMAPty _ => ptrSize
@@ -317,9 +328,7 @@ struct
     | PTRty _ => false
     | REAL32ty => true
     | REAL64ty => true
-    | RECORDLABELMAPty _ => false
-    | RECORDLABELty  => true
-    | RECORDty reifiedTyRecordLabelMapmap => List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
+    | RECORDty reifiedTyRecordLabelMapmap => List.all isGroundTy (map #2 reifiedTyRecordLabelMapmap)
     | REFty reifiedTy => isGroundTy reifiedTy
     | SENVMAPty _ => false
     | STRINGty => true
@@ -365,8 +374,6 @@ struct
       | PTRty reifiedTy  => false
       | REAL32ty  => false
       | REAL64ty => false
-      | RECORDLABELMAPty _ => true
-      | RECORDLABELty => false
       | RECORDty reifiedTyLabelMap => true
       | REFty reifiedTy => true
       | SENVMAPty _ => true
@@ -463,12 +470,12 @@ struct
             | (REAL64ty, REAL64ty) => idEnv
             | (REAL32ty, REAL32ty) => idEnv
             | (RECORDty map1, RECORDty map2) => 
-              RecordLabel.Map.foldl
+              SEnv.foldl
                 (fn ((SOME ty1, SOME ty2), idEnv) => eq equivEnv idEnv (ty1,ty2)
                   | _ => raise NotEQ
                 )
                 idEnv
-                (RecordLabel.Map.mergeWith SOME (map1, map2))
+                (SEnv.mergeWith SOME (toSEnv map1, toSEnv map2))
             | (REFty ty1, REFty ty2)  => eq equivEnv idEnv (ty1, ty2)
             | (SENVMAPty ty1, SENVMAPty ty2) => eq equivEnv idEnv (ty1, ty2)
             | (STRINGty, STRINGty) => idEnv
@@ -591,7 +598,7 @@ struct
         | OPTIONty reifiedTy => OPTIONty (apply reifiedTy)
         | REFty reifiedTy => REFty (apply reifiedTy)
         | RECORDty reifiedTyMap =>
-          RECORDty (RecordLabel.Map.map apply reifiedTyMap)
+          RECORDty (map (fn (lab, ty) => (lab, apply ty)) reifiedTyMap)
         | DATATYPEty {longsymbol, id, args, layout, size} =>
           DATATYPEty {longsymbol=longsymbol, id=id, args=map apply args, layout=layout, size=size}
         | POLYty {boundenv, body} =>
@@ -649,13 +656,7 @@ struct
       end
     | getConstructTy tyRep = tyRep
 
-  fun stringReifiedTyListToRecordTy stringReifiedTyList =
-      RECORDty
-        (foldr
-           (fn ((string, reifiedTy), labelMap) => 
-               RecordLabel.Map.insert(labelMap, RecordLabel.fromString string, reifiedTy))
-           RecordLabel.Map.empty
-           stringReifiedTyList)
+  fun stringReifiedTyListToRecordTy _ = raise Bug.Bug "placeholder for bootstrap: stringReifiedTyListToRecordTy"
 
   fun stringReifiedTyOptionListToConSet stringReifiedTyOptionList =
       foldr
@@ -747,8 +748,6 @@ struct
     | PTRty _ => false
     | REAL32ty => true
     | REAL64ty => true
-    | RECORDLABELMAPty _ => false
-    | RECORDLABELty  => true
     | RECORDty reifiedTyRecordLabelMapmap =>  false
     | REFty reifiedTy =>  false
     | SENVMAPty _ => false

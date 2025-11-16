@@ -11,7 +11,7 @@ _require local "../../../libs/toolchain/main/Filename.smi"
 
 _require  "../../../data/symbols/main/Symbol.smi"
 _require  "../../../data/symbols/main/Longsymbol.smi"
-_require  "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
 _require  "../../../data/symbols/main/Loc.smi"
 _require  "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require  "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
@@ -30,7 +30,7 @@ struct
   type exnCon = TypedCalc.exnCon
   type exp = TypedCalc.tpexp
   type decl = TypedCalc.tpdecl
-  type label = RecordLabel.label
+  type label = string
 
   val Int32Ty = ReifiedTyData.Int32Ty
   val Int64Ty = ReifiedTyData.Int64Ty
@@ -99,12 +99,10 @@ struct
   val --> : ty * ty -> ty
   val ** : ty * ty -> ty
 
-  val LabelAsString : loc -> RecordLabel.label -> {exp:exp, ty:ty}
 (*
   val Loc : loc -> {exp:exp, ty:ty}
 *)
   val BtvId : loc -> BoundTypeVarID.id -> {exp:exp, ty:ty}
   val TypId : loc -> TypID.id -> {exp:exp, ty:ty}
-  val RecordLabelFromString : loc -> string -> {exp:exp, ty:ty}
 
 end

@@ -40,12 +40,12 @@ struct
         else 
           case (term, ty) of
             (RTm.RECORD fields, RTy.RECORDty tyFields) =>
-            RTm.RECORD (RecordLabel.Map.mergeWith
+            RTm.RECORD (SEnv.listItemsi (SEnv.mergeWith
                           (fn (SOME v, SOME ty) => SOME (nullExtend (v,ty))
                             | (NONE, SOME ty) =>  SOME (PD.genNull ty)
                             | (SOME v, NONE) => SOME v
                             | (NONE, NONE) => NONE)
-                          (fields, tyFields))
+                          (RTy.toSEnv fields, RTy.toSEnv tyFields)))
           | (RTm.LIST l, RTy.LISTty ty) => 
             RTm.LIST (map (fn term => nullExtend(term, ty)) l)
           | _ => raise NaturalJoin
@@ -59,12 +59,12 @@ struct
         else 
           case (term, ty) of
             (RTm.RECORD fields, RTy.RECORDty tyFields) =>
-            RTm.RECORD (RecordLabel.Map.mergeWith
+            RTm.RECORD (SEnv.listItemsi (SEnv.mergeWith
                           (fn (SOME v, SOME ty) => SOME (nullOverride (v,ty))
                             | (NONE, SOME ty) =>  SOME (PD.genNull ty)
                             | (SOME v, NONE) => SOME v
                             | (NONE, NONE) => NONE)
-                          (fields, tyFields))
+                          (RTy.toSEnv fields, RTy.toSEnv tyFields)))
           | (RTm.LIST l, RTy.LISTty ty) => 
             RTm.LIST (map (fn term => nullOverride(term, ty)) l)
           | _ => raise NaturalJoin (* impossible *)
@@ -86,12 +86,13 @@ struct
       | EXTEND => l2
 
   and joinFields joinKind (map1, map2) =
-      RecordLabel.Map.mergeWith
-      (fn (SOME v1, SOME v2) => SOME (naturalJoin joinKind (v1,v2))
-        | (NONE, SOME v) => SOME v
-        | (SOME v, NONE) => SOME v
-        | (NONE, NONE) => NONE)
-      (map1, map2)
+      SEnv.listItemsi
+        (SEnv.mergeWith
+           (fn (SOME v1, SOME v2) => SOME (naturalJoin joinKind (v1,v2))
+             | (NONE, SOME v) => SOME v
+             | (SOME v, NONE) => SOME v
+             | (NONE, NONE) => NONE)
+           (RTy.toSEnv map1, RTy.toSEnv map2))
 
   and joinData joinKind ((con1, termOpt1, ty1), (con2, termOpt2, ty2)) =
       if con1 = con2 
@@ -196,32 +197,33 @@ struct
       else 
         case (term, ty) of
           (RTm.RECORD fields, RTy.RECORDty tyFields) =>
-          RTm.RECORD (RecordLabel.Map.mergeWith
+          RTm.RECORD (SEnv.listItemsi (SEnv.mergeWith
                         (fn (SOME v, SOME ty) => SOME (overrideNull (v, ty))
                           | (SOME v, NONE) => SOME v
                           | (NONE, SOME ty) => NONE
                           | (NONE, NONE) => NONE)
-                        (fields, tyFields))
+                        (RTy.toSEnv fields, RTy.toSEnv tyFields)))
         | _ => term
   and overrideValue (ty, term) = 
       if RTy.reifiedTyEq (PD.inferTy term, ty) then term
       else 
         case (ty, term) of
           (RTy.RECORDty tyFields, RTm.RECORD fields) =>
-          RTm.RECORD (RecordLabel.Map.mergeWith
+          RTm.RECORD (SEnv.listItemsi (SEnv.mergeWith
                         (fn (SOME ty, SOME v) => SOME (overrideValue (ty, v))
                           | (SOME ty, NONE) => SOME (RTm.NULL_WITHTy ty)
                           | (NONE, SOME v) => NONE
                           | (NONE, NONE) => NONE)
-                        (tyFields, fields))
+                        (RTy.toSEnv tyFields, RTy.toSEnv fields)))
         | _ => RTm.NULL_WITHTy ty
   and overrideFields (map1, map2) =
-      RecordLabel.Map.mergeWith
-      (fn (SOME v1, SOME v2) => SOME (override (v1, v2))
-        | (SOME v, NONE) => SOME v
-        | (NONE, SOME v) => NONE
-        | (NONE, NONE) => NONE)
-      (map1, map2)
+      SEnv.listItemsi
+        (SEnv.mergeWith
+           (fn (SOME v1, SOME v2) => SOME (override (v1, v2))
+             | (SOME v, NONE) => SOME v
+             | (NONE, SOME v) => NONE
+             | (NONE, NONE) => NONE)
+           (RTy.toSEnv map1, RTy.toSEnv map2))
   and override (x, y) =
       case (x, y) of
         (RTm.RECORD r1, RTm.RECORD r2) => RTm.RECORD (overrideFields (r1, r2))
@@ -229,12 +231,13 @@ struct
       | (_, RTm.NULL_WITHTy ty2) => overrideNull (x, ty2)
       | _ => y
   and extendFields (map1, map2) =
-      RecordLabel.Map.mergeWith
-      (fn (SOME v1, SOME v2) => SOME (extend (v1, v2))
-        | (NONE, SOME v) => SOME v
-        | (SOME v, NONE) => SOME v
-        | _ => raise Extend)
-      (map1, map2)
+      SEnv.listItemsi
+        (SEnv.mergeWith
+           (fn (SOME v1, SOME v2) => SOME (extend (v1, v2))
+             | (NONE, SOME v) => SOME v
+             | (SOME v, NONE) => SOME v
+             | _ => raise Extend)
+           (RTy.toSEnv map1, RTy.toSEnv map2))
   and extend (x,y) = 
       case (x, y) of
         (RTm.RECORD r1, RTm.RECORD r2) => RTm.RECORD (extendFields (r1, r2))
@@ -252,11 +255,11 @@ struct
       let
         exception Fail
       in
-        (RecordLabel.Map.mergeWith
+        (SEnv.mergeWith
            (fn (SOME v1, SOME v2) => if greaterEq (v1,v2) then NONE else raise Fail
              | (NONE, SOME v) => raise Fail
              | _ => NONE)
-           (map1, map2);
+           (RTy.toSEnv map1, RTy.toSEnv map2);
          true)
         handle Fail => false
       end

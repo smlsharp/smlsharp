@@ -37,12 +37,12 @@ in
       val (termTyFields, tyTyFields) =
           case (termTy, tyTy) of
             (RTy.RECORDty termTyFields, RTy.RECORDty tyTyFields) =>
-            (termTyFields, tyTyFields)
+            (RTy.toSEnv termTyFields, tyTyFields)
           | _ => raise RuntimeTypeError
       val _ =
-          RecordLabel.Map.appi
+          app
             (fn (l,tyTy) =>
-                case RecordLabel.Map.find(termTyFields, l) of
+                case SEnv.find(termTyFields, l) of
                   SOME termTy => if RTy.reifiedTyEq (termTy, tyTy) 
                                  then ()
                                  else raise RuntimeTypeError
@@ -53,10 +53,10 @@ in
           case term of 
             R.RECORD fields =>
             R.RECORD
-              (RecordLabel.Map.intersectWith
+              (SEnv.listItemsi (SEnv.intersectWith
                  (fn (a,b) => a)
-                 (fields, tyTyFields)
-              )
+                 (RTy.toSEnv fields, RTy.toSEnv tyTyFields)
+              ))
           | _ => raise RuntimeTypeError
     in
       ReifiedTermToML.reifiedTermToMLWithTy projectedRecord tyTyRep : 'ty
@@ -74,28 +74,28 @@ in
             => (relTyFields, nestedRelTyFields)
           | _ => raise RuntimeTypeError
       val (flatFields, labelNestedFieldsOpt) =
-          RecordLabel.Map.foldli
-          (fn (l, RTy.LISTty elemTy, (flatFields, NONE)) =>
+          foldl
+          (fn ((l, RTy.LISTty elemTy), (flatFields, NONE)) =>
               (case elemTy of
                 (RTy.RECORDty nestFileds) =>
-                (RecordLabel.Map.app
-                   (fn ty => if not (RTy.isBaseTy ty) then
-                               raise RuntimeTypeError
-                             else ())
+                (app
+                   (fn (_, ty) => if not (RTy.isBaseTy ty) then
+                                    raise RuntimeTypeError
+                                  else ())
                    nestFileds;
-                 (flatFields, SOME (l, nestFileds))
+                 (flatFields, SOME (l, RTy.toSEnv nestFileds))
                  )
               | _ => raise RuntimeTypeError
               )
-            | (l, ty, (flatFields, labelNestedFieldsOpt)) =>
+            | ((l, ty), (flatFields, labelNestedFieldsOpt)) =>
               (if not (RTy.isBaseTy ty) then 
                  raise RuntimeTypeError
                else ();
-               (RecordLabel.Map.insert(flatFields, l, ty),
+               (SEnv.insert(flatFields, l, ty),
                 labelNestedFieldsOpt)
               )
           )
-          (RecordLabel.Map.empty, NONE)
+          (SEnv.empty, NONE)
           nestedRelTyFields
       val (label, nestedField) = 
           case labelNestedFieldsOpt of
@@ -106,14 +106,15 @@ in
                               R.LIST recordTupleList => recordTupleList
                             | _ => raise RuntimeTypeError
       fun flatField tuple = 
-          RecordLabel.Map.intersectWith #1 (tuple, flatFields)
+          SEnv.intersectWith #1 (tuple, flatFields)
       fun nestField tuple = 
-          RecordLabel.Map.intersectWith #1 (tuple, nestedField)
+          SEnv.intersectWith #1 (tuple, nestedField)
       fun folder (R.RECORD tuple, 
                   (NONE, nestTermListRev, nestedRecordListRev)) =
           let
-            val currentFlatTerm = R.RECORD (flatField tuple)
-            val currentNestTerm = R.RECORD (nestField tuple)
+            val tuple = RTy.toSEnv tuple
+            val currentFlatTerm = R.RECORD (SEnv.listItemsi (flatField tuple))
+            val currentNestTerm = R.RECORD (SEnv.listItemsi (nestField tuple))
           in
             (SOME currentFlatTerm, currentNestTerm::nestTermListRev, 
              nestedRecordListRev)
@@ -122,24 +123,27 @@ in
                   (SOME (currentFlatTerm as R.RECORD currentFlatField), 
                           nestTermListRev, nestedRecordListRev)) =
           let
+            val tuple = RTy.toSEnv tuple
+            val currentFlatFieldSenv = RTy.toSEnv currentFlatField
             val newFlatField = flatField tuple
             val newNestField = nestField tuple
           in
-            if RecordLabel.Map.equiv
+            if SEnv.equiv
                  eqBaseTerm
-                 (currentFlatField, newFlatField) then
+                 (currentFlatFieldSenv, newFlatField) then
               (SOME (R.RECORD currentFlatField), 
-               R.RECORD newNestField::nestTermListRev, nestedRecordListRev)
+               R.RECORD (SEnv.listItemsi newNestField)::nestTermListRev, nestedRecordListRev)
             else
               let
                 val nestedRecordItem = 
                     R.RECORD 
-                      (RecordLabel.Map.insert
-                         (currentFlatField, label, 
-                          R.LIST (rev nestTermListRev)))
+                      (SEnv.listItemsi
+                         (SEnv.insert
+                            (currentFlatFieldSenv, label,
+                             R.LIST (rev nestTermListRev))))
               in
-                (SOME (R.RECORD newFlatField), 
-                 [R.RECORD newNestField], 
+                (SOME (R.RECORD (SEnv.listItemsi newFlatField)),
+                 [R.RECORD (SEnv.listItemsi newNestField)],
                  nestedRecordItem::nestedRecordListRev)
               end
           end
@@ -149,8 +153,8 @@ in
       val nestTermListRev =
           case flatTerm of
             SOME (R.RECORD flatField) => 
-            R.RECORD (RecordLabel.Map.insert
-                        (flatField, label, R.LIST (rev nestTermListRev)))
+            R.RECORD (SEnv.listItemsi (SEnv.insert
+                        (RTy.toSEnv flatField, label, R.LIST (rev nestTermListRev))))
             :: nestedRecordListRev
           | SOME _ => raise RuntimeTypeError
           | NONE => nestedRecordListRev
