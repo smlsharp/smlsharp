@@ -82,6 +82,8 @@ struct
   val InstVar : loc -> {exVarInfo:exVarInfo, instTy:ty} -> {ty:ty, exp:exp}
   val InstListVar : loc -> {exVarInfo:exVarInfo, instTyList:ty list} -> {ty:ty, exp:exp}
   val Pair : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} -> {exp:exp, ty:ty}
+  val Record : loc -> (string * {exp:exp,ty:ty}) list -> {exp:exp, ty:ty}
+  val Select : loc -> string -> {exp:exp,ty:ty} -> {exp:exp, ty:ty}
   val Fn : loc -> {expFn : varInfo -> exp, argTy:ty, bodyTy:ty} -> {exp:exp, ty:ty}
   val FunExp : loc -> ({exp:exp,ty:ty} -> {exp:exp, ty:ty}) -> ty -> {exp:exp, ty:ty}
   val Apply : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} -> {exp:exp, ty:ty}

@@ -166,6 +166,44 @@ struct
                 recordTy = RecordLabel.tupleMap [ty1, ty2]},
        ty = ty1 ** ty2}
 
+  fun Record loc fields =
+      let
+        fun makeMap selector =
+            foldl
+              (fn ((lab, item), z) =>
+                  RecordLabel.Map.insert
+                    (z, RecordLabel.fromString lab, selector item))
+              RecordLabel.Map.empty
+              fields
+        val fields = makeMap #exp
+        val recordTy = makeMap #ty
+      in
+        {exp = TC.TPRECORD {fields = fields, recordTy = recordTy, loc = loc},
+         ty = T.RECORDty recordTy}
+      end
+
+  fun Select loc label {exp, ty} =
+      let
+        val label = RecordLabel.fromString label
+        val fieldTy =
+            case ty of
+              T.RECORDty fields => RecordLabel.Map.find (fields, label)
+            | _ => NONE
+        val fieldTy =
+            case fieldTy of
+              SOME ty => ty
+            | NONE => (Bug.printError "SelectFail\n";
+                       Bug.printError "recordExp:\n";
+                       printTpexp exp;
+                       Bug.printError "recordTy:\n";
+                       printTy ty;
+                       raise TypeMismatch)
+      in
+        {exp = TC.TPSELECT {exp = exp, expTy = ty, label = label,
+                            resultTy = fieldTy, loc = loc},
+         ty = fieldTy}
+      end
+
   fun Fn loc {expFn, argTy, bodyTy} =
       let
         val v = newVar argTy

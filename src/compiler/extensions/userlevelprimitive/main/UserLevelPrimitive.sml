@@ -286,14 +286,22 @@ struct
       getCon ["ReifiedTy", "CHARty"]
   val REIFY_conInfo_CODEPTRty =
       getCon ["ReifiedTy", "CODEPTRty"]
+  val REIFY_conInfo_DATATYPEty =
+      getCon ["ReifiedTy", "DATATYPEty"]
+  val REIFY_conInfo_DUMMYty =
+      getCon ["ReifiedTy", "DUMMYty"]
   val REIFY_conInfo_DYNAMICty =
       getCon ["ReifiedTy", "DYNAMICty"]
   val REIFY_conInfo_ERRORty =
       getCon ["ReifiedTy", "ERRORty"]
+  val REIFY_conInfo_EXISTty =
+      getCon ["ReifiedTy", "EXISTty"]
   val REIFY_conInfo_EXNTAGty =
       getCon ["ReifiedTy", "EXNTAGty"]
   val REIFY_conInfo_EXNty =
       getCon ["ReifiedTy", "EXNty"]
+  val REIFY_conInfo_FUNMty =
+      getCon ["ReifiedTy", "FUNMty"]
   val REIFY_conInfo_INT16ty =
       getCon ["ReifiedTy", "INT16ty"]
   val REIFY_conInfo_INT64ty =
@@ -324,6 +332,10 @@ struct
       getCon ["ReifiedTy", "SENVMAPty"]
   val REIFY_conInfo_OPTIONty =
       getCon ["ReifiedTy", "OPTIONty"]
+  val REIFY_conInfo_OPAQUEty =
+      getCon ["ReifiedTy", "OPAQUEty"]
+  val REIFY_conInfo_POLYty =
+      getCon ["ReifiedTy", "POLYty"]
   val REIFY_conInfo_PTRty =
       getCon ["ReifiedTy", "PTRty"]
   val REIFY_conInfo_RECORDLABELty =
@@ -373,16 +385,8 @@ struct
       getExVar ["RecordLabel", "fromString"]
   val REIFY_exInfo_LongsymbolFromStringList =
       getExVar ["Longsymbol", "fromStringList"]
-  val REIFY_exInfo_TyRep =
-      getExVar ["ReifiedTy", "TyRep"]
-  val REIFY_exInfo_TyRepToReifiedTy =
-      getExVar ["ReifiedTy", "TyRepToReifiedTy"]
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
       getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
-  val REIFY_exInfo_boolToWrapRecord =
-      getExVar ["ReifiedTy", "boolToWrapRecord"]
-  val REIFY_exInfo_boundenvReifiedTyToPolyTy =
-      getExVar ["ReifiedTy", "boundenvReifiedTyToPolyTy"]
   val REIFY_exInfo_btvIdBtvIdListToBoundenv =
       getExVar ["ReifiedTy", "btvIdBtvIdListToBoundenv"]
   val REIFY_exInfo_coerceTermGeneric =
@@ -399,16 +403,6 @@ struct
       getExVar ["PartialDynamic", "dynamicTypeCase"]
   val REIFY_exInfo_dynamicExistInstance =
       getExVar ["PartialDynamic", "dynamicExistInstance"]
-  val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy =
-      getExVar ["ReifiedTy", "longsymbolIdArgsLayoutListToDatatypeTy"]
-  val REIFY_exInfo_longsymbolIdArgsToOpaqueTy =
-      getExVar ["ReifiedTy", "longsymbolIdArgsToOpaqueTy"]
-  val REIFY_exInfo_makeDummyTy =
-      getExVar ["ReifiedTy", "makeDummyTy"]
-  val REIFY_exInfo_makeExistTy =
-      getExVar ["ReifiedTy", "makeExistTy"]
-  val REIFY_exInfo_makeFUNMty =
-      getExVar ["ReifiedTy", "makeFUNMty"]
   val REIFY_exInfo_mkENVenv =
       getExVar ["ReifiedTerm", "mkENVenv"]
   val REIFY_exInfo_mkEXEXNIdstatus =
@@ -433,12 +427,6 @@ struct
       getExVar ["ReifiedTy", "stringReifiedTyListToRecordTy"]
   val REIFY_exInfo_stringReifiedTyOptionListToConSet =
       getExVar ["ReifiedTy", "stringReifiedTyOptionListToConSet"]
-  val REIFY_exInfo_stringToFalseNameRecord =
-      getExVar ["ReifiedTy", "stringToFalseNameRecord"]
-  val REIFY_exInfo_tagMapStringToTagMapNullNameRecord =
-      getExVar ["ReifiedTy", "tagMapStringToTagMapNullNameRecord"]
-  val REIFY_exInfo_tagMapToTagMapRecord =
-      getExVar ["ReifiedTy", "tagMapToTagMapRecord"]
   val REIFY_exInfo_toReifiedTerm =
       getExVar ["ReifyTerm", "toReifiedTerm"]
   val REIFY_exInfo_toReifiedTermPrint =

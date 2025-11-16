@@ -51,21 +51,15 @@ struct
       case taggedLayout of 
         TAGGED_RECORD {tagMap} =>
         let
-          val TagMapRecord = 
-              Apply 
-                loc
-                (MonoVar loc (UP.REIFY_exInfo_tagMapToTagMapRecord loc))
-                (TagMap loc tagMap)
+          val TagMapRecord = Record loc [("tagMap", TagMap loc tagMap)]
         in
           Con loc (UP.REIFY_conInfo_TAGGED_RECORD loc) (SOME TagMapRecord)
         end
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
-          val TagMapNullNameRecord = 
-              ApplyList
-                loc
-                (MonoVar loc (UP.REIFY_exInfo_tagMapStringToTagMapNullNameRecord loc))
-                [TagMap loc tagMap, String loc nullName]
+          val TagMapNullNameRecord =
+              Record loc [("tagMap", TagMap loc tagMap),
+                          ("nullName", String loc nullName)]
         in
           Con
             loc
@@ -74,18 +68,14 @@ struct
         end
       | TAGGED_TAGONLY {tagMap} =>
         let
-          val TagMapRecord = 
-              Apply 
-                loc
-                (MonoVar loc (UP.REIFY_exInfo_tagMapToTagMapRecord loc))
-                (TagMap loc tagMap)
+          val TagMapRecord = Record loc [("tagMap", TagMap loc tagMap)]
         in
           Con loc (UP.REIFY_conInfo_TAGGED_TAGONLY loc) (SOME TagMapRecord)
         end
-  fun BoolToWrapRecord loc bool = 
-      Apply loc (MonoVar loc (UP.REIFY_exInfo_boolToWrapRecord loc)) (Bool loc bool)
-  fun StringToFalseNameRecord loc bool = 
-      Apply loc (MonoVar loc (UP.REIFY_exInfo_stringToFalseNameRecord loc)) (String loc bool)
+  fun BoolToWrapRecord loc bool =
+      Record loc [("wrap", Bool loc bool)]
+  fun StringToFalseNameRecord loc falseName =
+      Record loc [("falseName", String loc falseName)]
   fun Layout loc layout = 
       case layout of
         LAYOUT_TAGGED taggedLayout =>
@@ -119,38 +109,47 @@ struct
       | CHARty => Con loc (UP.REIFY_conInfo_CHARty loc) NONE
       | CODEPTRty => Con loc (UP.REIFY_conInfo_CODEPTRty loc) NONE
       | CONSTRUCTty _ => raise Bug.Bug "CONSTRUCTty to ReifiedTy"
-      | DATATYPEty {longsymbol, id, args, layout,size} => 
-        ApplyList 
+      | DATATYPEty {longsymbol, id, args, layout,size} =>
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy loc)) 
-          [Longsymbol loc longsymbol,
-           TypId loc id,
-           List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args),
-           Layout loc layout,
-           Int loc size
-          ]
+          (UP.REIFY_conInfo_DATATYPEty loc)
+          (SOME (Record
+                   loc
+                   [("longsymbol", Longsymbol loc longsymbol),
+                     ("id", TypId loc id),
+                     ("args", List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args)),
+                     ("layout", Layout loc layout),
+                     ("size", Int loc size)]))
       | DUMMYty {boxed, size} =>
-        ApplyList 
-          loc 
-          (MonoVar loc (UP.REIFY_exInfo_makeDummyTy loc)) 
-          [Bool loc boxed, Word loc size]
-      | EXISTty {boxed, size, id} =>
-        ApplyList
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_makeExistTy loc))
-          [Option loc BoolTy (Option.map (Bool loc) boxed),
-           Option loc Word32Ty (Option.map (Word loc) size),
-           Int loc id]
+          (UP.REIFY_conInfo_DUMMYty loc)
+          (SOME (Record
+                   loc
+                   [("boxed", Bool loc boxed),
+                    ("size", Word loc size)]))
+      | EXISTty {boxed, size, id} =>
+        Con
+          loc
+          (UP.REIFY_conInfo_EXISTty loc)
+          (SOME (Record
+                   loc
+                   [("boxed", Option loc BoolTy (Option.map (Bool loc) boxed)),
+                    ("size", Option loc Word32Ty (Option.map (Word loc) size)),
+                    ("id", Int loc id)]))
       | DYNAMICty reifiedTy => Con loc (UP.REIFY_conInfo_DYNAMICty loc) 
                                    (SOME (ReifiedTy loc reifiedTy))
       | ERRORty => Con loc (UP.REIFY_conInfo_ERRORty loc) NONE
       | EXNTAGty => Con loc (UP.REIFY_conInfo_EXNTAGty loc) NONE
       | EXNty => Con loc (UP.REIFY_conInfo_EXNty loc) NONE
       | FUNMty (tyList, ty)=> 
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_makeFUNMty loc)) 
-          [List loc (ReifiedTyTy loc) (map (ReifiedTy loc) tyList), ReifiedTy loc ty ]
+          (UP.REIFY_conInfo_FUNMty loc)
+          (SOME (Pair
+                   loc
+                   (List loc (ReifiedTyTy loc) (map (ReifiedTy loc) tyList))
+                   (ReifiedTy loc ty)))
       | IENVMAPty reifiedTy => Con loc (UP.REIFY_conInfo_IENVMAPty loc) 
                                    (SOME (ReifiedTy loc reifiedTy))
       | INT16ty => Con loc (UP.REIFY_conInfo_INT16ty loc) NONE
@@ -162,22 +161,26 @@ struct
       | LISTty reifiedTy  => Con loc (UP.REIFY_conInfo_LISTty loc) 
                                  (SOME (ReifiedTy loc reifiedTy))
       | OPAQUEty {longsymbol, id, args, size, boxed} => 
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_longsymbolIdArgsToOpaqueTy loc)) 
-          [Longsymbol loc longsymbol,
-           TypId loc id,
-           List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args),
-           Int loc size,
-           Bool loc boxed
-          ]
+          (UP.REIFY_conInfo_OPAQUEty loc)
+          (SOME (Record
+                   loc
+                   [("longsymbol", Longsymbol loc longsymbol),
+                    ("id", TypId loc id),
+                    ("args", List loc (ReifiedTyTy loc) (map (ReifiedTy loc) args)),
+                    ("size", Int loc size),
+                    ("boxed", Bool loc boxed)]))
       | OPTIONty reifiedTy => Con loc (UP.REIFY_conInfo_OPTIONty loc) 
                                   (SOME (ReifiedTy loc reifiedTy))
       | POLYty {boundenv, body} =>
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_boundenvReifiedTyToPolyTy loc))
-          [Boundenv loc boundenv, ReifiedTy loc body]
+          (UP.REIFY_conInfo_POLYty loc)
+          (SOME (Record
+                   loc
+                   [("boundenv", Boundenv loc boundenv),
+                    ("body", ReifiedTy loc body)]))
       | PTRty reifiedTy => Con loc (UP.REIFY_conInfo_PTRty loc) (SOME  (ReifiedTy loc reifiedTy))
       | REAL32ty => Con loc (UP.REIFY_conInfo_REAL32ty loc) NONE
       | REAL64ty => Con loc (UP.REIFY_conInfo_REAL64ty loc) NONE
@@ -262,50 +265,58 @@ struct
       | BOUNDVARty btvId => 
         (case lookup btvId of
            SOME {path,id,ty} =>
-           ApplyList 
+           Select
              loc
-             (MonoVar loc (UP.REIFY_exInfo_TyRepToReifiedTy loc))
-             [TypeCast
+             "reifiedTy"
+             (TypeCast
                 loc
                 (Var {path=path, id = id, ty = ty, opaque = false})
-                (TyRepTy loc)]
+                (TyRepTy loc))
          | NONE =>  Con loc (UP.REIFY_conInfo_BOUNDVARty loc) (SOME (BtvId loc btvId)))
       | CHARty => Con loc (UP.REIFY_conInfo_CHARty loc) NONE
       | CODEPTRty => Con loc (UP.REIFY_conInfo_CODEPTRty loc) NONE
       | CONSTRUCTty _ => raise Bug.Bug "CONSTRUCTty to ReifiedTy"
       | DATATYPEty {longsymbol, id, args, layout,size} => 
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy loc)) 
-          [Longsymbol loc longsymbol,
-           TypId loc id,
-           List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args),
-           Layout loc layout,
-           Int loc size
-          ]
+          (UP.REIFY_conInfo_DATATYPEty loc)
+          (SOME (Record
+                   loc
+                   [("longsymbol", Longsymbol loc longsymbol),
+                     ("id", TypId loc id),
+                     ("args", List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args)),
+                     ("layout", Layout loc layout),
+                     ("size", Int loc size)]))
       | DUMMYty {boxed, size} =>
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_makeDummyTy loc)) 
-          [Bool loc boxed, Word loc size]
+          (UP.REIFY_conInfo_DUMMYty loc)
+          (SOME (Record
+                   loc
+                   [("boxed", Bool loc boxed),
+                    ("size", Word loc size)]))
       | EXISTty {boxed, size, id} =>
-        ApplyList
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_makeExistTy loc))
-          [Option loc BoolTy (Option.map (Bool loc) boxed),
-           Option loc Word32Ty (Option.map (Word loc) size),
-           Int loc id]
+          (UP.REIFY_conInfo_EXISTty loc)
+          (SOME (Record
+                   loc
+                   [("boxed", Option loc BoolTy (Option.map (Bool loc) boxed)),
+                    ("size", Option loc Word32Ty (Option.map (Word loc) size)),
+                    ("id", Int loc id)]))
       | DYNAMICty reifiedTy => 
         Con loc (UP.REIFY_conInfo_DYNAMICty loc) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
       | ERRORty => Con loc (UP.REIFY_conInfo_ERRORty loc) NONE
       | EXNTAGty => Con loc (UP.REIFY_conInfo_EXNTAGty loc) NONE
       | EXNty => Con loc (UP.REIFY_conInfo_EXNty loc) NONE
       | FUNMty (tyList, ty)=> 
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_makeFUNMty loc)) 
-          [List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) tyList), 
-           ReifiedTyWithLookUp lookup loc ty ]
+          (UP.REIFY_conInfo_FUNMty loc)
+          (SOME (Pair
+                   loc
+                   (List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) tyList))
+                   (ReifiedTyWithLookUp lookup loc ty)))
       | INT16ty => Con loc (UP.REIFY_conInfo_INT16ty loc) NONE
       | INT64ty => Con loc (UP.REIFY_conInfo_INT64ty loc) NONE
       | INT8ty => Con loc (UP.REIFY_conInfo_INT8ty loc) NONE
@@ -319,22 +330,26 @@ struct
       | SENVMAPty reifiedTy  => 
         Con loc (UP.REIFY_conInfo_SENVMAPty loc) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
       | OPAQUEty {longsymbol, id, args, size, boxed} => 
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_longsymbolIdArgsToOpaqueTy loc)) 
-          [Longsymbol loc longsymbol,
-           TypId loc id,
-           List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args),
-           Int loc size,
-           Bool loc boxed
-          ]
+          (UP.REIFY_conInfo_OPAQUEty loc)
+          (SOME (Record
+                   loc
+                   [("longsymbol", Longsymbol loc longsymbol),
+                    ("id", TypId loc id),
+                    ("args", List loc (ReifiedTyTy loc) (map (ReifiedTyWithLookUp lookup loc) args)),
+                    ("size", Int loc size),
+                    ("boxed", Bool loc boxed)]))
       | OPTIONty reifiedTy => 
         Con loc (UP.REIFY_conInfo_OPTIONty loc) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
       | POLYty {boundenv, body} =>
-        ApplyList 
+        Con
           loc
-          (MonoVar loc (UP.REIFY_exInfo_boundenvReifiedTyToPolyTy loc))
-          [Boundenv loc boundenv, ReifiedTyWithLookUp lookup loc body]
+          (UP.REIFY_conInfo_POLYty loc)
+          (SOME (Record
+                   loc
+                   [("boundenv", Boundenv loc boundenv),
+                    ("body", ReifiedTyWithLookUp lookup loc body)]))
       | PTRty reifiedTy => 
         Con loc (UP.REIFY_conInfo_PTRty loc) (SOME  (ReifiedTyWithLookUp lookup loc reifiedTy))
       | REAL32ty => Con loc (UP.REIFY_conInfo_REAL32ty loc) NONE
@@ -409,10 +424,8 @@ struct
           TypIdConSetList
       end
   fun TyRep loc {conSetEnv, reifiedTy} =
-      ApplyList 
-        loc
-        (MonoVar loc (UP.REIFY_exInfo_TyRep loc))
-        [ConSetEnv loc conSetEnv, ReifiedTy loc reifiedTy]
+      Record loc [("conSetEnv", ConSetEnv loc conSetEnv),
+                  ("reifiedTy", ReifiedTy loc reifiedTy)]
 
   fun TyRepWithLookUp lookup loc (tyRep as {conSetEnv, reifiedTy}) =
       let
@@ -430,9 +443,6 @@ struct
               (MonoVar loc (UP.REIFY_exInfo_MergeConSetEnvWithTyRepList loc))
               [conSetEnvExp, tyRepListExp]
       in
-        ApplyList 
-          loc
-          (MonoVar loc (UP.REIFY_exInfo_TyRep  loc))
-          [conSetEnvExp, reifiedTyExp]
+        Record loc [("conSetEnv", conSetEnvExp), ("reifiedTy", reifiedTyExp)]
       end
 end
