@@ -244,8 +244,8 @@ in
                    arity=arity,
                    polyTy = evalTy btvMap polyTy}
 
-  fun evalTyVar (btvMap:btvMap) ({id, ty, path, opaque}:varInfo) =
-      {id=id, path=path, ty=evalTy btvMap ty, opaque=opaque}
+  fun evalTyVar (btvMap:btvMap) ({id, ty, path, loc, opaque}:varInfo) =
+      {id=id, path=path, loc=loc, ty=evalTy btvMap ty, opaque=opaque}
 
   fun applyTys (btvMap:btvMap) (btvEnv:T.btvEnv, instTyList:ty list) : btvMap =
       let

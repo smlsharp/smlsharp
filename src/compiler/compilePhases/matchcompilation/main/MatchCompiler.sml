@@ -83,9 +83,9 @@ local
 
   fun newLocalId () = VarID.generate ()
   fun freshVar ty =
-      {path=nil,ty=ty,id=newLocalId(),opaque=false} : T.varInfo
+      {path=NONE,loc=Loc.noloc,ty=ty,id=newLocalId(),opaque=false} : T.varInfo
   fun makeVar (id, ty) =
-      {path=nil,ty=ty,id=id,opaque=false} : T.varInfo
+      {path=NONE,loc=Loc.noloc,ty=ty,id=id,opaque=false} : T.varInfo
   fun printVarInfo var =
       print (Bug.prettyPrint (T.format_varInfo var))
 

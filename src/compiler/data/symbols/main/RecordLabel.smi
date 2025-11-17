@@ -5,7 +5,6 @@ _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require local "../../../libs/list-utils/main/Snoc.smi"
 _require local "../../../libs/util/main/StringEscape.smi"
 _require "./Symbol.smi"
-_require "./Longsymbol.smi"
 
 structure RecordLabel =
 struct
@@ -13,7 +12,6 @@ struct
   eqtype label (= string)
 
   val fromSymbol : Symbol.symbol -> label
-  val fromLongsymbol : Longsymbol.longsymbol -> label
   val fromInt : int -> label
   val fromString : string -> label
   val toString : label -> string

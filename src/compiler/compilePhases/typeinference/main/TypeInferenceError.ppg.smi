@@ -75,7 +75,7 @@ structure TypeInferenceError =
     exception NonIDInLayered of string * {id:string}
     exception SignatureMismatch
               of string * {annotatedTy:Types.ty,
-                           path:string list,
+                           path:Longsymbol.longsymbol,
                            ty:Types.ty}
     exception SignatureMismatchValueRestriction
               of string * {annotatedTy:Types.ty,

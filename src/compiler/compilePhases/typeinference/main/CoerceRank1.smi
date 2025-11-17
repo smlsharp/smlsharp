@@ -5,6 +5,7 @@ _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../data/types/main/Unify.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "./Printers.smi"
@@ -19,7 +20,7 @@ struct
       {revealTyFrom:Types.ty -> Types.ty,
        revealTyTo:Types.ty -> Types.ty,
        loc:Loc.loc,
-       path:string list,
+       path:Longsymbol.longsymbol,
        tpexp:TypedCalc.tpexp,
        tpexpTy:Types.ty,
        toTy:Types.ty}

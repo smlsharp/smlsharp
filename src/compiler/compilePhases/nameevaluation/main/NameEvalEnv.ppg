@@ -415,7 +415,7 @@ in
           Env()(sname,mode,name)
        *)
       {env:env, strKind:strKind, loc:Loc.loc, 
-       definedSymbol:SymbolWithLoc.longsymbol}
+       definedSymbol:SymbolWithLoc.symbol list}
   and sigEntry 
     = 
       (*%
@@ -808,6 +808,8 @@ in
          | SOME (symbolInEnv, {env,...}) => findTstr (env, path)
         )
 
+  val findId = fn (env, key) => findId (env, #symbols key)
+  val findTstr = fn (env, key) => findTstr (env, #symbols key)
 
 end
 end

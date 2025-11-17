@@ -220,7 +220,7 @@ struct
       }
 
   type btvEnv = kind BoundTypeVarID.Map.map
-  type varInfo = {path:SymbolWithLoc.longsymbol, id:VarID.id, ty:ty, opaque:bool}
+  type varInfo = {path:Longsymbol.longsymbol option, loc:Loc.loc, id:VarID.id, ty:ty, opaque:bool}
   type exVarInfo = {path:Longsymbol.longsymbol, ty:ty}
   type primInfo = {primitive : BuiltinPrimitive.primitive, ty : ty}
   type oprimInfo = {ty : ty, path : Longsymbol.longsymbol, id : OPrimID.id}

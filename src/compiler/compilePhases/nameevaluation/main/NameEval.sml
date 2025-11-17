@@ -31,8 +31,6 @@ local
   type renameEnv = I.tfun TypID.Map.map
   val emptyRenameEnv =  TypID.Map.empty : renameEnv
 
-  fun mkSymbol s = SymbolWithLoc.mkSymbol s Loc.noloc
-  fun mkLongsymbol s = SymbolWithLoc.mkLongsymbol s Loc.noloc
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 
   fun printStrKind strkind =
@@ -78,10 +76,10 @@ local
 
   val emptyExternVarSet = Longsymbol.Map.empty : I.exInfo Longsymbol.Map.map
 
-  val DUMMYIDFUN = mkLongsymbol ["id"]
+  val DUMMYIDFUN = SymbolWithLoc.mkLongsymbol ["id"] Loc.noloc
 
  (* This is to avoid name conflict in functor names and variable names *)
-  val FUNCTORPREFIX = mkSymbol "_"
+  val FUNCTORPREFIX = SymbolWithLoc.mkSymbol "_" Loc.noloc
 
   exception Arity 
   exception Eq
@@ -94,7 +92,7 @@ local
   exception ProcessShare
   exception FunIDUndefind
 
-  type path = SymbolWithLoc.longsymbol
+  type path = SymbolWithLoc.symbol list
   val nilPath = nil : path
 
   fun generateFunVar path funIdPat =
@@ -111,9 +109,9 @@ local
       val (idPat, tyList) = stripTy funIdPat
       val {funVarInfo, funSymbol, tyList} =
           case idPat of
-            P.PLPATID [funSymbol] =>
+            P.PLPATID (longsymbol as {symbols = [funSymbol], ...}) =>
               let
-                val longsymbol = SymbolWithLoc.prefixPath(path, funSymbol)
+                val longsymbol = SymbolWithLoc.prefixPath(path, longsymbol)
               in
                 {funVarInfo= {longsymbol=longsymbol, id=VarID.generate()},
                  funSymbol=funSymbol,
@@ -125,23 +123,23 @@ local
                  (SymbolWithLoc.longsymbolToLoc longsymbol,
                   E.IlleagalFunID ("010",{pat = funIdPat}));
                let
-                 val longsymbol = SymbolWithLoc.concatPath (path, longsymbol)
+                 val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                in
                  {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                  funSymbol = mkSymbol "_",
+                  funSymbol = SymbolWithLoc.mkSymbol "_" Loc.noloc,
                   tyList=nil
                  }
                end
               )
           | _ => 
                let
-                 val longsymbol = path@[mkSymbol "_"]
+                 val longsymbol = SymbolWithLoc.prefixPath' (path, SymbolWithLoc.mkSymbol "_" Loc.noloc)
                in
                  (EU.enqueueError
                     (SymbolWithLoc.longsymbolToLoc longsymbol,
                      E.IlleagalFunID ("010",{pat = funIdPat}));
                   {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                   funSymbol = mkSymbol "_",
+                   funSymbol = SymbolWithLoc.mkSymbol "_" Loc.noloc,
                    tyList=nil
                   }
                  )
@@ -161,7 +159,7 @@ local
         case plpat of
           P.PLPATWILD loc => (V.emptyEnv, I.ICPATWILD loc)
         | P.PLPATID refLongsymbol =>
-          (case refLongsymbol of
+          (case #symbols refLongsymbol of
              nil => raise bug "nil longsymbol"
            | [symbol] => 
              (case VP.findCon(env, refLongsymbol) of
@@ -172,10 +170,10 @@ local
                             (fn x => x)
                             [symbol]
                   val varId = VarID.generate()
-                  val newLongsymbol = SymbolWithLoc.concatPath(path, refLongsymbol)
+                  val newLongsymbol = SymbolWithLoc.prefixPath(path, refLongsymbol)
                   val varInfo = {longsymbol=newLongsymbol, id=varId}
                   val rangeLoc = case defRange of
-                                   NONE => SymbolWithLoc.longsymbolToLastLoc refLongsymbol
+                                   NONE => #loc refLongsymbol
                                  | SOME loc => loc
                   val idstatus = I.IDVAR{longsymbol=newLongsymbol, id=varId, 
                                          defRange = rangeLoc}
@@ -332,13 +330,13 @@ local
                 else
                   (EU.enqueueError
                      (SymbolWithLoc.symbolToLoc symbol,
-                      E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol [symbol]}));
+                      E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol symbol)}));
                    VarID.generate())
             val _ = Ty.checkReservedName
                       Ty.isReservedName
                       (fn x => x)
                       [symbol]
-            val longsymbol =  SymbolWithLoc.prefixPath (path, symbol)
+            val longsymbol =  SymbolWithLoc.prefixPath' (path, symbol)
             val rangeLoc = case defRange of
                              NONE => loc
                            | SOME loc => loc
@@ -390,7 +388,7 @@ local
       case icpat of 
         I.ICPATVAR_TRANS (varInfo as {longsymbol=defLongsymbol,...}) => 
         let
-          val symbol = List.last defLongsymbol 
+          val symbol = SymbolWithLoc.lastSymbol defLongsymbol
               handle List.Empty => raise bug "empty longsymbol"
         in
           (case icexp of
@@ -458,7 +456,7 @@ local
       end
 
   (* P.PLCOREDEC (pdecl, loc) *)
-  fun evalPdecl (renameEnv:renameEnv) (path:SymbolWithLoc.longsymbol)
+  fun evalPdecl (renameEnv:renameEnv) (path:SymbolWithLoc.symbol list)
                 (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
       : renameEnv * V.env * I.icdecl list =
       case pdecl of
@@ -575,7 +573,7 @@ local
                     symbolTyPlexpLocList
                     (fn s => E.DuplicateVarInRecDecl("110",s))
           fun generateFunVar symbol = 
-              {longsymbol= SymbolWithLoc.prefixPath(path, symbol), id=VarID.generate()}
+              {longsymbol=SymbolWithLoc.prefixPath' (path, symbol), id=VarID.generate()}
           val recList =
               map 
                 (fn (symbol, ty, exp, loc) => (generateFunVar symbol, symbol, ty, exp, loc))
@@ -632,7 +630,7 @@ local
 (*
                               val longsymbol = [symbol]
 *)
-                              val longsymbol = SymbolWithLoc.prefixPath(path, symbol)
+                              val longsymbol = SymbolWithLoc.prefixPath' (path, symbol)
                               val admitsEq = N.admitEq tvarList ty
                             in
                               (I.TFUN_DEF {admitsEq=admitsEq,
@@ -655,7 +653,7 @@ local
 
       | P.PDDATATYPE (datadeclList, withty, loc) =>
         let
-          val (returnEnv, icdecls) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, withty, loc)
+          val (returnEnv, icdecls) = Ty.evalDatatype env (datadeclList, withty, loc)
         in
           (renameEnv, returnEnv, icdecls)
         end
@@ -672,7 +670,7 @@ local
                    V.TSTR {tfun, defRange} => 
                    let
                      val (tfun, renameEnv) = 
-                         RL.replaceLongsymbolTfun renameEnv (SymbolWithLoc.prefixPath (path, symbol)) tfun
+                         RL.replaceLongsymbolTfun renameEnv (SymbolWithLoc.prefixPath' (path, symbol)) tfun
 (*
                          RL.replacePathTfun renameEnv path tfun
 *)
@@ -686,7 +684,7 @@ local
                          RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
                          RL.replacePathTfun renameEnv path tfun
 *)
-                         RL.replaceLongsymbolTfun emptyRenameEnv (SymbolWithLoc.prefixPath (path, symbol)) tfun
+                         RL.replaceLongsymbolTfun emptyRenameEnv (SymbolWithLoc.prefixPath' (path, symbol)) tfun
                      val varE = RL.renameLongsymbolVarE renameEnv varE
                    in
                      (V.TSTR_DTY {tfun= tfun,
@@ -757,7 +755,7 @@ local
                   abstractTstr tstr tfvSubst)
               tfvSubst
               tyE
-          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype (SymbolWithLoc.toLongsymbol path) env (datadeclList, withty, loc)
+          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype env (datadeclList, withty, loc)
           val evalEnv = VP.envWithEnv (env, env1)
           val (renameEnv, newEnv, icdeclList) = evalPdeclList (renameEnv:renameEnv)  path tvarEnv evalEnv pdeclList
           val absEnv = V.ENV{varE=SymbolWithLocEnv.empty, tyE=tyE, strE=V.STR SymbolWithLocEnv.empty}
@@ -794,7 +792,7 @@ local
                               I.TYFUNM([Ty.evalTy tvarEnv env ty],
                                         BT.exnITy)
                         val newExnId = ExnID.generate()
-                        val longsymbol = SymbolWithLoc.prefixPath(path, symbol)
+                        val longsymbol = SymbolWithLoc.prefixPath' (path, symbol)
                         val exnInfo = {longsymbol=longsymbol, ty=ty, id=newExnId}
 (*
                         val _ = VP.exnConAdd (V.EXN exnInfo)
@@ -893,7 +891,7 @@ local
       | P.PDNONFIXDEC _ => (renameEnv, V.emptyEnv, nil)
       | P.PDEMPTY => (renameEnv, V.emptyEnv, nil)
 
-  and evalPdeclList (renameEnv:renameEnv) (path:SymbolWithLoc.longsymbol) (tvarEnv:Ty.tvarEnv) (env:V.env) pdeclList
+  and evalPdeclList (renameEnv:renameEnv) (path:SymbolWithLoc.symbol list) (tvarEnv:Ty.tvarEnv) (env:V.env) pdeclList
       : renameEnv * V.env * I.icdecl list =
       let
         val (renameEnv, returnEnv, icdeclList) =
@@ -1439,14 +1437,14 @@ U.print "substitution performed\n";
                      )
                    else (EU.enqueueError
                            (loc, E.FunctorParamRestriction
-                                   ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
+                                   ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}));
                          subst
                         )
                  | I.TFUN_VAR _ => raise bug "tfun var"
                  | I.TFUN_DEF _ =>
                    (EU.enqueueError
                       (loc, E.FunctorParamRestriction
-                              ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
+                              ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}));
                     subst)
                 )
               | I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {id=id1,dtyKind,...})) =>
@@ -1587,7 +1585,7 @@ U.printTfun tfun;
             in
               (SC.sigCheck
                  {mode = SC.Trans,
-                  strPath = argPath,
+                  strPath = #symbols argPath,
                   strEnv = argStrEnv,
                   specEnv = argSigEnv,
                   loc = loc
@@ -1597,10 +1595,10 @@ U.printTfun tfun;
               handle e => raise e
             end
         val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-        val argStrSymbol = mkSymbol "arg"
-        val argStrLongsymbol = mkLongsymbol ["arg"]
-        val bodyStrSymbol = mkSymbol "body"
-        val bodyStrLongsymbol = mkLongsymbol ["body"]
+        val argStrSymbol = SymbolWithLoc.mkSymbol "arg" Loc.noloc
+        val argStrLongsymbol = SymbolWithLoc.symbolToLongsymbol argStrSymbol
+        val bodyStrSymbol = SymbolWithLoc.mkSymbol "body" Loc.noloc
+        val bodyStrLongsymbol = SymbolWithLoc.symbolToLongsymbol bodyStrSymbol
         val tempEnv =
             VP.rebindStr 
               VP.SYSTEMUSE 
@@ -1895,7 +1893,7 @@ CHECKME: bug 119
                 | I.IDEXEXNREP _ => exnTags
                 | I.IDOPRIM _ => exnTags
                 | I.IDSPECVAR _ => exnTags
-                | I.IDSPECEXN _ => (path@[name])::exnTags
+                | I.IDSPECEXN _ => (SymbolWithLoc.prefixPath' (path, name))::exnTags
                 | I.IDSPECCON _ => exnTags
             )
             exnTags
@@ -2148,7 +2146,7 @@ val _ = U.print "\n"
                | _ => functorExp1
               )
 
-        val functorExpVar = {longsymbol= [FUNCTORPREFIX, nameSymbol],
+        val functorExpVar = {longsymbol= SymbolWithLoc.prefixPath' ([FUNCTORPREFIX], nameSymbol),
                              id=VarID.generate()}
         val functorExpVarExp = I.ICVAR functorExpVar
 (*
@@ -2377,7 +2375,7 @@ So we change exnSet to path exnMap in genExportIdstatus
                *)
               (fn (name, idstatus, (exnInfoList, exnPathMap, varE, icdecls)) =>
                   let
-                    val exLongsymbol = path@[name]
+                    val exLongsymbol = SymbolWithLoc.prefixPath' (path, name)
                     val (exnInfoList, exnPathMap, idstatus, icdecls) = 
                         genExportIdstatus 
                           exnInfoList exnPathMap exLongsymbol version idstatus icdecls
@@ -2554,7 +2552,7 @@ So we change exnSet to path exnMap in genExportIdstatus
           T.OVERLOAD_EXVAR {exVarInfo={path, ty}, instTyList} =>
           let
             val idstatus = 
-                case VP.findId (#Env env, SymbolWithLoc.fromLongsymbol path Loc.noloc) of
+                case VP.findId (#Env env, SymbolWithLoc.fromLongsymbol path) of
                   SOME (sym, idstatus) => idstatus
                 | NONE => raise bug  (Longsymbol.toString path
                                       ^

@@ -92,7 +92,7 @@ struct
          raise TypeMismatch)
 
   fun newVar ty =
-      {path = [], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
+      {path = NONE, loc = Loc.noloc, ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
 
   fun Int loc int =
       {exp = TC.TPCONSTANT
@@ -148,7 +148,7 @@ struct
   fun MonoVar loc (exVarInfo as {path:Longsymbol.longsymbol, ty:T.ty}) =
       {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc)}
 
-  fun Var (varInfo as {ty,path,id,opaque}) =
+  fun Var (varInfo as {ty,path,loc,id,opaque}) =
       {exp = TC.TPVAR varInfo, ty = ty}
 
   fun InstVar loc {exVarInfo as {path:Longsymbol.longsymbol, ty:T.ty}, instTy} =

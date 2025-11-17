@@ -55,7 +55,8 @@ in
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val Name = String loc (SymbolWithLoc.symbolToString symbol)
-        val VarExp = Var {path = setVersion (longsymbol, version), ty = ty, id = id, opaque = false}
+        val longsymbol = setVersion (longsymbol, version)
+        val VarExp = Var {path = SOME (SymbolWithLoc.toLongsymbol longsymbol), loc = SymbolWithLoc.longsymbolToLoc longsymbol, ty = ty, id = id, opaque = false}
         val InstVarExp = TCU.groundInst VarExp
         val ReifyFun = InstVar loc {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint loc, instTy = #ty InstVarExp}
         val ReifiedTerm = ApplyList loc ReifyFun [Int loc (!PrintControl.printMaxDepth), InstVarExp]
@@ -345,7 +346,7 @@ in
       let
         val ty = #ty Exp
         val symbol = SymbolWithLoc.mkSymbol string loc
-        val longsymbol = [symbol]
+        val longsymbol = {symbols = [symbol], loc = loc}
         val externalInfo = {path = SymbolWithLoc.toLongsymbol (setVersion(longsymbol, version)), ty = ty}
         val idstatus = 
             I.IDEXVAR {exInfo = {used = ref false, 

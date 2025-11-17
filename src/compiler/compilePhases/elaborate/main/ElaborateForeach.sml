@@ -24,7 +24,8 @@ struct
   fun Loc (loc:P.loc) x = fn (_:P.loc) => x loc
 
   fun PatVar (sym, loc) (_:P.loc) =
-      P.PLPATID [{symbol = sym, loc = Loc.LOC loc}]
+      P.PLPATID
+        (SymbolWithLoc.symbolToLongsymbol {symbol = sym, loc = Loc.LOC loc})
 
   fun PatRecord fields loc =
       P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, loc)

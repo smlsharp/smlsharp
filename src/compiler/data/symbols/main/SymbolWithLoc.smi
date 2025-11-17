@@ -5,24 +5,25 @@ _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
 _require "./Loc.smi"
 _require "./Symbol.smi"
 _require "./Longsymbol.smi"
+_require "./RecordLabel.smi"
 
 structure SymbolWithLoc =
 struct
   type symbol = {symbol : Symbol.symbol, loc : Loc.loc}
-  type longsymbol = symbol list
+  type longsymbol = {symbols : symbol list, loc : Loc.loc}
 
   val compareLoc : symbol * symbol -> order
   val lastSymbol : longsymbol -> symbol
   val symbolToString : symbol -> string
   val symbolToLoc : symbol -> Loc.loc
+  val toRecordLabel : longsymbol -> RecordLabel.label
   val toLongsymbol : longsymbol -> Longsymbol.longsymbol
-  val fromLongsymbol : Longsymbol.longsymbol -> Loc.loc -> longsymbol
+  val fromLongsymbol : Longsymbol.longsymbol -> longsymbol
   val longsymbolToString : longsymbol -> string
   val longsymbolToLoc : longsymbol -> Loc.loc
-  val longsymbolToLastLoc : longsymbol -> Loc.loc
-  val longsymbolToLongid : longsymbol -> string list
+  val longsymbolToLoc' : longsymbol option -> Loc.loc
   val mkSymbol : string -> Loc.loc -> symbol
-  val mkLongsymbol:  string list -> Loc.loc -> longsymbol
+  val mkLongsymbol: string list -> Loc.loc -> longsymbol
   val coerceLongsymbolToSymbol : longsymbol -> symbol
   val setVersion : longsymbol * int -> longsymbol
   val symbolCompare : symbol * symbol -> order
@@ -36,9 +37,11 @@ struct
   val formatUserLongSymbol : longsymbol -> SMLFormat.FormatExpression.expression list
   val replaceLocSymbol : Loc.loc -> symbol -> symbol
   val replaceLocLongsymbol : Loc.loc -> longsymbol -> longsymbol
-  val prefixPath : longsymbol * symbol -> longsymbol
-  val concatPath : longsymbol * longsymbol -> longsymbol
+  val symbolToLongsymbol : symbol -> longsymbol
+  val prefixPath : symbol list * longsymbol -> longsymbol
+  val prefixPath' : symbol list * symbol -> longsymbol
   val generate : unit -> symbol
+  val generateLongsymbol : unit -> longsymbol
 end
 
 structure SymbolWithLocOrd =

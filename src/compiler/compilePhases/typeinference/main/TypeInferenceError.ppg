@@ -412,13 +412,13 @@ struct
 
   and
   (*%
-   * @format(code * {path: id ids, ty, annotatedTy})
+   * @format(code * {path, ty, annotatedTy})
    * "(type inference" +d code ")" +d  
-   *    "signature" +d "mismatch" +d "at" +d ids(id)(".")
+   *    "signature" +d "mismatch" +d "at" +d path
    *        +1  "  inferred type:" + {ty}
    *        +1  "type annotation:" + {annotatedTy}
    *)
-  SignatureMismatch of string * {path : string list, ty : Types.ty,
+  SignatureMismatch of string * {path : Longsymbol.longsymbol, ty : Types.ty,
                                  annotatedTy : Types.ty}
 
   and

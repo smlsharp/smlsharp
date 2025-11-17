@@ -101,7 +101,7 @@ struct
   fun TPEXVAR (x as {path, ty}, loc) =
       (C.TPEXVAR (x,loc), ty)
 
-  fun TPVAR (x as {id, path, ty, opaque}) =
+  fun TPVAR (x as {id, path, ty, loc, opaque}) =
       (C.TPVAR x, ty)
 
   fun TPRECFUNVAR (x as {arity, var = {ty, ...}}) =
@@ -498,8 +498,8 @@ struct
     | TPMONOLET {binds, bodyExp = (bodyExp, bodyTy), loc} =
       (C.TPMONOLET
          {binds =
-            map (fn ({id, ty, path, opaque}, (exp, expTy)) =>
-                    ({id = id, ty = expTy, path = path, opaque = opaque}, exp))
+            map (fn (varInfo, (exp, expTy)) =>
+                    (varInfo # {ty = expTy}, exp))
                 binds,
           bodyExp = bodyExp,
           loc = loc},
@@ -691,7 +691,7 @@ struct
   fun TPPATCONSTANT (x as (constant, ty, loc)) =
       (C.TPPATCONSTANT x, ty, VarID.Map.empty)
 
-  fun TPPATVAR (x as {id, path, ty, opaque}) =
+  fun TPPATVAR (x as {id, ty, ...}) =
       (C.TPPATVAR x, ty, VarID.Map.singleton (id, x))
 
   fun TPPATWILD (x as (ty, loc)) =

@@ -21,6 +21,8 @@ local
   (* structure EU = UserErrorUtils *)
   fun bug s = Bug.Bug ("NameEval (FunctorUtils): " ^ s)
   val DUMMYIDFUN = "id"
+  infix @@
+  val op @@ = SymbolWithLoc.prefixPath'
 in
   fun evalFunArg (topEnv, argSig, loc) =
       let
@@ -48,7 +50,7 @@ in
                        )
                      | _ =>
                        let
-                         val longsymbol = path@[name]
+                         val longsymbol = path @@ name
                          val funparamProp =
                              case I.propertyOfIty BT.boxedITy of
                                SOME (I.PROP p) => p
@@ -78,7 +80,7 @@ in
             | _ => icdecls
             )
 
-        fun materializeTyE (path:SymbolWithLoc.longsymbol) (tyE:V.tyE) =
+        fun materializeTyE (path:SymbolWithLoc.symbol list) (tyE:V.tyE) =
             SymbolWithLocEnv.foldri (materializeTstr path) nil tyE
 
         fun materializeStrE path (V.STR envMap) =
@@ -159,7 +161,7 @@ in
                   I.IDSPECVAR {ty, symbol, defRange} =>
                   let
                     val varId = VarID.generate()
-                    val longsymbol = path@[name]
+                    val longsymbol = path @@ name
                     (** 以下のderRangeは妥当か ? *)
                     val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol, defRange = defRange}
                     val pat = ({longsymbol=longsymbol,id=varId},ty)
@@ -173,7 +175,7 @@ in
                 | I.IDSPECEXN {ty, symbol, defRange} => 
                   let
                     val varId = VarID.generate()
-                    val longsymbol = path@[name]
+                    val longsymbol = path @@ name
                     val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol, defRange=defRange}
                     val varInfo = {longsymbol= longsymbol, id=varId}
                     val pat = (varInfo, BT.exntagITy)
@@ -312,7 +314,7 @@ val _ = U.print "\n"
                              let
                                val conId = ConID.generate()
                                val conIDSet = ConID.Set.add (conIDSet, conId)
-                               val longsymbol = path@[name]
+                               val longsymbol = path @@ name
                                val conTy = 
                                    case tyOpt of
                                      NONE => returnTy
@@ -365,7 +367,7 @@ val _ = U.print "\n"
                          )
                    val _ = tfv := I.FUN_DTY{tfun=envTfun,
                                             varE=varE,
-                                            longsymbol= path@[name],
+                                            longsymbol= path @@ name,
                                             formals=formals,
                                             liftedTys=liftedTys,
                                             conSpec=conSpec
@@ -451,11 +453,11 @@ val _ = U.print "\n"
         and genActualVarE path vars varE : I.icexp list =
             SymbolWithLocEnv.foldri
               (fn (name, I.IDVAR {id, longsymbol, defRange}, vars) => 
-                  I.ICVAR {id=id, longsymbol=path@[name]} :: vars
+                  I.ICVAR {id=id, longsymbol=path @@ name} :: vars
                 | (name, I.IDVAR_TYPED {id, longsymbol, ty, defRange=defRange}, vars) => 
-                  I.ICVAR {id=id, longsymbol= path@[name]} :: vars
+                  I.ICVAR {id=id, longsymbol=path @@ name} :: vars
                 | (name, I.IDEXVAR {exInfo, internalId, defRange}, vars) =>
-                  I.ICEXVAR {exInfo=exInfo, longsymbol=path@[name]} :: vars
+                  I.ICEXVAR {exInfo=exInfo, longsymbol= path @@ name} :: vars
 (*
                 | (name, I.IDEXVAR {longsymbol, ty, used, version, internalId}, vars) =>
                   (* CHECKME:
@@ -576,15 +578,15 @@ val _ = U.print "\n"
         : ((SymbolWithLoc.longsymbol * I.icexp) list * ExnID.Set.set) =
         SymbolWithLocEnv.foldri
           (fn (name, I.IDVAR {id, longsymbol, defRange}, (vars, set)) =>
-              ((path@[name], I.ICVAR {id=id, longsymbol=longsymbol}) :: vars, 
+              ((path @@ name, I.ICVAR {id=id, longsymbol=longsymbol}) :: vars,
                set)
             | (name, I.IDVAR_TYPED {id, longsymbol, ty, defRange}, (vars, set)) => 
-              ((path@[name], I.ICVAR {id=id, longsymbol=longsymbol}) :: vars, 
+              ((path @@ name, I.ICVAR {id=id, longsymbol=longsymbol}) :: vars,
                set)
             | (name, I.IDEXVAR {exInfo, internalId, defRange},  (vars, set)) =>
               (* 2013-7-26 ohori. 061_functor but *)
               (#used exInfo := true;
-               ((path@[name], I.ICEXVAR {longsymbol=path@[name], exInfo=exInfo}) :: vars, set)
+               ((path @@ name, I.ICEXVAR {longsymbol= path @@ name, exInfo=exInfo}) :: vars, set)
               )
 (*
             | (name, I.IDEXVAR {longsymbol, ty, used, version, internalId}, 
@@ -604,12 +606,12 @@ val _ = U.print "\n"
             | (name, I.IDEXN (exnInfo as {id,...}), (vars, set)) =>
               if ExnID.Set.member(set, id) then (vars, set)
               else
-                ((path@[name], I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
+                ((path @@ name, I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
                  ExnID.Set.add(set,id))
             | (name, I.IDEXNREP (exnInfo as {id, ...}), (vars, set)) =>
               if ExnID.Set.member(set, id) then (vars, set)
               else
-                ((path@[name], I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
+                ((path @@ name, I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
                  ExnID.Set.add(set,id)
                 )
 (*

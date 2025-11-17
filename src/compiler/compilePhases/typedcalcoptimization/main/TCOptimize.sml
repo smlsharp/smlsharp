@@ -75,12 +75,12 @@ local
   fun isSmallValue tpexp =
       not (TCU.expansive tpexp) andalso TCSize.isSmallerExp (tpexp, limitSize)
 
-  fun isOneUse ({id, ty, path, opaque}:T.varInfo) =
+  fun isOneUse ({id, ty, path, loc, opaque}:T.varInfo) =
       case VarID.Map.find(!countMapRef, id) of
         SOME (TCAnalyse.FIN 1) => true
       | _ => false
 
-  fun isInfUse ({id, ty, path, opaque}:T.varInfo) =
+  fun isInfUse ({id, ty, path, loc, opaque}:T.varInfo) =
       case VarID.Map.find(!countMapRef, id) of
         SOME TCAnalyse.INF => true
       | _ => false

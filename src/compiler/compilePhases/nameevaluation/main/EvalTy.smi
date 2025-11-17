@@ -46,7 +46,7 @@ struct
       -> PatternCalc.scopedTvars
       -> tvarEnv * IDCalc.kindedTvar list
   val evalDatatype :
-      Longsymbol.longsymbol -> NameEvalEnv.env
+      NameEvalEnv.env
                         -> PatternCalc.datbind list
                            * PatternCalc.typbind list
                            * Loc.loc

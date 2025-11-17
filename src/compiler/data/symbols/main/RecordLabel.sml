@@ -36,8 +36,6 @@ struct
 
   fun fromSymbol symbol = fromString (Symbol.toString symbol)
 
-  fun fromLongsymbol longsymbol = fromString (Longsymbol.toString longsymbol)
-
   fun term s = [SMLFormat.FormatExpression.Term (size s, s)]
 
   fun format_label (digits, "") = term digits

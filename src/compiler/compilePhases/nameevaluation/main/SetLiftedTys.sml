@@ -249,7 +249,7 @@ local
               (fn tvfList =>
                   map 
                     (fn tfv => case TfvMap.find(freeTfvs, tfv) of
-                                 SOME path => (path, tfv)
+                                 SOME path => (#symbols path, tfv)
                                | _ => raise bug "tfvPathListList"
                     )
                     tvfList

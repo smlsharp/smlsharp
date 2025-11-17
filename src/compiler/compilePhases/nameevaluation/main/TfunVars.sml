@@ -86,7 +86,7 @@ in
                 tfvsTfun tfvKind path (name, tfun, set)
               | _ => set
         in
-          if tfvKind tfv then TfvMap.insert(set, tfv, path@[name])
+          if tfvKind tfv then TfvMap.insert(set, tfv, SymbolWithLoc.prefixPath' (path, name))
           else set
         end
 
@@ -156,7 +156,7 @@ in
       case tfun of
         I.TFUN_DEF _ => set
       | I.TFUN_VAR tfv =>
-        if tfvKind tfv then TfvMap.insert(set, tfv, path@[name])
+        if tfvKind tfv then TfvMap.insert(set, tfv, SymbolWithLoc.prefixPath' (path, name))
         else set
   fun tfvsTstr tfvKind path (name, tstr, set) =
       case tstr of

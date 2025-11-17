@@ -10,6 +10,7 @@ _require local "./NameEvalError.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../libs/util/main/TermFormat.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
@@ -38,11 +39,11 @@ struct
     | FUNARG of StructureID.id
   datatype strE
     = STR of {env:env, strKind:strKind, loc:Loc.loc, 
-              definedSymbol:SymbolWithLoc.longsymbol} SymbolWithLocEnv.map
+              definedSymbol:SymbolWithLoc.symbol list} SymbolWithLocEnv.map
   and env
     = ENV of {varE: varE, tyE: tyE, strE: strE}
   type strEntry = {env:env, strKind:strKind, loc:Loc.loc, 
-                   definedSymbol:SymbolWithLoc.longsymbol}
+                   definedSymbol:SymbolWithLoc.symbol list}
   type sigEntry = {env:env, sigId:SignatureID.id, loc:Loc.loc}
   type funEEntry = 
        {id: FunctorID.id,

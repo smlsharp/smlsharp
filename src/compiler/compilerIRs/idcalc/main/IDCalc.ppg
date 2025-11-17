@@ -355,13 +355,10 @@ in
      tvar list
 
   (*%
-    @formatter(option) TermFormat.formatOptionalOption
    *)
   (*% @prefix formatWithType_
-    @formatter(option) TermFormat.formatOptionalOption
    *)
   (*% @prefix print_
-    @formatter(option) TermFormat.formatOptionalOption
    *)
   (* variable *)
   type varInfo
@@ -2708,7 +2705,7 @@ in
 
   fun newICVar() =
       let
-        val longsymbol = []
+        val longsymbol = SymbolWithLoc.generateLongsymbol ()
         val newVarId = VarID.generate()
       in
         {longsymbol=longsymbol, id=newVarId}

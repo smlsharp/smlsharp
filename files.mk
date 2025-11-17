@@ -423,7 +423,6 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -535,10 +534,10 @@ src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/data/symbols/main/Symbol.o \
 src/compiler/data/symbols/main/Longsymbol.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
-src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/RecordLabel.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/smlnj-lib/Util/int-redblack-set.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
@@ -957,7 +956,6 @@ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
@@ -976,10 +974,11 @@ src/compiler/extensions/reflection/main/Dynamic.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
+src/compiler/data/symbols/main/Longsymbol.o \
+src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
-src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/extensions/usererror/main/UserErrorUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -1267,7 +1266,6 @@ src/smlnj-lib/Util/binary-set-fn.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/libs/env/main/SOrd.o \
 src/compiler/libs/env/main/SEnv.o \
@@ -1498,7 +1496,6 @@ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
 src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
 src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
@@ -1517,10 +1514,11 @@ src/compiler/extensions/reflection/main/Dynamic.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/libs/toolchain/main/Filename.o \
 src/compiler/data/symbols/main/Loc.o \
+src/compiler/data/symbols/main/Longsymbol.o \
+src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o \
-src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/extensions/usererror/main/UserErrorUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -2076,7 +2074,6 @@ src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/compiler/libs/list-utils/main/Snoc.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -2100,6 +2097,7 @@ src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
 src/compiler/libs/ids/main/LocalID.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.o \
 src/compiler/data/runtimetypes/main/FFIAttributes.ppg.o \
@@ -3601,7 +3599,6 @@ src/compiler/extensions/debug/main/Bug.o \
 src/compiler/compilerIRs/absyn/main/Token.o \
 src/compiler/libs/util/main/StringEscape.o \
 src/compiler/data/symbols/main/Symbol.o \
-src/compiler/data/symbols/main/Longsymbol.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -3628,6 +3625,7 @@ src/smlnj-lib/Util/int-redblack-map.o \
 src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
+src/compiler/data/symbols/main/Longsymbol.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/smlnj-lib/Util/int-redblack-set.o \

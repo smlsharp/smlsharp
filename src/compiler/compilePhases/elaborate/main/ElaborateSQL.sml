@@ -133,10 +133,17 @@ struct
       end
 
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids, _) : A.longvid) = map toSymbol ids
+  fun toLongsymbol ((ids, loc) : A.longvid) =
+      {symbols = map toSymbol ids, loc = LOC loc}
 
   fun recordLabelToSymbol label loc =
       SymbolWithLoc.mkSymbol (RecordLabel.toString label) (LOC loc)
+  fun recordLabelToLongsymbol label loc =
+      {symbols = [recordLabelToSymbol label loc], loc = LOC loc}
+
+  fun prefixPath path (symbol as {loc, ...}) =
+      SymbolWithLoc.prefixPath'
+        (map (fn x => SymbolWithLoc.mkSymbol x loc) path,  symbol)
 
   fun Ty ty (_:S.loc) = ty : A.ty
 
@@ -168,10 +175,10 @@ struct
       P.PLPATCONSTANT (A.UNITCONST, LOC loc)
 
   fun PatVar symbol (_:A.loc) =
-      P.PLPATID [symbol]
+      P.PLPATID (SymbolWithLoc.symbolToLongsymbol symbol)
 
   fun PatVarLabel label loc =
-      P.PLPATID [recordLabelToSymbol label loc]
+      P.PLPATID (recordLabelToLongsymbol label loc)
 
   fun PatFlexRecord fields loc =
       P.PLPATRECORD (true, map (fn (l, pat) => (l, pat loc)) fields, LOC loc)
@@ -189,7 +196,8 @@ struct
 
   fun PatCon name symbol loc =
       P.PLPATCONSTRUCT (P.PLPATID (SymbolWithLoc.mkLongsymbol name (LOC loc)),
-                        P.PLPATID [symbol], LOC loc)
+                        P.PLPATID (SymbolWithLoc.symbolToLongsymbol symbol),
+                        LOC loc)
 
   fun PatTyped (pat, ty) loc =
       P.PLPATTYPED (pat loc, ty loc, LOC loc)
@@ -199,13 +207,13 @@ struct
   fun Loc (loc:A.loc) x = fn (_:A.loc) => x loc
 
   fun Var symbol (_:A.loc) =
-      P.PLVAR [symbol]
+      P.PLVAR (SymbolWithLoc.symbolToLongsymbol symbol)
 
   fun LongVar longsymbol (_:A.loc) =
       P.PLVAR longsymbol
 
   fun VarLabel label loc =
-      P.PLVAR [recordLabelToSymbol label loc]
+      P.PLVAR (recordLabelToLongsymbol label loc)
 
   fun ExVar name loc =
       P.PLVAR (SymbolWithLoc.mkLongsymbol name (LOC loc))
@@ -1057,15 +1065,13 @@ struct
         (fn c => Loc loc (App (queryToToy f c) (queryToToy x c)))
       | SQLAPP (_, f, arg, loc) =>
         let
-          val f =
-              SymbolWithLoc.mkLongsymbol Name.structure_Op (SymbolWithLoc.symbolToLoc f) @ [f]
+          val f = prefixPath Name.structure_Op f
         in
           fn c => Loc loc (App (LongVar f) (queryToToy arg c))
         end
       | APPOP2 (f, x, y, loc) =>
         let
-          val f =
-              SymbolWithLoc.mkLongsymbol Name.structure_Op (SymbolWithLoc.symbolToLoc f) @ [f]
+          val f = prefixPath Name.structure_Op f
         in
           fn c => Loc loc (App (LongVar f)
                                (Tuple [queryToToy x c, queryToToy y c]))
@@ -1509,7 +1515,7 @@ struct
                     exp = (queryToToy q UnitTuple) loc,
                     loc = loc}],
           column2set = emptySet},
-         MLEXP ([x], loc))
+         MLEXP (SymbolWithLoc.symbolToLongsymbol x, loc))
       end
 
   fun embed (ty, plexp, loc) =
@@ -1562,7 +1568,7 @@ struct
         in
           ({binds = [{pat = PatVar x loc, exp = Unit loc, loc = loc}],
             column2set = emptySet},
-           ML (MLEXP ([x], loc)))
+           ML (MLEXP (SymbolWithLoc.symbolToLongsymbol x, loc)))
         end
       | S.NULL loc => (emptyRet, SQL (NULL loc))
       | S.TRUE loc => (emptyRet, ML (CONST (BOOL true, loc)))
@@ -1598,7 +1604,7 @@ struct
         in
           case q2 of
             ML q2 =>
-            (ret2, ML (APP (MLEXP ([id], loc1), q2, loc)))
+            (ret2, ML (APP (MLEXP (SymbolWithLoc.symbolToLongsymbol id, loc1), q2, loc)))
           | SQL q2 =>
             (ret2, SQL (SQLAPP (false, id, q2, loc)))
         end
@@ -1626,7 +1632,7 @@ struct
           case (q1, q2) of
             (ML q1, ML q2) =>
             (merge [ret1, ret2],
-             ML (APP (MLEXP ([toSymbol vid], #2 vid),
+             ML (APP (MLEXP (SymbolWithLoc.symbolToLongsymbol (toSymbol vid), #2 vid),
                       TUPLE ([q1, q2], loc),
                       loc)))
           | _ =>

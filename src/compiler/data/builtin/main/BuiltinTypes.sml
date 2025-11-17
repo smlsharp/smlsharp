@@ -11,7 +11,6 @@ struct
   structure R = RuntimeTypes
   fun bug s = Bug.Bug ("BuiltinTypes: " ^ s)
 
-  fun mkLongsymbol path = SymbolWithLoc.mkLongsymbol path Loc.noloc
   val mkSymbol = Symbol.fromString
 
   type tstrInfo =
@@ -81,7 +80,7 @@ struct
               Symbol.Map.empty
               (formals, formalTvars)
         val tfvSpec =
-            {longsymbol = [{symbol = symbol, loc = Loc.noloc}],
+            {longsymbol = {symbols = [{symbol = symbol, loc = Loc.noloc}], loc = Loc.noloc},
              id = case typIdOpt of NONE => TypID.generate () | SOME id => id,
              admitsEq = admitsEq,
              formals = formalTvars}
@@ -141,7 +140,7 @@ struct
                             nil => conMonoTy
                           | _::_ => I.TYPOLY (boundtvars, conMonoTy)
                     val conInfo : I.conInfo =
-                        {id = id, ty = conTy, longsymbol = [{symbol = name, loc = Loc.noloc}]}
+                        {id = id, ty = conTy, longsymbol = {symbols = [{symbol = name, loc = Loc.noloc}], loc = Loc.noloc}}
                     in
                       (name, conInfo)
                     end)

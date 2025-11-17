@@ -38,7 +38,7 @@ local
       in
         ({btvMap=btvMap, varMap=varMap, catchMap=catchMap}, btvEnv)
       end
-  fun copyExVarInfo context {path:longsymbol, ty:ty} =
+  fun copyExVarInfo context {path:longsymbol option, ty:ty} =
       {path=path, ty=copyTy context ty}
   fun copyPrimInfo context {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy context ty}
@@ -98,14 +98,14 @@ local
       in
         ({varMap=varMap, btvMap=btvMap, catchMap=catchMap}, newId)
       end
-  fun newVar (context:context) ({path, id, ty, opaque}:varInfo) =
+  fun newVar (context:context) ({path, loc, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val (context, newId) = newId context id
             handle DuplicateVar =>
                    raise bug "duplicate id in IDCalcUtils"
       in
-        (context, {path=path, id=newId, ty=ty, opaque=opaque})
+        (context, {path=path, loc=loc, id=newId, ty=ty, opaque=opaque})
       end
   fun newVars (context:context) (vars:varInfo list) =
       let
@@ -233,7 +233,7 @@ local
         (context, List.rev patsRev)
       end
   fun evalVar (context as {varMap, btvMap, catchMap}:context)
-              ({path, id, ty, opaque}:varInfo) =
+              ({path, loc, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val id =
@@ -241,7 +241,7 @@ local
               SOME id => id
             | NONE => id
       in
-        {path=path, id=id, ty=ty, opaque=opaque}
+        {path=path, loc=loc, id=id, ty=ty, opaque=opaque}
       end
       handle DuplicateBtv =>
              (P.print "DuplicateBtv in evalVar\n";

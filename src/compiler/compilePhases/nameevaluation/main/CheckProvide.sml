@@ -27,6 +27,8 @@ local
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
+  infix @@
+  val op @@ = SymbolWithLoc.prefixPath'
 
   exception Fail
   fun raiseFail i = (U.print ( "CheckProvide Fail exception at " ^ (Int.toString i) ^ "\n"); raise Fail)
@@ -141,7 +143,7 @@ local
       SymbolWithLocEnv.foldli
       (fn (name, idstatus, (exnSet, icdecls)) =>
           let
-            val exLongsymbol = path@[name]
+            val exLongsymbol = path @@ name
           in
             genTypedExportVarsIdstatus exLongsymbol idstatus (exnSet, icdecls)
           end
@@ -177,13 +179,13 @@ local
               I.TFUN_DEF _ =>
               (EU.enqueueError
                  (SymbolWithLoc.symbolToLoc name,
-                  E.ProvideDtyExpected ("CP-010",{longsymbol=SymbolWithLoc.toLongsymbol (path@[tycon])}));
+                  E.ProvideDtyExpected ("CP-010",{longsymbol=SymbolWithLoc.toLongsymbol (path@@tycon)}));
                raiseFail 1)
             | I.TFUN_VAR(ref(I.TFUN_DTY x)) => x
             | _ =>
               (EU.enqueueError
                  (SymbolWithLoc.symbolToLoc name,
-                  E.ProvideDtyExpected ("CP-020",{longsymbol=SymbolWithLoc.toLongsymbol (path@[tycon])}));
+                  E.ProvideDtyExpected ("CP-020",{longsymbol=SymbolWithLoc.toLongsymbol (path@@tycon)}));
                raiseFail 2)
         val eqEnv =
             if length tvarList = length formals then
@@ -200,7 +202,7 @@ local
             else
               (EU.enqueueError
                  (SymbolWithLoc.symbolToLoc name,
-                  E.ProvideArity("CP-030",{longsymbol = SymbolWithLoc.toLongsymbol (path@[tycon])}));
+                  E.ProvideArity("CP-030",{longsymbol = SymbolWithLoc.toLongsymbol (path@@tycon)}));
                raiseFail 3
               )
         val (nameTyPairList, conSpec) =
@@ -218,11 +220,11 @@ local
                           (EU.enqueueError
                              (SymbolWithLoc.symbolToLoc vid,
                               E.ProvideUndefinedCon
-                                ("CP-040",{longsymbol=SymbolWithLoc.toLongsymbol (path@[vid])}));
+                                ("CP-040",{longsymbol=SymbolWithLoc.toLongsymbol (path@@vid)}));
                            raiseFail 4
                           )
                         | SOME (sym, tyOpt) => 
-                          (!Analyzers.provideCon (vid, sym, path@[sym]);
+                          (!Analyzers.provideCon (vid, sym, path@@sym);
                            (tyOpt, #1 (SymbolWithLocEnv.remove(conSpec, vid))
                                    handle LibBase.NotFound => raise bug "SymbolEnv.remove"
                            )
@@ -238,7 +240,7 @@ local
               (fn (name, _) => 
                   EU.enqueueError
                     (SymbolWithLoc.symbolToLoc name,
-                     E.ProvideRedundantCon("CP-050",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}))
+                     E.ProvideRedundantCon("CP-050",{longsymbol=SymbolWithLoc.toLongsymbol (path@@name)}))
               )
               conSpec
         val _ = if SymbolWithLocEnv.isEmpty conSpec then ()
@@ -254,12 +256,12 @@ local
                     else 
                       (EU.enqueueError
                          (SymbolWithLoc.symbolToLoc name,
-                          E.ProvideConType("CP-060",{longsymbol=SymbolWithLoc.toLongsymbol (path@[name])}));
+                          E.ProvideConType("CP-060",{longsymbol=SymbolWithLoc.toLongsymbol (path@@name)}));
                        raiseFail 6)
                   | _ => 
                     (EU.enqueueError
                        (SymbolWithLoc.symbolToLoc name,
-                        E.ProvideConType("CP-070",{longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                        E.ProvideConType("CP-070",{longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                      raiseFail 7)
               )
               nameTyPairList
@@ -281,7 +283,7 @@ local
                           NONE => (EU.enqueueError
                                      (SymbolWithLoc.symbolToLoc tycon,
                                       E.ProvideUndefinedTypeName
-                                        ("CP-080",{longsymbol = SymbolWithLoc.toLongsymbol (path@[tycon])}));
+                                        ("CP-080",{longsymbol = SymbolWithLoc.toLongsymbol (path@@tycon)}));
                                    raiseFail 8)
                         | SOME tstr => tstr
                     val (defTfun, defRange, varE) = 
@@ -299,7 +301,7 @@ local
                           (EU.enqueueError
                              (SymbolWithLoc.symbolToLoc tycon,
                               E.ProvideDtyExpected
-                                ("CP-090",{longsymbol=SymbolWithLoc.toLongsymbol (path@[tycon])}));
+                                ("CP-090",{longsymbol=SymbolWithLoc.toLongsymbol (path@@tycon)}));
                            raiseFail 8)
                     val defRealTstr =
                         V.TSTR_DTY{tfun=defTfun,
@@ -346,7 +348,7 @@ local
         (* val name ... *)
         PI.PIVAL {scopedTvars, symbol=name, body, loc} =>
         let
-          val internalLongsymbol = path @ [name]
+          val internalLongsymbol = path @@ name
           (* for declaration and error message *)
           val (tvarEnv, scopedTvars) =
               Ty.evalScopedTvars Ty.emptyTvarEnv evalEnv scopedTvars
@@ -362,7 +364,7 @@ local
                         | _ => I.TYPOLY(scopedTvars, bodyTy)
                fun makeDecl icexp defRange = 
                    let
-                     val icexp =  I.ICINTERFACETYPED {icexp=icexp, path=path@[name], ty=bodyTy, loc=loc}
+                     val icexp =  I.ICINTERFACETYPED {icexp=icexp, path=path@@name, ty=bodyTy, loc=loc}
                      val newId = VarID.generate()
                      val icpat = 
                          if isOpaque ty 
@@ -549,7 +551,7 @@ local
                NONE =>
                (EU.enqueueError
                   (SymbolWithLoc.symbolToLoc name,
-                   E.ProvideUndefinedID("CP-130", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                   E.ProvideUndefinedID("CP-130", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                 raiseFail 10)
              | SOME (I.IDEXVAR {exInfo={used=used1, longsymbol=refSym, ty, version},  
                                             internalId, defRange = defRange1}) =>
@@ -754,7 +756,7 @@ local
       | (* type 'a foo = ty  *)
         PI.PITYPE {tyvars, symbol=name, ty, loc} =>
         let
-          val internalLongsymbol = path @ [name]
+          val internalLongsymbol = path @@ name
           val _ = EU.checkSymbolDuplication
                     (fn (isEq, symbol) => toSymbol symbol)
                     tyvars
@@ -806,7 +808,7 @@ local
 (*
 val _ = U.print "*** PI.PIOPAQUE_TYPE in checkPidec\n"
 *)
-          val internalLongsymbol = path @ [name]
+          val internalLongsymbol = path @@ name
           val _ = EU.checkSymbolDuplication
                     (fn (isEq, symbol) => toSymbol symbol)
                     tyvars
@@ -897,7 +899,7 @@ val _ = U.print "\n"
       | (* datatype foo = datatype bar *)
         PI.PITYPEREP {symbol=tycon, longsymbol=origTycon, loc} =>
          let
-           val internalPath = path @ [tycon]
+           val internalPath = path @@ tycon
            val specTstr =
                case VP.checkProvideAliasTstr(evalEnv, origTycon) of
                  NONE => (EU.enqueueError
@@ -952,7 +954,7 @@ val _ = U.print "\n"
       | (* exception name [of ty] *)
         PI.PIEXCEPTION {symbol=name, ty=tyOpt, loc} => 
         let
-          val longsymbol = path @ [name]
+          val longsymbol = path @@ name
           val tySpec =
               case tyOpt of 
                 NONE => BT.exnITy
@@ -1081,7 +1083,7 @@ val _ = U.print "\n"
                  )
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-500", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                    (loc, E.ProvideExceptionRepID("CP-500", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                   raiseFail 51)
              | I.IDEXNREP {id=id2,...} => 
                if ExnID.eq(id1, id2) then 
@@ -1091,11 +1093,11 @@ val _ = U.print "\n"
                  )
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-510", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                    (loc, E.ProvideExceptionRepID("CP-510", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                   raiseFail 52)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-520", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                  (loc, E.ProvideExceptionRepID("CP-520", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                 raiseFail 53)
             )
           | I.IDEXEXN {longsymbol=longsymbol1, ...} =>
@@ -1108,11 +1110,11 @@ val _ = U.print "\n"
                  )
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-530", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                    (loc, E.ProvideExceptionRepID("CP-530", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                   raiseFail 54)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-540", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                  (loc, E.ProvideExceptionRepID("CP-540", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                 raiseFail 55)
             )
           | I.IDEXEXNREP {longsymbol=longsymbol1, ...} =>
@@ -1125,7 +1127,7 @@ val _ = U.print "\n"
                  )
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-550", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                    (loc, E.ProvideExceptionRepID("CP-550", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                   raiseFail 56)
 (* 2012-9-25 ohori: added the following case due to the fix of 237_functorExn
    _require file
@@ -1147,11 +1149,11 @@ val _ = U.print "\n"
                  )
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-550", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                    (loc, E.ProvideExceptionRepID("CP-550", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                   raiseFail 57)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-560", {longsymbol = SymbolWithLoc.toLongsymbol (path@[name])}));
+                  (loc, E.ProvideExceptionRepID("CP-560", {longsymbol = SymbolWithLoc.toLongsymbol (path@@name)}));
                 raiseFail 58)
             )
           | _ => raise bug "impossible"
@@ -1183,7 +1185,7 @@ val _ = U.print "\n"
            end
          | NONE =>
            (EU.enqueueError
-              (loc, E.ProvideUndefinedStr("CP-570", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+              (loc, E.ProvideUndefinedStr("CP-570", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
             raiseFail 59)
         )
 
@@ -1198,7 +1200,7 @@ val _ = U.print "\n"
                            | V.FUNAPP {id, ...} => id
                            | _ => 
                              (EU.enqueueError
-                                (loc, E.ProvideStrRep("CP-580", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+                                (loc, E.ProvideStrRep("CP-580", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
                               raiseFail 60)
              in
                (case VP.checkStr(evalEnv, strPath) of
@@ -1210,7 +1212,7 @@ val _ = U.print "\n"
                         | V.FUNAPP {id,...} => id
                         | _ => 
                           (EU.enqueueError
-                             (loc, E.ProvideStrRep("CP-590", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+                             (loc, E.ProvideStrRep("CP-590", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
                            raiseFail 61)
                   in
                     if StructureID.eq(defId, refId) then 
@@ -1223,7 +1225,7 @@ val _ = U.print "\n"
                       )
                     else 
                       (EU.enqueueError
-                         (loc, E.ProvideStrRep("CP-600", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+                         (loc, E.ProvideStrRep("CP-600", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
                        raiseFail 62)
                   end
                 | NONE => 
@@ -1235,7 +1237,7 @@ val _ = U.print "\n"
              end
            | NONE =>
              (EU.enqueueError
-                (loc, E.ProvideUndefinedStr("CP-620", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+                (loc, E.ProvideUndefinedStr("CP-620", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
               raiseFail 64)
           )  (* structure S = Spath *)
 
@@ -1259,7 +1261,7 @@ val _ = U.print "\n"
                     | NONE =>
                       (EU.enqueueError
                          (loc,E.ProvideUndefinedFunctorName
-                                ("CP-630",{longsymbol = SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                                ("CP-630",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                        raiseFail 65)
                 val {strKind=argStrKind, env=_, ...} = 
                     case VP.checkStr(Env, argument) of
@@ -1282,7 +1284,7 @@ val _ = U.print "\n"
                            EU.enqueueError
                              (loc,
                               E.ProvideFunctorIdMismatchInFunapp
-                                ("CP-660",{longsymbol = SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                                ("CP-660",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                            raiseFail 68)
                 val _ = if StructureID.eq(argId1, argId2) then ()
                         else 
@@ -1302,12 +1304,12 @@ val _ = U.print "\n"
               end
             | _ => 
               (EU.enqueueError
-                 (loc, E.ProvideUndefinedStr("CP-670", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+                 (loc, E.ProvideUndefinedStr("CP-670", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
                raiseFail 70)
            )
          | _ => 
            (EU.enqueueError
-              (loc, E.ProvideUndefinedStr("CP-680", {longsymbol=SymbolWithLoc.toLongsymbol (path@[strSymbol])}));
+              (loc, E.ProvideUndefinedStr("CP-680", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
             raiseFail 71)
         )
 (*
@@ -1367,7 +1369,7 @@ val _ = U.print "\n"
               NONE =>
               (EU.enqueueError
                  (symbolToLoc functorSymbol,
-                  E.ProvideUndefinedFunctorName("CP-700",{longsymbol=SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                  E.ProvideUndefinedFunctorName("CP-700",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                raiseFail 72
               )
             | SOME entry => entry
@@ -1385,7 +1387,7 @@ val _ = U.print "\n"
                      EU.enqueueError
                        (loc,
                         E.ProvideFunparamMismatch("CP-710",
-                                                  {longsymbol=SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                                                  {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                      raiseFail 74
                     )
 
@@ -1410,7 +1412,7 @@ val _ = U.print "\n"
                   else 
                     (
                      EU.enqueueError
-                       (loc,E.ProvideFunctorMismatch("CP-720",{longsymbol=SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                       (loc,E.ProvideFunctorMismatch("CP-720",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                      raiseFail 76
                     )
           val typidSet = FU.typidSet specBodyEnv
@@ -1478,7 +1480,7 @@ val _ = U.print "\n"
 
           val exportDecls =
               case bodyVarExp of 
-                I.ICVAR {longsymbol, id} => 
+                I.ICVAR {longsymbol =longsymbol, id} =>
                 [I.ICEXPORTFUNCTOR 
                    {exInfo={used = ref false, longsymbol=longsymbol, ty=functorTy, version=I.SELF}, 
                     id=id}
@@ -1528,7 +1530,7 @@ in
                    EU.enqueueError
                      (defLoc,
                       E.ProvideFunparamMismatch("CP-710",
-                                                {longsymbol=SymbolWithLoc.toLongsymbol [functorSymbol]}));
+                                                {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
                    raiseFail 77
                   )
         val pidec = PI.PISTRUCTURE {symbol=functorSymbol, strexp=specBodyStr, loc=specLoc}

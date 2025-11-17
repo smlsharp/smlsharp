@@ -23,7 +23,8 @@ struct
   structure PC = PatternCalc
   datatype loc = datatype Loc.loc
   fun toSymbol ((sym, loc):T.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids, _):T.longvid) = map toSymbol ids
+  fun toLongsymbol ((ids, loc):T.longvid) =
+      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
   type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map

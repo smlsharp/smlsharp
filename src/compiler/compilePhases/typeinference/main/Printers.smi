@@ -28,6 +28,6 @@ structure Printers =
     val printIcexp : IDCalc.icexp -> unit
     val printIcpat : IDCalc.icpat -> unit
     val printIcdecl : IDCalc.icdecl -> unit
-    val printIcVarInfo : {id:VarID.id, longsymbol:SymbolWithLoc.longsymbol} -> unit
+    val printIcVarInfo : IDCalc.varInfo -> unit
     val printTycast : IDCalc.tycast -> unit
   end

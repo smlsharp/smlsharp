@@ -222,7 +222,7 @@ in
 *)
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map revealTy fields)
-  fun revealVar ({id, ty, path, opaque}:varInfo) =
-      {id=id, path=path, ty=revealTy ty, opaque=opaque}
+  fun revealVar ({id, ty, path, loc, opaque}:varInfo) =
+      {id=id, path=path, loc=loc, ty=revealTy ty, opaque=opaque}
 end
 end

@@ -117,7 +117,7 @@ in
     | matchToFnCaseTerm  
         loc
         {
-         funVarInfo as {opaque, path=funLongsymbol,id=funId,...}, 
+         funVarInfo as {opaque, path=funLongsymbol, loc=funLoc, id=funId,...},
          argTyList, 
          bodyTy, 
          ruleList = ruleList as _::_
@@ -140,7 +140,7 @@ in
               argTyList
         val newTy = T.FUNMty(argTyList, bodyTy)
       in
-        ({path=funLongsymbol, id=funId, ty =newTy, opaque=false},
+        ({path=funLongsymbol, loc=funLoc, id=funId, ty =newTy, opaque=false},
          TC.TPFNM {argVarList = newVars,
                    bodyTy = bodyTy,
                    loc = loc,
@@ -163,7 +163,7 @@ in
     case tpexp of
       TC.TPERROR => tpexp
     | TC.TPCONSTANT {const, ty, loc} => makeApply(tpexp, spine, loc)
-    | TC.TPVAR {path,...} => makeApply (tpexp, spine, SymbolWithLoc.longsymbolToLoc path)
+    | TC.TPVAR {loc,...} => makeApply (tpexp, spine, loc)
     | TC.TPEXVAR ({path,...},loc) => makeApply (tpexp, spine, loc)
     | 
       (*
@@ -175,7 +175,7 @@ in
        * we re-construct applications, i.e. uncurrying is performed 
        * only for statically know function indicated by TC.TPRECFUNVAR.
        *)
-      TC.TPRECFUNVAR {var={path, id, ty, opaque}, arity} =>
+      TC.TPRECFUNVAR {var={path, loc, id, ty, opaque}, arity} =>
       (
        case (TB.derefTy ty, spine) of
          (polyty as T.POLYty {boundtvars, constraints, body}, nil) =>
@@ -188,7 +188,6 @@ in
                 type generalization
           *)
           let
-            val loc = SymbolWithLoc.longsymbolToLoc path
             val (subst, boundtvars) = 
                 TB.copyBoundEnv boundtvars
             val constraints =
@@ -217,7 +216,7 @@ in
             val newPolyTtermBody =
                 grabAndApply 
                   (TC.TPTAPP
-                     {exp = TC.TPVAR {path=path, id=id, ty=uncurriedTy, opaque=false},
+                     {exp = TC.TPVAR {path=path, loc=loc, id=id, ty=uncurriedTy, opaque=false},
                       expTy = uncurriedTy,
                       instTyList =
                       map
@@ -241,12 +240,11 @@ in
        | _ => 
          (
           let
-            val loc = SymbolWithLoc.longsymbolToLoc path
             val (argTyList, bodyTy) = grabTy (ty, arity)
           in
             grabAndApply 
               (TC.TPVAR
-                 {path=path, id=id, ty= T.FUNMty(argTyList, bodyTy), opaque=false}, 
+                 {path=path, loc=loc, id=id, ty= T.FUNMty(argTyList, bodyTy), opaque=false},
                argTyList, 
                bodyTy,
                spine, 
@@ -471,7 +469,7 @@ in
                   loc)
       end
     | TC.TPTAPP
-        {exp = TC.TPRECFUNVAR {var={path, id, ty,  opaque}, arity},
+        {exp = TC.TPRECFUNVAR {var={path, loc, id, ty,  opaque}, arity},
          expTy,
          instTyList,
          loc=loc2} =>
@@ -489,7 +487,7 @@ in
        in
          grabAndApply 
            (TC.TPTAPP
-              {exp = TC.TPVAR {path=path, id=id, ty=newPolyTy,  opaque=opaque}, 
+              {exp = TC.TPVAR {path=path, loc=loc, id=id, ty=newPolyTy,  opaque=opaque},
                expTy=newPolyTy, 
                instTyList=instTyList, 
                loc=loc2},

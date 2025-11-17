@@ -26,7 +26,8 @@ struct
   structure PC = PatternCalc
 
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids,_):A.longvid) = map toSymbol ids
+  fun toLongsymbol ((ids,loc):A.longvid) =
+      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
   (**

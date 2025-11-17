@@ -78,7 +78,7 @@ struct
             expTyList
 
   fun newVar ty =
-      {path = [], ty = ty, id = VarID.generate (), opaque = false} : T.varInfo
+      {path = NONE, loc = Loc.noloc, ty = ty, id = VarID.generate (), opaque = false} : T.varInfo
 
   fun Fn loc {expFn, argTy, bodyTy} =
       let

@@ -46,12 +46,8 @@ struct
         fun lookUp btv =
             case lookup (T.REIFYty (T.BOUNDVARty btv)) of
               NONE => NONE
-            | SOME {path = NONE, id, ty} =>
-              SOME {path = nil, id = id, ty = ty}
-            | SOME {path = SOME path, id, ty} =>
-              SOME {path = SymbolWithLoc.fromLongsymbol path loc,
-                    id = id,
-                    ty = ty}
+            | SOME {path, id, ty} =>
+              SOME {path = path, id = id, ty = ty, loc = loc}
         val tyRep = TyToReifiedTy.toTy loc ty
         val tyRepExp = ReifyTy.TyRepWithLookUp lookUp loc tyRep
         val retExp = DatatypeCompilation.compileExp

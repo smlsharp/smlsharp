@@ -32,11 +32,11 @@ struct
   datatype mode = Opaque | Trans
   type sigCheckParam =
     {loc:Loc.loc, mode:mode, specEnv:NameEvalEnv.env,
-     strEnv:NameEvalEnv.env, strPath:SymbolWithLoc.longsymbol}
+     strEnv:NameEvalEnv.env, strPath:SymbolWithLoc.symbol list}
   type sigCheckResult = NameEvalEnv.env * IDCalc.icdecl list
   val sigCheck : sigCheckParam -> sigCheckResult
   val removeEnv : NameEvalEnv.env * NameEvalEnv.env -> NameEvalEnv.env
-  val refreshEnv : SymbolWithLoc.longsymbol -> TypID.Set.set * Subst.exnIdSubst
+  val refreshEnv : SymbolWithLoc.symbol list -> TypID.Set.set * Subst.exnIdSubst
                    -> NameEvalEnv.env
                    -> (Subst.tfvSubst * Subst.conIdSubst) * NameEvalEnv.env
 end

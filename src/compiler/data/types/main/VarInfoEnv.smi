@@ -2,7 +2,8 @@ _require "../../../../basis.smi"
 _require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
+_require "../../../data/symbols/main/Longsymbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 
@@ -25,7 +26,7 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd =
 struct
-  type ord_key = {path:SymbolWithLoc.longsymbol, id:VarID.id, ty:Types.ty, opaque:bool}
+  type ord_key = {path:Longsymbol.longsymbol option, loc:Loc.loc, id:VarID.id, ty:Types.ty, opaque:bool}
   val compare : ord_key * ord_key -> order
 end
 

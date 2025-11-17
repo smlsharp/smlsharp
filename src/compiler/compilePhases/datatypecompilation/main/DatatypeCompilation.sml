@@ -372,10 +372,7 @@ struct
               TL.TLCONSTANT (TL.UNIT, loc)) (*dummy*)
 
   fun compileVarInfo ({id, path, ty, ...}:Types.varInfo) : TypedLambda.varInfo =
-      {id = id,
-       path = case path of nil => NONE
-                         | _ => SOME (SymbolWithLoc.toLongsymbol path),
-       ty = ty}
+      {id = id, path = path, ty = ty}
 
   fun compileExp (env:env) rcexp =
       case rcexp of

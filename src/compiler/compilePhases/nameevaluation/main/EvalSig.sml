@@ -39,6 +39,8 @@ local
   exception FunIDUndefind
   fun bug s = Bug.Bug ("NameEval: " ^ s)
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
+  infix @@
+  val op @@ = SymbolWithLoc.prefixPath'
 
   val symbolToLoc = SymbolWithLoc.symbolToLoc
   
@@ -110,7 +112,7 @@ local
           (fn (tfv as ref (I.TFV_SPEC {longsymbol, admitsEq, formals,...}),
                _, tfvSubst) =>
               let
-                val longsymbol =  path @ longsymbol
+                val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                 val id = TypID.generate()
                 val newTfv =
                     I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, 
@@ -125,7 +127,7 @@ local
                _,
                tfvSubst) =>
               let
-                val longsymbol = path @ longsymbol
+                val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                 val id = TypID.generate()
                 val newTfv =
                     I.mkTfv (I.TFV_DTY{id=id,
@@ -401,7 +403,7 @@ local
               let
                 exception FindID 
                 fun lookupId env path =
-                    case VP.findId(env,path) of
+                    case VP.findId(env,{symbols = path, loc = Loc.noloc}) of
                       SOME (sym, idstatus) => idstatus
                     | NONE => raise FindID
                 val _ = EU.checkSymbolDuplication
@@ -413,7 +415,7 @@ local
                 fun strPath nil = nil
                   | strPath [name] = nil
                   | strPath (h::t) = h::(strPath t)
-                val realizeePath = strPath longsymbol
+                val realizeePath = strPath (#symbols longsymbol)
                 val realizerPath =
                       case ty of
                         A.TYCON (tyList, (path, _), loc) =>
@@ -621,7 +623,8 @@ local
                           SymbolWithLocEnv.foldri
                             (fn (name, _, returnEnv) =>
                                   VP.rebindIdLongsymbol VP.BIND_SIG
-                                    (returnEnv, realizeePath@[name], 
+                                    (returnEnv,
+                                     {symbols = realizeePath@[name], loc = #loc name},
                                      lookupId
                                        (#Env topEnv)
                                        (realizerPath@[name])
@@ -770,7 +773,7 @@ local
                  val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
                  val defRange = SymbolWithLoc.symbolToLoc symbol
                  val id = TypID.generate()
-                 val longsymbol = path @ [symbol]
+                 val longsymbol = path @@ symbol
                  val tfunvar =
                      I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, 
                                          id=id,admitsEq=eq,
@@ -795,7 +798,7 @@ local
       (* type 'a foo = 'a * 'a *)
       | P.PLSPECTYPEEQUATION ((tvarList, symbol, ty), loc) =>
         let
-          val longsymbol = [symbol]
+          val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
           val _ = EU.checkSymbolDuplication
                     (fn (isEq, symbol) => toSymbol symbol)
                     tvarList
@@ -849,7 +852,7 @@ local
                           Ty.genTvarList Ty.emptyTvarEnv tvarList
                       val id = TypID.generate()
                       val admitsEqRef = ref true
-                      val longsymbol = SymbolWithLoc.prefixPath(path , symbol)
+                      val longsymbol = path @@ symbol
                       val tfv =
                           I.mkTfv(I.TFV_DTY{id=id,
                                             longsymbol=longsymbol,
@@ -1098,7 +1101,7 @@ local
           and addTyE path key tyE pathEnv =
               SymbolWithLocEnv.foldli
               (fn (name, tstr, pathEnv) => 
-                  addToListEnv (pathEnv, SymbolWithLoc.toLongsymbol (key@[name]), path@[name])
+                  addToListEnv (pathEnv, SymbolWithLoc.toLongsymbol (key @@ name), path @@ name)
               )
               pathEnv
               tyE
@@ -1132,7 +1135,7 @@ local
                          pathEnv
                         )
                       | SOME {env=specEnv, strKind, loc, definedSymbol} =>
-                        addSpecEnv longsymbol nil specEnv pathEnv
+                        addSpecEnv (#symbols longsymbol) nil specEnv pathEnv
                   end
                 )
                 Longsymbol.Map.empty

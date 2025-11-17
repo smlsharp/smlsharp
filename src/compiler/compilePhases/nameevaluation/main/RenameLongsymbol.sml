@@ -72,7 +72,7 @@ struct
       let
         val symbol = SymbolWithLoc.lastSymbol longsymbol
       in
-        SymbolWithLoc.prefixPath(path, symbol)
+        SymbolWithLoc.prefixPath' (path, symbol)
       end
 
   fun replacePathTfun renameEnv path tfun =
@@ -141,7 +141,7 @@ struct
             SymbolWithLocEnv.foldri
             (fn (symbol, strEntry as {env,...}, (envStrkindSymbolMap,renameEnv)) =>
                 let
-                  val newPath = SymbolWithLoc.prefixPath (path, symbol)
+                  val newPath = path @ [symbol]
                   val (newEnv, renameEnv) = replacePathEnv renameEnv newPath env
                   val envStrkinSymbolMap =
                       SymbolWithLocEnv.insert

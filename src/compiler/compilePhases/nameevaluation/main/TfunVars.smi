@@ -26,15 +26,15 @@ structure TfvSet = BinarySetFn(TfvKey2)
 structure TfunVars =
   struct
     val tfvsTyE : (IDCalc.tfunkind ref -> bool)
-                  -> SymbolWithLoc.longsymbol
+                  -> SymbolWithLoc.symbol list
                   -> NameEvalEnv.tstr SymbolWithLocEnv.map * SymbolWithLoc.longsymbol TfvMap.map
                   -> SymbolWithLoc.longsymbol TfvMap.map
     val tfvsStrE : (IDCalc.tfunkind ref -> bool)
-                   -> SymbolWithLoc.longsymbol
+                   -> SymbolWithLoc.symbol list
                    -> NameEvalEnv.strE * SymbolWithLoc.longsymbol TfvMap.map
                    -> SymbolWithLoc.longsymbol TfvMap.map
     val tfvsEnv : (IDCalc.tfunkind ref -> bool)
-                  -> SymbolWithLoc.longsymbol
+                  -> SymbolWithLoc.symbol list
                   -> NameEvalEnv.env * SymbolWithLoc.longsymbol TfvMap.map
                   -> SymbolWithLoc.longsymbol TfvMap.map
     val allTfvKind : IDCalc.tfunkind ref -> bool
@@ -49,15 +49,15 @@ structure TfunVars =
 structure TfunVarsRefresh =
   struct
     val tfvsTyE : (IDCalc.tfunkind ref -> bool)
-                  -> SymbolWithLoc.longsymbol
+                  -> SymbolWithLoc.symbol list
                   -> NameEvalEnv.tstr SymbolWithLocEnv.map * SymbolWithLoc.longsymbol TfvMap.map
                   -> SymbolWithLoc.longsymbol TfvMap.map
     val tfvsStrE : (IDCalc.tfunkind ref -> bool)
-                   -> SymbolWithLoc.longsymbol
+                   -> SymbolWithLoc.symbol list
                    -> NameEvalEnv.strE * SymbolWithLoc.longsymbol TfvMap.map
                    -> SymbolWithLoc.longsymbol TfvMap.map
     val tfvsEnv : (IDCalc.tfunkind ref -> bool)
-                  -> SymbolWithLoc.longsymbol
+                  -> SymbolWithLoc.symbol list
                   -> NameEvalEnv.env * SymbolWithLoc.longsymbol TfvMap.map
                   -> SymbolWithLoc.longsymbol TfvMap.map
     val allTfvKind : IDCalc.tfunkind ref -> bool

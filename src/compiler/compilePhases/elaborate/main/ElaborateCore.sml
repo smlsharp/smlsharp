@@ -67,8 +67,6 @@ struct
   type symbol = Symbol.symbol
   type longsymbol = Longsymbol.longsymbol
 
-  val mkSymbol = SymbolWithLoc.mkSymbol
-  val mkLongsymbol  = SymbolWithLoc.mkLongsymbol
   val eqLongsymbol = SymbolWithLoc.eqLongsymbol
   val eqSymbol = SymbolWithLoc.eqSymbol
 
@@ -82,7 +80,8 @@ struct
   fun bug s = Bug.Bug ("ElaborateCore: " ^ s)
 
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids,_):A.longvid) = map toSymbol ids
+  fun toLongsymbol ((ids,loc):A.longvid) =
+      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
   fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, Loc.NOLOC)
 
@@ -262,10 +261,10 @@ struct
             conbind = map expandInDataCon conbind}
       end
 
-  fun truePat loc = PC.PLPATID(mkLongsymbol ["true"] (LOC loc))
-  fun falsePat loc = PC.PLPATID(mkLongsymbol ["false"] (LOC loc))
-  fun trueExp loc = PC.PLVAR(mkLongsymbol ["true"] (LOC loc))
-  fun falseExp loc = PC.PLVAR(mkLongsymbol ["false"] (LOC loc))
+  fun truePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol ["true"] (LOC loc))
+  fun falsePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol ["false"] (LOC loc))
+  fun trueExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol ["true"] (LOC loc))
+  fun falseExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol ["false"] (LOC loc))
   fun unitPat loc = PC.PLPATCONSTANT(A.UNITCONST, LOC loc)
   fun unitExp loc = PC.PLCONSTANT(A.UNITCONST, LOC loc)
 
@@ -326,7 +325,7 @@ struct
         PC.PLPATCONSTRUCT (elabPat pat1, elabPat pat2, LOC loc)
       | A.PATINFIX (pat1, vid, pat2, loc) =>
         PC.PLPATCONSTRUCT
-          (PC.PLPATID [toSymbol vid],
+          (PC.PLPATID (toLongsymbol ([vid], #2 vid)),
            PC.PLPATRECORD
              (false,
               RecordLabel.tupleList [elabPat pat1, elabPat pat2],
@@ -343,11 +342,11 @@ struct
               (fn (x, y) =>
                   PC.PLPATCONSTRUCT
                   (
-                    PC.PLPATID(mkLongsymbol ["::"] (LOC loc)),
+                    PC.PLPATID(SymbolWithLoc.mkLongsymbol ["::"] (LOC loc)),
                     PC.PLPATRECORD(false, RecordLabel.tupleList [elabPat x, y], LOC loc),
                     LOC loc
                   ))
-              (PC.PLPATID(mkLongsymbol ["nil"] (LOC loc)))
+              (PC.PLPATID(SymbolWithLoc.mkLongsymbol ["nil"] (LOC loc)))
               elist
         in
           plexp
@@ -376,17 +375,16 @@ struct
         (* label < : ty > < as pat > *)
       | A.PATROWVAR (vid, optTy, optPat, loc) =>
         let
-          val symbol = toSymbol vid
           val pat =
               case optPat of
                 SOME pat =>
-                PC.PLPATLAYERED(symbol, optTy, elabPat pat, LOC loc)
+                PC.PLPATLAYERED(toSymbol vid, optTy, elabPat pat, LOC loc)
               | _ =>
                 case optTy of
-                  SOME ty => PC.PLPATTYPED (PC.PLPATID [symbol], ty, LOC loc)
-                | _ => PC.PLPATID [symbol]
+                  SOME ty => PC.PLPATTYPED (PC.PLPATID (toLongsymbol ([vid], #2 vid)), ty, LOC loc)
+                | _ => PC.PLPATID (toLongsymbol ([vid], #2 vid))
         in
-          (RecordLabel.fromSymbol (#symbol symbol), pat)
+          (RecordLabel.fromSymbol (#1 vid), pat)
         end
 
   fun patappSpine (A.PATAPP (x, y, _)) r = patappSpine x (y :: r)
@@ -485,10 +483,10 @@ struct
         let
           fun folder (x, y) =
               PC.PLAPPM
-                (PC.PLVAR(mkLongsymbol ["::"] (LOC loc)),
+                (PC.PLVAR(SymbolWithLoc.mkLongsymbol ["::"] (LOC loc)),
                  [PC.PLRECORD(RecordLabel.tupleList [elabExp x, y], LOC loc)],
                  LOC loc)
-          val plexp = foldr folder (PC.PLVAR(mkLongsymbol ["nil"] (LOC loc))) elist
+          val plexp = foldr folder (PC.PLVAR(SymbolWithLoc.mkLongsymbol ["nil"] (LOC loc))) elist
         in
           plexp
         end
@@ -496,7 +494,7 @@ struct
         PC.PLAPPM (elabExp exp1, [elabExp exp2], LOC loc)
       | A.EXPINFIX (exp1, vid, exp2, loc) =>
         PC.PLAPPM
-          (PC.PLVAR [toSymbol vid],
+          (PC.PLVAR (toLongsymbol ([vid], #2 vid)),
            [PC.PLRECORD
               (RecordLabel.tupleList [elabExp exp1, elabExp exp2],
                LOC loc)],
@@ -571,7 +569,7 @@ struct
                   [
                     (
                      [PC.PLPATWILD (LOC loc)],
-                     PC.PLAPPM(PC.PLVAR [newid],
+                     PC.PLAPPM(PC.PLVAR (SymbolWithLoc.symbolToLongsymbol newid),
                                [unitExp loc], LOC loc),
                      LOC loc
                     )
@@ -607,8 +605,8 @@ struct
         in
           PC.PLLET
           (
-            [PC.PDVAL(emptyTvars, nil, [(PC.PLPATID [newid], body, LOC loc)], LOC loc)],
-            PC.PLAPPM(PC.PLVAR [newid], [unitExp loc], LOC loc),
+            [PC.PDVAL(emptyTvars, nil, [(PC.PLPATID (SymbolWithLoc.symbolToLongsymbol newid), body, LOC loc)], LOC loc)],
+            PC.PLAPPM(PC.PLVAR (SymbolWithLoc.symbolToLongsymbol newid), [unitExp loc], LOC loc),
             LOC loc
           )
         end

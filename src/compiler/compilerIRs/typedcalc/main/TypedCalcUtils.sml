@@ -16,15 +16,15 @@ in
       let
         val newVarId = VarID.generate()
       in
-        {path=[], id=newVarId, ty = ty, opaque=false}
+        {path=NONE, loc=Loc.noloc, id=newVarId, ty = ty, opaque=false}
       end
   fun getLocOfExp exp =
       case exp of
         TC.TPERROR => Loc.noloc
       | TC.TPCONSTANT {const, ty, loc} => loc
-      | TC.TPVAR {path,...} => SymbolWithLoc.longsymbolToLoc path
+      | TC.TPVAR {loc,...} => loc
       | TC.TPEXVAR ({path,...}, loc) => loc
-      | TC.TPRECFUNVAR {var={path,...},...} => SymbolWithLoc.longsymbolToLoc path
+      | TC.TPRECFUNVAR {var={loc,...},...} => loc
       | TC.TPFNM  {loc,...} => loc
       | TC.TPAPPM {loc,...} => loc
       | TC.TPDATACONSTRUCT {loc,...} => loc

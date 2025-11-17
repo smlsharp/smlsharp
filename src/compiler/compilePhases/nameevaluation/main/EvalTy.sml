@@ -22,7 +22,7 @@ local
   datatype loc = datatype Loc.loc
   fun bug s = Bug.Bug ("NameEval(EvalTy): " ^ s)
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
-  fun toLongsymbol (ids, _) = map toSymbol ids
+  fun toLongsymbol (ids, loc) = {symbols = map toSymbol ids, loc = Loc.LOC loc}
   type freeTvarEnv = I.tvarId Symbol.Map.map
   val freeTvarEnv = ref Symbol.Map.empty : freeTvarEnv ref
   fun findFreeTvarId symbol = 
@@ -520,7 +520,6 @@ in
        evalKindedTvarList false tvarEnv env tvars)
  
   fun evalDatatype 
-        (path:Longsymbol.longsymbol)
         (env:V.env) 
         (datbindList:PatternCalc.datbind list, typbindList, loc:Loc.loc)
        : NameEvalEnv.env * IDCalc.icdecl list
@@ -558,7 +557,7 @@ in
 (*
                     val longsymbol = Symbol.prefixPath (path , symbol)
 *)
-                    val longsymbol = [symbol]
+                    val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
                     val tfv =
                         I.mkTfv(I.TFV_SPEC{longsymbol= longsymbol, 
                                            id=id,admitsEq=true,
@@ -607,7 +606,7 @@ in
                         val longsymbol = 
                             Symbol.prefixPath(path, symbol)
 *)
-                        val longsymbol = [symbol]
+                        val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
                         val conId = ConID.generate()
                         val conIDSet = 
                             ConID.Set.add (conIDSet, conId)
@@ -695,7 +694,7 @@ in
 (*
                            longsymbol= Symbol.prefixPath (path , name),
 *)
-                           longsymbol= [name],
+                           longsymbol= SymbolWithLoc.symbolToLongsymbol name,
                            formals=args,
                            liftedTys=I.emptyLiftedTys,
                            dtyKind=I.DTY property

@@ -1518,7 +1518,7 @@ structure TypedCalc = struct
       case tppat of
         TPPATERROR (ty, loc) => loc
       | TPPATWILD (ty, loc) => loc
-      | TPPATVAR varInfo => SymbolWithLoc.longsymbolToLoc (#path varInfo)
+      | TPPATVAR {loc, ...} => loc
       | TPPATCONSTANT (constant, ty, loc) => loc
       | TPPATDATACONSTRUCT {loc, ...} => loc
       | TPPATEXNCONSTRUCT {loc, ...} => loc

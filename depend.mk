@@ -6251,113 +6251,6 @@ src/compiler/data/symbols/main/Symbol.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  $(SMLSHARP_DEP)
-src/compiler/data/symbols/main/Longsymbol.o: \
- src/compiler/data/symbols/main/Longsymbol.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- $(SMLSHARP_DEP)
 src/compiler/data/symbols/main/RecordLabel.o: \
  src/compiler/data/symbols/main/RecordLabel.sml \
  src/basis/main/General.smi \
@@ -6465,7 +6358,6 @@ src/compiler/data/symbols/main/RecordLabel.o: \
  src/compiler/libs/list-utils/main/Snoc.smi \
  src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/absyn/main/RequirePath.o: \
@@ -6680,7 +6572,6 @@ src/compiler/compilerIRs/absyn/main/AbsynTy.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  $(SMLSHARP_DEP)
@@ -6891,7 +6782,6 @@ src/compiler/compilerIRs/absyn/main/AbsynSQL.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -7001,7 +6891,6 @@ src/compiler/compilerIRs/absyn/main/Absyn.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -7122,7 +7011,6 @@ src/compiler/compilePhases/parser/main/iml.grm.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -7353,7 +7241,6 @@ src/compiler/compilePhases/parser/main/SMLSharpParser.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -7469,7 +7356,6 @@ src/compiler/compilerIRs/absyn/main/AbsynUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -7797,7 +7683,6 @@ src/smlformat/generator/main/MLParser.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -8964,6 +8849,113 @@ src/compiler/extensions/usererror/main/UserError.ppg.o: \
  src/compiler/extensions/usererror/main/USER_ERROR.sig \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  $(SMLSHARP_DEP)
+src/compiler/data/symbols/main/Longsymbol.o: \
+ src/compiler/data/symbols/main/Longsymbol.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ $(SMLSHARP_DEP)
 src/smlnj-lib/Util2/binary-map-fn2.o: \
  src/smlnj-lib/Util2/binary-map-fn2.sml \
  src/basis/main/General.smi \
@@ -9174,6 +9166,7 @@ src/compiler/data/symbols/main/SymbolWithLoc.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  $(SMLSHARP_DEP)
 src/smlnj-lib/Util/int-redblack-set.o: \
@@ -9803,6 +9796,7 @@ src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/list-utils/main/ListSorter.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
@@ -9912,11 +9906,11 @@ src/compiler/libs/util/main/TermFormat.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -10868,7 +10862,6 @@ src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -10985,9 +10978,9 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -11110,6 +11103,7 @@ src/compiler/data/types/main/TvarMap.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/types/main/TvarMap.smi \
  $(SMLSHARP_DEP)
@@ -11431,11 +11425,11 @@ src/compiler/data/types/main/DynamicKind.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -11556,8 +11550,8 @@ src/compiler/data/types/main/Types.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -11679,8 +11673,8 @@ src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
@@ -11811,8 +11805,8 @@ src/compiler/extensions/usererror/main/UserErrorUtils.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  $(SMLSHARP_DEP)
@@ -11921,8 +11915,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -12058,9 +12052,9 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -12188,15 +12182,15 @@ src/compiler/data/types/main/VarInfoEnv.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -12316,8 +12310,8 @@ src/compiler/data/types/main/TypesBasics.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
@@ -12439,15 +12433,15 @@ src/compiler/data/types/main/TypesUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
@@ -12567,11 +12561,11 @@ src/compiler/data/types/main/CheckEq.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -12695,8 +12689,8 @@ src/compiler/data/types/main/TyPrinters.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -12820,8 +12814,8 @@ src/compiler/data/runtimetypes/main/TypeLayout2.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -12939,10 +12933,6 @@ src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  $(SMLSHARP_DEP)
@@ -13048,14 +13038,13 @@ src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.smi \
  $(SMLSHARP_DEP)
@@ -13170,8 +13159,8 @@ src/compiler/data/types/main/DynamicKindUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -13291,11 +13280,11 @@ src/compiler/data/types/main/Unify.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -13427,6 +13416,7 @@ src/compiler/data/types/main/VarMap.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/types/main/VarMap.smi \
@@ -13541,6 +13531,7 @@ src/compiler/data/types/main/OPrimMap.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/types/main/OPrimMap.smi \
  $(SMLSHARP_DEP)
@@ -13649,7 +13640,6 @@ src/compiler/compilerIRs/idcalc/main/EvalIty.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -13657,6 +13647,7 @@ src/compiler/compilerIRs/idcalc/main/EvalIty.o: \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -13899,8 +13890,8 @@ src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitive.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -14679,7 +14670,6 @@ src/compiler/compilePhases/parser/main/Parser.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -14804,8 +14794,8 @@ src/compiler/data/runtimetypes/main/DatatypeLayout.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -14930,9 +14920,9 @@ src/compiler/data/builtin/main/BuiltinTypes.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -15069,8 +15059,8 @@ src/compiler/compilePhases/nameevaluation/main/TfunVars.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -15199,8 +15189,8 @@ src/compiler/compilerIRs/idcalc/main/IDCalcUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -15327,11 +15317,11 @@ src/compiler/compilePhases/nameevaluation/main/NormalizeTy.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -15465,7 +15455,6 @@ src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -15579,7 +15568,6 @@ src/compiler/compilerIRs/absyn/main/AbsynFormatter.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -15701,7 +15689,6 @@ src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -15818,11 +15805,11 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -15954,8 +15941,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -16311,12 +16298,12 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/extensions/debug/main/Bug.smi \
@@ -16441,7 +16428,6 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -16450,6 +16436,7 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.o: \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -16582,8 +16569,8 @@ src/compiler/extensions/reflection/main/ReifiedTyData.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -16714,7 +16701,6 @@ src/compiler/extensions/reflection/main/ReifyUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -16723,6 +16709,7 @@ src/compiler/extensions/reflection/main/ReifyUtils.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -16869,8 +16856,8 @@ src/compiler/compilePhases/analyzefiles/main/Analyzers.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -17001,8 +16988,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -17137,9 +17124,9 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -17292,9 +17279,9 @@ src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -17421,7 +17408,6 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -17548,7 +17534,6 @@ src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -17671,7 +17656,6 @@ src/compiler/compilePhases/parser/main/InterfaceParser.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -17793,7 +17777,6 @@ src/compiler/compilePhases/loadfile/main/InterfaceHash.o: \
  src/compiler/libs/list-utils/main/ListSorter.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -18030,7 +18013,6 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o: \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/data/control/main/PrintControl.smi \
  src/compiler/data/control/main/Control.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -18154,7 +18136,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -18267,7 +18248,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.smi \
  $(SMLSHARP_DEP)
@@ -18380,8 +18360,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
@@ -18506,8 +18486,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateForeach.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -18622,7 +18602,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateCore.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -18633,6 +18612,7 @@ src/compiler/compilePhases/elaborate/main/ElaborateCore.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
@@ -18770,8 +18750,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateModule.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -19005,8 +18985,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateInterface.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -19135,8 +19115,8 @@ src/compiler/compilePhases/elaborate/main/UserTvarScope.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/list-utils/main/ListSorter.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -19364,7 +19344,6 @@ src/compiler/compilePhases/elaborate/main/ResolveInfix.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -19375,6 +19354,7 @@ src/compiler/compilePhases/elaborate/main/ResolveInfix.o: \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
@@ -19490,8 +19470,8 @@ src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -19836,13 +19816,13 @@ src/compiler/compilePhases/nameevaluation/main/SetLiftedTys.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/libs/util/main/SCCFun.smi \
@@ -19970,12 +19950,12 @@ src/compiler/compilePhases/nameevaluation/main/EvalTy.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -20125,8 +20105,8 @@ src/compiler/compilePhases/nameevaluation/main/Subst.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/types/main/TvarMap.smi \
@@ -20266,10 +20246,10 @@ src/compiler/compilePhases/nameevaluation/main/EvalSig.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -20413,11 +20393,11 @@ src/compiler/compilePhases/nameevaluation/main/FunctorUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -20564,12 +20544,12 @@ src/compiler/compilePhases/nameevaluation/main/SigCheck.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
@@ -20713,12 +20693,12 @@ src/compiler/compilePhases/nameevaluation/main/RenameLongsymbol.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -20847,7 +20827,6 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalInterface.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -20858,6 +20837,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalInterface.o: \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -21001,7 +20981,6 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -21014,6 +20993,7 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -21161,8 +21141,8 @@ src/compiler/compilePhases/nameevaluation/main/SpliceFunProvide.o: \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -21300,8 +21280,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEval.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -21461,8 +21441,8 @@ src/compiler/compilePhases/valrecoptimization/main/VALREC_Utils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -21594,8 +21574,8 @@ src/compiler/compilePhases/valrecoptimization/main/VALREC_Optimizer.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -21724,8 +21704,8 @@ src/compiler/compilePhases/valrecoptimization/main/TransFundecl.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/valrecoptimization/main/TRANS_FUNDECL.sig \
@@ -21857,8 +21837,8 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceContext.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -21997,8 +21977,8 @@ src/compiler/compilePhases/typeinference/main/Printers.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -22525,10 +22505,10 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCAnalyse.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -22653,11 +22633,11 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCSize.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -22781,10 +22761,10 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCEvalTy.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -22910,11 +22890,11 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCOptimize.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -23286,8 +23266,8 @@ src/compiler/data/builtin/main/ConstantTypes.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -23423,8 +23403,8 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -23565,10 +23545,10 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -23708,11 +23688,11 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -23833,8 +23813,8 @@ src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -23980,8 +23960,8 @@ src/compiler/compilePhases/typeinference/main/CoerceRank1.o: \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -24125,8 +24105,8 @@ src/compiler/compilePhases/typeinference/main/InferTypes2.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -24378,8 +24358,8 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
@@ -24519,11 +24499,11 @@ src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -24647,11 +24627,11 @@ src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/control/main/PrintControl.smi \
  src/compiler/data/control/main/Control.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -24787,17 +24767,17 @@ src/compiler/compilePhases/typeinference/main/UncurryFundecl_ng.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -24929,8 +24909,8 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -25182,10 +25162,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -25466,8 +25446,8 @@ src/compiler/compilePhases/matchcompilation/main/MatchData.o: \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -25603,8 +25583,8 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -25879,11 +25859,11 @@ src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -26010,12 +25990,12 @@ src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -26150,10 +26130,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -26283,8 +26263,8 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -26407,11 +26387,11 @@ src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -26671,11 +26651,11 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -26801,8 +26781,8 @@ src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -26941,8 +26921,8 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -27066,10 +27046,10 @@ src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -27312,13 +27292,13 @@ src/compiler/compilePhases/fficompilation/main/FFICompilation.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/list-utils/main/utils.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -27558,6 +27538,7 @@ src/compiler/extensions/reflection/main/ReifiedTy.ppg.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -27671,6 +27652,7 @@ src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -27789,9 +27771,6 @@ src/compiler/extensions/reflection/main/ReifiedTermToML.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
@@ -29318,11 +29297,11 @@ src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -29446,8 +29425,8 @@ src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -29728,8 +29707,8 @@ src/compiler/compilePhases/recordcompilation/main/OverloadKind.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -29861,8 +29840,8 @@ src/compiler/compilePhases/recordcompilation/main/RecordKind.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -29998,8 +29977,8 @@ src/compiler/extensions/reflection/main/TyToReifiedTy.o: \
  src/smlformat-lib.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -30418,8 +30397,8 @@ src/compiler/compilePhases/datatypecompilation/main/DatatypeCompilation.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -30567,11 +30546,11 @@ src/compiler/compilePhases/recordcompilation/main/ReifyKind.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/int-redblack-map.smi \
  src/compiler/libs/env/main/IEnv.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -30710,8 +30689,8 @@ src/compiler/compilePhases/recordcompilation/main/TagKind.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -30843,8 +30822,8 @@ src/compiler/compilePhases/recordcompilation/main/SizeKind.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -30975,8 +30954,8 @@ src/compiler/compilePhases/recordcompilation/main/DynamicExistInstance.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -31129,9 +31108,9 @@ src/compiler/compilePhases/recordcompilation/main/RecordCompilation.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/smlnj-lib/Util/ord-key-sig.sml \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -31272,11 +31251,11 @@ src/compiler/compilerIRs/bitmapcalc/main/BitmapCalc2.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -31398,17 +31377,17 @@ src/compiler/compilePhases/bitmapcompilation/main/BitmapCompilation.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -31660,9 +31639,9 @@ src/compiler/compilerIRs/closurecalc/main/ClosureCalc.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -31793,8 +31772,8 @@ src/compiler/compilePhases/bitmapcompilation/main/SingletonTyEnv.o: \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -31919,16 +31898,16 @@ src/compiler/compilePhases/closureconversion/main/ClosureConversion2.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi \
  src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -32073,10 +32052,10 @@ src/compiler/compilerIRs/runtimecalc/main/RuntimeCalc.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -32201,9 +32180,9 @@ src/compiler/compilePhases/cconvcompile/main/CallingConventionCompile.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -32350,9 +32329,9 @@ src/compiler/compilerIRs/anormal/main/ANormal.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -32476,12 +32455,12 @@ src/compiler/compilerIRs/anormal/main/ANormalTypeCheck.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -32621,10 +32600,10 @@ src/compiler/compilePhases/anormalize/main/ANormalize.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/name/main/ExternSymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -32760,8 +32739,8 @@ src/compiler/compilerIRs/machinecode/main/MachineCode.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/name/main/ExternSymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -32887,10 +32866,10 @@ src/compiler/compilePhases/machinecodegen/main/MachineCodeGen.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/name/main/ExternSymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -33640,8 +33619,8 @@ src/compiler/compilePhases/llvmgen/main/LLVMGen.o: \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/compiler/data/name/main/ExternSymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -33890,9 +33869,9 @@ src/compiler/compilePhases/toplevel/main/TopData.ppg.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -34031,11 +34010,11 @@ src/compiler/compilePhases/toplevel/main/NameEvalEnvUtils.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/types/main/VarMap.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -34169,8 +34148,8 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -34684,8 +34663,8 @@ src/compiler/compilePhases/main/main/MiniMain.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -44244,7 +44223,6 @@ src/compiler/compilePhases/main/main/Interactive.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -44258,6 +44236,7 @@ src/compiler/compilePhases/main/main/Interactive.o: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -44398,7 +44377,6 @@ src/compiler/compilePhases/main/main/RunLoop.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -44413,6 +44391,7 @@ src/compiler/compilePhases/main/main/RunLoop.o: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -45692,12 +45671,12 @@ src/compiler/compilePhases/analyzefiles/main/PrintUtils.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
  src/compiler/libs/util/main/TermFormat.smi \
@@ -45854,8 +45833,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzersImpl.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46003,7 +45982,6 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/reify.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -46022,6 +46000,7 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
@@ -46195,8 +46174,8 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46348,8 +46327,8 @@ src/compiler/compilePhases/main/main/Main.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -46679,8 +46658,8 @@ src/compiler/smlsharp.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -46925,7 +46904,6 @@ src/compiler/compilerIRs/absyn/main/AbsynNode.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -47043,7 +47021,6 @@ src/compiler/compilerIRs/absyn/main/TransposeAbsyn.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
@@ -47796,7 +47773,6 @@ tests/driver/Compiler.o: \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
@@ -47809,6 +47785,7 @@ tests/driver/Compiler.o: \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -48283,8 +48260,8 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -48603,8 +48580,8 @@ tests/suite/regression/RegressionTests.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -48933,8 +48910,8 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49251,8 +49228,8 @@ tests/suite/example/ExampleTests.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49569,8 +49546,8 @@ tests/suite/document/DocumentTests.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -49896,8 +49873,8 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -58219,8 +58196,8 @@ tests/driver/dotest.o: \
  src/reify.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/libs/util/main/TermFormat.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \

@@ -208,12 +208,12 @@ struct
       case reifeidTy of
         BOUNDVARty btvId => 
         (case lookup btvId of
-           SOME {path,id,ty} =>
+           SOME {path,id,ty,loc} =>
            BoundTypeVarID.Map.insert
              (btvMap, btvId,
               TypeCast
                 loc
-                (Var {path=path, id = id, ty = ty, opaque = false})
+                (Var {path=path, loc = loc, id = id, ty = ty, opaque = false})
                 (TyRepTy loc))
          | NONE =>  btvMap)
       | ARRAYty ty => tyExpList visited lookup (ty,btvMap)
@@ -247,13 +247,13 @@ struct
       | BOXEDty =>  Con loc (UP.REIFY_conInfo_BOXEDty loc) NONE
       | BOUNDVARty btvId => 
         (case lookup btvId of
-           SOME {path,id,ty} =>
+           SOME {path,id,ty,loc} =>
            Select
              loc
              "reifiedTy"
              (TypeCast
                 loc
-                (Var {path=path, id = id, ty = ty, opaque = false})
+                (Var {path=path, loc=loc, id = id, ty = ty, opaque = false})
                 (TyRepTy loc))
          | NONE =>  Con loc (UP.REIFY_conInfo_BOUNDVARty loc) (SOME (BtvId loc btvId)))
       | CHARty => Con loc (UP.REIFY_conInfo_CHARty loc) NONE
