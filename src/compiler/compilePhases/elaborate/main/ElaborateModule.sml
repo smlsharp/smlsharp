@@ -26,8 +26,6 @@ struct
   structure PC = PatternCalc
 
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids,loc):A.longvid) =
-      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
   (**
@@ -104,7 +102,7 @@ struct
                   dataDescs,
               LOC loc)]
         | A.SPECDATATYPEREP(tyCon, longTyCon, loc) =>
-          [PC.PLSPECREPLIC(toSymbol tyCon, toLongsymbol longTyCon, LOC loc)]
+          [PC.PLSPECREPLIC(toSymbol tyCon, SymbolWithLoc.fromAbsyn longTyCon, LOC loc)]
         | A.SPECEXCEPTION(exnDescs, loc) =>
           let
             val exnDescs =
@@ -124,9 +122,9 @@ struct
             map elabSigID sigids
           end
         | A.SPECSHARINGTYPE(spec, longTyCons, loc) =>
-          [PC.PLSPECSHARE (elabSpecList spec, map toLongsymbol longTyCons, LOC loc)]
+          [PC.PLSPECSHARE (elabSpecList spec, map SymbolWithLoc.fromAbsyn longTyCons, LOC loc)]
         | A.SPECSHARING(spec, longstrids, loc) =>
-          [PC.PLSPECSHARESTR (elabSpecList spec, map toLongsymbol longstrids, LOC loc)]
+          [PC.PLSPECSHARESTR (elabSpecList spec, map SymbolWithLoc.fromAbsyn longstrids, LOC loc)]
         | A.SPECSEMICOLON _ => nil
 
     and elabSpecList specs =
@@ -141,9 +139,9 @@ struct
         | A.SIGWHERE (sigexp, whtypes, loc) =>
           foldl
             (fn ((NONE, longsymbol, ty, _), plsigexp) =>
-                PC.PLSIGWHERE (plsigexp, (nil, toLongsymbol longsymbol, ty), LOC loc)
+                PC.PLSIGWHERE (plsigexp, (nil, SymbolWithLoc.fromAbsyn longsymbol, ty), LOC loc)
               | ((SOME (tvars, _), longsymbol, ty, _), plsigexp) =>
-                PC.PLSIGWHERE (plsigexp, (tvars, toLongsymbol longsymbol, ty), LOC loc))
+                PC.PLSIGWHERE (plsigexp, (tvars, SymbolWithLoc.fromAbsyn longsymbol, ty), LOC loc))
             (elabSigExp sigexp)
             whtypes
 
@@ -155,7 +153,7 @@ struct
           in
             PC.PLSTREXPBASIC(plstrdecs, LOC loc)
           end
-        | A.STRID longid => PC.PLSTRID (toLongsymbol longid)
+        | A.STRID longid => PC.PLSTRID (SymbolWithLoc.fromAbsyn longid)
         | A.STRCONSTRAINT(strexp, (A.TRANSPARENT, sigexp, _), loc) =>
           PC.PLSTRTRANCONSTRAINT
             (elabStrExp strexp, elabSigExp sigexp, LOC loc)
@@ -163,7 +161,7 @@ struct
           PC.PLSTROPAQCONSTRAINT
             (elabStrExp strexp, elabSigExp sigexp, LOC loc)
         | A.STRAPP(funid, SOME (A.FUNARG (A.STRID longid)), loc) =>
-          PC.PLFUNCTORAPP(toSymbol funid, toLongsymbol longid, LOC loc)
+          PC.PLFUNCTORAPP(toSymbol funid, SymbolWithLoc.fromAbsyn longid, LOC loc)
         | A.STRAPP(funid, SOME (A.FUNARG strexp), loc) =>
           let
             val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER

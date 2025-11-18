@@ -20,6 +20,9 @@ local
   structure IM = InfoMaps
   exception SYSTEMPATH
 
+  fun symbolListToString symbols =
+      String.concatWith "." (map (Symbol.toString o #symbol) symbols)
+
   fun isNoloc Loc.NOLOC = true
     | isNoloc (Loc.LOC _) = false
 
@@ -366,7 +369,7 @@ in
     if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
-      val definedSymbol = SymbolWithLoc.longsymbolToString {symbols = definedSymbol, loc = Loc.noloc}
+      val definedSymbol = symbolListToString definedSymbol
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
@@ -482,7 +485,7 @@ in
   fun analyzeStr fileId (sym, {loc=defRange, definedSymbol,...}) =
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
-      val definedSymbol = SymbolWithLoc.longsymbolToString {symbols = definedSymbol, loc = Loc.noloc}
+      val definedSymbol = symbolListToString definedSymbol
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
@@ -590,7 +593,7 @@ in
     if !Control.doNameAnalysis andalso !nameRefTracing then
       let
         val {locKey, refSymInfo} = refLongSymLocInfo longsymbol
-        val definedSymbol = SymbolWithLoc.longsymbolToString {symbols = definedSymbol, loc = Loc.noloc}
+        val definedSymbol = symbolListToString definedSymbol
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
@@ -722,7 +725,7 @@ in
     if !Control.doNameAnalysis andalso !provideTracing then
       let
         val {locKey, refSymInfo} = refSymLocInfo symbol
-        val definedSymbol = SymbolWithLoc.longsymbolToString {symbols = definedSymbol, loc = Loc.noloc}
+        val definedSymbol = symbolListToString definedSymbol
         val provideInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}

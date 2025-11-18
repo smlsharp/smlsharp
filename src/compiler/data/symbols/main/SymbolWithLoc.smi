@@ -2,6 +2,7 @@ _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require "./Loc.smi"
 _require "./Symbol.smi"
 _require "./Longsymbol.smi"
@@ -10,8 +11,10 @@ _require "./RecordLabel.smi"
 structure SymbolWithLoc =
 struct
   type symbol = {symbol : Symbol.symbol, loc : Loc.loc}
-  type longsymbol = {symbols : symbol list, loc : Loc.loc}
+  type longsymbol (= {})
 
+  val fromAbsyn : AbsynTy.longid -> longsymbol
+  val toSymbolList : longsymbol -> symbol list
   val compareLoc : symbol * symbol -> order
   val lastSymbol : longsymbol -> symbol
   val symbolToString : symbol -> string
@@ -47,6 +50,6 @@ end
 structure SymbolWithLocOrd =
 struct
   type ord_key = SymbolWithLoc.symbol
-  val compare = SymbolWithLoc.symbolCompare
+  val compare : ord_key * ord_key -> order
 end
 structure SymbolWithLocEnv = BinaryMapFn2(SymbolWithLocOrd)

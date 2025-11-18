@@ -14,13 +14,13 @@ in
   datatype category  = datatype DBSchema.category
 
   (* find function *)
-  fun findId (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, longsymbol as {symbols, loc}) =
+  fun findId (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "nil to findId"
       | symbol :: nil => 
         (case SymbolWithLocEnv.findi(varE, symbol) of
            SOME (sym, idstatus) => 
-           (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+           (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
             SOME (sym, idstatus))
          | NONE => NONE)
       | strsymbol :: path =>
@@ -28,11 +28,12 @@ in
            NONE => NONE
          | SOME (sym, strEntry as {env,...}) => 
            (!Analyzers.analyzeStrRef (SymbolWithLoc.symbolToLongsymbol strsymbol, (sym, strEntry));
-            findId (env, {symbols = path, loc = loc}))
+            findId (env, path))
         )
+  val findId = fn (env, longsymbol) => findId (env, SymbolWithLoc.toSymbolList longsymbol)
 
   (* find function for those that returns an idstatus *)
-  fun findCon (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, longsymbol as {symbols, loc}) =
+  fun findCon (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "nil to findCon"
       | symbol :: nil => 
@@ -41,19 +42,19 @@ in
         in
           case idstatusOpt of
             (SOME (sym, idstatus as I.IDCON _)) => 
-            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXN _)) => 
-            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXNREP _)) =>
-            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXEXN _)) =>
-            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, idstatus as I.IDEXEXNREP _)) =>
-            (!Analyzers.analyzeIdRef (longsymbol, (sym, idstatus));
+            (!Analyzers.analyzeIdRef (SymbolWithLoc.symbolToLongsymbol symbol, (sym, idstatus));
              SOME (sym, idstatus))
           | (SOME (sym, I.IDVAR _)) => NONE
           | (SOME (sym, I.IDVAR_TYPED _)) => NONE
@@ -71,19 +72,21 @@ in
            NONE => NONE
          | SOME (smbolInEnv, strEntry as {env,...}) => 
            (!Analyzers.analyzeStrRef (SymbolWithLoc.symbolToLongsymbol strsymbol, (smbolInEnv, strEntry));
-            findCon (env, {symbols = path, loc = loc}))
+            findCon (env, path))
         )
+  val findCon = fn (env, longsymbol) => findCon (env, SymbolWithLoc.toSymbolList longsymbol)
 
  (* check sig id *)
-  fun checkSigId (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, {symbols, loc}) =
+  fun checkSigId (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "nil to checkSigId"
       | symbol :: nil => SymbolWithLocEnv.find(varE, symbol)
       | strsymbol :: path =>
         (case SymbolWithLocEnv.find(envSymbolEnvMap, strsymbol) of
            NONE => NONE
-         | SOME {env,...} => checkSigId (env, {symbols = path, loc = loc})
+         | SOME {env,...} => checkSigId (env, symbols)
         )
+  val checkSigId = fn (env, longsymbol) => checkSigId (env, SymbolWithLoc.toSymbolList longsymbol)
 
  (* check function *)
   fun checkProvideId (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbol) =
@@ -94,15 +97,18 @@ in
          SOME idstatus)
 
  (* check function *)
-  fun checkProvideAliasId (symbol, V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, {symbols, loc}) =
+  fun checkProvideAliasId (symbol, V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "nil to checkProvideAliasId"
       | symbol :: nil => SymbolWithLocEnv.find(varE, symbol)
       | strsymbol :: path =>
         (case SymbolWithLocEnv.find(envSymbolEnvMap, strsymbol) of
            NONE => NONE
-         | SOME {env,...} => checkProvideAliasId (symbol, env, {symbols = path, loc = loc})
+         | SOME {env,...} => checkProvideAliasId (symbol, env, path)
         )
+  val checkProvideAliasId =
+      fn (symbol, env, symbols) =>
+         checkProvideAliasId (symbol, env, SymbolWithLoc.toSymbolList symbols)
 
   (* bind function *)
   fun rebindId context (V.ENV{varE, tyE, strE}, symbol, idstatus) =
@@ -116,7 +122,7 @@ in
   (* bind function *)
   fun rebindIdLongsymbol context
         (V.ENV{varE, tyE, strE = strE as V.STR envMap},
-         {symbols, loc}, idstatus) : V.env =
+         symbols, idstatus) : V.env =
     case symbols of
       nil => raise bug "nil to rebindTypLongid"
     | symbol::nil =>
@@ -133,7 +139,7 @@ in
             case SymbolWithLocEnv.find(envMap, strsymbol) of
               SOME strEntry => strEntry
             | NONE => raise bug "env not found in rebindIdLongsymbol"
-        val newEnv = rebindIdLongsymbol context (env, {symbols = path, loc = loc}, idstatus)
+        val newEnv = rebindIdLongsymbol context (env, path, idstatus)
       in
         V.ENV
           {
@@ -146,8 +152,11 @@ in
                      strEntry # {env=newEnv}))
           }
       end
+  val rebindIdLongsymbol =
+      fn context => fn (env, longsymbol, idstatus) =>
+         rebindIdLongsymbol context (env, SymbolWithLoc.toSymbolList longsymbol, idstatus)
 
-  fun findTstr (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, longsymbol as {symbols, loc}) =
+  fun findTstr (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "*** nil to findTstr *** "
       | symbol :: nil => 
@@ -161,18 +170,22 @@ in
            NONE => NONE
          | SOME (symbolInEnv, strEntry as {env,...}) => 
            (!Analyzers.analyzeStrRef (SymbolWithLoc.symbolToLongsymbol strsymbol, (symbolInEnv, strEntry));
-            findTstr (env, {symbols = path, loc = loc}))
+            findTstr (env, path))
         )
+  val findTstr = fn (env, longsymbol) => findTstr (env, SymbolWithLoc.toSymbolList longsymbol)
 
-  fun checkProvideAliasTstr (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, longsymbol as {symbols, loc}) =
+  fun checkProvideAliasTstr (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbols) =
       case symbols of
         nil => raise bug "*** nil to lookupTy *** "
       | symbol :: nil => SymbolWithLocEnv.find(tyE, symbol)
       | strsymbol :: path =>
         (case SymbolWithLocEnv.find(envSymbolEnvMap, strsymbol) of
            NONE => NONE
-         | SOME {env,...} => checkProvideAliasTstr (env, {symbols = path, loc = loc})
+         | SOME {env,...} => checkProvideAliasTstr (env, path)
         )
+  val checkProvideAliasTstr =
+      fn (env, longsymbol) =>
+         checkProvideAliasTstr (env, SymbolWithLoc.toSymbolList longsymbol)
 
   fun checkProvideTstr (V.ENV {varE, tyE, strE = V.STR envSymbolEnvMap}, symbol) =
       case SymbolWithLocEnv.findi(tyE, symbol) of
@@ -193,7 +206,7 @@ in
 
   fun rebindTstrLongsymbol context
         (V.ENV{varE, tyE, strE = strE as V.STR envMap},
-         {symbols, loc}, tstr) =
+         symbols, tstr) =
       case symbols of
         nil => raise bug "nil to rebindTypLongid"
       | symbol::nil =>
@@ -210,7 +223,7 @@ in
               case SymbolWithLocEnv.find(envMap, strsymbol) of
                 SOME strEntry =>strEntry
               | NONE => raise bug "strenv not found in rebindStrLongsymbol"
-          val newEnv = rebindTstrLongsymbol context (env, {symbols = path, loc = loc}, tstr)
+          val newEnv = rebindTstrLongsymbol context (env, path, tstr)
         in
           V.ENV
             {
@@ -222,9 +235,12 @@ in
                   (envMap, strsymbol, strEntry # {env=newEnv}))
             }
         end
+  val rebindTstrLongsymbol =
+      fn context => fn (env, longsymbol, tstr) =>
+         rebindTstrLongsymbol context (env, SymbolWithLoc.toSymbolList longsymbol, tstr)
 
   (* find function *)
-  fun findStr (V.ENV {varE, tyE, strE = V.STR strMap}, longsymbol as {symbols, loc}) =
+  fun findStr (V.ENV {varE, tyE, strE = V.STR strMap}, symbols) =
       case symbols of
         nil => raise bug "nil to lookupStrId"
       | symbol :: nil =>  
@@ -239,19 +255,23 @@ in
            NONE => NONE
          | SOME (symbolInEnv, strEntry as {env,...}) => 
            (!Analyzers.analyzeStrRef (SymbolWithLoc.symbolToLongsymbol strsymbol, (symbolInEnv, strEntry));
-            findStr (env, {symbols = path, loc = loc}))
+            findStr (env, path))
         )
+  val findStr = fn (env, longsymbol) => findStr (env, SymbolWithLoc.toSymbolList longsymbol)
 
   (* find function *)
-  fun checkProvideAliasStr (V.ENV {varE, tyE, strE = V.STR strMap}, longsymbol as {symbols, loc}) =
+  fun checkProvideAliasStr (V.ENV {varE, tyE, strE = V.STR strMap}, symbols) =
       case symbols of
           nil => raise bug "nil to lookupStrId"
         | symbol :: nil =>  SymbolWithLocEnv.find(strMap, symbol)
         | strsymbol :: path =>
           (case SymbolWithLocEnv.find(strMap, strsymbol) of
              NONE => NONE
-           | SOME {env,...} => checkProvideAliasStr (env, {symbols = path, loc = loc})
+           | SOME {env,...} => checkProvideAliasStr (env, path)
           )
+  val checkProvideAliasStr =
+      fn (env, longsymbol) =>
+         checkProvideAliasStr (env, SymbolWithLoc.toSymbolList longsymbol)
 
   (* find function *)
   fun checkProvideStr (V.ENV {varE, tyE, strE = V.STR strMap}, symbol) = 
@@ -270,15 +290,16 @@ in
       )
 
   (* 以下２つは、例外としてサポート *)
-  fun checkStr (V.ENV {varE, tyE, strE = V.STR strMap}, longsymbol as {symbols, loc}) =
+  fun checkStr (V.ENV {varE, tyE, strE = V.STR strMap}, symbols) =
       case symbols of
           nil => raise bug "nil to lookupStrId"
         | symbol :: nil =>  SymbolWithLocEnv.find(strMap, symbol)
         | strsymbol :: path =>
           (case SymbolWithLocEnv.find(strMap, strsymbol) of
              NONE => NONE
-           | SOME {env,...} => checkStr (env, {symbols = path, loc = loc})
+           | SOME {env,...} => checkStr (env, path)
           )
+  val checkStr = fn (env, longsymbol) => checkStr (env, SymbolWithLoc.toSymbolList longsymbol)
   fun reinsertStr (V.ENV{varE,tyE,strE=V.STR envMap}, symbol, strEntry) =
       V.ENV {varE = varE,
              tyE = tyE,

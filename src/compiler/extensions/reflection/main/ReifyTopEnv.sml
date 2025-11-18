@@ -346,7 +346,7 @@ in
       let
         val ty = #ty Exp
         val symbol = SymbolWithLoc.mkSymbol string loc
-        val longsymbol = {symbols = [symbol], loc = loc}
+        val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
         val externalInfo = {path = SymbolWithLoc.toLongsymbol (setVersion(longsymbol, version)), ty = ty}
         val idstatus = 
             I.IDEXVAR {exInfo = {used = ref false, 

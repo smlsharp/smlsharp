@@ -109,28 +109,32 @@ local
       val (idPat, tyList) = stripTy funIdPat
       val {funVarInfo, funSymbol, tyList} =
           case idPat of
-            P.PLPATID (longsymbol as {symbols = [funSymbol], ...}) =>
-              let
-                val longsymbol = SymbolWithLoc.prefixPath(path, longsymbol)
-              in
-                {funVarInfo= {longsymbol=longsymbol, id=VarID.generate()},
-                 funSymbol=funSymbol,
-                 tyList=tyList
-                }
-              end
-          | P.PLPATID longsymbol =>
-              (EU.enqueueError
-                 (SymbolWithLoc.longsymbolToLoc longsymbol,
-                  E.IlleagalFunID ("010",{pat = funIdPat}));
-               let
-                 val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
-               in
-                 {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                  funSymbol = SymbolWithLoc.mkSymbol "_" Loc.noloc,
-                  tyList=nil
-                 }
-               end
-              )
+            P.PLPATID longsymbol =>
+            (
+              case SymbolWithLoc.toSymbolList longsymbol of
+                [funSymbol] =>
+                let
+                  val longsymbol = SymbolWithLoc.prefixPath(path, longsymbol)
+                in
+                  {funVarInfo= {longsymbol=longsymbol, id=VarID.generate()},
+                   funSymbol=funSymbol,
+                   tyList=tyList
+                  }
+                end
+              | _ =>
+                (EU.enqueueError
+                   (SymbolWithLoc.longsymbolToLoc longsymbol,
+                    E.IlleagalFunID ("010",{pat = funIdPat}));
+                 let
+                   val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
+                 in
+                   {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
+                    funSymbol = SymbolWithLoc.mkSymbol "_" Loc.noloc,
+                    tyList=nil
+                   }
+                 end
+                )
+            )
           | _ => 
                let
                  val longsymbol = SymbolWithLoc.prefixPath' (path, SymbolWithLoc.mkSymbol "_" Loc.noloc)
@@ -159,7 +163,7 @@ local
         case plpat of
           P.PLPATWILD loc => (V.emptyEnv, I.ICPATWILD loc)
         | P.PLPATID refLongsymbol =>
-          (case #symbols refLongsymbol of
+          (case SymbolWithLoc.toSymbolList refLongsymbol of
              nil => raise bug "nil longsymbol"
            | [symbol] => 
              (case VP.findCon(env, refLongsymbol) of
@@ -173,7 +177,7 @@ local
                   val newLongsymbol = SymbolWithLoc.prefixPath(path, refLongsymbol)
                   val varInfo = {longsymbol=newLongsymbol, id=varId}
                   val rangeLoc = case defRange of
-                                   NONE => #loc refLongsymbol
+                                   NONE => SymbolWithLoc.longsymbolToLoc refLongsymbol
                                  | SOME loc => loc
                   val idstatus = I.IDVAR{longsymbol=newLongsymbol, id=varId, 
                                          defRange = rangeLoc}
@@ -1585,7 +1589,7 @@ U.printTfun tfun;
             in
               (SC.sigCheck
                  {mode = SC.Trans,
-                  strPath = #symbols argPath,
+                  strPath = SymbolWithLoc.toSymbolList argPath,
                   strEnv = argStrEnv,
                   specEnv = argSigEnv,
                   loc = loc

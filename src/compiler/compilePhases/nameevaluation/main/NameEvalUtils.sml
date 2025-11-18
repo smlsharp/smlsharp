@@ -491,7 +491,7 @@ in
 
   fun staticTyName (typId, envList) =
       let
-        exception FoundInEnv of SymbolWithLoc.symbol list
+        exception FoundInEnv of SymbolWithLoc.longsymbol
         fun sortBySymbol env =
             ListSorter.sort
               (fn ((x, _), (y, _)) =>
@@ -518,7 +518,7 @@ in
         fun findIdEnv (symbolList, V.ENV{tyE, strE=V.STR strentryMap, ...}, typId) =
             case findIdTyE (tyE, typId) of
               SOME (symbol, _) =>
-              raise FoundInEnv (symbolList @ [symbol])
+              raise FoundInEnv (SymbolWithLoc.prefixPath' (symbolList, symbol))
             | NONE => 
               app
                 (fn (symbol, {env, strKind, loc, definedSymbol}) =>
@@ -528,8 +528,7 @@ in
             List.app (fn env => (findIdEnv (nil, env, typId))) envList
       in
         (findIdEnvList (envList, typId); NONE)
-        handle FoundInEnv res =>
-               SOME {symbols = res, loc = #loc (List.last res)}
+        handle FoundInEnv res => SOME res
       end
             
   fun staticTfunName (envList, tfun) =

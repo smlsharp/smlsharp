@@ -11,8 +11,6 @@ struct
   structure R = RuntimeTypes
   fun bug s = Bug.Bug ("BuiltinTypes: " ^ s)
 
-  val mkSymbol = Symbol.fromString
-
   type tstrInfo =
       {tfun : I.tfun,
        varE : I.idstatus SymbolWithLocEnv.map,
@@ -36,7 +34,7 @@ struct
 
   fun evalTy (env as (tvarMap, self)) ty =
       case ty of
-        TVAR s => (case Symbol.Map.find (tvarMap, mkSymbol s) of
+        TVAR s => (case Symbol.Map.find (tvarMap, Symbol.fromString s) of
                      SOME tv => I.TYVAR tv
                    | NONE =>
                      (print "bug tvar not found\n";
@@ -65,10 +63,11 @@ struct
 
   fun makeTfun typIdOpt {printName, admitsEq, formals, dtyKind} =
       let
-        val symbol = mkSymbol printName
+        val printName = SymbolWithLoc.mkSymbol printName Loc.noloc
         val formalTvars =
             map (fn tvarName =>
-                    {symbol = {symbol = mkSymbol tvarName, loc = Loc.noloc},
+                    {symbol = {symbol = Symbol.fromString tvarName,
+                               loc = Loc.noloc},
                      isEq = false,
                      id = TvarID.generate (),
                      lifted = false})
@@ -76,11 +75,11 @@ struct
         val tvarEnv =
             ListPair.foldlEq
               (fn (name, tvar, tvarEnv) =>
-                  Symbol.Map.insert (tvarEnv, mkSymbol name, tvar))
+                  Symbol.Map.insert (tvarEnv, Symbol.fromString name, tvar))
               Symbol.Map.empty
               (formals, formalTvars)
         val tfvSpec =
-            {longsymbol = {symbols = [{symbol = symbol, loc = Loc.noloc}], loc = Loc.noloc},
+            {longsymbol = SymbolWithLoc.symbolToLongsymbol printName,
              id = case typIdOpt of NONE => TypID.generate () | SOME id => id,
              admitsEq = admitsEq,
              formals = formalTvars}
@@ -95,7 +94,7 @@ struct
             | REF x => [x]
         val conList =
             map (fn (name, tyOpt) =>
-                    {name = mkSymbol name,
+                    {name = Symbol.fromString name,
                      id = ConID.generate (),
                      ty = Option.map (evalTy (tvarEnv, tfun)) tyOpt})
                 conList
@@ -131,6 +130,8 @@ struct
         val conInfoList =
             map (fn {name, id, ty} =>
                   let
+                    val symbol = {symbol = name, loc = Loc.noloc}
+                    val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
                     val conMonoTy =
                         case ty of
                           NONE => returnTy
@@ -140,7 +141,7 @@ struct
                             nil => conMonoTy
                           | _::_ => I.TYPOLY (boundtvars, conMonoTy)
                     val conInfo : I.conInfo =
-                        {id = id, ty = conTy, longsymbol = {symbols = [{symbol = name, loc = Loc.noloc}], loc = Loc.noloc}}
+                        {id = id, ty = conTy, longsymbol = longsymbol}
                     in
                       (name, conInfo)
                     end)
@@ -170,7 +171,8 @@ struct
             {tfun=tfun, defRange = Loc.noloc,
              varE=varE, formals=formalTvars, conSpec=conSpec}
       in
-        tstrinfoMap := Symbol.Map.insert (!tstrinfoMap, symbol, tstrInfo);
+        tstrinfoMap := Symbol.Map.insert
+                         (!tstrinfoMap, #symbol printName, tstrInfo);
         (tstrInfo, tyCon, ity, ty, conList)
       end
 

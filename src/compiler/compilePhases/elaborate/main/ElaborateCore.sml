@@ -80,8 +80,6 @@ struct
   fun bug s = Bug.Bug ("ElaborateCore: " ^ s)
 
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids,loc):A.longvid) =
-      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
   fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, Loc.NOLOC)
 
@@ -320,12 +318,12 @@ struct
            (enqueueError (loc, E.RealConstantInPattern);
             PC.PLPATCONSTANT (constant, LOC loc))
          | _ => PC.PLPATCONSTANT (constant, LOC loc))
-      | A.PATID (_, longvid, _) => PC.PLPATID (toLongsymbol longvid)
+      | A.PATID (_, longvid, _) => PC.PLPATID (SymbolWithLoc.fromAbsyn longvid)
       | A.PATAPP (pat1, pat2, loc) =>
         PC.PLPATCONSTRUCT (elabPat pat1, elabPat pat2, LOC loc)
       | A.PATINFIX (pat1, vid, pat2, loc) =>
         PC.PLPATCONSTRUCT
-          (PC.PLPATID (toLongsymbol ([vid], #2 vid)),
+          (PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid)),
            PC.PLPATRECORD
              (false,
               RecordLabel.tupleList [elabPat pat1, elabPat pat2],
@@ -381,8 +379,8 @@ struct
                 PC.PLPATLAYERED(toSymbol vid, optTy, elabPat pat, LOC loc)
               | _ =>
                 case optTy of
-                  SOME ty => PC.PLPATTYPED (PC.PLPATID (toLongsymbol ([vid], #2 vid)), ty, LOC loc)
-                | _ => PC.PLPATID (toLongsymbol ([vid], #2 vid))
+                  SOME ty => PC.PLPATTYPED (PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid)), ty, LOC loc)
+                | _ => PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid))
         in
           (RecordLabel.fromSymbol (#1 vid), pat)
         end
@@ -442,7 +440,7 @@ struct
       case ast of
         A.EXPCONST (const, loc) => PC.PLCONSTANT (const, LOC loc)
       | A.EXPSIZEOF (ty, loc) => PC.PLSIZEOF (ty, LOC loc)
-      | A.EXPID (_, longid, _) => PC.PLVAR (toLongsymbol longid)
+      | A.EXPID (_, longid, _) => PC.PLVAR (SymbolWithLoc.fromAbsyn longid)
       | A.EXPRECORD (stringExpList, loc) =>
         PC.PLRECORD (elabLabeledSequence elabExp stringExpList, LOC loc)
       | A.EXPRECORD_UPDATE (exp, stringExpList, loc) =>
@@ -494,7 +492,7 @@ struct
         PC.PLAPPM (elabExp exp1, [elabExp exp2], LOC loc)
       | A.EXPINFIX (exp1, vid, exp2, loc) =>
         PC.PLAPPM
-          (PC.PLVAR (toLongsymbol ([vid], #2 vid)),
+          (PC.PLVAR (SymbolWithLoc.fromAbsyn ([vid], #2 vid)),
            [PC.PLRECORD
               (RecordLabel.tupleList [elabExp exp1, elabExp exp2],
                LOC loc)],
@@ -805,7 +803,7 @@ struct
         end
       | A.DECDATATYPEREP (defSymbol, refLongsymbol, loc) =>
         [PC.PDREPLICATEDAT
-           (toSymbol defSymbol, toLongsymbol refLongsymbol, LOC loc)]
+           (toSymbol defSymbol, SymbolWithLoc.fromAbsyn refLongsymbol, LOC loc)]
       | A.DECABSTYPE (dataBinds, withTypeBinds, decs, loc) =>
         let
           val (newDataBinds, newWithTypeBinds) =
@@ -828,7 +826,7 @@ struct
               PC.PLEXBINDDEF(toSymbol conSymbol, SOME ty, LOC loc)
             | elabExnBind
                 (A.EXBINDREP ((_, conSymbol, _), (_, refLongsymbol, _), loc)) =
-              PC.PLEXBINDREP(toSymbol conSymbol, toLongsymbol refLongsymbol, LOC loc)
+              PC.PLEXBINDREP(toSymbol conSymbol, SymbolWithLoc.fromAbsyn refLongsymbol, LOC loc)
         in
           [PC.PDEXD (map elabExnBind exnBinds, LOC loc)]
         end
@@ -840,7 +838,7 @@ struct
           [PC.PDLOCALDEC(pdecs1, pdecs2, LOC loc)]
         end
       | A.DECOPEN(longids,loc) =>
-        [PC.PDOPEN(map toLongsymbol longids, LOC loc)]
+        [PC.PDOPEN(map SymbolWithLoc.fromAbsyn longids, LOC loc)]
       | A.DECINFIX (n, idlist, loc) =>
         let
           val n = elabInfixPrec (getOpt (n, "0"), loc)

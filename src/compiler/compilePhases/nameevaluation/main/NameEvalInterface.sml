@@ -962,7 +962,7 @@ in
                   in
                     SC.sigCheck
                        {mode = SC.Trans,
-                        strPath = #symbols argument,
+                        strPath = SymbolWithLoc.toSymbolList argument,
                         strEnv = argStrEnv,
                         specEnv = argSigEnv,
                         loc = loc

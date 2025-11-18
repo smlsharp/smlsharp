@@ -133,13 +133,11 @@ struct
       end
 
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids, loc) : A.longvid) =
-      {symbols = map toSymbol ids, loc = LOC loc}
 
   fun recordLabelToSymbol label loc =
       SymbolWithLoc.mkSymbol (RecordLabel.toString label) (LOC loc)
   fun recordLabelToLongsymbol label loc =
-      {symbols = [recordLabelToSymbol label loc], loc = LOC loc}
+      SymbolWithLoc.symbolToLongsymbol (recordLabelToSymbol label loc)
 
   fun prefixPath path (symbol as {loc, ...}) =
       SymbolWithLoc.prefixPath'
@@ -1573,7 +1571,8 @@ struct
       | S.NULL loc => (emptyRet, SQL (NULL loc))
       | S.TRUE loc => (emptyRet, ML (CONST (BOOL true, loc)))
       | S.FALSE loc => (emptyRet, ML (CONST (BOOL false, loc)))
-      | S.ID (_, id, loc) => (emptyRet, ML (MLEXP (toLongsymbol id, loc)))
+      | S.ID (_, id, loc) =>
+        (emptyRet, ML (MLEXP (SymbolWithLoc.fromAbsyn id, loc)))
       | S.OP1 (op1, e, loc) =>
         let
           val (ret, q) = elabExp env e
@@ -2007,7 +2006,7 @@ struct
              (ret1,
               INSERT_VAR {table = table,
                           labels = map #1 labels,
-                          values = (toLongsymbol id, loc),
+                          values = (SymbolWithLoc.fromAbsyn id, loc),
                           loc = loc}))
         end
       | S.INSERT_NOLABEL (tid, query, loc) =>

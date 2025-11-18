@@ -23,8 +23,6 @@ struct
   structure PC = PatternCalc
   datatype loc = datatype Loc.loc
   fun toSymbol ((sym, loc):T.vid) = {symbol = sym, loc = LOC loc}
-  fun toLongsymbol ((ids, loc):T.longvid) =
-      {symbols = map toSymbol ids, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
   type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
@@ -217,7 +215,7 @@ struct
   and elabOverloadInst (I.INST_OVERLOAD c) =
       P.INST_OVERLOAD (elabOverloadCase c)
     | elabOverloadInst (I.INST_LONGVID id) =
-      P.INST_LONGVID {longsymbol = toLongsymbol id}
+      P.INST_LONGVID {longsymbol = SymbolWithLoc.fromAbsyn id}
     | elabOverloadInst (I.INST_PAREN (inst, loc)) =
       elabOverloadInst inst
 
@@ -231,7 +229,7 @@ struct
       | I.VAL_ALIAS (id, longid, loc) =>
         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
                  symbol = toSymbol id,
-                 body = P.VALALIAS_EXTERN (toLongsymbol longid),
+                 body = P.VALALIAS_EXTERN (SymbolWithLoc.fromAbsyn longid),
                  loc = LOC loc}
       | I.VAL_BUILTIN (id, name, ty, loc) =>
         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
@@ -249,11 +247,11 @@ struct
         I.EXBIND ((_, id, _), ty, loc) =>
         P.PIEXCEPTION {symbol=toSymbol id, ty=ty, loc=LOC loc}
       | I.EXBINDREP ((_, id, _), (_, longid, _), loc) =>
-        P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=toLongsymbol longid, loc=LOC loc}
+        P.PIEXCEPTIONREP {symbol=toSymbol id, longsymbol=SymbolWithLoc.fromAbsyn longid, loc=LOC loc}
 
   fun elabOpaqueImpl impl =
       case impl of
-        I.IMPL_TY longid => P.IMPL_TY (toLongsymbol longid)
+        I.IMPL_TY longid => P.IMPL_TY (SymbolWithLoc.fromAbsyn longid)
       | I.IMPL_TUPLE _ => P.IMPL_TUPLE
       | I.IMPL_RECORD _ => P.IMPL_RECORD
       | I.IMPL_FUNC _ => P.IMPL_FUNC
@@ -293,7 +291,7 @@ struct
                               ty = ty, loc = LOC loc})
                 (seq withType))
       | I.DATATYPEREP (symbol, longsymbol, loc) =>
-        [P.PITYPEREP {loc=LOC loc, longsymbol = toLongsymbol longsymbol, symbol= toSymbol symbol}]
+        [P.PITYPEREP {loc=LOC loc, longsymbol = SymbolWithLoc.fromAbsyn longsymbol, symbol= toSymbol symbol}]
       | I.TYPEBUILTIN (symbol, builtinSymbol, loc) =>
         [P.PITYPEBUILTIN {builtinSymbol= toSymbol builtinSymbol, loc=LOC loc, symbol= toSymbol symbol}]
       | I.EXCEPTION (exbind, _) => map elabExbind exbind
@@ -309,9 +307,9 @@ struct
       case strexp of
         I.STRBASIC (decs, loc) =>
         P.PISTRUCT {decs = List.concat (map elabDec decs), loc = LOC loc}
-      | I.STRID longvid => P.PISTRUCTREP{longsymbol= toLongsymbol longvid, loc= LOC (#2 longvid)}
+      | I.STRID longvid => P.PISTRUCTREP{longsymbol= SymbolWithLoc.fromAbsyn longvid, loc= LOC (#2 longvid)}
       | I.STRAPP (functorSymbol, argument, loc) =>
-        P.PIFUNCTORAPP{functorSymbol= toSymbol functorSymbol, argument= toLongsymbol argument, loc=LOC loc}
+        P.PIFUNCTORAPP{functorSymbol= toSymbol functorSymbol, argument= SymbolWithLoc.fromAbsyn argument, loc=LOC loc}
 
   fun elabFunbind ((functorSymbol, param, strexp, loc):I.funbind) =
       let

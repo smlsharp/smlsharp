@@ -22,7 +22,6 @@ local
   datatype loc = datatype Loc.loc
   fun bug s = Bug.Bug ("NameEval(EvalTy): " ^ s)
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
-  fun toLongsymbol (ids, loc) = {symbols = map toSymbol ids, loc = Loc.LOC loc}
   type freeTvarEnv = I.tvarId Symbol.Map.map
   val freeTvarEnv = ref Symbol.Map.empty : freeTvarEnv ref
   fun findFreeTvarId symbol = 
@@ -198,7 +197,7 @@ in
     | A.TYCON (tyvarseq, path, loc) =>
       let
         val tyList = case tyvarseq of SOME (tys, _) => tys | NONE => nil
-        val path = toLongsymbol path
+        val path = SymbolWithLoc.fromAbsyn path
         exception Arity
       in
         let
@@ -483,7 +482,7 @@ in
         | P.FFICONTY (argTyList, typath, loc) =>
           let
             val tfun =
-                case VP.findTstr(env, toLongsymbol typath) of
+                case VP.findTstr(env, SymbolWithLoc.fromAbsyn typath) of
                   SOME (sym, V.TSTR {tfun,...}) => tfun
                 | SOME (sym, V.TSTR_DTY {tfun,...}) => tfun
                 | NONE => raise LookupTstr

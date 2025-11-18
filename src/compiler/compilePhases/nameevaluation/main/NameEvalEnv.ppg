@@ -808,8 +808,8 @@ in
          | SOME (symbolInEnv, {env,...}) => findTstr (env, path)
         )
 
-  val findId = fn (env, key) => findId (env, #symbols key)
-  val findTstr = fn (env, key) => findTstr (env, #symbols key)
+  val findId = fn (env, key) => findId (env, SymbolWithLoc.toSymbolList key)
+  val findTstr = fn (env, key) => findTstr (env, SymbolWithLoc.toSymbolList key)
 
 end
 end

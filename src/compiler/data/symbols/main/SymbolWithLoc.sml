@@ -43,6 +43,13 @@ in
   type longsymbol =
     {symbols : symbol list, loc : Loc.loc}
 
+  fun fromAbsyn (longid, loc) =
+      {symbols = map (fn (symbol, loc) => {symbol = symbol, loc = Loc.LOC loc})
+                     longid,
+       loc = Loc.LOC loc}
+
+  fun toSymbolList {symbols, loc} = symbols
+
   fun toLongsymbol {symbols, loc} =
       Longsymbol.fromSymbolList (map #symbol symbols)
   fun toRecordLabel longsymbol =

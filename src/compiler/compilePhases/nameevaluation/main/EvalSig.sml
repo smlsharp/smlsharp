@@ -403,7 +403,7 @@ local
               let
                 exception FindID 
                 fun lookupId env path =
-                    case VP.findId(env,{symbols = path, loc = Loc.noloc}) of
+                    case VP.findId(env, path) of
                       SOME (sym, idstatus) => idstatus
                     | NONE => raise FindID
                 val _ = EU.checkSymbolDuplication
@@ -415,7 +415,7 @@ local
                 fun strPath nil = nil
                   | strPath [name] = nil
                   | strPath (h::t) = h::(strPath t)
-                val realizeePath = strPath (#symbols longsymbol)
+                val realizeePath = strPath (SymbolWithLoc.toSymbolList longsymbol)
                 val realizerPath =
                       case ty of
                         A.TYCON (tyList, (path, _), loc) =>
@@ -463,7 +463,7 @@ local
                                    (varE, 
                                     name,
                                     lookupId (#Env topEnv)
-                                             (realizerPath@[name])
+                                             (SymbolWithLoc.prefixPath' (realizerPath, name))
                                    )
                                  handle FindId => 
                                         (U.print "setRealizer\n";
@@ -624,10 +624,10 @@ local
                             (fn (name, _, returnEnv) =>
                                   VP.rebindIdLongsymbol VP.BIND_SIG
                                     (returnEnv,
-                                     {symbols = realizeePath@[name], loc = #loc name},
+                                     SymbolWithLoc.prefixPath' (realizeePath, name),
                                      lookupId
                                        (#Env topEnv)
-                                       (realizerPath@[name])
+                                       (SymbolWithLoc.prefixPath' (realizerPath, name))
                                     )
                                   handle FindID 
                                          =>
@@ -1135,7 +1135,7 @@ local
                          pathEnv
                         )
                       | SOME {env=specEnv, strKind, loc, definedSymbol} =>
-                        addSpecEnv (#symbols longsymbol) nil specEnv pathEnv
+                        addSpecEnv (SymbolWithLoc.toSymbolList longsymbol) nil specEnv pathEnv
                   end
                 )
                 Longsymbol.Map.empty
