@@ -76,11 +76,6 @@ local
 
   val emptyExternVarSet = Longsymbol.Map.empty : I.exInfo Longsymbol.Map.map
 
-  val DUMMYIDFUN = SymbolWithLoc.mkLongsymbol (nil, "id") Loc.noloc
-
- (* This is to avoid name conflict in functor names and variable names *)
-  val FUNCTORPREFIX = {symbol = Symbol.intern "_", loc = Loc.noloc}
-
   exception Arity 
   exception Eq
   exception Type 
@@ -1853,7 +1848,7 @@ CHECKME: bug 119
               SOME dummyIdTy =>
               let
                 val id = VarID.generate()
-                val funargVarinfo = {id=id, longsymbol= DUMMYIDFUN}
+                val funargVarinfo = {id=id, longsymbol= SymbolWithLoc.symbolToLongsymbol {symbol = FunctorUtils.DUMMYIDFUN, loc = Loc.noloc}}
               in
                 SOME
                   (
@@ -2149,7 +2144,7 @@ val _ = U.print "\n"
                | _ => functorExp1
               )
 
-        val functorExpVar = {longsymbol= SymbolWithLoc.prefixPath' ([FUNCTORPREFIX], nameSymbol),
+        val functorExpVar = {longsymbol= SymbolWithLoc.prefixPath' ([{symbol = FunctorUtils.FUNCTORPREFIX, loc = Loc.noloc}], nameSymbol),
                              id=VarID.generate()}
         val functorExpVarExp = I.ICVAR functorExpVar
 (*

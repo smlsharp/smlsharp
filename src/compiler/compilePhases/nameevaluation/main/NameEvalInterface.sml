@@ -38,9 +38,6 @@ local
   fun bug s = Bug.Bug ("NameEvalInterface: " ^ s)
   val nilPath = nil
 
-  (* FIXME factor out this def into some unique plcae *)
-  val FUNCORPREFIX = "_"
-
   fun addExSet (externSet:Longsymbol.Set.set, {used, longsymbol, ty, version}:I.exInfo) =
       Longsymbol.Set.add(externSet, SymbolWithLoc.toLongsymbol longsymbol)
 
@@ -1314,7 +1311,7 @@ in
               I.TYPOLY _ => functorTy2
             | I.TYFUNM _ => functorTy2
             | _ => I.TYFUNM([BT.unitITy], functorTy2)
-        val longsymbol = [{symbol = Symbol.intern FUNCORPREFIX, loc = loc}] @@ functorSymbol
+        val longsymbol = [{symbol = FunctorUtils.FUNCTORPREFIX, loc = loc}] @@ functorSymbol
         val exInfo = {used = ref false, longsymbol=longsymbol, ty=functorTy, version=provider}
         val decl = I.ICEXTERNVAR exInfo
         val functorExp = I.ICEXVAR {longsymbol=longsymbol,

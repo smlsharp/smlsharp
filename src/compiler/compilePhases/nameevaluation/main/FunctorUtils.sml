@@ -20,10 +20,14 @@ local
   (* structure P = PatternCalc *)
   (* structure EU = UserErrorUtils *)
   fun bug s = Bug.Bug ("NameEval (FunctorUtils): " ^ s)
-  val DUMMYIDFUN = "id"
   infix @@
   val op @@ = SymbolWithLoc.prefixPath'
 in
+  val DUMMYIDFUN = Symbol.intern "id"
+
+  (* This is to avoid name conflict in functor names and variable names *)
+  val FUNCTORPREFIX = Symbol.intern "_"
+
   fun evalFunArg (topEnv, argSig, loc) =
       let
         fun materializeTstr path (name:SymbolWithLoc.symbol, tstr, icdecls) =
@@ -412,7 +416,7 @@ val _ = U.print "\n"
         val firstArgPat =
             case dummyIdfunTy of
               SOME ty => 
-              SOME ({longsymbol=SymbolWithLoc.mkLongsymbol (nil, DUMMYIDFUN) loc, id = VarID.generate()},
+              SOME ({longsymbol=SymbolWithLoc.symbolToLongsymbol {symbol = DUMMYIDFUN, loc = loc}, id = VarID.generate()},
                     [ty])
             | NONE => NONE
 (*

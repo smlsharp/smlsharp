@@ -18,7 +18,7 @@ _require local "./TfunVars.smi"
 
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/Loc.smi"
-_require local "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
@@ -44,4 +44,7 @@ struct
   val eqSize : NameEvalEnv.env * NameEvalEnv.env -> bool
   val eqShape : NameEvalEnv.env * NameEvalEnv.env -> bool
   val makeFunctorArgs : Loc.loc -> SymbolWithLoc.longsymbol list -> NameEvalEnv.env -> IDCalc.icexp list
+
+  val DUMMYIDFUN : Symbol.symbol
+  val FUNCTORPREFIX : Symbol.symbol
 end
