@@ -412,7 +412,7 @@ val _ = U.print "\n"
         val firstArgPat =
             case dummyIdfunTy of
               SOME ty => 
-              SOME ({longsymbol=SymbolWithLoc.mkLongsymbol [DUMMYIDFUN] loc, id = VarID.generate()},
+              SOME ({longsymbol=SymbolWithLoc.mkLongsymbol (nil, DUMMYIDFUN) loc, id = VarID.generate()},
                     [ty])
             | NONE => NONE
 (*

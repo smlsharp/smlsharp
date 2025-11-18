@@ -81,13 +81,10 @@ in
 
   fun mkSymbol string loc = {symbol = Symbol.fromString string, loc=loc}
 
-  fun mkLongsymbol stringList loc =
-      case rev stringList of
-        nil => raise Bug.Bug "mkLongsymbol with empty list"
-      | last :: othersRev =>
-        {path = map (fn s => mkSymbol s loc) (rev othersRev),
-         last = mkSymbol last loc,
-         loc = loc}
+  fun mkLongsymbol (path, last) loc =
+      {path = map (fn s => mkSymbol s loc) path,
+       last = mkSymbol last loc,
+       loc = loc}
 
   fun setVersion ({path, last, loc} : longsymbol, version) =
       {path = path @ [last],

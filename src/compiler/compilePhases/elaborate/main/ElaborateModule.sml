@@ -165,7 +165,7 @@ struct
         | A.STRAPP(funid, SOME (A.FUNARG strexp), loc) =>
           let
             val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
-            val newStrLong = SymbolWithLoc.mkLongsymbol [newStrid] (LOC loc)
+            val newStrLong = SymbolWithLoc.mkLongsymbol (nil, newStrid) (LOC loc)
             val newStrSymbol = SymbolWithLoc.mkSymbol newStrid (LOC loc)
             val plstrexp = elabStrExp strexp
             val plstrbody = PC.PLFUNCTORAPP(toSymbol funid, newStrLong, LOC loc)
@@ -355,7 +355,7 @@ struct
            (PC.PLCOREDEC
               (PC.PDVAL
                  (emptyTvars,
-                  [(PC.PLPATID (SymbolWithLoc.mkLongsymbol ["it"] (LOC loc)),
+                  [(PC.PLPATID (SymbolWithLoc.mkLongsymbol (nil, "it") (LOC loc)),
                     ElaborateCore.elabExp exp,
                     LOC loc)],
                   nil,

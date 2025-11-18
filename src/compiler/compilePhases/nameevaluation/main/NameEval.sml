@@ -76,7 +76,7 @@ local
 
   val emptyExternVarSet = Longsymbol.Map.empty : I.exInfo Longsymbol.Map.map
 
-  val DUMMYIDFUN = SymbolWithLoc.mkLongsymbol ["id"] Loc.noloc
+  val DUMMYIDFUN = SymbolWithLoc.mkLongsymbol (nil, "id") Loc.noloc
 
  (* This is to avoid name conflict in functor names and variable names *)
   val FUNCTORPREFIX = SymbolWithLoc.mkSymbol "_" Loc.noloc
@@ -2136,7 +2136,7 @@ val _ = U.print "\n"
                  I.ICLET _ =>
                  let
                    val varId = VarID.generate()
-                   val longsymbol = SymbolWithLoc.mkLongsymbol ["unitVar"] defLoc
+                   val longsymbol = SymbolWithLoc.mkLongsymbol (nil, "unitVar") defLoc
                    val patVarInfo ={longsymbol=longsymbol, id=varId}
                  in
                    I.ICFNM1

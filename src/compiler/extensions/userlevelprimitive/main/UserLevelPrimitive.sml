@@ -90,7 +90,7 @@ struct
         initExternalDecls ()
       )
 
-  fun getTyCon (path : string list) (loc : Loc.loc) : T.tyCon =
+  fun getTyCon (path : string list * string) (loc : Loc.loc) : T.tyCon =
       let
         val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
       in
@@ -118,7 +118,7 @@ struct
         SOME (sym, idstatus) => (sym, idstatus)
       | _ => raise IDNotFound
 
-  fun getCon (path : string list) (loc : Loc.loc) : T.conInfo =
+  fun getCon (path : string list * string) (loc : Loc.loc) : T.conInfo =
       let
         val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
@@ -135,7 +135,7 @@ struct
         | _ =>
           (
             Bug.printError "not a con id (findCon):";
-            Bug.printError (String.concatWith "." path);
+            Bug.printError (String.concatWith "." (#1 path @ [#2 path]));
             Bug.printError "\n";
             Bug.printError (Bug.prettyPrint (I.format_idstatus idstatus));
             Bug.printError "\n";
@@ -145,7 +145,7 @@ struct
           )
       end
 
-  fun getExInfo (path : string list) (loc : Loc.loc) : I.exInfo =
+  fun getExInfo (path : string list * string) (loc : Loc.loc) : I.exInfo =
       let
         val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
@@ -163,7 +163,7 @@ struct
         | _ =>
           (
             Bug.printError "not an exvar id (getExInfo):";
-            Bug.printError (String.concatWith "." path);
+            Bug.printError (String.concatWith "." (#1 path @ [#2 path]));
             Bug.printError "\n";
             Bug.printError (Bug.prettyPrint (I.format_idstatus idstatus));
             Bug.printError "\n";
@@ -173,7 +173,7 @@ struct
           )
       end
 
-  fun getExExnInfo (path : string list) (loc : Loc.loc) : T.exExnInfo =
+  fun getExExnInfo (path : string list * string) (loc : Loc.loc) : T.exExnInfo =
       let
         val refLongsymbol = SymbolWithLoc.mkLongsymbol path loc
         val (sym, idstatus) =
@@ -193,7 +193,7 @@ struct
         | _ =>
           (
             Bug.printError "not an expected id (getExExnInfo):";
-            Bug.printError (String.concatWith "." path);
+            Bug.printError (String.concatWith "." (#1 path @ [#2 path]));
             Bug.printError "\n";
             Bug.printError (Bug.prettyPrint (I.format_idstatus idstatus));
             Bug.printError "\n";
@@ -202,14 +202,14 @@ struct
               (loc, UE.IdNotFound ("002", {longsymbol = SymbolWithLoc.toLongsymbol refLongsymbol})))
       end
 
-  fun getIcexp (path : string list) (loc : Loc.loc) : I.icexp =
+  fun getIcexp (path : string list * string) (loc : Loc.loc) : I.icexp =
       let
         val exInfo = getExInfo path loc
       in
         I.ICEXVAR {exInfo = exInfo, longsymbol = #longsymbol exInfo}
       end
 
-  fun getExVar (path : string list) (loc : Loc.loc) : T.exVarInfo =
+  fun getExVar (path : string list * string) (loc : Loc.loc) : T.exVarInfo =
       let
         val exInfo = getExInfo path loc
       in
@@ -217,197 +217,197 @@ struct
       end
 
   val SQL_tyCon_command =
-      getTyCon ["SMLSharp_SQL_Prim", "command"]
+      getTyCon (["SMLSharp_SQL_Prim"], "command")
   val SQL_tyCon_db =
-      getTyCon ["SMLSharp_SQL_Prim", "db"]
+      getTyCon (["SMLSharp_SQL_Prim"], "db")
   val SQL_tyCon_exp =
-      getTyCon ["SMLSharp_SQL_Prim", "exp"]
+      getTyCon (["SMLSharp_SQL_Prim"], "exp")
   val SQL_tyCon_from =
-      getTyCon ["SMLSharp_SQL_Prim", "from"]
+      getTyCon (["SMLSharp_SQL_Prim"], "from")
   val SQL_tyCon_limit =
-      getTyCon ["SMLSharp_SQL_Prim", "limit"]
+      getTyCon (["SMLSharp_SQL_Prim"], "limit")
   val SQL_tyCon_offset =
-      getTyCon ["SMLSharp_SQL_Prim", "offset"]
+      getTyCon (["SMLSharp_SQL_Prim"], "offset")
   val SQL_tyCon_orderby =
-      getTyCon ["SMLSharp_SQL_Prim", "orderby"]
+      getTyCon (["SMLSharp_SQL_Prim"], "orderby")
   val SQL_tyCon_query =
-      getTyCon ["SMLSharp_SQL_Prim", "query"]
+      getTyCon (["SMLSharp_SQL_Prim"], "query")
   val SQL_tyCon_select =
-      getTyCon ["SMLSharp_SQL_Prim", "select"]
+      getTyCon (["SMLSharp_SQL_Prim"], "select")
   val SQL_tyCon_whr =
-      getTyCon ["SMLSharp_SQL_Prim", "whr"]
+      getTyCon (["SMLSharp_SQL_Prim"], "whr")
 
   val REIFY_tyCon_SENVMAPty =
-      getTyCon ["SEnv", "map"]
+      getTyCon (["SEnv"], "map")
   val REIFY_tyCon_IENVMAPty =
-      getTyCon ["IEnv", "map"]
+      getTyCon (["IEnv"], "map")
   val REIFY_tyCon_TypIDMapMap =
-      getTyCon ["TypID", "Map", "map"]
+      getTyCon (["TypID", "Map"], "map")
   val REIFY_tyCon_void =
-      getTyCon ["ReifiedTy", "void"]
+      getTyCon (["ReifiedTy"], "void")
   val REIFY_tyCon_btvId =
-      getTyCon ["BoundTypeVarID", "id"]
+      getTyCon (["BoundTypeVarID"], "id")
   val REIFY_tyCon_dyn =
-      getTyCon ["ReifiedTerm", "dyn"]
+      getTyCon (["ReifiedTerm"], "dyn")
   val REIFY_tyCon_env =
-      getTyCon ["ReifiedTerm", "env"]
+      getTyCon (["ReifiedTerm"], "env")
   val REIFY_tyCon_idstatus =
-      getTyCon ["ReifiedTerm", "idstatus"]
+      getTyCon (["ReifiedTerm"], "idstatus")
   val REIFY_tyCon_reifiedTerm =
-      getTyCon ["ReifiedTerm", "reifiedTerm"]
+      getTyCon (["ReifiedTerm"], "reifiedTerm")
   val REIFY_tyCon_reifiedTy =
-      getTyCon ["ReifiedTy", "reifiedTy"]
+      getTyCon (["ReifiedTy"], "reifiedTy")
   val REIFY_tyCon_typId =
-      getTyCon ["TypID", "id"]
+      getTyCon (["TypID"], "id")
   val REIFY_tyCon_existInstMap =
-      getTyCon ["PartialDynamic", "existInstMap"]
+      getTyCon (["PartialDynamic"], "existInstMap")
 
   val REIFY_conInfo_ARRAYty =
-      getCon ["ReifiedTy", "ARRAYty"]
+      getCon (["ReifiedTy"], "ARRAYty")
   val REIFY_conInfo_BOOLty =
-      getCon ["ReifiedTy", "BOOLty"]
+      getCon (["ReifiedTy"], "BOOLty")
   val REIFY_conInfo_BOTTOMty =
-      getCon ["ReifiedTy", "BOTTOMty"]
+      getCon (["ReifiedTy"], "BOTTOMty")
   val REIFY_conInfo_BOXEDty =
-      getCon ["ReifiedTy", "BOXEDty"]
+      getCon (["ReifiedTy"], "BOXEDty")
   val REIFY_conInfo_BOUNDVARty =
-      getCon ["ReifiedTy", "BOUNDVARty"]
+      getCon (["ReifiedTy"], "BOUNDVARty")
   val REIFY_conInfo_BUILTIN =
-      getCon ["ReifiedTerm", "BUILTIN"]
+      getCon (["ReifiedTerm"], "BUILTIN")
   val REIFY_conInfo_CHARty =
-      getCon ["ReifiedTy", "CHARty"]
+      getCon (["ReifiedTy"], "CHARty")
   val REIFY_conInfo_CODEPTRty =
-      getCon ["ReifiedTy", "CODEPTRty"]
+      getCon (["ReifiedTy"], "CODEPTRty")
   val REIFY_conInfo_DATATYPEty =
-      getCon ["ReifiedTy", "DATATYPEty"]
+      getCon (["ReifiedTy"], "DATATYPEty")
   val REIFY_conInfo_DUMMYty =
-      getCon ["ReifiedTy", "DUMMYty"]
+      getCon (["ReifiedTy"], "DUMMYty")
   val REIFY_conInfo_DYNAMICty =
-      getCon ["ReifiedTy", "DYNAMICty"]
+      getCon (["ReifiedTy"], "DYNAMICty")
   val REIFY_conInfo_ERRORty =
-      getCon ["ReifiedTy", "ERRORty"]
+      getCon (["ReifiedTy"], "ERRORty")
   val REIFY_conInfo_EXISTty =
-      getCon ["ReifiedTy", "EXISTty"]
+      getCon (["ReifiedTy"], "EXISTty")
   val REIFY_conInfo_EXNTAGty =
-      getCon ["ReifiedTy", "EXNTAGty"]
+      getCon (["ReifiedTy"], "EXNTAGty")
   val REIFY_conInfo_EXNty =
-      getCon ["ReifiedTy", "EXNty"]
+      getCon (["ReifiedTy"], "EXNty")
   val REIFY_conInfo_FUNMty =
-      getCon ["ReifiedTy", "FUNMty"]
+      getCon (["ReifiedTy"], "FUNMty")
   val REIFY_conInfo_INT16ty =
-      getCon ["ReifiedTy", "INT16ty"]
+      getCon (["ReifiedTy"], "INT16ty")
   val REIFY_conInfo_INT64ty =
-      getCon ["ReifiedTy", "INT64ty"]
+      getCon (["ReifiedTy"], "INT64ty")
   val REIFY_conInfo_INT8ty =
-      getCon ["ReifiedTy", "INT8ty"]
+      getCon (["ReifiedTy"], "INT8ty")
   val REIFY_conInfo_INTERNALty =
-      getCon ["ReifiedTy", "INTERNALty"]
+      getCon (["ReifiedTy"], "INTERNALty")
   val REIFY_conInfo_INTINFty =
-      getCon ["ReifiedTy", "INTINFty"]
+      getCon (["ReifiedTy"], "INTINFty")
   val REIFY_conInfo_INT32ty =
-      getCon ["ReifiedTy", "INT32ty"]
+      getCon (["ReifiedTy"], "INT32ty")
   val REIFY_conInfo_LAYOUT_ARG_OR_NULL =
-      getCon ["ReifiedTy", "LAYOUT_ARG_OR_NULL"]
+      getCon (["ReifiedTy"], "LAYOUT_ARG_OR_NULL")
   val REIFY_conInfo_LAYOUT_CHOICE =
-      getCon ["ReifiedTy", "LAYOUT_CHOICE"]
+      getCon (["ReifiedTy"], "LAYOUT_CHOICE")
   val REIFY_conInfo_LAYOUT_SINGLE =
-      getCon ["ReifiedTy", "LAYOUT_SINGLE"]
+      getCon (["ReifiedTy"], "LAYOUT_SINGLE")
   val REIFY_conInfo_LAYOUT_SINGLE_ARG =
-      getCon ["ReifiedTy", "LAYOUT_SINGLE_ARG"]
+      getCon (["ReifiedTy"], "LAYOUT_SINGLE_ARG")
   val REIFY_conInfo_LAYOUT_TAGGED =
-      getCon ["ReifiedTy", "LAYOUT_TAGGED"]
+      getCon (["ReifiedTy"], "LAYOUT_TAGGED")
   val REIFY_conInfo_LISTty =
-      getCon ["ReifiedTy", "LISTty"]
+      getCon (["ReifiedTy"], "LISTty")
   val REIFY_conInfo_IENVMAPty =
-      getCon ["ReifiedTy", "IENVMAPty"]
+      getCon (["ReifiedTy"], "IENVMAPty")
   val REIFY_conInfo_SENVMAPty =
-      getCon ["ReifiedTy", "SENVMAPty"]
+      getCon (["ReifiedTy"], "SENVMAPty")
   val REIFY_conInfo_OPTIONty =
-      getCon ["ReifiedTy", "OPTIONty"]
+      getCon (["ReifiedTy"], "OPTIONty")
   val REIFY_conInfo_OPAQUEty =
-      getCon ["ReifiedTy", "OPAQUEty"]
+      getCon (["ReifiedTy"], "OPAQUEty")
   val REIFY_conInfo_POLYty =
-      getCon ["ReifiedTy", "POLYty"]
+      getCon (["ReifiedTy"], "POLYty")
   val REIFY_conInfo_PTRty =
-      getCon ["ReifiedTy", "PTRty"]
+      getCon (["ReifiedTy"], "PTRty")
   val REIFY_conInfo_REAL32ty =
-      getCon ["ReifiedTy", "REAL32ty"]
+      getCon (["ReifiedTy"], "REAL32ty")
   val REIFY_conInfo_REAL64ty =
-      getCon ["ReifiedTy", "REAL64ty"]
+      getCon (["ReifiedTy"], "REAL64ty")
   val REIFY_conInfo_RECORDty =
-      getCon ["ReifiedTy", "RECORDty"]
+      getCon (["ReifiedTy"], "RECORDty")
   val REIFY_conInfo_REFty =
-      getCon ["ReifiedTy", "REFty"]
+      getCon (["ReifiedTy"], "REFty")
   val REIFY_conInfo_STRINGty =
-      getCon ["ReifiedTy", "STRINGty"]
+      getCon (["ReifiedTy"], "STRINGty")
   val REIFY_conInfo_TAGGED_OR_NULL =
-      getCon ["ReifiedTy", "TAGGED_OR_NULL"]
+      getCon (["ReifiedTy"], "TAGGED_OR_NULL")
   val REIFY_conInfo_TAGGED_RECORD =
-      getCon ["ReifiedTy", "TAGGED_RECORD"]
+      getCon (["ReifiedTy"], "TAGGED_RECORD")
   val REIFY_conInfo_TAGGED_TAGONLY =
-      getCon ["ReifiedTy", "TAGGED_TAGONLY"]
+      getCon (["ReifiedTy"], "TAGGED_TAGONLY")
   val REIFY_conInfo_VOIDty =
-      getCon ["ReifiedTy", "VOIDty"]
+      getCon (["ReifiedTy"], "VOIDty")
   val REIFY_conInfo_TYVARty =
-      getCon ["ReifiedTy", "TYVARty"]
+      getCon (["ReifiedTy"], "TYVARty")
   val REIFY_conInfo_UNITty =
-      getCon ["ReifiedTy", "UNITty"]
+      getCon (["ReifiedTy"], "UNITty")
   val REIFY_conInfo_VECTORty =
-      getCon ["ReifiedTy", "VECTORty"]
+      getCon (["ReifiedTy"], "VECTORty")
   val REIFY_conInfo_WORD16ty =
-      getCon ["ReifiedTy", "WORD16ty"]
+      getCon (["ReifiedTy"], "WORD16ty")
   val REIFY_conInfo_WORD64ty =
-      getCon ["ReifiedTy", "WORD64ty"]
+      getCon (["ReifiedTy"], "WORD64ty")
   val REIFY_conInfo_WORD8ty =
-      getCon ["ReifiedTy", "WORD8ty"]
+      getCon (["ReifiedTy"], "WORD8ty")
   val REIFY_conInfo_WORD32ty =
-      getCon ["ReifiedTy", "WORD32ty"]
+      getCon (["ReifiedTy"], "WORD32ty")
   val REIFY_conInfo_ENV =
-      getCon ["ReifiedTerm", "ENV"]
+      getCon (["ReifiedTerm"], "ENV")
   val REIFY_conInfo_EXEXN =
-      getCon ["ReifiedTerm", "EXEXN"]
+      getCon (["ReifiedTerm"], "EXEXN")
   val REIFY_conInfo_EXEXNREP =
-      getCon ["ReifiedTerm", "EXEXNREP"]
+      getCon (["ReifiedTerm"], "EXEXNREP")
   val REIFY_conInfo_EXVAR =
-      getCon ["ReifiedTerm", "EXVAR"]
+      getCon (["ReifiedTerm"], "EXVAR")
 
   val REIFY_exExnInfo_NaturalJoin =
-      getExExnInfo ["NaturalJoin", "NaturalJoin"]
+      getExExnInfo (["NaturalJoin"], "NaturalJoin")
   val REIFY_exExnInfo_RuntimeTypeError =
-      getExExnInfo ["PartialDynamic", "RuntimeTypeError"]
+      getExExnInfo (["PartialDynamic"], "RuntimeTypeError")
 
   val SQL_icexp_toyServer =
-      getIcexp ["SMLSharp_SQL_Prim", "toyServer"]
+      getIcexp (["SMLSharp_SQL_Prim"], "toyServer")
 
   val REIFY_exInfo_MergeConSetEnvWithTyRepList =
-      getExVar ["ReifiedTy", "MergeConSetEnvWithTyRepList"]
+      getExVar (["ReifiedTy"], "MergeConSetEnvWithTyRepList")
   val REIFY_exInfo_makeConSetEnv =
-      getExVar ["ReifiedTy", "makeConSetEnv"]
+      getExVar (["ReifiedTy"], "makeConSetEnv")
   val REIFY_exInfo_coerceTermGeneric =
-      getExVar ["PartialDynamic", "coerceTermGeneric"]
+      getExVar (["PartialDynamic"], "coerceTermGeneric")
   val REIFY_exInfo_checkTermGeneric =
-      getExVar ["PartialDynamic", "checkTermGeneric"]
+      getExVar (["PartialDynamic"], "checkTermGeneric")
   val REIFY_exInfo_viewTermGeneric =
-      getExVar ["PartialDynamic", "viewTermGeneric"]
+      getExVar (["PartialDynamic"], "viewTermGeneric")
   val REIFY_exInfo_null =
-      getExVar ["PartialDynamic", "null"]
+      getExVar (["PartialDynamic"], "null")
   val REIFY_exInfo_void =
-      getExVar ["PartialDynamic", "void"]
+      getExVar (["PartialDynamic"], "void")
   val REIFY_exInfo_dynamicTypeCase =
-      getExVar ["PartialDynamic", "dynamicTypeCase"]
+      getExVar (["PartialDynamic"], "dynamicTypeCase")
   val REIFY_exInfo_dynamicExistInstance =
-      getExVar ["PartialDynamic", "dynamicExistInstance"]
+      getExVar (["PartialDynamic"], "dynamicExistInstance")
   val REIFY_exInfo_naturalJoin =
-      getExVar ["NaturalJoin", "naturalJoin"]
+      getExVar (["NaturalJoin"], "naturalJoin")
   val REIFY_exInfo_extend =
-      getExVar ["NaturalJoin", "extend"]
+      getExVar (["NaturalJoin"], "extend")
   val REIFY_exInfo_printTopEnv =
-      getExVar ["ReifiedTerm", "printTopEnv"]
+      getExVar (["ReifiedTerm"], "printTopEnv")
   val REIFY_exInfo_reifiedTermToML =
-      getExVar ["ReifiedTermToML", "reifiedTermToML"]
+      getExVar (["ReifiedTermToML"], "reifiedTermToML")
   val REIFY_exInfo_toReifiedTerm =
-      getExVar ["ReifyTerm", "toReifiedTerm"]
+      getExVar (["ReifyTerm"], "toReifiedTerm")
   val REIFY_exInfo_toReifiedTermPrint =
-      getExVar ["ReifyTerm", "toReifiedTermPrint"]
+      getExVar (["ReifyTerm"], "toReifiedTermPrint")
 
 end

@@ -13,8 +13,8 @@ struct
 
   structure Name =
   struct
-    val fun_ForeachArray = ["ForeachArray", "ForeachArray"]
-    val fun_ForeachData = ["ForeachData", "ForeachData"]
+    val fun_ForeachArray = (["ForeachArray"], "ForeachArray")
+    val fun_ForeachData = (["ForeachData"], "ForeachData")
   end
 
   fun Pat x (_:P.loc) = x : P.plpat

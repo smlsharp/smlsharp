@@ -259,10 +259,10 @@ struct
             conbind = map expandInDataCon conbind}
       end
 
-  fun truePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol ["true"] (LOC loc))
-  fun falsePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol ["false"] (LOC loc))
-  fun trueExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol ["true"] (LOC loc))
-  fun falseExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol ["false"] (LOC loc))
+  fun truePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol (nil, "true") (LOC loc))
+  fun falsePat loc = PC.PLPATID(SymbolWithLoc.mkLongsymbol (nil, "false") (LOC loc))
+  fun trueExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol (nil, "true") (LOC loc))
+  fun falseExp loc = PC.PLVAR(SymbolWithLoc.mkLongsymbol (nil, "false") (LOC loc))
   fun unitPat loc = PC.PLPATCONSTANT(A.UNITCONST, LOC loc)
   fun unitExp loc = PC.PLCONSTANT(A.UNITCONST, LOC loc)
 
@@ -340,11 +340,11 @@ struct
               (fn (x, y) =>
                   PC.PLPATCONSTRUCT
                   (
-                    PC.PLPATID(SymbolWithLoc.mkLongsymbol ["::"] (LOC loc)),
+                    PC.PLPATID(SymbolWithLoc.mkLongsymbol (nil, "::") (LOC loc)),
                     PC.PLPATRECORD(false, RecordLabel.tupleList [elabPat x, y], LOC loc),
                     LOC loc
                   ))
-              (PC.PLPATID(SymbolWithLoc.mkLongsymbol ["nil"] (LOC loc)))
+              (PC.PLPATID(SymbolWithLoc.mkLongsymbol (nil, "nil") (LOC loc)))
               elist
         in
           plexp
@@ -481,10 +481,10 @@ struct
         let
           fun folder (x, y) =
               PC.PLAPPM
-                (PC.PLVAR(SymbolWithLoc.mkLongsymbol ["::"] (LOC loc)),
+                (PC.PLVAR(SymbolWithLoc.mkLongsymbol (nil, "::") (LOC loc)),
                  [PC.PLRECORD(RecordLabel.tupleList [elabExp x, y], LOC loc)],
                  LOC loc)
-          val plexp = foldr folder (PC.PLVAR(SymbolWithLoc.mkLongsymbol ["nil"] (LOC loc))) elist
+          val plexp = foldr folder (PC.PLVAR(SymbolWithLoc.mkLongsymbol (nil, "nil") (LOC loc))) elist
         in
           plexp
         end
