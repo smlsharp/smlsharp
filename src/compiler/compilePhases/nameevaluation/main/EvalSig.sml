@@ -42,8 +42,6 @@ local
   infix @@
   val op @@ = SymbolWithLoc.prefixPath'
 
-  val symbolToLoc = SymbolWithLoc.symbolToLoc
-  
  (* the following three functions are copied from IDTypes
     and slightly changed to fix the bug 152
   *)
@@ -385,7 +383,7 @@ local
           val (sigEnv, sym) = 
               case VP.findSigETopEnv(topEnv, symbol) of
                 NONE => (EU.enqueueError
-                           (symbolToLoc symbol,
+                           (#loc symbol,
                             E.SigIdUndefined("Sig-060", {symbol = #symbol symbol}));
                          (V.emptyEnv, symbol)
                         )
@@ -768,7 +766,7 @@ local
                            tvarList
                            (fn s => E.DuplicateTypParms("Sig-160",s))
                  val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
-                 val defRange = SymbolWithLoc.symbolToLoc symbol
+                 val defRange = #loc symbol
                  val id = TypID.generate()
                  val longsymbol = path @@ symbol
                  val tfunvar =

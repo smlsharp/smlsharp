@@ -66,10 +66,8 @@ in
 
   fun symbolToString (s : symbol) = Symbol.toString (#symbol s)
 
-  fun symbolToLoc ({loc, ...} : symbol) = loc
-
   fun symbolToStringWithLoc s =
-      symbolToString s ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
+      symbolToString s ^ "(" ^ Loc.locToString (#loc s) ^ ")"
 
   fun longsymbolToString longsymbol =
       Longsymbol.toString (toLongsymbol longsymbol)

@@ -675,7 +675,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol1, v1), (symbol2,v2)) =>
             (EU.enqueueError 
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateVar(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
@@ -685,7 +685,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1), (symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateTypName(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
@@ -697,7 +697,7 @@ in
          SymbolWithLocEnv.unionWithi2
            (fn ((symbol1,v1), (symbol2,v2)) =>
                (EU.enqueueError
-                  (SymbolWithLoc.symbolToLoc symbol2,
+                  (#loc symbol2,
                    E.DuplicateStrName(code ^ "v", #symbol symbol2));
                 (symbol2, v2))
            )
@@ -708,7 +708,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateFunctor(code ^ "f", #symbol symbol2));
              (symbol2, v2))
         )
@@ -718,7 +718,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateSigname(code ^ "s", #symbol symbol2));
              (symbol2,v2))
         )

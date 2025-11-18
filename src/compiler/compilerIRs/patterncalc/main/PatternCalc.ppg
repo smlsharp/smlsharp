@@ -758,7 +758,7 @@ struct
   fun getLocSigexp sigexp =
       case sigexp of
         PLSIGEXPBASIC (plspec, loc) => loc
-      | PLSIGID symbol => SymbolWithLoc.symbolToLoc symbol
+      | PLSIGID symbol => #loc symbol
       | PLSIGWHERE (plsigexp, tybind, loc) => loc
 
 end

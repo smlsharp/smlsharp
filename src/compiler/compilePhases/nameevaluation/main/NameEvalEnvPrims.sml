@@ -522,11 +522,11 @@ in
                if ConID.eq(id1, id2) then ()
                else 
                  EU.enqueueError 
-                   (SymbolWithLoc.symbolToLoc symbol2,
+                   (#loc symbol2,
                     E.DuplicateVar(code ^ "v", #symbol symbol2))
              | _ => 
                EU.enqueueError 
-                 (SymbolWithLoc.symbolToLoc symbol2,
+                 (#loc symbol2,
                   E.DuplicateVar(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
@@ -536,7 +536,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1), (symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateTypName(code ^ "v", #symbol symbol2));
              (symbol2, v2))
         )
@@ -548,7 +548,7 @@ in
          SymbolWithLocEnv.unionWithi2
            (fn ((symbol1,v1), (symbol2,v2)) =>
                (EU.enqueueError
-                  (SymbolWithLoc.symbolToLoc symbol2,
+                  (#loc symbol2,
                    E.DuplicateStrName(code ^ "v", #symbol symbol2));
                 (symbol2, v2))
            )
@@ -559,7 +559,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateFunctor(code ^ "f", #symbol symbol2));
              (symbol2, v2))
         )
@@ -569,7 +569,7 @@ in
       SymbolWithLocEnv.unionWithi2
         (fn ((symbol1,v1),(symbol2,v2)) =>
             (EU.enqueueError
-               (SymbolWithLoc.symbolToLoc symbol2,
+               (#loc symbol2,
                 E.DuplicateSigname(code ^ "s", #symbol symbol2));
              (symbol2,v2))
         )
@@ -603,7 +603,7 @@ end
         val varE =
             SymbolEnv.insertWithi
               (fn (symbol,_) =>
-                  (EU.enqueueError (Symbol.symbolToLoc symbol,E.DuplicateIdInSpec("054",symbol))))
+                  (EU.enqueueError (#loc symbol,E.DuplicateIdInSpec("054",symbol))))
               (varE, symbol, idstate)
       in
         V.ENV {varE=varE, tyE=tyE, strE=strE}
@@ -615,7 +615,7 @@ end
         val varE =
             SymbolEnv.insertWithi
               (fn (symbol,_) =>
-                  (EU.enqueueError (Symbol.symbolToLoc symbol,E.DuplicateIdInSpec("054",symbol))))
+                  (EU.enqueueError (#loc symbol,E.DuplicateIdInSpec("054",symbol))))
               (varE, symbol, idstate)
       in
         V.ENV {varE=varE, tyE=tyE, strE=strE}
@@ -694,7 +694,7 @@ end
         val tyE =
             SymbolEnv.insertWithi
             (fn (symbol, _) =>
-                (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateTypInSpec("055", symbol))))
+                (EU.enqueueError (#loc symbol, E.DuplicateTypInSpec("055", symbol))))
             (tyE, symbol, tstr)
       in
         V.ENV {tyE=tyE, varE=varE, strE=strE}
@@ -708,7 +708,7 @@ end
             case SymbolEnv.find(tyE, symbol) of
               NONE => ()
             | SOME _ =>
-              EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateTypInSpec("055", symbol))
+              EU.enqueueError (#loc symbol, E.DuplicateTypInSpec("055", symbol))
         val tyE = SymbolEnv.insert(tyE, symbol, tstr)
       in
         V.ENV {tyE=tyE, varE=varE, strE=strE}
@@ -762,7 +762,7 @@ end
             case SymbolEnv.findi(envMap, symbol) of
               NONE => SymbolEnv.insert(envMap, symbol, strEntry)
             | SOME (symbol, _) => 
-              (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateIdInSpec("050", symbol));
+              (EU.enqueueError (#loc symbol, E.DuplicateIdInSpec("050", symbol));
                envMap
               )
       in
@@ -775,7 +775,7 @@ end
             case SymbolEnv.findi(envMap, symbol) of
               NONE => SymbolEnv.insert(envMap, symbol, strEntry)
             | SOME (symbol, _) => 
-              (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateIdInSpec("050", symbol));
+              (EU.enqueueError (#loc symbol, E.DuplicateIdInSpec("050", symbol));
                envMap
               )
       in

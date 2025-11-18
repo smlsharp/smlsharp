@@ -68,7 +68,7 @@ in
         val _ = Symbol.Map.app
                   (fn {functorSymbol, ...} =>
                       EU.enqueueError
-                        (SymbolWithLoc.symbolToLoc functorSymbol,
+                        (#loc functorSymbol,
                          E.ProvideUndefinedFunctor("200",{symbol= #symbol functorSymbol}))
                   )
                   fundeclEnv

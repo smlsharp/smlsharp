@@ -32,8 +32,6 @@ local
   val emptyRenameEnv =  TypID.Map.empty : renameEnv
 
   val mkSymbol = SymbolWithLoc.mkSymbol
-  val symbolToLoc = SymbolWithLoc.symbolToLoc
-  val longsymbolToLoc = SymbolWithLoc.longsymbolToLoc
   fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
   infix @@
   val op @@ = SymbolWithLoc.prefixPath'
@@ -252,7 +250,7 @@ in
                 I.INST_OVERLOAD (evalOverloadCase overloadCase)
               | PI.INST_LONGVID {longsymbol=longsymbol} =>
                 let
-                  val loc = longsymbolToLoc longsymbol
+                  val loc = SymbolWithLoc.longsymbolToLoc longsymbol
                   fun error e =
                       (EU.enqueueError (loc, e);
                        I.INST_EXVAR
@@ -310,7 +308,7 @@ in
             end
           | PI.VALALIAS_EXTERN longsymbol =>
             let
-              val loc = longsymbolToLoc longsymbol
+              val loc = SymbolWithLoc.longsymbolToLoc longsymbol
             in
               case VP.findId(env, longsymbol) of
                  SOME(sym, 
@@ -346,7 +344,7 @@ in
             end
           | PI.VAL_BUILTIN {builtinSymbol, ty} =>
             let
-              val loc = symbolToLoc builtinSymbol
+              val loc = #loc builtinSymbol
               val ty = Ty.evalTy tvarEnv env ty
               val ty = 
                   case kindedTvars of
@@ -1202,9 +1200,9 @@ in
               P.PLSIGEXPBASIC (map checkSpec spec, loc)
             | P.PLSIGID symbol =>
               (UserErrorUtils.enqueueError
-                 (SymbolWithLoc.symbolToLoc symbol,
+                 (#loc symbol,
                   E.SigIDFoundInInterfaceFunArg (#symbol symbol));
-               P.PLSIGEXPBASIC (nil, SymbolWithLoc.symbolToLoc symbol))
+               P.PLSIGEXPBASIC (nil, #loc symbol))
             | P.PLSIGWHERE (sigexp, typbinds, loc) =>
               P.PLSIGWHERE (checkSigexp sigexp, typbinds, loc)
         and checkSpec spec =

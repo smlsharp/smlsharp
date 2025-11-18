@@ -20,7 +20,6 @@ struct
   val lastSymbol : longsymbol -> symbol
   val pathOf : longsymbol -> symbol list
   val symbolToString : symbol -> string
-  val symbolToLoc : symbol -> Loc.loc
   val toRecordLabel : longsymbol -> RecordLabel.label
   val toLongsymbol : longsymbol -> Longsymbol.longsymbol
   val fromLongsymbol : Longsymbol.longsymbol -> longsymbol

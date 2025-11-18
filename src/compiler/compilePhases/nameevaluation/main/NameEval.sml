@@ -333,7 +333,7 @@ local
                 if isId (env, symbol) then VarID.generate()
                 else
                   (EU.enqueueError
-                     (SymbolWithLoc.symbolToLoc symbol,
+                     (#loc symbol,
                       E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol symbol)}));
                    VarID.generate())
             val _ = Ty.checkReservedName

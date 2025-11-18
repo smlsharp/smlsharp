@@ -139,7 +139,7 @@ in
         val symbol = getSymbol item
       in
         if checker (SymbolWithLoc.symbolToString symbol)
-        then EU.enqueueError (SymbolWithLoc.symbolToLoc symbol,
+        then EU.enqueueError (#loc symbol,
                               E.BindReservedName (#symbol symbol))
         else ();
         checkReservedName checker getSymbol items
@@ -251,7 +251,7 @@ in
             evalKindedTvarList allowFlex tvarEnv env (kindedTvarList, LOC loc2)
 (*
         val cyclicTvars = checkCyclicKind kindedTvarList 
-        fun tvarLoc {symbol, id, eq, lifted} = Symbol.symbolToLoc symbol
+        fun tvarLoc {symbol, id, eq, lifted} = #loc symbol
         val kindedTvarList =
             case cyclicTvars of
               nil => kindedTvarList
@@ -345,7 +345,7 @@ in
             map (fn (tvar, kind) => (tvar, evalTvarKindAux allowFlex tvarEnv env kind))
                 tvarKindList
         val cyclicTvars = checkCyclicKind tvarKindList
-        fun tvarLoc {symbol, id, isEq, lifted} = SymbolWithLoc.symbolToLoc symbol
+        fun tvarLoc {symbol, id, isEq, lifted} = #loc symbol
         val tvarKindList =
             case cyclicTvars of
               nil => tvarKindList

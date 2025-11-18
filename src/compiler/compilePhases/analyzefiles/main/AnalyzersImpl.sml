@@ -47,7 +47,7 @@ local
       end
   fun defSymLocInfo symbol =
       let
-        val loc = S.symbolToLoc symbol
+        val loc = #loc symbol
         val symbol = S.symbolToString symbol
         val (s, e, f) = locRange loc
       in
@@ -77,7 +77,7 @@ local
       end
   fun refSymLocInfo symbol =
       let
-        val loc = S.symbolToLoc symbol
+        val loc = #loc symbol
         val symbol = S.symbolToString symbol
         val (s, e, f) = locRange loc
       in
@@ -789,11 +789,11 @@ in
   fun insertUPRefMap (symbol, sym) =
       if !Control.doNameAnalysis then
         let
-          val refSymbolLoc = SymbolWithLoc.symbolToLoc symbol
+          val refSymbolLoc = #loc symbol
           val refSymbol = S.symbolToString symbol
           val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 
               locRange refSymbolLoc
-          val defSymbolLoc = SymbolWithLoc.symbolToLoc sym
+          val defSymbolLoc = #loc sym
           val defSymbol = SymbolWithLoc.symbolToString sym
           val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
@@ -837,7 +837,7 @@ in
         val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 
             locRange refLongsymbolLoc
         val refSymbol = S.longsymbolToString longsymbol
-        val defSymbolLoc = SymbolWithLoc.symbolToLoc sym
+        val defSymbolLoc = #loc sym
         val defSymbol = SymbolWithLoc.symbolToString sym
         val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
