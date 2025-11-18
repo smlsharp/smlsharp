@@ -111,8 +111,8 @@ struct
 
   fun locToRegion (pos1, pos2) = (posOf pos1, posOf pos2)
 
-  fun scanLongid (longsymbol, _) =
-      map (Symbol.toString o #1) longsymbol
+  fun scanLongid (strids, id, _) =
+      map (Symbol.toString o #1) (strids @ [id])
 
   fun scanTyvar ((_, (symbol, _)) : A.tyvar) =
       S.Tyv (Symbol.toString symbol)
@@ -254,7 +254,7 @@ struct
       case strexp of
         A.STRBASIC (strdecList, loc) =>
         S.BaseStr (scanStrdecList c strdecList)
-      | A.STRID (id, loc) => S.VarStr
+      | A.STRID (_, _, loc) => S.VarStr
       | A.STRCONSTRAINT (strexp, (_, sigexp, _), loc) =>
         S.ConstrainedStr (scanStrexp c strexp)
       | A.STRAPP (id, funarg, loc) => S.AppStr

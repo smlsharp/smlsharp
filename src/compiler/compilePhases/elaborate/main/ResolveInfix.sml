@@ -95,13 +95,13 @@ struct
         UserErrorUtils.enqueueError
           (Loc.LOC loc, E.BeginWithInfixID symbol)
 
-  fun patVid (A.PATID (false, ([id], _), _)) = SOME id
+  fun patVid (A.PATID (false, (nil, id, _), _)) = SOME id
     | patVid _ = NONE
 
-  fun expVid (A.EXPID (false, ([id], _), _)) = SOME id
+  fun expVid (A.EXPID (false, (nil, id, _), _)) = SOME id
     | expVid _ = NONE
 
-  fun sqlexpVid (S.ID (false, ([id], _), _)) = SOME id
+  fun sqlexpVid (S.ID (false, (nil, id, _), _)) = SOME id
     | sqlexpVid _ = NONE
 
   fun patToTerm env pat =
@@ -127,12 +127,14 @@ struct
 
   fun resolvePatFexp env exp =
       case exp of
-        F.TERM (pat as A.PATID (false, ([id], _), _), _) => pat
+        F.TERM (pat as A.PATID (false, (nil, id, _), _), _) => pat
       | F.TERM (pat, _) =>
         resolvePat env pat
       | F.APP (exp1, exp2, loc) =>
         A.PATAPP (resolvePatFexp env exp1, resolvePatFexp env exp2, loc)
-      | F.OP2 (F.TERM (A.PATID (false, ([id], _), _), _), (exp1, exp2), loc) =>
+      | F.OP2 (F.TERM (A.PATID (false, (nil, id, _), _), _),
+               (exp1, exp2),
+               loc) =>
         A.PATINFIX (resolvePatFexp env exp1, id, resolvePatFexp env exp2, loc)
       | F.OP2 _ => raise Bug.Bug "resolvePatFexp"
 
@@ -182,7 +184,7 @@ struct
 
   and resolveSqlFexpSpine env exps =
       case exps of
-        F.TERM (S.PAREN (S.ID (false, ([id], _), _), _), loc)
+        F.TERM (S.PAREN (S.ID (false, (nil, id, _), _), _), loc)
         :: (exps as _ :: _) =>
         let
           val exp = resolveSqlFexpSpine env exps
@@ -200,7 +202,7 @@ struct
         resolveSqlExp env exp
       | F.APP (exp1, exp2, loc) =>
         resolveSqlFexpSpine env (fexpSpine exp1 [exp2])
-      | F.OP2 (F.TERM (S.ID (false, ([id], _), _), _), (exp1, exp2), loc) =>
+      | F.OP2 (F.TERM (S.ID (false, (nil, id, _), _), _), (exp1, exp2), loc) =>
         S.INFIX (resolveSqlFexp env exp1, id, resolveSqlFexp env exp2, loc)
       | F.OP2 _ => raise Bug.Bug "resolveSqlFexp"
 
@@ -376,7 +378,7 @@ struct
       case values of
         S.INSERT_VALUES (rows, loc) =>
         S.INSERT_VALUES (map (resolveSqlInsertRow env) rows, loc)
-      | S.INSERT_VAR ((false, ([id], _), _), _) =>
+      | S.INSERT_VAR ((false, (nil, id, _), _), _) =>
         (mustBeNonfix env (SOME id); values)
       | S.INSERT_VAR _ => values
       | S.INSERT_SELECT query =>
@@ -448,12 +450,14 @@ struct
 
   and resolveExpFexp env exp =
       case exp of
-        F.TERM (exp as A.EXPID (false, ([id], _), _), _) => exp
+        F.TERM (exp as A.EXPID (false, (nil, id, _), _), _) => exp
       | F.TERM (exp, _) =>
         resolveExp env exp
       | F.APP (exp1, exp2, loc) =>
         A.EXPAPP (resolveExpFexp env exp1, resolveExpFexp env exp2, loc)
-      | F.OP2 (F.TERM (A.EXPID (false, ([id], _), _), _), (exp1, exp2), loc) =>
+      | F.OP2 (F.TERM (A.EXPID (false, (nil, id, _), _), _),
+               (exp1, exp2),
+               loc) =>
         A.EXPINFIX (resolveExpFexp env exp1, id, resolveExpFexp env exp2, loc)
       | F.OP2 _ => raise Bug.Bug "resolveExpFexp"
 

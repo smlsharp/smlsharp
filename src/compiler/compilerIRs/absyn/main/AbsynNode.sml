@@ -437,9 +437,9 @@ struct
       case node of
         ID (_, loc) => loc
       | VID (_, loc) => loc
-      | LONGVID (_, loc) => loc
+      | LONGVID (_, _, loc) => loc
       | TYCON (_, loc) => loc
-      | LONGTYCON (_, loc) => loc
+      | LONGTYCON (_, _, loc) => loc
       | LAB (_, loc) => loc
       | TYVAR (_, (_, loc)) => loc
       | TYVARSEQ (_, loc) => loc
@@ -474,7 +474,7 @@ struct
       | STRID (_, loc) => loc
       | SIGID (_, loc) => loc
       | FUNID (_, loc) => loc
-      | LONGSTRID (_, loc) => loc
+      | LONGSTRID (_, _, loc) => loc
       | OP_VID (_, _, loc) => loc
       | REQUIRE_PATH (_, loc) => loc
       | EXTERN_NAME (_, loc) => loc
@@ -586,7 +586,7 @@ struct
       | SIGBIND (_, _, loc) => loc
       | SIGCONSTRAINT (_, _, loc) => loc
       | STREXP (A.STRBASIC (_, loc)) => loc
-      | STREXP (A.STRID (_, loc)) => loc
+      | STREXP (A.STRID (_, _, loc)) => loc
       | STREXP (A.STRCONSTRAINT (_, _, loc)) => loc
       | STREXP (A.STRAPP (_, _, loc)) => loc
       | STREXP (A.STRLET (_, _, loc)) => loc
@@ -691,12 +691,12 @@ struct
       | SQL_TOP (S.SQLSERVER (_, _, loc)) => loc
       | SQL_TOP (S.SQL (_, loc)) => loc
       | SQL_TOP (S.SQLFN (_, _, loc)) => loc
-      | OPAQUE_IMPL (I.IMPL_TY (_, loc)) => loc
+      | OPAQUE_IMPL (I.IMPL_TY (_, _, loc)) => loc
       | OPAQUE_IMPL (I.IMPL_TUPLE loc) => loc
       | OPAQUE_IMPL (I.IMPL_RECORD loc) => loc
       | OPAQUE_IMPL (I.IMPL_FUNC loc) => loc
       | OVERLOAD_INSTANCE (I.INST_OVERLOAD (_, _, _, loc)) => loc
-      | OVERLOAD_INSTANCE (I.INST_LONGVID (_, loc)) => loc
+      | OVERLOAD_INSTANCE (I.INST_LONGVID (_, _, loc)) => loc
       | OVERLOAD_INSTANCE (I.INST_PAREN (_, loc)) => loc
       | OVERLOAD_MRULE (_, _, loc) => loc
       | OVERLOAD_CASE (_, _, _, loc) => loc
@@ -715,7 +715,7 @@ struct
       | IDEC (I.STRUCTURE (_, loc)) => loc
       | IDEC (I.SEMICOLON loc) => loc
       | ISTREXP (I.STRBASIC (_, loc)) => loc
-      | ISTREXP (I.STRID (_, loc)) => loc
+      | ISTREXP (I.STRID (_, _, loc)) => loc
       | ISTREXP (I.STRAPP (_, _, loc)) => loc
       | ISTRBIND (_, _, loc) => loc
       | IFUNBIND (_, _, _, loc) => loc
@@ -735,19 +735,13 @@ struct
       | ITOP (I.INTERFACE (_, _, loc)) => loc
       | ITOP (I.INCLUDES (_, _, loc)) => loc
 
-  fun childrenOfLongid con ids =
-      case rev ids of
-        nil => nil
-      | [x] => [con x]
-      | last :: rests => rev (con last :: map STRID rests)
-
   fun getChildren node =
       case node of
         ID _ => nil
       | VID _ => nil
-      | LONGVID (ids, loc) => childrenOfLongid VID ids
+      | LONGVID (strids, id, loc) => map STRID strids @ [VID id]
       | TYCON _ => nil
-      | LONGTYCON (ids, loc) => childrenOfLongid TYCON ids
+      | LONGTYCON (strids, id, loc) => map STRID strids @ [TYCON id]
       | LAB _ => nil
       | TYVAR _ => nil
       | TYVARSEQ (tyvars, loc) => map TYVAR tyvars
@@ -789,7 +783,7 @@ struct
       | STRID _ => nil
       | SIGID _ => nil
       | FUNID _ => nil
-      | LONGSTRID (ids, loc) => map STRID ids
+      | LONGSTRID (strid, id, loc) => map STRID strid @ [STRID id]
       | OP_VID (_, id, loc) => [VID id]
       | REQUIRE_PATH _ => nil
       | EXTERN_NAME _ => nil

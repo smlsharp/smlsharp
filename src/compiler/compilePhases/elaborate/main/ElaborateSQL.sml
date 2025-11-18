@@ -28,8 +28,8 @@ struct
     val con_True = [SQLPrim, "Bool3", "True"]
     val con_False = [SQLPrim, "Bool3", "False"]
     val con_Unknown = [SQLPrim, "Bool3", "Unknown"]
-    val ty_db = [SQLPrim, "db"]
-    val ty_command = [SQLPrim, "command"]
+    val ty_db = ([SQLPrim], "db")
+    val ty_command = ([SQLPrim], "command")
     val fun_isSome = [SQLPrim, "Option", "isSome"]
     val fun_not3 = [SQLPrim, "Bool3", "not3"]
     val fun_and3 = [SQLPrim, "Bool3", "and3"]
@@ -158,7 +158,9 @@ struct
       A.TYCON
         (case args of nil => NONE
                     | _ :: _ => SOME (map (fn arg => arg loc) args, loc),
-         (map (fn i => (Symbol.fromString i, loc)) name, loc),
+         (map (fn i => (Symbol.fromString i, loc)) (#1 name),
+          (Symbol.fromString (#2 name), loc),
+          loc),
          loc)
 
   fun TyFun (ty1, ty2) loc =
@@ -1596,7 +1598,7 @@ struct
               (merge [ret1, ret3, ret2, ret4], SQL (OP2 (op2, q1, q2, loc)))
             end
         end
-      | S.APP (S.ID (false, ([id], _), loc1), exp2, loc) =>
+      | S.APP (S.ID (false, (nil, id, _), loc1), exp2, loc) =>
         let
           val (ret2, q2) = elabExp env exp2
           val id = toSymbol id
@@ -1703,7 +1705,7 @@ struct
 
   and elabTableId env ((db as (_, loc1), label, loc):S.table_selector) =
       let
-        val exploc = (A.EXPID (false, ([db], loc1), loc1), loc1)
+        val exploc = (A.EXPID (false, (nil, db, loc1), loc1), loc1)
         val (ret, db) = elabEmbed env DBty exploc
       in
         (ret, {db = db, label = #1 label, loc = loc})

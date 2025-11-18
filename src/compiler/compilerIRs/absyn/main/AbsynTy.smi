@@ -11,7 +11,7 @@ struct
 
   type id = Symbol.symbol * loc
 
-  type longid = id list * loc
+  type longid = id list * id * loc
 
   type vid = id
 

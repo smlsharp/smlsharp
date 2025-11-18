@@ -200,15 +200,15 @@ struct
               in
                 A.TYRECORD (newLabelTys, ifFlex, loc)
               end
-            | A.TYCON (tyseq, tyConPath, loc) =>
+            | A.TYCON (tyseq, tycon as (tyConPath, tyConName, _), loc) =>
               let
                 val expandedTyseq =
                     case tyseq of
                       SOME (tys, loc) => SOME (map expandInTy tys, loc)
                     | NONE => NONE
               in
-                case #1 tyConPath of
-                  [tyConName] =>
+                case tyConPath of
+                  nil =>
                   (case Symbol.Map.find (typeMap, #1 tyConName) of
                      SOME (withTyVars, withTy) =>
                      let
@@ -235,8 +235,8 @@ struct
                             enqueueError(loc, exn); ty
                           end
                       end
-                   | NONE => A.TYCON(expandedTyseq, tyConPath, loc))
-                | _ => A.TYCON(expandedTyseq, tyConPath, loc)
+                   | NONE => A.TYCON(expandedTyseq, tycon, loc))
+                | _ => A.TYCON(expandedTyseq, tycon, loc)
               end
             | A.TYTUPLE(tys, loc) => 
 (*
@@ -323,7 +323,7 @@ struct
         PC.PLPATCONSTRUCT (elabPat pat1, elabPat pat2, LOC loc)
       | A.PATINFIX (pat1, vid, pat2, loc) =>
         PC.PLPATCONSTRUCT
-          (PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid)),
+          (PC.PLPATID (SymbolWithLoc.fromAbsyn (nil, vid, #2 vid)),
            PC.PLPATRECORD
              (false,
               RecordLabel.tupleList [elabPat pat1, elabPat pat2],
@@ -379,8 +379,8 @@ struct
                 PC.PLPATLAYERED(toSymbol vid, optTy, elabPat pat, LOC loc)
               | _ =>
                 case optTy of
-                  SOME ty => PC.PLPATTYPED (PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid)), ty, LOC loc)
-                | _ => PC.PLPATID (SymbolWithLoc.fromAbsyn ([vid], #2 vid))
+                  SOME ty => PC.PLPATTYPED (PC.PLPATID (SymbolWithLoc.fromAbsyn (nil, vid, #2 vid)), ty, LOC loc)
+                | _ => PC.PLPATID (SymbolWithLoc.fromAbsyn (nil, vid, #2 vid))
         in
           (RecordLabel.fromSymbol (#1 vid), pat)
         end
@@ -405,7 +405,7 @@ struct
               (mustBeAtpat pat1;
                mustBeAtpat pat2;
                (SOME vid,
-                A.PATID (false, ([vid], #2 vid), #2 vid),
+                A.PATID (false, (nil, vid, #2 vid), #2 vid),
                 fn x => x,
                 [A.PATTUPLE ([pat1, pat2], loc)]))
             | (* fun (atpat vid atpat) ... = ... *)
@@ -413,16 +413,16 @@ struct
               (mustBeAtpat pat1;
                mustBeAtpat pat2;
                (SOME vid,
-                A.PATID (false, ([vid], #2 vid), #2 vid),
+                A.PATID (false, (nil, vid, #2 vid), #2 vid),
                 fn x => x,
                 A.PATTUPLE ([pat1, pat2], loc) :: args))
             | (* fun (vid : ty) ... = ... (SML# extension) *)
               (A.PATPAREN
-                 (A.PATTYPED (pat as A.PATID (_, ([id], _), _), ty, loc), _),
+                 (A.PATTYPED (pat as A.PATID (_, (nil, id, _), _), ty, loc), _),
                args) =>
               (SOME id, pat, fn pat => A.PATTYPED (pat, ty, loc), args)
             | (* fun vid ... = ... *)
-              (pat as A.PATID (_, ([id], _), _), args) =>
+              (pat as A.PATID (_, (nil, id, _), _), args) =>
               (SOME id, pat, fn x => x, args)
             | (head, args) =>
               (enqueueError (AbsynUtils.patLoc head, E.IllegalFunctionSymbol);
@@ -492,7 +492,7 @@ struct
         PC.PLAPPM (elabExp exp1, [elabExp exp2], LOC loc)
       | A.EXPINFIX (exp1, vid, exp2, loc) =>
         PC.PLAPPM
-          (PC.PLVAR (SymbolWithLoc.fromAbsyn ([vid], #2 vid)),
+          (PC.PLVAR (SymbolWithLoc.fromAbsyn (nil, vid, #2 vid)),
            [PC.PLRECORD
               (RecordLabel.tupleList [elabExp exp1, elabExp exp2],
                LOC loc)],

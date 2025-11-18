@@ -76,7 +76,7 @@ struct
       | T.TYVAR_FREE _ => raise Bug.Bug "FREE_TYID to substTy in ElaborateInterface"
       | T.TYRECORD (fields, ifFlex, loc) =>
         T.TYRECORD (substRecordTy subst fields, ifFlex, loc)
-      | T.TYCON (tyseq, tyCon as ([(symbol, _)], _), loc) =>
+      | T.TYCON (tyseq, tyCon as (nil, (symbol, _), _), loc) =>
         let
           val (tyList, con) =
               case tyseq of
@@ -307,7 +307,7 @@ struct
       case strexp of
         I.STRBASIC (decs, loc) =>
         P.PISTRUCT {decs = List.concat (map elabDec decs), loc = LOC loc}
-      | I.STRID longvid => P.PISTRUCTREP{longsymbol= SymbolWithLoc.fromAbsyn longvid, loc= LOC (#2 longvid)}
+      | I.STRID longvid => P.PISTRUCTREP{longsymbol= SymbolWithLoc.fromAbsyn longvid, loc= LOC (#3 longvid)}
       | I.STRAPP (functorSymbol, argument, loc) =>
         P.PIFUNCTORAPP{functorSymbol= toSymbol functorSymbol, argument= SymbolWithLoc.fromAbsyn argument, loc=LOC loc}
 

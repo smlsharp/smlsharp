@@ -22,13 +22,15 @@ struct
        *)
       Symbol.symbol * loc
 
-  (*% *)
+  (*%
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
+   *)
   type longid =
       (*%
-       * @format(id ids * loc)
-       * ids(id)(".")
+       * @format(strid strids * id * loc)
+       * strids(strid)(".") strids:ifcons()(".",) id
        *)
-      id list * loc
+      id list * id * loc
 
   (*% *)
   type vid = id

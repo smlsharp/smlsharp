@@ -43,9 +43,9 @@ in
   type longsymbol =
     {symbols : symbol list, loc : Loc.loc}
 
-  fun fromAbsyn (longid, loc) =
+  fun fromAbsyn (strids, id, loc) =
       {symbols = map (fn (symbol, loc) => {symbol = symbol, loc = Loc.LOC loc})
-                     longid,
+                     (strids @ [id]),
        loc = Loc.LOC loc}
 
   fun toSymbolList {symbols, loc} = symbols

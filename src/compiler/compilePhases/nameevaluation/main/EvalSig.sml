@@ -418,8 +418,8 @@ local
                 val realizeePath = strPath (SymbolWithLoc.toSymbolList longsymbol)
                 val realizerPath =
                       case ty of
-                        A.TYCON (tyList, (path, _), loc) =>
-                        strPath (map toSymbol path)
+                        A.TYCON (tyList, (strids, _, _), loc) =>
+                        map toSymbol strids
                       | _ => nil
                   val ty = Ty.evalTy tvarEnv (#Env topEnv) ty
   

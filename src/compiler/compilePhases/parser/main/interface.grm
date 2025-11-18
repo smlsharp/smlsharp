@@ -560,27 +560,35 @@ id
 
 longid
         : id
-          ([id], (idleft, idright))
+          (nil, id, (idleft, idright))
         | alphabetic_id PERIOD longid
-          (alphabetic_id :: #1 longid, (alphabetic_idleft, longidright))
+          (alphabetic_id :: #1 longid,
+           #2 longid,
+           (alphabetic_idleft, longidright))
 
 longstrid
         : alphabetic_id
-          ([alphabetic_id], (alphabetic_idleft, alphabetic_idright))
+          (nil, alphabetic_id, (alphabetic_idleft, alphabetic_idright))
         | alphabetic_id PERIOD longstrid
-          (alphabetic_id :: #1 longstrid, (alphabetic_idleft, longstridright))
+          (alphabetic_id :: #1 longstrid,
+           #2 longstrid,
+           (alphabetic_idleft, longstridright))
 
 longtycon
         : id_noSTAR
-          ([id_noSTAR], (id_noSTARleft, id_noSTARright))
+          (nil, id_noSTAR, (id_noSTARleft, id_noSTARright))
         | alphabetic_id PERIOD longtycon
-          (alphabetic_id :: #1 longtycon, (alphabetic_idleft, longtyconright))
+          (alphabetic_id :: #1 longtycon,
+           #2 longtycon,
+           (alphabetic_idleft, longtyconright))
 
 longtycon_noEQ
         : id_noEQSTAR
-          ([id_noEQSTAR], (id_noEQSTARleft, id_noEQSTARright))
+          (nil, id_noEQSTAR, (id_noEQSTARleft, id_noEQSTARright))
         | alphabetic_id PERIOD longtycon
-          (alphabetic_id :: #1 longtycon, (alphabetic_idleft, longtyconright))
+          (alphabetic_id :: #1 longtycon,
+           #2 longtycon,
+           (alphabetic_idleft, longtyconright))
 
 vids
         : id

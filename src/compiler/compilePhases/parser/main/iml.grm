@@ -27,9 +27,9 @@ structure A = Absyn
 structure S = AbsynSQL
 
 fun PATID (id, loc) =
-    A.PATID (false, ([id], loc), loc)
+    A.PATID (false, (nil, id, loc), loc)
 fun OP_PATID (id, pos1, loc as (_, pos3)) =
-    A.PATID (true, ([id], loc), (pos1, pos3))
+    A.PATID (true, (nil, id, loc), (pos1, pos3))
 
 %%
 
@@ -582,31 +582,41 @@ id_noSQL
 
 longid
         : id
-          ([id], (idleft, idright))
+          (nil, id, (idleft, idright))
         | alphabetic_id PERIOD longid
-          (alphabetic_id :: #1 longid, (alphabetic_idleft, longidright))
+          (alphabetic_id :: #1 longid,
+           #2 longid,
+           (alphabetic_idleft, longidright))
 
 longid_noID
         : alphabetic_id PERIOD longid
-          (alphabetic_id :: #1 longid, (alphabetic_idleft, longidright))
+          (alphabetic_id :: #1 longid,
+           #2 longid,
+           (alphabetic_idleft, longidright))
 
 longstrid
         : alphabetic_id
-          ([alphabetic_id], (alphabetic_idleft, alphabetic_idright))
+          (nil, alphabetic_id, (alphabetic_idleft, alphabetic_idright))
         | alphabetic_id PERIOD longstrid
-          (alphabetic_id :: #1 longstrid, (alphabetic_idleft, longstridright))
+          (alphabetic_id :: #1 longstrid,
+           #2 longstrid,
+           (alphabetic_idleft, longstridright))
 
 longtycon
         : id_noSTAR
-          ([id_noSTAR], (id_noSTARleft, id_noSTARright))
+          (nil, id_noSTAR, (id_noSTARleft, id_noSTARright))
         | alphabetic_id PERIOD longtycon
-          (alphabetic_id :: #1 longtycon, (alphabetic_idleft, longtyconright))
+          (alphabetic_id :: #1 longtycon,
+           #2 longtycon,
+           (alphabetic_idleft, longtyconright))
 
 longtycon_noEQ
         : id_noEQSTAR
-          ([id_noEQSTAR], (id_noEQSTARleft, id_noEQSTARright))
+          (nil, id_noEQSTAR, (id_noEQSTARleft, id_noEQSTARright))
         | alphabetic_id PERIOD longtycon
-          (alphabetic_id :: #1 longtycon, (alphabetic_idleft, longtyconright))
+          (alphabetic_id :: #1 longtycon,
+           #2 longtycon,
+           (alphabetic_idleft, longtyconright))
 
 vids
         : id
@@ -1270,7 +1280,7 @@ sqlatexp
           (S.ID (true, longid, (OPleft, longidright)))
         | id_noSQL
           (S.ID (false,
-                 ([id_noSQL], (id_noSQLleft, id_noSQLright)),
+                 (nil, id_noSQL, (id_noSQLleft, id_noSQLright)),
                  (id_noSQLleft, id_noSQLright)))
         | HASH lab PERIOD lab
           (S.COLUMN2 (lab1, lab2, (HASHleft, lab2right)))
