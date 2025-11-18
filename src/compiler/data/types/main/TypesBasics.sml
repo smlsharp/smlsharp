@@ -326,7 +326,7 @@ end
   fun freshRigidSubst boundEnv = 
       let
         val id = TvarID.generate()
-        val symbol = {symbol = Symbol.fromString "RIGID", loc = Loc.noloc}
+        val symbol = {symbol = Symbol.intern "RIGID", loc = Loc.noloc}
         val tvar = {symbol=symbol, isEq=false, id=id, lifted=false}
         val utvarOpt = SOME tvar
       in
@@ -338,7 +338,7 @@ end
   fun freshRigidSubstWithLambdaDepth lambdaDepth boundEnv =
       let
         val id = TvarID.generate()
-        val symbol = {symbol = Symbol.fromString "RIGID", loc = Loc.noloc}
+        val symbol = {symbol = Symbol.intern "RIGID", loc = Loc.noloc}
         val tvar = {symbol=symbol, isEq=false, id=id, lifted=false}
         val utvarOpt = SOME tvar
       in

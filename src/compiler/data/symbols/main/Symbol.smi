@@ -9,7 +9,7 @@ struct
   val format_symbol : symbol -> SMLFormat.format
 
   val toString : symbol -> string
-  val fromString : string -> symbol
+  val intern : string -> symbol
   val compare : symbol * symbol -> order
 
   structure Ord =

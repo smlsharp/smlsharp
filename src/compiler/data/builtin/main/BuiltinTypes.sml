@@ -34,7 +34,7 @@ struct
 
   fun evalTy (env as (tvarMap, self)) ty =
       case ty of
-        TVAR s => (case Symbol.Map.find (tvarMap, Symbol.fromString s) of
+        TVAR s => (case Symbol.Map.find (tvarMap, Symbol.intern s) of
                      SOME tv => I.TYVAR tv
                    | NONE =>
                      (print "bug tvar not found\n";
@@ -63,10 +63,10 @@ struct
 
   fun makeTfun typIdOpt {printName, admitsEq, formals, dtyKind} =
       let
-        val printName = {symbol = Symbol.fromString printName, loc = Loc.noloc}
+        val printName = {symbol = Symbol.intern printName, loc = Loc.noloc}
         val formalTvars =
             map (fn tvarName =>
-                    {symbol = {symbol = Symbol.fromString tvarName,
+                    {symbol = {symbol = Symbol.intern tvarName,
                                loc = Loc.noloc},
                      isEq = false,
                      id = TvarID.generate (),
@@ -75,7 +75,7 @@ struct
         val tvarEnv =
             ListPair.foldlEq
               (fn (name, tvar, tvarEnv) =>
-                  Symbol.Map.insert (tvarEnv, Symbol.fromString name, tvar))
+                  Symbol.Map.insert (tvarEnv, Symbol.intern name, tvar))
               Symbol.Map.empty
               (formals, formalTvars)
         val tfvSpec =
@@ -94,7 +94,7 @@ struct
             | REF x => [x]
         val conList =
             map (fn (name, tyOpt) =>
-                    {name = Symbol.fromString name,
+                    {name = Symbol.intern name,
                      id = ConID.generate (),
                      ty = Option.map (evalTy (tvarEnv, tfun)) tyOpt})
                 conList

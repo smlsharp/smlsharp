@@ -457,128 +457,127 @@ constant
 
 alphabetic_id
         : ALNUMID
-          (Symbol.fromString ALNUMID,
-           (ALNUMIDleft, ALNUMIDright))
+          (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
         | ALL
-          (Symbol.fromString "all", (ALLleft, ALLright))
+          (Symbol.intern "all", (ALLleft, ALLright))
         | ASC
-          (Symbol.fromString "asc", (ASCleft, ASCright))
+          (Symbol.intern "asc", (ASCleft, ASCright))
         | BEGIN
-          (Symbol.fromString "begin", (BEGINleft, BEGINright))
+          (Symbol.intern "begin", (BEGINleft, BEGINright))
         | BY
-          (Symbol.fromString "by", (BYleft, BYright))
+          (Symbol.intern "by", (BYleft, BYright))
         | COMMIT
-          (Symbol.fromString "commit", (COMMITleft, COMMITright))
+          (Symbol.intern "commit", (COMMITleft, COMMITright))
         | CROSS
-          (Symbol.fromString "cross", (CROSSleft, CROSSright))
+          (Symbol.intern "cross", (CROSSleft, CROSSright))
         | DEFAULT
-          (Symbol.fromString "default", (DEFAULTleft, DEFAULTright))
+          (Symbol.intern "default", (DEFAULTleft, DEFAULTright))
         | DELETE
-          (Symbol.fromString "delete", (DELETEleft, DELETEright))
+          (Symbol.intern "delete", (DELETEleft, DELETEright))
         | DESC
-          (Symbol.fromString "desc", (DESCleft, DESCright))
+          (Symbol.intern "desc", (DESCleft, DESCright))
         | DISTINCT
-          (Symbol.fromString "distinct", (DISTINCTleft, DISTINCTright))
+          (Symbol.intern "distinct", (DISTINCTleft, DISTINCTright))
         | EXISTS
-          (Symbol.fromString "exists", (EXISTSleft, EXISTSright))
+          (Symbol.intern "exists", (EXISTSleft, EXISTSright))
         | FALSE
-          (Symbol.fromString "false", (FALSEleft, FALSEright))
+          (Symbol.intern "false", (FALSEleft, FALSEright))
         | FETCH
-          (Symbol.fromString "fetch", (FETCHleft, FETCHright))
+          (Symbol.intern "fetch", (FETCHleft, FETCHright))
         | FIRST
-          (Symbol.fromString "first", (FIRSTleft, FIRSTright))
+          (Symbol.intern "first", (FIRSTleft, FIRSTright))
         | FROM
-          (Symbol.fromString "from", (FROMleft, FROMright))
+          (Symbol.intern "from", (FROMleft, FROMright))
         | GROUP
-          (Symbol.fromString "group", (GROUPleft, GROUPright))
+          (Symbol.intern "group", (GROUPleft, GROUPright))
         | HAVING
-          (Symbol.fromString "having", (HAVINGleft, HAVINGright))
+          (Symbol.intern "having", (HAVINGleft, HAVINGright))
         | INNER
-          (Symbol.fromString "inner", (INNERleft, INNERright))
+          (Symbol.intern "inner", (INNERleft, INNERright))
         | INSERT
-          (Symbol.fromString "insert", (INSERTleft, INSERTright))
+          (Symbol.intern "insert", (INSERTleft, INSERTright))
         | INTO
-          (Symbol.fromString "into", (INTOleft, INTOright))
+          (Symbol.intern "into", (INTOleft, INTOright))
         | IS
-          (Symbol.fromString "is", (ISleft, ISright))
+          (Symbol.intern "is", (ISleft, ISright))
         | JOIN
-          (Symbol.fromString "join", (JOINleft, JOINright))
+          (Symbol.intern "join", (JOINleft, JOINright))
         | LIMIT
-          (Symbol.fromString "limit", (LIMITleft, LIMITright))
+          (Symbol.intern "limit", (LIMITleft, LIMITright))
         | NATURAL
-          (Symbol.fromString "natural", (NATURALleft, NATURALright))
+          (Symbol.intern "natural", (NATURALleft, NATURALright))
         | NEXT
-          (Symbol.fromString "next", (NEXTleft, NEXTright))
+          (Symbol.intern "next", (NEXTleft, NEXTright))
         | NOT
-          (Symbol.fromString "not", (NOTleft, NOTright))
+          (Symbol.intern "not", (NOTleft, NOTright))
         | NULL
-          (Symbol.fromString "null", (NULLleft, NULLright))
+          (Symbol.intern "null", (NULLleft, NULLright))
         | OFFSET
-          (Symbol.fromString "offset", (OFFSETleft, OFFSETright))
+          (Symbol.intern "offset", (OFFSETleft, OFFSETright))
         | ON
-          (Symbol.fromString "on", (ONleft, ONright))
+          (Symbol.intern "on", (ONleft, ONright))
         | ONLY
-          (Symbol.fromString "only", (ONLYleft, ONLYright))
+          (Symbol.intern "only", (ONLYleft, ONLYright))
         | OR
-          (Symbol.fromString "or", (ORleft, ORright))
+          (Symbol.intern "or", (ORleft, ORright))
         | ORDER
-          (Symbol.fromString "order", (ORDERleft, ORDERright))
+          (Symbol.intern "order", (ORDERleft, ORDERright))
         | ROLLBACK
-          (Symbol.fromString "rollback", (ROLLBACKleft, ROLLBACKright))
+          (Symbol.intern "rollback", (ROLLBACKleft, ROLLBACKright))
         | ROW
-          (Symbol.fromString "row", (ROWleft, ROWright))
+          (Symbol.intern "row", (ROWleft, ROWright))
         | ROWS
-          (Symbol.fromString "rows", (ROWSleft, ROWSright))
+          (Symbol.intern "rows", (ROWSleft, ROWSright))
         | SELECT
-          (Symbol.fromString "select", (SELECTleft, SELECTright))
+          (Symbol.intern "select", (SELECTleft, SELECTright))
         | SET
-          (Symbol.fromString "set", (SETleft, SETright))
+          (Symbol.intern "set", (SETleft, SETright))
         | TRUE
-          (Symbol.fromString "true", (TRUEleft, TRUEright))
+          (Symbol.intern "true", (TRUEleft, TRUEright))
         | UNKNOWN
-          (Symbol.fromString "unknown", (UNKNOWNleft, UNKNOWNright))
+          (Symbol.intern "unknown", (UNKNOWNleft, UNKNOWNright))
         | UPDATE
-          (Symbol.fromString "update", (UPDATEleft, UPDATEright))
+          (Symbol.intern "update", (UPDATEleft, UPDATEright))
         | VALUES
-          (Symbol.fromString "values", (VALUESleft, VALUESright))
+          (Symbol.intern "values", (VALUESleft, VALUESright))
 
 id_noEQSTAR
         : alphabetic_id
           (alphabetic_id)
         | SYMBOLID
-          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
+          (Symbol.intern SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
 
 id_noEQ
         : id_noEQSTAR
           (id_noEQSTAR)
         | ASTERISK
-          (Symbol.fromString "*", (ASTERISKleft, ASTERISKright))
+          (Symbol.intern "*", (ASTERISKleft, ASTERISKright))
 
 id_noSTAR
         : id_noEQSTAR
           (id_noEQSTAR)
         | EQ
-          (Symbol.fromString "=", (EQleft, EQright))
+          (Symbol.intern "=", (EQleft, EQright))
 
 id
         : id_noEQ
           (id_noEQ)
         | EQ
-          (Symbol.fromString "=", (EQleft, EQright))
+          (Symbol.intern "=", (EQleft, EQright))
 
 id_noEQSQL
         : ALNUMID
-          (Symbol.fromString ALNUMID, (ALNUMIDleft, ALNUMIDright))
+          (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
         | SYMBOLID
-          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
+          (Symbol.intern SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
         | ASTERISK
-          (Symbol.fromString "*", (ASTERISKleft, ASTERISKright))
+          (Symbol.intern "*", (ASTERISKleft, ASTERISKright))
 
 id_noSQL
         : id_noEQSQL
           (id_noEQSQL)
         | EQ
-          (Symbol.fromString "=", (EQleft, EQright))
+          (Symbol.intern "=", (EQleft, EQright))
 
 longid
         : id
@@ -1544,18 +1543,17 @@ exbind
 
 tyvar
         : TYVAR
-          (false, (Symbol.fromString TYVAR, (TYVARleft, TYVARright)))
+          (false, (Symbol.intern TYVAR, (TYVARleft, TYVARright)))
         | EQTYVAR
-          (true, (Symbol.fromString EQTYVAR, (EQTYVARleft, EQTYVARright)))
+          (true, (Symbol.intern EQTYVAR, (EQTYVARleft, EQTYVARright)))
 
 free_tyvar
         : FREE_TYVAR
           (false,
-           (Symbol.fromString FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
+           (Symbol.intern FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
         | FREE_EQTYVAR
           (true,
-           (Symbol.fromString FREE_EQTYVAR,
-            (FREE_EQTYVARleft, FREE_EQTYVARright)))
+           (Symbol.intern FREE_EQTYVAR, (FREE_EQTYVARleft, FREE_EQTYVARright)))
 
 tyvarseq
         : tyvar

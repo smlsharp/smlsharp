@@ -8,7 +8,7 @@ struct
   type symbol = string
 
   fun toString (x : symbol) = x
-  fun fromString (x : string) = x
+  fun intern (x : string) = x
   val compare = String.compare
 
   fun term s = SMLFormat.FormatExpression.Term (size s, s)

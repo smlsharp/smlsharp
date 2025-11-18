@@ -79,7 +79,7 @@ local
   val DUMMYIDFUN = SymbolWithLoc.mkLongsymbol (nil, "id") Loc.noloc
 
  (* This is to avoid name conflict in functor names and variable names *)
-  val FUNCTORPREFIX = {symbol = Symbol.fromString "_", loc = Loc.noloc}
+  val FUNCTORPREFIX = {symbol = Symbol.intern "_", loc = Loc.noloc}
 
   exception Arity 
   exception Eq
@@ -129,7 +129,7 @@ local
                    val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                  in
                    {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                    funSymbol = {symbol = Symbol.fromString "_", loc = Loc.noloc},
+                    funSymbol = {symbol = Symbol.intern "_", loc = Loc.noloc},
                     tyList=nil
                    }
                  end
@@ -137,13 +137,13 @@ local
             )
           | _ => 
                let
-                 val longsymbol = SymbolWithLoc.prefixPath' (path, {symbol = Symbol.fromString "_", loc = Loc.noloc})
+                 val longsymbol = SymbolWithLoc.prefixPath' (path, {symbol = Symbol.intern "_", loc = Loc.noloc})
                in
                  (EU.enqueueError
                     (SymbolWithLoc.longsymbolToLoc longsymbol,
                      E.IlleagalFunID ("010",{pat = funIdPat}));
                   {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                   funSymbol = {symbol = Symbol.fromString "_", loc = Loc.noloc},
+                   funSymbol = {symbol = Symbol.intern "_", loc = Loc.noloc},
                    tyList=nil
                   }
                  )
@@ -1598,9 +1598,9 @@ U.printTfun tfun;
               handle e => raise e
             end
         val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-        val argStrSymbol = {symbol = Symbol.fromString "arg", loc = Loc.noloc}
+        val argStrSymbol = {symbol = Symbol.intern "arg", loc = Loc.noloc}
         val argStrLongsymbol = SymbolWithLoc.symbolToLongsymbol argStrSymbol
-        val bodyStrSymbol = {symbol = Symbol.fromString "body", loc = Loc.noloc}
+        val bodyStrSymbol = {symbol = Symbol.intern "body", loc = Loc.noloc}
         val bodyStrLongsymbol = SymbolWithLoc.symbolToLongsymbol bodyStrSymbol
         val tempEnv =
             VP.rebindStr 

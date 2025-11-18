@@ -130,7 +130,7 @@ struct
               SOME _ => raise Bug.Bug "composeCon: LAYOUT_CHOICE"
             | NONE =>
               E.Cast (if Longsymbol.last (#path conInfo)
-                         = Symbol.fromString falseName
+                         = Symbol.intern falseName
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
           )
@@ -196,7 +196,7 @@ struct
           end
         | LAYOUT_CHOICE {falseName} =>
           let
-            val falseName = Symbol.fromString falseName
+            val falseName = Symbol.intern falseName
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
                   [(con1, NONE, exp1), (con2, NONE, exp2)] =>

@@ -75,18 +75,17 @@ in
   fun longsymbolToLoc ({loc, ...} : longsymbol) = loc
 
   fun coerceLongsymbolToSymbol (longsymbol as {loc, ...} : longsymbol) =
-      {symbol =
-         Symbol.fromString (Longsymbol.toString (toLongsymbol longsymbol)),
+      {symbol = Symbol.intern (Longsymbol.toString (toLongsymbol longsymbol)),
        loc = loc}
 
   fun mkLongsymbol (path, last) loc =
-      {path = map (fn s => {symbol = Symbol.fromString s, loc = loc}) path,
-       last = {symbol = Symbol.fromString last, loc = loc},
+      {path = map (fn s => {symbol = Symbol.intern s, loc = loc}) path,
+       last = {symbol = Symbol.intern last, loc = loc},
        loc = loc}
 
   fun setVersion ({path, last, loc} : longsymbol, version) =
       {path = path @ [last],
-       last = {symbol = Symbol.fromString (Int.toString version),
+       last = {symbol = Symbol.intern (Int.toString version),
                loc = Loc.noloc},
        loc = loc}
 
@@ -135,7 +134,7 @@ in
 
   (* FIXME: how to ensure the generated symbol is fresh? *)
   fun generate () =
-      {symbol = Symbol.fromString ("$" ^ gensym ()), loc = Loc.noloc}
+      {symbol = Symbol.intern ("$" ^ gensym ()), loc = Loc.noloc}
 
   fun generateLongsymbol () =
       symbolToLongsymbol (generate ())

@@ -530,33 +530,32 @@ int
 
 alphabetic_id
         : ALNUMID
-          (Symbol.fromString ALNUMID,
-           (ALNUMIDleft, ALNUMIDright))
+          (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
           (* difference: sql keywords *)
 
 id_noEQSTAR
         : alphabetic_id
           (alphabetic_id)
         | SYMBOLID
-          (Symbol.fromString SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
+          (Symbol.intern SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
 
 id_noEQ
         : id_noEQSTAR
           (id_noEQSTAR)
         | ASTERISK
-          (Symbol.fromString "*", (ASTERISKleft, ASTERISKright))
+          (Symbol.intern "*", (ASTERISKleft, ASTERISKright))
 
 id_noSTAR
         : id_noEQSTAR
           (id_noEQSTAR)
         | EQ
-          (Symbol.fromString "=", (EQleft, EQright))
+          (Symbol.intern "=", (EQleft, EQright))
 
 id
         : id_noEQ
           (id_noEQ)
         | EQ
-          (Symbol.fromString "=", (EQleft, EQright))
+          (Symbol.intern "=", (EQleft, EQright))
 
 longid
         : id
@@ -681,18 +680,17 @@ exbind
 
 tyvar
         : TYVAR
-          (false, (Symbol.fromString TYVAR, (TYVARleft, TYVARright)))
+          (false, (Symbol.intern TYVAR, (TYVARleft, TYVARright)))
         | EQTYVAR
-          (true, (Symbol.fromString EQTYVAR, (EQTYVARleft, EQTYVARright)))
+          (true, (Symbol.intern EQTYVAR, (EQTYVARleft, EQTYVARright)))
 
 free_tyvar
         : FREE_TYVAR
           (false,
-           (Symbol.fromString FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
+           (Symbol.intern FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
         | FREE_EQTYVAR
           (true,
-           (Symbol.fromString FREE_EQTYVAR,
-            (FREE_EQTYVARleft, FREE_EQTYVARright)))
+           (Symbol.intern FREE_EQTYVAR, (FREE_EQTYVARleft, FREE_EQTYVARright)))
 
 tyvarseq
         : tyvar

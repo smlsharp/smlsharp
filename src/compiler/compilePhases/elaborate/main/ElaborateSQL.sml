@@ -135,13 +135,13 @@ struct
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
 
   fun recordLabelToSymbol label loc =
-      {symbol = Symbol.fromString (RecordLabel.toString label), loc = LOC loc}
+      {symbol = Symbol.intern (RecordLabel.toString label), loc = LOC loc}
   fun recordLabelToLongsymbol label loc =
       SymbolWithLoc.symbolToLongsymbol (recordLabelToSymbol label loc)
 
   fun prefixPath path (symbol as {loc, ...}) =
       SymbolWithLoc.prefixPath'
-        (map (fn x => {symbol = Symbol.fromString x, loc = loc}) path,  symbol)
+        (map (fn x => {symbol = Symbol.intern x, loc = loc}) path,  symbol)
 
   fun Ty ty (_:S.loc) = ty : A.ty
 
@@ -158,8 +158,8 @@ struct
       A.TYCON
         (case args of nil => NONE
                     | _ :: _ => SOME (map (fn arg => arg loc) args, loc),
-         (map (fn i => (Symbol.fromString i, loc)) (#1 name),
-          (Symbol.fromString (#2 name), loc),
+         (map (fn i => (Symbol.intern i, loc)) (#1 name),
+          (Symbol.intern (#2 name), loc),
           loc),
          loc)
 

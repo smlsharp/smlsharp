@@ -47,13 +47,13 @@ struct
   fun sqlEnv env loc =
       let
         val env =
-            Symbol.Map.insert (env, Symbol.fromString "like", (F.INFIX 5, loc))
+            Symbol.Map.insert (env, Symbol.intern "like", (F.INFIX 5, loc))
         val env =
-            Symbol.Map.insert (env, Symbol.fromString "||", (F.INFIX 5, loc))
+            Symbol.Map.insert (env, Symbol.intern "||", (F.INFIX 5, loc))
         val env =
-            Symbol.Map.insert (env, Symbol.fromString "%", (F.INFIX 7, loc))
+            Symbol.Map.insert (env, Symbol.intern "%", (F.INFIX 7, loc))
         val env =
-            Symbol.Map.insert (env, Symbol.fromString "mod", (F.NONFIX, loc))
+            Symbol.Map.insert (env, Symbol.intern "mod", (F.NONFIX, loc))
       in
         env
       end

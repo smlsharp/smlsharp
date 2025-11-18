@@ -1050,7 +1050,7 @@ in
                   ("008",
                    case utvarOpt of
                      SOME {symbol, ...} => #symbol symbol
-                   | NONE => Symbol.fromString ""
+                   | NONE => Symbol.intern ""
                   )
                )
            else ();

@@ -12,7 +12,7 @@ struct
   fun toSymbolList x : longsymbol = x
 
   fun fromStringList (path, last) =
-      (map Symbol.fromString path, Symbol.fromString last)
+      (map Symbol.intern path, Symbol.intern last)
 
   fun toStringList ((path, last) : longsymbol) =
       (map Symbol.toString path, Symbol.toString last)

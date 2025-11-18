@@ -967,9 +967,9 @@ in
                     handle e => raise e
                   end
               val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-              val argStrSymbol = {symbol = Symbol.fromString "arg", loc = Loc.noloc}
+              val argStrSymbol = {symbol = Symbol.intern "arg", loc = Loc.noloc}
               val argStrLongsymbol = SymbolWithLoc.symbolToLongsymbol argStrSymbol
-              val bodyStrSymbol = {symbol = Symbol.fromString "body", loc = Loc.noloc}
+              val bodyStrSymbol = {symbol = Symbol.intern "body", loc = Loc.noloc}
               val bodyStrLongsymbol = SymbolWithLoc.symbolToLongsymbol bodyStrSymbol
               val tempEnv =
                   VP.reinsertStr(VP.reinsertStr(V.emptyEnv, argStrSymbol, argStrEntry),
@@ -1313,7 +1313,7 @@ in
               I.TYPOLY _ => functorTy2
             | I.TYFUNM _ => functorTy2
             | _ => I.TYFUNM([BT.unitITy], functorTy2)
-        val longsymbol = [{symbol = Symbol.fromString FUNCORPREFIX, loc = loc}] @@ functorSymbol
+        val longsymbol = [{symbol = Symbol.intern FUNCORPREFIX, loc = loc}] @@ functorSymbol
         val exInfo = {used = ref false, longsymbol=longsymbol, ty=functorTy, version=provider}
         val decl = I.ICEXTERNVAR exInfo
         val functorExp = I.ICEXVAR {longsymbol=longsymbol,
