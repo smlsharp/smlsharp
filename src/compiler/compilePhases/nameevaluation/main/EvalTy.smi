@@ -53,8 +53,8 @@ struct
                         -> NameEvalEnv.env * IDCalc.icdecl list
   val resetFreeTvarEnv : unit -> unit
 
-  val isReservedName : string -> bool
-  val isReservedConName : string -> bool
+  val reservedNameSet : Symbol.Set.set
+  val reservedConNameSet : Symbol.Set.set
   val checkReservedName
-      : (string -> bool) -> ('a -> SymbolWithLoc.symbol) -> 'a list -> unit
+      : Symbol.Set.set -> ('a -> SymbolWithLoc.symbol) -> 'a list -> unit
 end

@@ -119,30 +119,23 @@ in
         foldr checkTvarKind nil tvarKindList
       end
 
-  fun isReservedName name =
-      case name of
-        "true" => true
-      | "false" => true
-      | "nil" => true
-      | "::" => true
-      | "ref" => true
-      | _ => false
+  val reservedNameSet =
+      Symbol.Set.fromList
+        (map Symbol.intern ["true", "false", "nil", "::", "ref"])
 
-  fun isReservedConName name =
-      case name of
-        "it" => true
-      | _ => isReservedName name
+  val reservedConNameSet =
+      Symbol.Set.add (reservedNameSet, Symbol.intern "it")
 
-  fun checkReservedName checker getSymbol nil = ()
-    | checkReservedName checker getSymbol (item :: items) =
+  fun checkReservedName reserved getSymbol nil = ()
+    | checkReservedName reserved getSymbol (item :: items) =
       let
         val symbol = getSymbol item
       in
-        if checker (SymbolWithLoc.symbolToString symbol)
+        if Symbol.Set.member (reserved, #symbol symbol)
         then EU.enqueueError (#loc symbol,
                               E.BindReservedName (#symbol symbol))
         else ();
-        checkReservedName checker getSymbol items
+        checkReservedName reserved getSymbol items
       end
 
   (* type variable evaluators *)
@@ -538,7 +531,7 @@ in
                      datbindList)
                   (fn s => E.DuplicateConNameInDty("Ty-130",s))
         val _ = checkReservedName
-                  isReservedConName
+                  reservedConNameSet
                   (fn {symbol, ...} => symbol)
                   (List.concat (map #conbind datbindList))
         val (newEnv, datbindListRev) =

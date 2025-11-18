@@ -170,7 +170,7 @@ local
                 NONE =>
                 let
                   val _ = Ty.checkReservedName
-                            Ty.isReservedName
+                            Ty.reservedNameSet
                             (fn x => x)
                             [symbol]
                   val varId = VarID.generate()
@@ -337,7 +337,7 @@ local
                       E.VarPatExpected("090", {longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol symbol)}));
                    VarID.generate())
             val _ = Ty.checkReservedName
-                      Ty.isReservedName
+                      Ty.reservedNameSet
                       (fn x => x)
                       [symbol]
             val longsymbol =  SymbolWithLoc.prefixPath' (path, symbol)
@@ -497,7 +497,7 @@ local
                     recList
                     (fn s => E.DuplicateVarInRecDecl("110",s))
           val _ = Ty.checkReservedName
-                    Ty.isReservedName
+                    Ty.reservedNameSet
                     (fn ({symbol, ...}, _, _) => symbol)
                     recList
           val returnEnv2 =
@@ -542,7 +542,7 @@ local
                     declList
                     (fn s => E.DuplicateFunVarInFunDecl("100",s))
           val _ = Ty.checkReservedName
-                    Ty.isReservedName
+                    Ty.reservedNameSet
                     (fn {fdecl=({symbol, ...}, _), ...} => symbol)
                     declList
           val returnEnv =
@@ -779,7 +779,7 @@ local
                     plexbindList
                     (fn s => E.DuplicateExnName("150",s))
           val _ = Ty.checkReservedName
-                    Ty.isReservedConName
+                    Ty.reservedConNameSet
                     getSymbol
                     plexbindList
           val (exEnv, exdeclList) =

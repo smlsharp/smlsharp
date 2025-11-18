@@ -286,7 +286,7 @@ in
                 end
           val longsymbol= path @@ symbol
         in
-          Ty.checkReservedName Ty.isReservedName (fn x => x) [symbol];
+          Ty.checkReservedName Ty.reservedNameSet (fn x => x) [symbol];
           case body of
             PI.VAL_EXTERN {ty} =>
             let
@@ -561,7 +561,8 @@ in
         )
       | PI.PIEXCEPTION {symbol, ty=tyOpt, loc} =>
         let
-          val _ = Ty.checkReservedName Ty.isReservedConName (fn x => x) [symbol]
+          val _ =
+              Ty.checkReservedName Ty.reservedConNameSet (fn x => x) [symbol]
           val longsymbol = path @@ symbol
           val ty =
               case tyOpt of
@@ -581,7 +582,7 @@ in
         end
 
       | PI.PIEXCEPTIONREP {symbol, longsymbol, loc} =>
-        (Ty.checkReservedName Ty.isReservedConName (fn x => x) [symbol];
+        (Ty.checkReservedName Ty.reservedConNameSet (fn x => x) [symbol];
          case VP.findId (env, longsymbol) of
            SOME(sym, idstatus as I.IDEXN idInfo) => 
            (renameEnv, externSet, 
