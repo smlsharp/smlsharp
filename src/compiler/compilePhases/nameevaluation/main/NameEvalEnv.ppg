@@ -646,13 +646,13 @@ in
   fun replaceLocTyE loc tyE =
       SymbolWithLocEnv.mapi2
       (fn (symbol, tstr) =>
-          (SymbolWithLoc.replaceLocSymbol loc symbol, tstr))
+          (symbol # {loc = loc}, tstr))
       tyE
 
   fun replaceLocVarE loc varE =
       SymbolWithLocEnv.mapi2
       (fn (symbol, idstatus) =>
-          (SymbolWithLoc.replaceLocSymbol loc symbol, idstatus))
+          (symbol # {loc = loc}, idstatus))
       varE
           
   fun replaceLocStrEntry newLoc {env, strKind, loc, definedSymbol} =
@@ -667,7 +667,7 @@ in
   and replaceLocStrE loc (STR strentryMap) =
       STR (SymbolWithLocEnv.mapi2
              (fn (symbol, strEntry) =>
-                 (SymbolWithLoc.replaceLocSymbol loc symbol,
+                 (symbol # {loc = loc},
                   replaceLocStrEntry loc strEntry))
              strentryMap)
 

@@ -109,9 +109,6 @@ in
   fun eqLongsymbol (s1 : longsymbol, s2 : longsymbol) =
       longsymbolToString s1 = longsymbolToString s2
 
-  fun replaceLocSymbol loc (symbol : symbol) =
-      symbol # {loc = loc}
-
   fun replaceLocLongsymbol loc (longsymbol : longsymbol) =
       longsymbol # {loc = loc}
 
