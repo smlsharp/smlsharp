@@ -10,7 +10,7 @@ struct
   val format_longsymbol : longsymbol -> SMLFormat.format
 
   val toStringList : longsymbol -> string list * string
-  val fromStringList : string list * string -> longsymbol
+  val fromSymbol : Symbol.symbol -> longsymbol
   val toSymbolList : longsymbol -> Symbol.symbol list * Symbol.symbol
   val fromSymbolList : Symbol.symbol list * Symbol.symbol -> longsymbol
   val toString : longsymbol -> string
