@@ -41,89 +41,124 @@ in
       | x => x
 
   type longsymbol =
-    {symbols : symbol list, loc : Loc.loc}
+      {
+        path : symbol list, (* strid path *)
+        last : symbol,
+        loc : Loc.loc (* user's original location *)
+      }
+
+  fun fromAbsynId (symbol, loc) = {symbol = symbol, loc = Loc.LOC loc}
 
   fun fromAbsyn (strids, id, loc) =
-      {symbols = map (fn (symbol, loc) => {symbol = symbol, loc = Loc.LOC loc})
-                     (strids @ [id]),
+      {path = map fromAbsynId strids,
+       last = fromAbsynId id,
        loc = Loc.LOC loc}
 
-  fun toSymbolList {symbols, loc} = symbols
+  fun toSymbolList ({path, last, loc} : longsymbol) =
+      path @ [last]
 
-  fun toLongsymbol {symbols, loc} =
-      Longsymbol.fromSymbolList (map #symbol symbols)
+  fun toLongsymbol longsymbol =
+      Longsymbol.fromSymbolList (map #symbol (toSymbolList longsymbol))
+
   fun toRecordLabel longsymbol =
       RecordLabel.fromString (Longsymbol.toString (toLongsymbol longsymbol))
+
   fun fromLongsymbol longsymbol =
-      {symbols = map (fn x => {symbol = x, loc = Loc.noloc})
-                     (Longsymbol.toSymbolList longsymbol),
-       loc = Loc.noloc}
+      case rev (Longsymbol.toSymbolList longsymbol) of
+        nil => raise Bug.Bug "SymbolWithLoc.fromLongsymbol with empty"
+      | last :: othersRev =>
+        {path = map (fn x => {symbol = x, loc = Loc.noloc}) (rev othersRev),
+         last = {symbol = last, loc = Loc.noloc},
+         loc = Loc.noloc}
 
   fun format_longsymbol longsymbol =
       Longsymbol.format_longsymbol (toLongsymbol longsymbol)
-  fun formatWithLoc_longsymbol (longsymbol as {symbols, loc}) =
-      Longsymbol.format_longsymbol (toLongsymbol longsymbol)
+
+  fun formatWithLoc_longsymbol (longsymbol as {loc, ...}) =
+      format_longsymbol longsymbol
       @ [SMLFormat.FormatExpression.Term (1, "("),
          SMLFormat.FormatExpression.Sequence (Loc.format_loc loc),
          SMLFormat.FormatExpression.Term (1, ")")]
 
   fun compareLoc ({symbol=s1, loc=l1}, {symbol=s2, loc=l2}) =
-      Loc.compareLoc (l1,l2)
+      Loc.compareLoc (l1, l2)
 
-  fun lastSymbol {symbols, loc} = List.last symbols
-  fun symbolToString (s:symbol) = Symbol.toString (#symbol s)
-  fun symbolToLoc (s:symbol) = #loc s
-  fun symbolToStringWithLoc (s:symbol) = 
-      Symbol.toString (#symbol s) ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
-  fun longsymbolToString {symbols, loc} =
-      Longsymbol.toString (Longsymbol.fromSymbolList (map #symbol symbols))
-  fun longsymbolToLoc {symbols, loc} = loc
-  fun longsymbolToLoc' NONE = Loc.noloc
-    | longsymbolToLoc' (SOME {symbols, loc}) = loc
+  fun lastSymbol ({last, ...} : longsymbol) = last
 
-  fun coerceLongsymbolToSymbol (longsymbol as {loc, ...}) =
-      {symbol = Symbol.fromString (Longsymbol.toString (toLongsymbol longsymbol)),
+  fun pathOf ({path, ...} : longsymbol) = path
+
+  fun symbolToString (s : symbol) = Symbol.toString (#symbol s)
+
+  fun symbolToLoc ({loc, ...} : symbol) = loc
+
+  fun symbolToStringWithLoc s =
+      symbolToString s ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
+
+  fun longsymbolToString longsymbol =
+      Longsymbol.toString (toLongsymbol longsymbol)
+
+  fun longsymbolToLoc ({loc, ...} : longsymbol) = loc
+
+  fun coerceLongsymbolToSymbol (longsymbol as {loc, ...} : longsymbol) =
+      {symbol =
+         Symbol.fromString (Longsymbol.toString (toLongsymbol longsymbol)),
        loc = loc}
 
-  fun mkSymbol string loc = {symbol=Symbol.fromString string, loc=loc}
-  fun mkLongsymbol stringList loc =
-      {symbols = map (fn s => mkSymbol s loc) stringList, loc = loc}
+  fun mkSymbol string loc = {symbol = Symbol.fromString string, loc=loc}
 
-  fun formatUserLongSymbol {symbols, loc} =
+  fun mkLongsymbol stringList loc =
+      case rev stringList of
+        nil => raise Bug.Bug "mkLongsymbol with empty list"
+      | last :: othersRev =>
+        {path = map (fn s => mkSymbol s loc) (rev othersRev),
+         last = mkSymbol last loc,
+         loc = loc}
+
+  fun formatUserLongSymbol longsymbol =
       Longsymbol.format_longsymbol
         (Longsymbol.fromSymbolList
            (map Symbol.fromString
-                (toUserLongSymbols (map (Symbol.toString o #symbol) symbols))))
+                (toUserLongSymbols
+                   (map (Symbol.toString o #symbol)
+                        (toSymbolList longsymbol)))))
 
-  fun setVersion ({symbols, loc}, version) =
-      {symbols = symbols @ [{symbol = Symbol.fromString (Int.toString version), loc = Loc.noloc}],
+  fun setVersion ({path, last, loc} : longsymbol, version) =
+      {path = path @ [last],
+       last = {symbol = Symbol.fromString (Int.toString version),
+               loc = Loc.noloc},
        loc = loc}
 
-  fun symbolCompare (s1:symbol, s2:symbol) = 
-      String.compare(symbolToString s1, symbolToString s2)
+  fun symbolCompare (s1 : symbol, s2 : symbol) =
+      String.compare (symbolToString s1, symbolToString s2)
 
-  fun longsymbolCompare (s1:longsymbol, s2:longsymbol) =
-      String.compare(longsymbolToString s1, longsymbolToString s2)
+  fun longsymbolCompare (s1 : longsymbol, s2 : longsymbol) =
+      String.compare (longsymbolToString s1, longsymbolToString s2)
 
-  fun eqSymbol (s1:symbol, s2:symbol) = 
-      case symbolCompare(s1,s2) of
+  fun eqSymbol (s1 : symbol, s2 : symbol) =
+      case symbolCompare (s1, s2) of
         EQUAL => true
       | _ => false
 
-  fun eqLongsymbol (s1:longsymbol, s2:longsymbol) =
+  fun eqLongsymbol (s1 : longsymbol, s2 : longsymbol) =
       longsymbolToString s1 = longsymbolToString s2
 
-  fun replaceLocSymbol loc {symbol, loc=_} = {symbol=symbol, loc=loc}
-  fun replaceLocLongsymbol loc {symbols, loc=_} = {symbols=symbols, loc=loc}
+  fun replaceLocSymbol loc (symbol : symbol) =
+      symbol # {loc = loc}
 
-  fun symbolToLongsymbol (symbol as {loc, ...}) =
-      {symbols = [symbol], loc = loc}
+  fun replaceLocLongsymbol loc (longsymbol : longsymbol) =
+      longsymbol # {loc = loc}
 
-  fun prefixPath (prefix, {symbols, loc}) =
-      {symbols = prefix @ symbols, loc = loc}
+  fun symbolToLongsymbol (symbol as {loc, ...} : symbol) =
+      {path = nil, last = symbol, loc = loc}
 
-  fun prefixPath' (prefix, symbol as {loc, ...}) =
-      {symbols = prefix @ [symbol], loc = loc}
+  fun prefixPath (prefix, longsymbol as {path, ...}: longsymbol) =
+      longsymbol # {path = prefix @ path}
+
+  fun prefixPath' (prefix, symbol as {loc, ...} : symbol) =
+      {path = prefix, last = symbol, loc = loc}
+
+  fun replacePrefix (longsymbol : longsymbol, prefix) =
+      longsymbol # {path = prefix}
 
   val seed = ref nil : char list ref
 

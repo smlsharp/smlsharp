@@ -3,6 +3,7 @@ _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require "../../../extensions/debug/main/Bug.smi"
 _require "./Loc.smi"
 _require "./Symbol.smi"
 _require "./Longsymbol.smi"
@@ -17,6 +18,7 @@ struct
   val toSymbolList : longsymbol -> symbol list
   val compareLoc : symbol * symbol -> order
   val lastSymbol : longsymbol -> symbol
+  val pathOf : longsymbol -> symbol list
   val symbolToString : symbol -> string
   val symbolToLoc : symbol -> Loc.loc
   val toRecordLabel : longsymbol -> RecordLabel.label
@@ -24,7 +26,6 @@ struct
   val fromLongsymbol : Longsymbol.longsymbol -> longsymbol
   val longsymbolToString : longsymbol -> string
   val longsymbolToLoc : longsymbol -> Loc.loc
-  val longsymbolToLoc' : longsymbol option -> Loc.loc
   val mkSymbol : string -> Loc.loc -> symbol
   val mkLongsymbol: string list -> Loc.loc -> longsymbol
   val coerceLongsymbolToSymbol : longsymbol -> symbol
@@ -43,6 +44,7 @@ struct
   val symbolToLongsymbol : symbol -> longsymbol
   val prefixPath : symbol list * longsymbol -> longsymbol
   val prefixPath' : symbol list * symbol -> longsymbol
+  val replacePrefix : longsymbol * symbol list -> longsymbol
   val generate : unit -> symbol
   val generateLongsymbol : unit -> longsymbol
 end

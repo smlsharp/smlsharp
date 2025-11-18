@@ -1068,18 +1068,8 @@ in
                path, (typIdSubst, tfvSubst, conIdSubst)) =>
               if TypID.Set.member(typidSet, origId) then
                 let
-                  val (name, path) = case List.rev (SymbolWithLoc.toSymbolList path) of
-                                       h::tl => (h, List.rev tl)
-                                     | _ => raise bug "nil path (2)"
-                  val (name, _) = case List.rev (SymbolWithLoc.toSymbolList originalPath) of
-                                       h::tl => (h, List.rev tl)
-                                     (* 2012-8-6 ohori bug 062_functorPoly.sml
-                                        This should not happen; but
-                                        in case we can use the the above 
-                                        name here; they should be the same.
-                                     | _ => raise bug "nil path (2)"
-                                      *)
-                                     | _ => (name, path)
+                  val path = SymbolWithLoc.pathOf path
+                  val name = SymbolWithLoc.lastSymbol originalPath
                   val id = TypID.generate()
                   val (conIdSubst, conIDSet) =
                       SymbolWithLocEnv.foldri

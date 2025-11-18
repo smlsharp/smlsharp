@@ -412,10 +412,7 @@ local
                           (fn s => E.DuplicateTypParms("Sig-070",s))
                 val (tvarEnv, tvarList) =
                     Ty.genTvarList Ty.emptyTvarEnv tyvarList
-                fun strPath nil = nil
-                  | strPath [name] = nil
-                  | strPath (h::t) = h::(strPath t)
-                val realizeePath = strPath (SymbolWithLoc.toSymbolList longsymbol)
+                val realizeePath = SymbolWithLoc.pathOf longsymbol
                 val realizerPath =
                       case ty of
                         A.TYCON (tyList, (strids, _, _), loc) =>

@@ -393,7 +393,6 @@ local
         I.ICPATVAR_TRANS (varInfo as {longsymbol=defLongsymbol,...}) => 
         let
           val symbol = SymbolWithLoc.lastSymbol defLongsymbol
-              handle List.Empty => raise bug "empty longsymbol"
         in
           (case icexp of
              (* val x = y *)

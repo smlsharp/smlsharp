@@ -68,13 +68,6 @@ struct
       | _ => (tfun, renameEnv)
 
 
-  fun replacePathLongsymbol (longsymbol, path) =
-      let
-        val symbol = SymbolWithLoc.lastSymbol longsymbol
-      in
-        SymbolWithLoc.prefixPath' (path, symbol)
-      end
-
   fun replacePathTfun renameEnv path tfun =
       case tfun of
         I.TFUN_VAR 
@@ -86,7 +79,7 @@ struct
               ref (I.TFUN_DTY 
                      {id=newId,
                       admitsEq=admitsEq,
-                      longsymbol=replacePathLongsymbol (longsymbol, path),
+                      longsymbol=SymbolWithLoc.replacePrefix (longsymbol, path),
                       formals=formals,
                       conSpec=conSpec,
                       conIDSet=conIDSet,
@@ -122,7 +115,7 @@ struct
                       I.TFUN_DTY 
                         {id=newId,
                          admitsEq=admitsEq,
-                         longsymbol=replacePathLongsymbol (longsymbol, path),
+                         longsymbol=SymbolWithLoc.replacePrefix (longsymbol, path),
                          formals=formals,
                          conSpec=newConSpec,
                          conIDSet=conIDSet,
