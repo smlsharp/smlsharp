@@ -63,7 +63,7 @@ struct
 
   fun makeTfun typIdOpt {printName, admitsEq, formals, dtyKind} =
       let
-        val printName = SymbolWithLoc.mkSymbol printName Loc.noloc
+        val printName = {symbol = Symbol.fromString printName, loc = Loc.noloc}
         val formalTvars =
             map (fn tvarName =>
                     {symbol = {symbol = Symbol.fromString tvarName,

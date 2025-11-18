@@ -135,13 +135,13 @@ struct
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
 
   fun recordLabelToSymbol label loc =
-      SymbolWithLoc.mkSymbol (RecordLabel.toString label) (LOC loc)
+      {symbol = Symbol.fromString (RecordLabel.toString label), loc = LOC loc}
   fun recordLabelToLongsymbol label loc =
       SymbolWithLoc.symbolToLongsymbol (recordLabelToSymbol label loc)
 
   fun prefixPath path (symbol as {loc, ...}) =
       SymbolWithLoc.prefixPath'
-        (map (fn x => SymbolWithLoc.mkSymbol x loc) path,  symbol)
+        (map (fn x => {symbol = Symbol.fromString x, loc = loc}) path,  symbol)
 
   fun Ty ty (_:S.loc) = ty : A.ty
 

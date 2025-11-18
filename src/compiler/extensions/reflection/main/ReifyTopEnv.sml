@@ -345,7 +345,7 @@ in
   fun externalBind loc (string, Exp) Env version = 
       let
         val ty = #ty Exp
-        val symbol = SymbolWithLoc.mkSymbol string loc
+        val symbol = {symbol = Symbol.fromString string, loc = loc}
         val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
         val externalInfo = {path = SymbolWithLoc.toLongsymbol (setVersion(longsymbol, version)), ty = ty}
         val idstatus = 

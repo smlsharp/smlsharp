@@ -26,6 +26,7 @@ _require local "./TfunVars.smi"
 _require local "./RenameLongsymbol.smi"
 
 _require local "../../../data/control/main/Control.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"

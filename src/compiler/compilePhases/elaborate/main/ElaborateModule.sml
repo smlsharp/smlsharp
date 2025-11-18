@@ -166,7 +166,7 @@ struct
           let
             val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
             val newStrLong = SymbolWithLoc.mkLongsymbol (nil, newStrid) (LOC loc)
-            val newStrSymbol = SymbolWithLoc.mkSymbol newStrid (LOC loc)
+            val newStrSymbol = {symbol = Symbol.fromString newStrid, loc = LOC loc}
             val plstrexp = elabStrExp strexp
             val plstrbody = PC.PLFUNCTORAPP(toSymbol funid, newStrLong, LOC loc)
             val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp, LOC loc)],LOC loc)]

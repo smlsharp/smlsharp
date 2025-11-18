@@ -79,11 +79,9 @@ in
          Symbol.fromString (Longsymbol.toString (toLongsymbol longsymbol)),
        loc = loc}
 
-  fun mkSymbol string loc = {symbol = Symbol.fromString string, loc=loc}
-
   fun mkLongsymbol (path, last) loc =
-      {path = map (fn s => mkSymbol s loc) path,
-       last = mkSymbol last loc,
+      {path = map (fn s => {symbol = Symbol.fromString s, loc = loc}) path,
+       last = {symbol = Symbol.fromString last, loc = loc},
        loc = loc}
 
   fun setVersion ({path, last, loc} : longsymbol, version) =

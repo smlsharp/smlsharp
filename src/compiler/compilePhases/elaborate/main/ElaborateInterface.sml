@@ -320,7 +320,7 @@ struct
               {strSymbol = toSymbol symbol, sigexp = elabSigexp sigexp}
             | _ =>
               let
-                val dummySym = SymbolWithLoc.mkSymbol "" (LOC loc)
+                val dummySym = {symbol = Symbol.fromString "", loc = LOC loc}
               in
                 (EU.enqueueError
                    (LOC loc, E.DerivedFormFunArg);

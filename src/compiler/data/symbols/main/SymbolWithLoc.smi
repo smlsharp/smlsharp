@@ -24,7 +24,6 @@ struct
   val fromLongsymbol : Longsymbol.longsymbol -> longsymbol
   val longsymbolToString : longsymbol -> string
   val longsymbolToLoc : longsymbol -> Loc.loc
-  val mkSymbol : string -> Loc.loc -> symbol
   val mkLongsymbol: string list * string -> Loc.loc -> longsymbol
   val coerceLongsymbolToSymbol : longsymbol -> symbol
   val setVersion : longsymbol * int -> longsymbol
