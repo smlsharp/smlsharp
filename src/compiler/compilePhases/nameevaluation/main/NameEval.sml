@@ -118,13 +118,13 @@ local
                 end
               | _ =>
                 (EU.enqueueError
-                   (SymbolWithLoc.longsymbolToLoc longsymbol,
+                   (PatternCalc.getLocPat funIdPat,
                     E.IlleagalFunID ("010",{pat = funIdPat}));
                  let
                    val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                  in
                    {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                    funSymbol = {symbol = Symbol.intern "_", loc = Loc.noloc},
+                    funSymbol = SymbolWithLoc.generate (),
                     tyList=nil
                    }
                  end
@@ -132,13 +132,14 @@ local
             )
           | _ => 
                let
-                 val longsymbol = SymbolWithLoc.prefixPath' (path, {symbol = Symbol.intern "_", loc = Loc.noloc})
+                 val symbol = SymbolWithLoc.generate ()
+                 val longsymbol = SymbolWithLoc.prefixPath' (path, symbol)
                in
                  (EU.enqueueError
-                    (SymbolWithLoc.longsymbolToLoc longsymbol,
+                    (PatternCalc.getLocPat funIdPat,
                      E.IlleagalFunID ("010",{pat = funIdPat}));
                   {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
-                   funSymbol = {symbol = Symbol.intern "_", loc = Loc.noloc},
+                   funSymbol = symbol,
                    tyList=nil
                   }
                  )
@@ -1593,9 +1594,9 @@ U.printTfun tfun;
               handle e => raise e
             end
         val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-        val argStrSymbol = {symbol = Symbol.intern "arg", loc = Loc.noloc}
+        val argStrSymbol = {symbol = Symbol.generate NONE, loc = Loc.noloc}
         val argStrLongsymbol = SymbolWithLoc.symbolToLongsymbol argStrSymbol
-        val bodyStrSymbol = {symbol = Symbol.intern "body", loc = Loc.noloc}
+        val bodyStrSymbol = {symbol = Symbol.generate NONE, loc = Loc.noloc}
         val bodyStrLongsymbol = SymbolWithLoc.symbolToLongsymbol bodyStrSymbol
         val tempEnv =
             VP.rebindStr 
@@ -2131,7 +2132,8 @@ val _ = U.print "\n"
                  I.ICLET _ =>
                  let
                    val varId = VarID.generate()
-                   val longsymbol = SymbolWithLoc.mkLongsymbol (nil, "unitVar") defLoc
+                   val symbol = {symbol = Symbol.generate NONE, loc = defLoc}
+                   val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
                    val patVarInfo ={longsymbol=longsymbol, id=varId}
                  in
                    I.ICFNM1

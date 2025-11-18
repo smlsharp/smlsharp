@@ -2086,7 +2086,7 @@ struct
 
   fun sqlFn (pat, exp) =
       let
-        val t = Tyvar (#symbol (SymbolWithLoc.generate ()))
+        val t = Tyvar (Symbol.generate NONE)
         val x = SymbolWithLoc.generate ()
         val patTy = Ty_db (TyWild, TyID t)
         val expTy = Ty_command (TyWild, TyID t)

@@ -965,9 +965,9 @@ in
                     handle e => raise e
                   end
               val _ = if EU.isAnyError () then raise SC.SIGCHECK else ()
-              val argStrSymbol = {symbol = Symbol.intern "arg", loc = Loc.noloc}
+              val argStrSymbol = {symbol = Symbol.generate NONE, loc = Loc.noloc}
               val argStrLongsymbol = SymbolWithLoc.symbolToLongsymbol argStrSymbol
-              val bodyStrSymbol = {symbol = Symbol.intern "body", loc = Loc.noloc}
+              val bodyStrSymbol = {symbol = Symbol.generate NONE, loc = Loc.noloc}
               val bodyStrLongsymbol = SymbolWithLoc.symbolToLongsymbol bodyStrSymbol
               val tempEnv =
                   VP.reinsertStr(VP.reinsertStr(V.emptyEnv, argStrSymbol, argStrEntry),

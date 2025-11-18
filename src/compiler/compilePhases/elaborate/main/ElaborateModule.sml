@@ -28,16 +28,6 @@ struct
   fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
-  (**
-   * name given to an anonymous parameter signature of a functor.
-   * Example:
-   *   functor F(type x) = struct datatype dt = D of x end
-   * is elaborated to:
-   *   functor F ('X : sig type x end) =
-   *   let open 'X in struct datatype dt = D of x end end
-   *)
-  val NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER = "_X"
-
   val emptyTvars = (nil, Loc.NOLOC) : PC.scopedTvars
 
   datatype sigexpKind = Interface | OrdinarySig
@@ -164,9 +154,8 @@ struct
           PC.PLFUNCTORAPP(toSymbol funid, SymbolWithLoc.fromAbsyn longid, LOC loc)
         | A.STRAPP(funid, SOME (A.FUNARG strexp), loc) =>
           let
-            val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
-            val newStrLong = SymbolWithLoc.mkLongsymbol (nil, newStrid) (LOC loc)
-            val newStrSymbol = {symbol = Symbol.intern newStrid, loc = LOC loc}
+            val newStrSymbol = {symbol = Symbol.generate NONE, loc = LOC loc}
+            val newStrLong = SymbolWithLoc.symbolToLongsymbol newStrSymbol
             val plstrexp = elabStrExp strexp
             val plstrbody = PC.PLFUNCTORAPP(toSymbol funid, newStrLong, LOC loc)
             val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp, LOC loc)],LOC loc)]
@@ -257,15 +246,15 @@ struct
          SOME (A.TRANSPARENT, resSigexp, _),
          strexp, loc) =>
         let
-          val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+          val newStrid = Symbol.generate NONE
           val newStrexp =
               A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (Symbol.intern newStrid, loc), loc)], loc))],
+                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))],
                  A.STRCONSTRAINT(strexp,(A.TRANSPARENT,resSigexp,loc),loc),
                  loc)
           val argSigExp = A.SIGBASIC specLoc
           val newFunBind =
-              (funid, SOME (A.FUNPARAM ((Symbol.intern newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
         in
           elabFunBind newFunBind
         end
@@ -276,15 +265,15 @@ struct
          SOME (A.OPAQUE, resSigexp, _),
          strexp, loc) =>
         let
-          val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+          val newStrid = Symbol.generate NONE
           val newStrexp =
               A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (Symbol.intern newStrid, loc), loc)], loc))],
+                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))],
                  A.STRCONSTRAINT(strexp,(A.OPAQUE,resSigexp,loc),loc),
                  loc)
           val argSigExp = A.SIGBASIC specLoc
           val newFunBind =
-              (funid, SOME (A.FUNPARAM ((Symbol.intern newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
         in
           elabFunBind newFunBind
         end
@@ -293,18 +282,18 @@ struct
        *)
       | (funid, SOME (A.FUNPARAM_SPEC specLoc), NONE, strexp, loc) =>
         let
-          val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+          val newStrid = Symbol.generate NONE
           val newStrexp =
               A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (Symbol.intern newStrid, loc), loc)], loc))], strexp, loc)
+                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))], strexp, loc)
           val newFunBind =
-              (funid, SOME (A.FUNPARAM ((Symbol.intern newStrid, loc), A.SIGBASIC specLoc, #2 specLoc)), NONE, newStrexp, loc)
+              (funid, SOME (A.FUNPARAM ((newStrid, loc), A.SIGBASIC specLoc, #2 specLoc)), NONE, newStrexp, loc)
         in
           elabFunBind newFunBind
         end
       | (funid, NONE, sigcon, strexp, loc) =>
         let
-          val newStrid = Symbol.intern NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+          val newStrid = Symbol.generate NONE
           val newFunBind =
               (funid, SOME (A.FUNPARAM ((newStrid, loc), A.SIGBASIC (nil, loc), loc)), sigcon, strexp, loc)
         in

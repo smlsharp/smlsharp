@@ -23,7 +23,7 @@ local
   infix @@
   val op @@ = SymbolWithLoc.prefixPath'
 in
-  val DUMMYIDFUN = Symbol.intern "id"
+  val DUMMYIDFUN = Symbol.generate NONE
 
   (* This is to avoid name conflict in functor names and variable names *)
   val FUNCTORPREFIX = Symbol.intern "_"
