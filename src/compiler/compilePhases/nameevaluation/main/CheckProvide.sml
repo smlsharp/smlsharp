@@ -683,7 +683,7 @@ local
           | (* val symbol = _builtin symbol : ty *)
             PI.VAL_BUILTIN {builtinSymbol, ty} =>
             (case BuiltinPrimitive.findPrimitive
-                    (SymbolWithLoc.symbolToString builtinSymbol) of
+                    (Symbol.toString (#symbol builtinSymbol)) of
                NONE =>
                (EU.enqueueError
                   (#loc builtinSymbol,

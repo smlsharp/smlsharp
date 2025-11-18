@@ -252,7 +252,7 @@ struct
       String (RecordLabel.toString label)
 
   fun SymbolString symbol =
-      String (SymbolWithLoc.symbolToString symbol)
+      String (Symbol.toString (#symbol symbol))
 
   fun StringFirst S.FIRST = String "first"
     | StringFirst S.NEXT = String "next"
@@ -643,7 +643,7 @@ struct
 
   fun sqlFunName symbol =
         String.translate (fn #"'" => "" | c => str (Char.toUpper c))
-                         (SymbolWithLoc.symbolToString symbol)
+                         (Symbol.toString (#symbol symbol))
 
   fun sappSpine (S.APP (x, y, _)) r = sappSpine x (y :: r)
     | sappSpine x r = x :: r
@@ -1290,11 +1290,11 @@ struct
         (UserErrorUtils.enqueueError (LOC loc, F.AppInSQLQuery); Unit)
       | SQLAPP (true, _, arg, _) => queryToTerm arg
       | SQLAPP (false, funid, TUPLE (args, loc1), loc) =>
-        (case SymbolWithLoc.symbolToString funid of
+        (case Symbol.toString (#symbol funid) of
            "~" => (UserErrorUtils.enqueueError (LOC loc, F.NegNotUnary); Unit)
          | _ => Loc loc (Con_FUNCALL (sqlFunName funid) (map queryToTerm args)))
       | SQLAPP (false, funid, arg, loc) =>
-        (case SymbolWithLoc.symbolToString funid of
+        (case Symbol.toString (#symbol funid) of
            "~" => Loc loc (Con_UNARYOP "-" (queryToTerm arg))
          | _ => Loc loc (Con_FUNCALL (sqlFunName funid) [queryToTerm arg]))
       | APPOP2 (f, x, y, loc) =>

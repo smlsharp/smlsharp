@@ -20,6 +20,7 @@ local
   structure IM = InfoMaps
   exception SYSTEMPATH
 
+  fun symbolToString {symbol, ...} = Symbol.toString symbol
   fun symbolListToString symbols =
       String.concatWith "." (map (Symbol.toString o #symbol) symbols)
 
@@ -48,7 +49,7 @@ local
   fun defSymLocInfo symbol =
       let
         val loc = #loc symbol
-        val symbol = S.symbolToString symbol
+        val symbol = symbolToString symbol
         val (s, e, f) = locRange loc
       in
         {locKey = locToKey loc,
@@ -78,7 +79,7 @@ local
   fun refSymLocInfo symbol =
       let
         val loc = #loc symbol
-        val symbol = S.symbolToString symbol
+        val symbol = symbolToString symbol
         val (s, e, f) = locRange loc
       in
         {locKey = locToKey loc,
@@ -91,7 +92,7 @@ local
         }
       end
   fun handlerSymbol symbol code =
-      (print (S.symbolToString symbol ^ "(" ^ code ^ ")\n"); ())
+      (print (symbolToString symbol ^ "(" ^ code ^ ")\n"); ())
   fun handlerLongsymbol longsymbol code =
       (print (S.longsymbolToString longsymbol^ "(" ^ code ^ ")\n"); ())
 
@@ -273,19 +274,19 @@ in
       | I.IDSPECVAR {defRange, ty, symbol, ...} =>
         idInfo
           # {{kind = "IDSPECVAR",
-              definedSymbol = S.symbolToString symbol
+              definedSymbol = symbolToString symbol
              }}
           # {(defRangeInfo defRange)}
       | I.IDSPECEXN {defRange, ty, symbol, ...} =>
         idInfo
           # {{kind = "IDSPECEXN",
-              definedSymbol = S.symbolToString symbol
+              definedSymbol = symbolToString symbol
              }}
           # {(defRangeInfo defRange)}
       | I.IDSPECCON {defRange, symbol, ...} =>
         idInfo
           # {{kind = "IDSPECCON",
-              definedSymbol = S.symbolToString symbol
+              definedSymbol = symbolToString symbol
              }}
           # {(defRangeInfo defRange)}
   fun tstrInfo tstr = 
@@ -790,11 +791,11 @@ in
       if !Control.doNameAnalysis then
         let
           val refSymbolLoc = #loc symbol
-          val refSymbol = S.symbolToString symbol
+          val refSymbol = symbolToString symbol
           val (refSymbolStartPos, refSymbolEndPos, refSymbolFileId) = 
               locRange refSymbolLoc
           val defSymbolLoc = #loc sym
-          val defSymbol = SymbolWithLoc.symbolToString sym
+          val defSymbol = symbolToString sym
           val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
         in
@@ -838,7 +839,7 @@ in
             locRange refLongsymbolLoc
         val refSymbol = S.longsymbolToString longsymbol
         val defSymbolLoc = #loc sym
-        val defSymbol = SymbolWithLoc.symbolToString sym
+        val defSymbol = symbolToString sym
         val (defSymbolStartPos, defSymbolEndPos, defSymbolFileId) = 
               locRange defSymbolLoc
       in

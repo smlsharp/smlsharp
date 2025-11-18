@@ -496,8 +496,8 @@ in
             ListSorter.sort
               (fn ((x, _), (y, _)) =>
                   let
-                    val x = SymbolWithLoc.symbolToString x
-                    val y = SymbolWithLoc.symbolToString y
+                    val x = Symbol.toString (#symbol x)
+                    val y = Symbol.toString (#symbol y)
                   in
                     case Int.compare (size x, size y) of
                       EQUAL => String.compare (x, y)

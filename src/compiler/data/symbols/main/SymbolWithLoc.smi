@@ -18,7 +18,6 @@ struct
   val compareLoc : symbol * symbol -> order
   val lastSymbol : longsymbol -> symbol
   val pathOf : longsymbol -> symbol list
-  val symbolToString : symbol -> string
   val toRecordLabel : longsymbol -> RecordLabel.label
   val toLongsymbol : longsymbol -> Longsymbol.longsymbol
   val fromLongsymbol : Longsymbol.longsymbol -> longsymbol

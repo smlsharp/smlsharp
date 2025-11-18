@@ -350,7 +350,7 @@ in
                     nil => ty
                   | _ => I.TYPOLY(kindedTvars,ty)
             in
-              case BuiltinPrimitive.findPrimitive (SymbolWithLoc.symbolToString builtinSymbol) of
+              case BuiltinPrimitive.findPrimitive (Symbol.toString (#symbol builtinSymbol)) of
                 SOME primitive => 
                 let
                   val idstatus = I.IDBUILTINVAR {primitive=primitive, ty=ty, defRange = loc}
