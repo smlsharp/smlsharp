@@ -5,14 +5,36 @@
  *)
 structure Symbol =
 struct
-  type symbol = string
+  type symbol = int * string
 
-  fun toString (x : symbol) = x
-  fun intern (x : string) = x
-  val compare = String.compare
+  fun toString (id, "") = "{" ^ Int.toString id ^ "}"
+    | toString (0, name) =
+      if String.sub (name, size name - 1) = #"}"
+      then name ^ "{0}"
+      else name
+    | toString (id, name) = name ^ "{" ^ Int.toString id ^ "}"
 
-  fun term s = SMLFormat.FormatExpression.Term (size s, s)
-  fun format_symbol symbol = [term symbol]
+  fun intern (x : string) = (0, x)
+
+  fun compare ((id1, name1) : symbol, (id2, name2) : symbol) =
+      if id1 = id2
+      then String.compare (name1, name2)
+      else Int.compare (id1, id2)
+
+  fun format_symbol symbol =
+      SMLFormat.BasicFormatters.format_string (toString symbol)
+
+  val count = ref 0
+
+  fun generate baseSymbol =
+      let
+        val id = !count + 1
+      in
+        count := id;
+        case baseSymbol of
+          NONE => (id, "")
+        | SOME (_, name) => (id, name)
+      end
 
   structure Ord =
   struct

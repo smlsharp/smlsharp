@@ -90,10 +90,10 @@ in
        loc = loc}
 
   fun symbolCompare (s1 : symbol, s2 : symbol) =
-      String.compare (symbolToString s1, symbolToString s2)
+      Symbol.compare (#symbol s1, #symbol s2)
 
   fun longsymbolCompare (s1 : longsymbol, s2 : longsymbol) =
-      String.compare (longsymbolToString s1, longsymbolToString s2)
+      Longsymbol.compare (toLongsymbol s1, toLongsymbol s2)
 
   fun eqSymbol (s1 : symbol, s2 : symbol) =
       case symbolCompare (s1, s2) of
@@ -118,23 +118,8 @@ in
   fun replacePrefix (longsymbol : longsymbol, prefix) =
       longsymbol # {path = prefix}
 
-  val seed = ref nil : char list ref
-
-  fun gensym () =
-      let
-        fun inc nil = [#"a"]
-          | inc (h::t) =
-            if h >= #"z"
-            then #"a" :: inc t
-            else (chr (ord h + 1)) :: t
-      in
-        seed := inc (!seed);
-        implode (rev (!seed))
-      end
-
-  (* FIXME: how to ensure the generated symbol is fresh? *)
   fun generate () =
-      {symbol = Symbol.intern ("$" ^ gensym ()), loc = Loc.noloc}
+      {symbol = Symbol.generate NONE, loc = Loc.noloc}
 
   fun generateLongsymbol () =
       symbolToLongsymbol (generate ())

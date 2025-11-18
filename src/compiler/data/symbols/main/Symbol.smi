@@ -5,12 +5,13 @@ _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 
 structure Symbol =
 struct
-  eqtype symbol (= string)
+  eqtype symbol (= *)
   val format_symbol : symbol -> SMLFormat.format
 
   val toString : symbol -> string
   val intern : string -> symbol
   val compare : symbol * symbol -> order
+  val generate : symbol option -> symbol
 
   structure Ord =
   struct
