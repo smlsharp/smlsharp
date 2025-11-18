@@ -38,7 +38,6 @@ struct
   val formatWithLoc_symbol : symbol -> SMLFormat.FormatExpression.expression list
   val format_longsymbol : longsymbol -> SMLFormat.FormatExpression.expression list
   val formatWithLoc_longsymbol : longsymbol -> SMLFormat.FormatExpression.expression list
-  val formatUserLongSymbol : longsymbol -> SMLFormat.FormatExpression.expression list
   val replaceLocSymbol : Loc.loc -> symbol -> symbol
   val replaceLocLongsymbol : Loc.loc -> longsymbol -> longsymbol
   val symbolToLongsymbol : symbol -> longsymbol

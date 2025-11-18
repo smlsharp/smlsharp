@@ -18,28 +18,6 @@ in
          SMLFormat.FormatExpression.Sequence (Loc.format_loc loc),
          SMLFormat.FormatExpression.Term (1, ")")]
 
-  fun toUserLongSymbols list =
-      case list of
-        ["Bool","bool"] => ["bool"]
-      | ["Int","int"] => ["int"]
-      | ["Int8","int"] => ["int8"]
-      | ["Int16","int"] => ["int16"]
-      | ["Int32","int"] => ["int"]
-      | ["Int64","int"] => ["int64"]
-      | ["IntInf","int"] => ["intInf"]
-      | ["Word","word"] => ["word"]
-      | ["Word8","word"] => ["word8"]
-      | ["Word16","word"] => ["word16"]
-      | ["Word32","word"] => ["word"]
-      | ["Word64","word"] => ["word64"]
-      | ["Real","real"] => ["real"]
-      | ["Real32","real"] => ["real32"]
-      | ["Real64","real"] => ["real64"]
-      | ["Array","array"] => ["array"]
-      | ["Vector","vector"] => ["vector"]
-      | "SMLSharp_SQL_Prim"::tl => "SQL"::tl
-      | x => x
-
   type longsymbol =
       {
         path : symbol list, (* strid path *)
@@ -113,14 +91,6 @@ in
         {path = map (fn s => mkSymbol s loc) (rev othersRev),
          last = mkSymbol last loc,
          loc = loc}
-
-  fun formatUserLongSymbol longsymbol =
-      Longsymbol.format_longsymbol
-        (Longsymbol.fromSymbolList
-           (map Symbol.fromString
-                (toUserLongSymbols
-                   (map (Symbol.toString o #symbol)
-                        (toSymbolList longsymbol)))))
 
   fun setVersion ({path, last, loc} : longsymbol, version) =
       {path = path @ [last],

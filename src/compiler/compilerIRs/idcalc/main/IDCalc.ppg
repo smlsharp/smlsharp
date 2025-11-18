@@ -459,7 +459,6 @@ in
        SmlppgUtil.makeToken (tfunName (env, tfun))
 
    (*%
-     @formatter(formatUserLongSymbol) SymbolWithLoc.formatUserLongSymbol
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
@@ -721,7 +720,7 @@ in
   (* actual structures of a type function *)
   and tfunkind
     = (*%
-         @format({id, admitsEq, formals, longsymbol:longsymbol:formatUserLongSymbol, 
+         @format({id, admitsEq, formals, longsymbol,
                   conSpec, conIDSet, liftedTys, dtyKind})
            longsymbol
        *)
@@ -755,7 +754,7 @@ in
                    dtyKind:dtyKind
                   }
     | (*%
-         @format({longsymbol:longsymbol:formatUserLongSymbol, id, admitsEq, formals})
+         @format({longsymbol, id, admitsEq, formals})
            longsymbol
        *)
       (*% @prefix formatWithType_
@@ -774,7 +773,7 @@ in
       (* type constructore name in spec *)
       TFV_SPEC of {longsymbol:longsymbol, id:typId, admitsEq:bool, formals:formals}
     | (*%
-         @format({longsymbol:longsymbol:formatUserLongSymbol, id, admitsEq, formals, conSpec, liftedTys})
+         @format({longsymbol, id, admitsEq, formals, conSpec, liftedTys})
            "TFV_DTY" +
            longsymbol
        *)
@@ -839,7 +838,7 @@ in
        *)
       INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
     | (*%
-         @format({longsymbol:longsymbol:formatUserLongSymbol, tfun, varE, formals, conSpec, liftedTys})
+         @format({longsymbol, tfun, varE, formals, conSpec, liftedTys})
            longsymbol
        *)
       (*% @prefix formatWithType_
