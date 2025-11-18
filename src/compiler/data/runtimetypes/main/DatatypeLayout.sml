@@ -133,7 +133,9 @@ struct
         conSet
 
   fun makeTagMap conSet =
-      map (Symbol.toString o #symbol) (SymbolWithLocEnv.listKeys conSet)
+      ListSorter.sort
+        String.compare
+        (map (Symbol.toString o #symbol) (SymbolWithLocEnv.listKeys conSet))
 
   fun propertyOf ty =
       case IDCalc.propertyOfIty ty of

@@ -15,7 +15,7 @@ _require local "./NameEvalUtils.smi"
 _require local "./NormalizeTy.smi"
 _require local "./SetLiftedTys.smi"
 _require local "./TfunVars.smi"
-
+_require local "../../../libs/list-utils/main/ListSorter.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Symbol.smi"

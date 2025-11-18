@@ -28,6 +28,15 @@ in
   (* This is to avoid name conflict in functor names and variable names *)
   val FUNCTORPREFIX = Symbol.intern "_"
 
+  fun foldri f z symbolEnv =
+      foldr
+        (fn ((s, k, v), z) => f (k, v, z))
+        z
+        (ListSorter.sort
+           (fn ((x, _, _), (y, _, _)) => String.compare (x, y))
+           (map (fn (k as {symbol, ...}, v) => (Symbol.toString symbol, k, v))
+                (SymbolWithLocEnv.listItemsi symbolEnv)))
+
   fun evalFunArg (topEnv, argSig, loc) =
       let
         fun materializeTstr path (name:SymbolWithLoc.symbol, tstr, icdecls) =
@@ -159,7 +168,7 @@ in
         fun genArgTyE path tyE env = SymbolWithLocEnv.foldri (genArgTstr path) env tyE
 
         fun genArgVarE path varE env =
-            SymbolWithLocEnv.foldri
+            foldri
             (fn (name, idstatus, {varPats, exnPats, env, exnTagDecls}) =>
                 case idstatus of
                   I.IDSPECVAR {ty, symbol, defRange} =>
@@ -206,7 +215,7 @@ in
             {varPats=nil, exnPats=nil, env=env, exnTagDecls=nil}
             varE
         fun genArgStrE path (V.STR envMap) returnEnv =
-            SymbolWithLocEnv.foldri
+            foldri
               (fn (name, {env=specEnv, ...}, {varPats, exnPats, env, exnTagDecls}) =>
                   let
                     val {varPats=newPats, exnPats=newExnPats, strEntry=newStrEntry, exnTagDecls=newExnTagDecls} =
@@ -455,7 +464,7 @@ val _ = U.print "\n"
                 genActualStrE path vars envMap
               end
         and genActualVarE path vars varE : I.icexp list =
-            SymbolWithLocEnv.foldri
+            foldri
               (fn (name, I.IDVAR {id, longsymbol, defRange}, vars) => 
                   I.ICVAR {id=id, longsymbol=path @@ name} :: vars
                 | (name, I.IDVAR_TYPED {id, longsymbol, ty, defRange=defRange}, vars) => 
@@ -513,7 +522,7 @@ val _ = U.print "\n"
               vars
               varE
         and genActualStrE path vars envMap : I.icexp list =
-            SymbolWithLocEnv.foldri
+            foldri
               (fn (strName, {env, strKind, loc, definedSymbol}, vars) => 
                   genActualEnv (path@[strName]) vars env
               )
@@ -580,7 +589,7 @@ val _ = U.print "\n"
           end
     and varsInVarE set loc path vars varE
         : ((SymbolWithLoc.longsymbol * I.icexp) list * ExnID.Set.set) =
-        SymbolWithLocEnv.foldri
+        foldri
           (fn (name, I.IDVAR {id, longsymbol, defRange}, (vars, set)) =>
               ((path @@ name, I.ICVAR {id=id, longsymbol=longsymbol}) :: vars,
                set)
@@ -637,7 +646,7 @@ val _ = U.print "\n"
           varE
     and varsInStrE set loc path vars envMap
         : ((SymbolWithLoc.longsymbol * I.icexp) list * ExnID.Set.set) =
-        SymbolWithLocEnv.foldri
+        foldri
           (fn (strName, {env,strKind,loc = _, definedSymbol}, (vars, set)) =>
               varsInEnv set loc (path@[strName]) vars env
           )

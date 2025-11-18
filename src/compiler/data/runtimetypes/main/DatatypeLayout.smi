@@ -4,6 +4,7 @@ _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../libs/list-utils/main/ListSorter.smi"
 
 structure DatatypeLayout =
 struct
