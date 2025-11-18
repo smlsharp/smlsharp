@@ -413,12 +413,12 @@ in
 
   and
   (*%
-     @format((code * {longsymbol}))
+     @format((code * {longsymbol: sym syms}))
      "(name evaluation" +d code ")" +d
      "replicating" +d "structure" +d "in" +d "functor" +d "argument" +d "not" +d "allowed" +d "in" +d "interface:" 
-     +d longsymbol
+     +d syms(sym)(".")
    *)
-    StructureRepOfFuncrorArgInInterface of (code * {longsymbol : longsymbol})
+    StructureRepOfFuncrorArgInInterface of (code * {longsymbol : symbol list})
 
   and
   (*%

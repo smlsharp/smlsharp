@@ -75,7 +75,7 @@ struct
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
           val vid = EmitTypedLambda.newId ()
-          val nullName = Longsymbol.fromStringList [nullName]
+          val nullName = Longsymbol.fromStringList (nil, nullName)
         in
           E.Let ([(vid, exp)],
                  E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),

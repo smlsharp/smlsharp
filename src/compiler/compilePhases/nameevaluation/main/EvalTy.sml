@@ -481,8 +481,9 @@ in
               LOC loc))
         | P.FFICONTY (argTyList, typath, loc) =>
           let
+            val longsymbol = SymbolWithLoc.fromAbsyn typath
             val tfun =
-                case VP.findTstr(env, SymbolWithLoc.fromAbsyn typath) of
+                case VP.findTstr(env, longsymbol) of
                   SOME (sym, V.TSTR {tfun,...}) => tfun
                 | SOME (sym, V.TSTR_DTY {tfun,...}) => tfun
                 | NONE => raise LookupTstr
@@ -502,11 +503,11 @@ in
           end
           handle LookupTstr => 
                  (EU.enqueueError
-                    (LOC loc, E.TypNotFound("Ty-100",{longsymbol = Longsymbol.fromSymbolList (map #1 (#1 typath))}));
+                    (LOC loc, E.TypNotFound("Ty-100",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
                   I.FFIBASETY (I.TYERROR, LOC loc))
                | UnqeualLengths =>
                  (EU.enqueueError
-                    (LOC loc, E.TypArity("Ty-110",{longsymbol = Longsymbol.fromSymbolList (map #1 (#1 typath))}));
+                    (LOC loc, E.TypArity("Ty-110",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
                   I.FFIBASETY (I.TYERROR, LOC loc))
       end
 

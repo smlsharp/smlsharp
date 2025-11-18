@@ -394,24 +394,24 @@ struct
        (SOMEICConInfo, SOMETPConInfo)) =
       case conList of [x,y] => (x,y) | _ => raise bug "conList option"
 
-  fun evalExn (longid, tyopt) : T.exExnInfo =
+  fun evalExn (id, tyopt) : T.exExnInfo =
       let
         val ty = case tyopt of
                      NONE => exnTy
                    | SOME ty => T.FUNMty([ty], exnTy)
       in
-        {path = Longsymbol.fromStringList longid, ty=ty}
+        {path = Longsymbol.fromStringList (nil, id), ty=ty}
       end
 
-  val BindExExn = evalExn (["Bind"], NONE)
-  val MatchExExn = evalExn (["Match"], NONE)
-  val SubscriptExExn = evalExn (["Subscript"], NONE)
-  val SizeExExn = evalExn (["Size"], NONE)
-  val OverflowExExn = evalExn (["Overflow"], NONE)
-  val DivExExn = evalExn (["Div"], NONE)
-  val DomainExExn = evalExn (["Domain"], NONE)
-  val FailExExn = evalExn (["Fail"], SOME stringTy)
-  val ChrExExn = evalExn (["Chr"], NONE)
+  val BindExExn = evalExn ("Bind", NONE)
+  val MatchExExn = evalExn ("Match", NONE)
+  val SubscriptExExn = evalExn ("Subscript", NONE)
+  val SizeExExn = evalExn ("Size", NONE)
+  val OverflowExExn = evalExn ("Overflow", NONE)
+  val DivExExn = evalExn ("Div", NONE)
+  val DomainExExn = evalExn ("Domain", NONE)
+  val FailExExn = evalExn ("Fail", SOME stringTy)
+  val ChrExExn = evalExn ("Chr", NONE)
 
   fun findTstrInfo name =
       Symbol.Map.find (!tstrinfoMap, name)

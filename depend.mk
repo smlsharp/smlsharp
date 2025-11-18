@@ -16073,12 +16073,6 @@ src/compiler/data/name/main/NameMangle.o: \
  src/basis/main/VECTOR_SLICE.sig \
  src/basis/main/WORD.sig \
  src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/data/name/main/NameMangle.smi \
  $(SMLSHARP_DEP)
 src/compiler/data/name/main/CodeLabel.o: \

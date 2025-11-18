@@ -31,10 +31,7 @@ local
         (!counter before counter := !counter + 1,
          case longsymbol of
            NONE => ""
-         | SOME s =>
-           case Longsymbol.toStringList s of
-             nil => ""
-           | l => NameMangle.mangle l)
+         | SOME s => NameMangle.mangle (Longsymbol.toStringList s))
 
     fun derive ((_, name):id) =
         (!counter before counter := !counter + 1, name) : id

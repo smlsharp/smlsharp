@@ -3,11 +3,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
-structure NameMangle : sig
-
-  val mangle : string list -> string
-
-end =
+structure NameMangle =
 struct
 
   (* It is not a good idea to use ML longids as link symbols as it is
@@ -51,13 +47,15 @@ struct
   fun escape s =
       String.translate escapeChar s
 
-  fun mangle nil = raise Bug.Bug "NameMangle.mangle"
-    | mangle path =
+  fun mangle (path, last) =
       let
         val path = map (fn s => Int.toString (size s) ^ escape s) path
-        val name = String.concat path
+        val last = Int.toString (size last) ^ escape last
+        val name = String.concat path ^ last
       in
-        if length path >= 2 then "N" ^ name ^ "E" else name
+        case path of
+          nil => name
+        | _ :: _ => "N" ^ name ^ "E"
       end
 
 end

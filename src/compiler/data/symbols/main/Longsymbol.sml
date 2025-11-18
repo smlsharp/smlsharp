@@ -5,28 +5,38 @@
  *)
 structure Longsymbol =
 struct
-  type longsymbol = Symbol.symbol list
+  type longsymbol = Symbol.symbol list * Symbol.symbol
 
-  fun toStringList (x : longsymbol) = map Symbol.toString x
-  fun fromStringList (x : string list) = map Symbol.fromString x
-  fun toSymbolList (x : longsymbol) = x
   fun fromSymbolList x : longsymbol = x
-  fun toString x = String.concatWith "." (toStringList x)
 
-  fun term s = SMLFormat.FormatExpression.Term (size s, s)
-  fun format_longsymbol longsymbol = [term (toString longsymbol)]
+  fun toSymbolList x : longsymbol = x
 
-  fun compare (nil, nil) = EQUAL
-    | compare (_ :: _, nil) = GREATER
-    | compare (nil, _ :: _) = LESS
-    | compare (h1 :: t1, h2 :: t2) =
+  fun fromStringList (path, last) =
+      (map Symbol.fromString path, Symbol.fromString last)
+
+  fun toStringList ((path, last) : longsymbol) =
+      (map Symbol.toString path, Symbol.toString last)
+
+  fun toString ((path, last) : longsymbol) =
+      String.concatWith "." (map Symbol.toString (path @ [last]))
+
+  fun format_longsymbol longsymbol =
+      SMLFormat.BasicFormatters.format_string (toString longsymbol)
+
+  fun comparePath (nil, nil) = EQUAL
+    | comparePath (_ :: _, nil) = GREATER
+    | comparePath (nil, _ :: _) = LESS
+    | comparePath (h1 :: t1, h2 :: t2) =
       case Symbol.compare (h1, h2) of
-        EQUAL => compare (t1, t2)
-      | LESS => LESS
-      | GREATER => GREATER
+        EQUAL => comparePath (t1, t2)
+      | order => order
 
-  fun append (x : longsymbol, y) = x @ [y]
-  fun last (x : longsymbol) = List.last x
+  fun compare ((path1, last1), (path2, last2)) =
+      case comparePath (path1, path2) of
+        EQUAL => Symbol.compare (last1, last2)
+      | order => order
+
+  fun last ((path, last) : longsymbol) = last
 
   structure Ord =
   struct

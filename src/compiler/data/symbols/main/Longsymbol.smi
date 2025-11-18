@@ -6,16 +6,15 @@ _require "./Symbol.smi"
 
 structure Longsymbol =
 struct
-  eqtype longsymbol (= list)
+  eqtype longsymbol (= *)
   val format_longsymbol : longsymbol -> SMLFormat.format
 
-  val toStringList : longsymbol -> string list
-  val fromStringList : string list -> longsymbol
-  val toSymbolList : longsymbol -> Symbol.symbol list
-  val fromSymbolList : Symbol.symbol list -> longsymbol
+  val toStringList : longsymbol -> string list * string
+  val fromStringList : string list * string -> longsymbol
+  val toSymbolList : longsymbol -> Symbol.symbol list * Symbol.symbol
+  val fromSymbolList : Symbol.symbol list * Symbol.symbol -> longsymbol
   val toString : longsymbol -> string
   val compare : longsymbol * longsymbol -> order
-  val append : longsymbol * Symbol.symbol -> longsymbol
   val last : longsymbol -> Symbol.symbol
 
   structure Ord =

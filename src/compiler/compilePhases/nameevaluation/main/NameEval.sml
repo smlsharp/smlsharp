@@ -1440,14 +1440,14 @@ U.print "substitution performed\n";
                      )
                    else (EU.enqueueError
                            (loc, E.FunctorParamRestriction
-                                   ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}));
+                                   ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
                          subst
                         )
                  | I.TFUN_VAR _ => raise bug "tfun var"
                  | I.TFUN_DEF _ =>
                    (EU.enqueueError
                       (loc, E.FunctorParamRestriction
-                              ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}));
+                              ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
                     subst)
                 )
               | I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {id=id1,dtyKind,...})) =>
@@ -1522,7 +1522,7 @@ U.printTfun tfun;
                           raise bug "tstr not found"
                           )
                   in 
-                   instTstr (path@[name]) (tstr, actualTstr) subst
+                   instTstr (SymbolWithLoc.prefixPath' (path, name)) (tstr, actualTstr) subst
                   end
               )
               subst

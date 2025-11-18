@@ -35,17 +35,16 @@ in
   fun toSymbolList ({path, last, loc} : longsymbol) =
       path @ [last]
 
-  fun toLongsymbol longsymbol =
-      Longsymbol.fromSymbolList (map #symbol (toSymbolList longsymbol))
+  fun toLongsymbol ({path, last, loc} : longsymbol) =
+      Longsymbol.fromSymbolList (map #symbol path, #symbol last)
 
   fun toRecordLabel longsymbol =
       RecordLabel.fromString (Longsymbol.toString (toLongsymbol longsymbol))
 
   fun fromLongsymbol longsymbol =
-      case rev (Longsymbol.toSymbolList longsymbol) of
-        nil => raise Bug.Bug "SymbolWithLoc.fromLongsymbol with empty"
-      | last :: othersRev =>
-        {path = map (fn x => {symbol = x, loc = Loc.noloc}) (rev othersRev),
+      case Longsymbol.toSymbolList longsymbol of
+        (path, last) =>
+        {path = map (fn x => {symbol = x, loc = Loc.noloc}) path,
          last = {symbol = last, loc = Loc.noloc},
          loc = Loc.noloc}
 

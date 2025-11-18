@@ -113,7 +113,7 @@ structure NameEvalError =
     exception ExnUndefined of code * {longsymbol: Longsymbol.longsymbol}
     exception DataTypeNameUndefined of code * {longsymbol: Longsymbol.longsymbol}
     exception StructureNameUndefined of code * {longsymbol : Longsymbol.longsymbol}
-    exception StructureRepOfFuncrorArgInInterface of code * {longsymbol : Longsymbol.longsymbol}
+    exception StructureRepOfFuncrorArgInInterface of code * {longsymbol : Symbol.symbol list}
     exception FunctorNameUndefined of code * {symbol : Symbol.symbol}
     exception DuplicateDtyInSpec of code * Symbol.symbol
     exception DuplicateConInSpec of code * Symbol.symbol

@@ -704,7 +704,7 @@ in
           | SOME {env, strKind=V.FUNARG _, loc, definedSymbol} => 
             (
              EU.enqueueError
-               (loc, E.StructureRepOfFuncrorArgInInterface("EI-141", {longsymbol = Longsymbol.fromSymbolList (map #symbol path)}));
+               (loc, E.StructureRepOfFuncrorArgInInterface("EI-141", {longsymbol = map #symbol path}));
              (renameEnv, 
               externSet, 
               {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate()), 
@@ -797,12 +797,12 @@ in
                          then tfv1 := tfunkind
                          else EU.enqueueError
                                 (loc, E.FunctorParamRestriction
-                                        ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}))
+                                        ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}))
                        | I.TFUN_VAR _ => raise bug "tfun var"
                        | I.TFUN_DEF _ =>
                          EU.enqueueError
                            (loc, E.FunctorParamRestriction
-                                   ("440", {longsymbol=Longsymbol.fromSymbolList (map #symbol path)}));
+                                   ("440", {longsymbol=SymbolWithLoc.toLongsymbol path}));
                        subst)
                     | I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {dtyKind,...})) =>
                       (case actualTfun of
@@ -864,7 +864,7 @@ in
                                  raise bug "tstr not found"
                                 )
                         in
-                          instTstr (path @ [name]) (tstr, actualTstr) subst
+                          instTstr (SymbolWithLoc.prefixPath' (path, name)) (tstr, actualTstr) subst
                         end
                     )
                     subst
