@@ -9,7 +9,6 @@ _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
@@ -25,7 +24,7 @@ struct
   val refTypId : TypID.id
 
   datatype provider = datatype InterfaceName.provider
-  type utvar = {symbol:SymbolWithLoc.symbol, id:TvarID.id, isEq:bool, lifted:bool}
+  type utvar = {symbol:{symbol:Symbol.symbol, loc:Loc.loc}, id:TvarID.id, isEq:bool, lifted:bool}
   type lambdaDepth = int
 
   datatype kindProperty = REIFY | BOXED | UNBOXED | EQ

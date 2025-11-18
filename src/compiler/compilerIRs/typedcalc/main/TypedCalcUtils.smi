@@ -8,7 +8,6 @@ _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
 
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "./TypedCalc.ppg.smi"
 

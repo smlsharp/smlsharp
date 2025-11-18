@@ -116,24 +116,26 @@ struct
 
   (*%
    * @formatter(iftrue) iftrue
-   * @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   (*%
    * @prefix print_
    * @formatter(iftrue) iftrue
-   * @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   type utvar =
       (*%
        * @format({symbol, id, isEq, lifted})
        * symbol "(" id lifted:iftrue()(",lifted",) ")"
+       * @format:symbol({symbol, loc}) symbol
        *)
       (*%
        * @prefix print_
        * @format({symbol, id, isEq, lifted})
        * symbol
+       * @format:symbol({symbol, loc}) symbol
        *)
-      {symbol:SymbolWithLoc.symbol, id:tvarId, isEq:bool, lifted:bool}
+      {symbol:{symbol:Symbol.symbol, loc:Loc.loc}, id:tvarId, isEq:bool, lifted:bool}
 
   (*%
    * @formatter(DummyTyID.id) DummyTyID.format_id
