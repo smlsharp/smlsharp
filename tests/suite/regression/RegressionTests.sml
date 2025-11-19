@@ -1923,6 +1923,14 @@ val tests = TestList [
     ("386_functorArg",
      fn () => ignore (compile ["regression/386_functorArg.sml"])),
 
+  Test
+    ("387_utvar",
+     fn () => ignore (compile ["regression/387_utvar.sml"])),
+
+  Test
+    ("388_utvar",
+     fn () => ignore (compile ["regression/388_utvar.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end

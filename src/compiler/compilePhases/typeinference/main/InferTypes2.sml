@@ -5503,7 +5503,11 @@ in
                 (fn ({symbol, ...}, ref (T.SUBSTITUTED ty)) =>
                     (case TB.derefTy ty of
                        T.BOUNDVARty _ => ()
-                     | T.TYVARty (tvstateRef as ref (T.TVAR _)) =>
+                     | T.TYVARty (tvstateRef as ref (T.TVAR tvKind)) =>
+                       if T.youngerDepth {contextDepth = lambdaDepth,
+                                          tyvarDepth = #lambdaDepth tvKind}
+                       then ()
+                       else
                        E.enqueueError "Typeinf 073"
                          (loc,
                           E.UserTvarNotGeneralized
@@ -5516,7 +5520,11 @@ in
                             \ UserTvarNotGeneralized check"
                        )
                     )
-                  | ({symbol, ...}, ref (T.TVAR _)) =>
+                  | ({symbol, ...}, ref (T.TVAR tvKind)) =>
+                    if T.youngerDepth {contextDepth = lambdaDepth,
+                                       tyvarDepth = #lambdaDepth tvKind}
+                    then ()
+                    else
                     E.enqueueError "Typeinf 074"
                       (loc,
                        E.UserTvarNotGeneralized
