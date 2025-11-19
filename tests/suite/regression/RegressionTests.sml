@@ -1915,6 +1915,14 @@ val tests = TestList [
     ("384_prefixedLabel",
      fn () => ignore (compile ["regression/384_prefixedLabel.sml"])),
 
+  Test
+    ("385_sharing",
+     fn () => ignore (compile ["regression/385_sharing.sml"])),
+
+  Test
+    ("386_functorArg",
+     fn () => ignore (compile ["regression/386_functorArg.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end

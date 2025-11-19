@@ -928,6 +928,7 @@ in
                  | _ => SymbolWithLocEnv.insert(tyE, name, tstr)
                 )
               | V.TSTR_DTY {tfun=specTfun, defRange, varE=tstrVarE, ...} =>
+                let fun loop specTfun =
                 (case I.derefTfun specTfun of
                    I.TFUN_VAR (tfv as ref tfunkind) =>
                    (case tfunkind of
@@ -958,15 +959,18 @@ in
                                          conSpec=conSpec}
                             )
                         end
+                      | I.TFUN_VAR (ref (I.FUN_DTY {tfun, ...})) => loop tfun
                       | _ => raise bug "non dty instance"
                       )
                     | I.TFV_SPEC _ => raise bug "non instantiated tfv (3)"
                     | I.TFV_DTY _ => raise bug "non instantiated tfv (3)"
                     | I.TFUN_DTY _ => SymbolWithLocEnv.insert(tyE, name, tstr)
-                    | _ => raise bug "non instantiated tfv (4)"
+                    | I.FUN_DTY {tfun, ...} => loop tfun
+                    | I.REALIZED _ => raise bug "non instantiated tfv (4)"
                    )
                  | _ => SymbolWithLocEnv.insert(tyE, name, tstr)
                 )
+                in loop specTfun end
 
           fun makeTransInstanceTyE tyE =
               SymbolWithLocEnv.foldri
