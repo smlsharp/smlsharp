@@ -31,10 +31,12 @@ struct
   fun singleton (tvar:A.tyvar) =
       [tvar] : tvset
 
-  fun checkEq (tvar as (isEq, (symbol, loc)):A.tyvar, isEq2) =
+  fun checkEq (tvar as (isEq, (symbol, loc)):A.tyvar, isEq2) = ()
+(*
       if isEq = isEq2 then ()
       else EU.enqueueError
              (LOC loc, E.DifferentEqOfSameTvar {tvar = tvar})
+*)
 
   fun union (tvs1:tvset, tvs2:tvset) =
       foldr
@@ -295,7 +297,7 @@ struct
         val _ = app (fn (tvar as (_, (symbol, _)), _, _) =>
                         if Symbol.Map.inDomain (btvEnv, symbol)
                         then EU.enqueueError
-                               (loc, E.UserTvarScopedAtOuterDecl {tvar = tvar})
+                               (loc, E.UserTvarScopedAtOuterDecl tvar)
                         else ())
                     explicitScope
         val btvEnv = bindKindedTvars btvEnv explicitScope
@@ -437,51 +439,15 @@ struct
       | P.PDNONFIXDEC _ => decl
       | P.PDEMPTY => decl
 
-  fun decideSigexp sigexp =
-      case sigexp of 
-        P.PLSIGEXPBASIC (spec, loc) =>
-        P.PLSIGEXPBASIC (map decideSpec spec, loc)
-      | P.PLSIGID _ => sigexp
-      | P.PLSIGWHERE (sigexp, typbinds, loc) =>
-        P.PLSIGWHERE (decideSigexp sigexp, typbinds, loc)
-
-  and decideValdesc (scope, symbol, ty, loc) =
-      let
-        val (_, scoped) = decideScope tyvarsTy emptyEnv (scope, ty, loc)
-      in
-        (scoped, symbol, ty, loc)
-      end
-
-  and decideSpec spec =
-      case spec of
-        P.PLSPECVAL valdescs =>
-        P.PLSPECVAL (map decideValdesc valdescs)
-      | P.PLSPECTYPE _ => spec
-      | P.PLSPECTYPEEQUATION _ => spec
-(*
-      | P.PLSPECEQTYPE _ => spec
-*)
-      | P.PLSPECDATATYPE _ => spec
-      | P.PLSPECREPLIC _ => spec
-      | P.PLSPECEXCEPTION _ => spec
-      | P.PLSPECSTRUCT (strdescs, loc) =>
-        P.PLSPECSTRUCT (map (fn (k,e,l) => (k, decideSigexp e, l)) strdescs, loc)
-      | P.PLSPECINCLUDE (sigexp, loc) =>
-        P.PLSPECINCLUDE (decideSigexp sigexp, loc)
-      | P.PLSPECSHARE (spec, tycons, loc) =>
-        P.PLSPECSHARE (map decideSpec spec, tycons, loc)
-      | P.PLSPECSHARESTR (spec, strids, loc) =>
-        P.PLSPECSHARESTR (map decideSpec spec, strids, loc)
-
   fun decideStrexp strexp =
       case strexp of
         P.PLSTREXPBASIC (strdecs, loc) =>
         P.PLSTREXPBASIC (map decideStrdec strdecs, loc)
       | P.PLSTRID _ => strexp
       | P.PLSTRTRANCONSTRAINT (strexp, sigexp, loc) =>
-        P.PLSTRTRANCONSTRAINT (decideStrexp strexp, decideSigexp sigexp, loc)
+        P.PLSTRTRANCONSTRAINT (decideStrexp strexp, sigexp, loc)
       | P.PLSTROPAQCONSTRAINT (strexp, sigexp, loc) =>
-        P.PLSTROPAQCONSTRAINT (decideStrexp strexp, decideSigexp sigexp, loc)
+        P.PLSTROPAQCONSTRAINT (decideStrexp strexp, sigexp, loc)
       | P.PLFUNCTORAPP (funid, strPath, loc) =>
         P.PLFUNCTORAPP (funid, strPath, loc)
       | P.PLSTRUCTLET (strdecs, strexp, loc) =>
@@ -504,14 +470,13 @@ struct
       case topdec of
         P.PLTOPDECSTR strdec =>
         P.PLTOPDECSTR (decideStrdec strdec)
-      | P.PLTOPDECSIG (sigbinds, loc) =>
-        P.PLTOPDECSIG (map (fn (k,e,l) => (k, decideSigexp e, l)) sigbinds, loc)
+      | P.PLTOPDECSIG (sigbinds, loc) => topdec
       | P.PLTOPDECFUN (funbinds, loc) =>
         P.PLTOPDECFUN
           (map (fn {name, argStrName, argSig, body, loc} =>
                    {name=name,
                     argStrName=argStrName,
-                    argSig=decideSigexp argSig,
+                    argSig=argSig,
                     body=decideStrexp body,
                     loc=loc})
                funbinds,
@@ -519,111 +484,5 @@ struct
 
   fun decide program =
       map decideTopdec program
-
-  fun ftv ty = tyvarsTy Symbol.Map.empty ty
-
-  fun tyvarsOverloadInstance inst =
-      case inst of
-        PI.INST_OVERLOAD overloadCase => tyvarsOverloadCase overloadCase
-      | PI.INST_LONGVID {longsymbol} => empty
-  and tyvarsOverloadMatch {instTy, instance} =
-      union (ftv instTy, tyvarsOverloadInstance instance)
-  and tyvarsOverloadCase ({tyvar, expTy, matches, loc}:PI.overloadCase) =
-      union
-        (union (singleton tyvar, ftv expTy),
-         tyvarsList tyvarsOverloadMatch matches)
-  fun tyvarsValbindBody body =
-      case body of
-        PI.VAL_EXTERN {ty} => ftv ty
-      | PI.VALALIAS_EXTERN longsymbol => empty
-      | PI.VAL_BUILTIN {builtinSymbol, ty} => ftv ty
-      | PI.VAL_OVERLOAD overloadCase => tyvarsOverloadCase overloadCase
-
-  fun checkUniqueOverloadTvars used ({tyvar, expTy, matches, loc}
-                                     :PI.overloadCase) =
-      let
-        val _ =
-            if member (used, tyvar)
-            then (EU.enqueueError
-                    (loc, E.UserTvarScopedAtOuterDecl
-                            {tvar = tyvar}))
-            else ()
-        val set = union (singleton tyvar, ftv expTy)
-        val used = union (used, set)
-      in
-        app (fn {instTy, instance} =>
-                case instance of
-                  PI.INST_OVERLOAD c => checkUniqueOverloadTvars used c
-                | PI.INST_LONGVID _ => ())
-            matches
-      end
-
-  fun checkValbindBody body =
-      case body of
-        PI.VAL_EXTERN _ => ()
-      | PI.VALALIAS_EXTERN _ => ()
-      | PI.VAL_BUILTIN _ => ()
-      | PI.VAL_OVERLOAD c =>
-        checkUniqueOverloadTvars empty c
-
-  fun decideValbindBody body =
-      (checkValbindBody body;
-       (toTvarList (tyvarsValbindBody body), body)
-      )
-  fun decidePidec pidec =
-      case pidec of
-        PI.PIVAL {scopedTvars = (_, loc2), symbol,body,loc} =>
-        let
-          val (scopedTvars, body) = decideValbindBody body
-        in
-          PI.PIVAL {scopedTvars = (scopedTvars, loc2), symbol = symbol, body=body, loc=loc}
-        end
-    | PI.PITYPE {tyvars, symbol, ty, loc} => pidec
-    | PI.PIOPAQUE_TYPE {eq, tyvars, symbol, runtimeTy, loc} => pidec
-    | PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} => pidec
-    | PI.PIDATATYPE {datbind, withty, loc} => pidec
-    | PI.PITYPEREP {symbol, longsymbol, loc} => pidec
-    | PI.PIEXCEPTION {symbol, ty, loc} => pidec
-    | PI.PIEXCEPTIONREP {symbol, longsymbol, loc} => pidec
-    | PI.PISTRUCTURE {symbol, strexp, loc} =>
-      let
-        val strexp = decidePistr strexp
-      in
-        PI.PISTRUCTURE {symbol=symbol, strexp=strexp, loc=loc}
-      end
-  and decidePistr pistr =
-      case pistr of
-        PI.PISTRUCT {decs, loc} =>
-        PI.PISTRUCT {decs = map decidePidec decs, loc = loc}
-      | PI.PISTRUCTREP {longsymbol, loc} => pistr
-      | PI.PIFUNCTORAPP {functorSymbol, argument, loc} => pistr
-
-  fun decidePitopdec pitopdec =
-      case pitopdec of
-        PI.PIDEC pidec => PI.PIDEC (decidePidec pidec)
-      | PI.PIFUNDEC {functorSymbol, param={strSymbol, sigexp}, strexp, loc} =>
-        PI.PIFUNDEC {functorSymbol = functorSymbol,
-                     param = {strSymbol=strSymbol, sigexp = decideSigexp sigexp},
-                     strexp = decidePistr strexp,
-                     loc = loc} 
-  fun decidePitopdecs provideTopdecs = 
-      map decidePitopdec provideTopdecs
-
-  fun decideInterfaceDec {interfaceId, interfaceName, requiredIds,
-                          provideTopdecs} =
-      {
-       interfaceId = interfaceId,
-       interfaceName = interfaceName,
-       requiredIds = requiredIds,
-       provideTopdecs = decidePitopdecs provideTopdecs
-      }
-  fun decideInterfaceDecs interfaceDecs = map decideInterfaceDec interfaceDecs
-  fun decideInterface {interfaceDecs, requiredIds, locallyRequiredIds,
-                       provideTopdecs} =
-      {interfaceDecs = decideInterfaceDecs interfaceDecs, 
-       requiredIds = requiredIds, 
-       locallyRequiredIds = locallyRequiredIds,
-       provideTopdecs = decidePitopdecs provideTopdecs
-      }
 
 end

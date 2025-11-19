@@ -19,6 +19,15 @@ struct
       | A.TYVAR_FREE (_, _, loc) => loc
       | A.TYPOLY (_, _, loc) => loc
 
+  fun ffiTyLoc ty =
+      case ty of
+        A.FFITYVAR (_, (_, loc)) => loc
+      | A.FFITYRECORD (_, loc) => loc
+      | A.FFITYCON (_, _, loc) => loc
+      | A.FFITYTUPLE (_, loc) => loc
+      | A.FFITYFUN (_, _, _, loc) => loc
+      | A.FFITYPAREN (_, loc) => loc
+
   fun patLoc pat =
       case pat of
         A.PATWILD loc => loc
@@ -117,6 +126,14 @@ struct
       | A.DECINFIXR (_, _, loc) => loc
       | A.DECNONFIX (_, loc) => loc
       | A.DECPOLYREC (_, loc) => loc
+
+  fun strexpLoc strexp =
+      case strexp of
+        A.STRBASIC (_, loc) => loc
+      | A.STRID (_, _, loc) => loc
+      | A.STRCONSTRAINT (_, _, loc) => loc
+      | A.STRAPP (_, _, loc) => loc
+      | A.STRLET (_, _, loc) => loc
 
   fun strdecLoc strdec =
       case strdec of

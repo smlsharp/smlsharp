@@ -33,13 +33,13 @@ struct
       {
         topEnv: NameEvalEnv.topEnv,
         version: IDCalc.version,
-        fixEnv: Elaborator.fixEnv,
+        fixEnv: Elaborator.fix_env,
         builtinDecls: IDCalc.icdecl list
       }
   type newContext =
       {
         topEnv: NameEvalEnv.topEnv,
-        fixEnv: Elaborator.fixEnv
+        fixEnv: Elaborator.fix_env
       }
 
   datatype result =

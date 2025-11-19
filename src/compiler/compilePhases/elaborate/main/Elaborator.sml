@@ -16,12 +16,12 @@ struct
   structure E = ElaborateError
   datatype loc = datatype Loc.loc
 
-  type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
+  type fix_env = (Fixity.fixity * Absyn.loc) Symbol.Map.map
 
-  fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
+  fun extendFixEnv (env1, env2) : fix_env =
       Symbol.Map.unionWith #2 (env1, env2)
 
-  fun elaborate fixEnv ({interface, topdecsSource}:A.compile_unit) =
+  fun elaborate fixEnv ({interface, topdecsSource} : A.compile_unit) =
       let
         val _ = EU.initializeErrorQueue ()
         val (interface, requireFixEnv, provideFixEnv, topdecsInclude) =
@@ -32,16 +32,15 @@ struct
                 {interface, requireFixEnv, provideFixEnv, topdecsInclude} =>
                 (SOME interface, requireFixEnv, provideFixEnv, topdecsInclude)
 
-        val interface = Option.map UserTvarScope.decideInterface interface
         val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
         val (topdecsIncludeFixEnv, ptopdecsInclude) =
             ResolveInfix.resolveTopdecs fixEnv topdecsInclude
-        val ptopdecsInclude = ElaborateModule.elabTopDecs ptopdecsInclude
+        val ptopdecsInclude = ElaborateModule.elabTopdecs ptopdecsInclude
         val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
         val fixEnv = extendFixEnv (fixEnv, topdecsIncludeFixEnv)
         val (topdecsSourceFixEnv, ptopdecsSource) =
             ResolveInfix.resolveTopdecs fixEnv topdecsSource
-        val ptopdecsSource = ElaborateModule.elabTopDecs ptopdecsSource
+        val ptopdecsSource = ElaborateModule.elabTopdecs ptopdecsSource
         val ptopdecsSource = UserTvarScope.decide ptopdecsSource
 
         (* provide check *)
@@ -69,7 +68,7 @@ struct
 
   fun elaborateInterface
         fixEnv
-        ({interfaceDecs, requiredIds, topdecsInclude}:A.interface_unit) =
+        ({interfaceDecs, requiredIds, topdecsInclude} : A.interface_unit) =
       let
         val _ = EU.initializeErrorQueue ()
         val {interface, requireFixEnv, provideFixEnv, topdecsInclude} =
@@ -79,11 +78,10 @@ struct
                           locallyRequiredIds = nil,
                           provideTopdecs = nil,
                           topdecsInclude = topdecsInclude}}
-        val interface = UserTvarScope.decideInterface interface
         val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
         val (topdecsIncludeFixEnv, ptopdecsInclude) =
             ResolveInfix.resolveTopdecs fixEnv topdecsInclude
-        val ptopdecsInclude = ElaborateModule.elabTopDecs topdecsInclude
+        val ptopdecsInclude = ElaborateModule.elabTopdecs topdecsInclude
         val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
         val resultFixEnv = extendFixEnv (requireFixEnv, topdecsIncludeFixEnv)
         val plunit =

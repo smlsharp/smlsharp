@@ -1,0 +1,30 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/util/main/CompileUtils.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "./ElaborateError.ppg.smi"
+
+structure ElaborateTy =
+struct
+  type ftv = (Absyn.tyvar * Absyn.tyvar list) Symbol.Map.map
+  val singleton : Absyn.tyvar -> ftv
+  val union : ftv * ftv -> ftv
+  val unionList : ftv list -> ftv
+  val intersect : 'a Symbol.Map.map * ftv -> 'a Symbol.Map.map
+  val setMinus : 'a Symbol.Map.map * ftv -> 'a Symbol.Map.map
+  val tyvarsToSet : Absyn.tyvar list -> ftv
+  val kindedTyvarsToSet : Absyn.kinded_tyvar list -> ftv
+  val toKindedTyvars : ftv -> Absyn.kinded_tyvar list
+  val ftvKindedTyvar : Absyn.kinded_tyvar -> ftv
+  val ftvTy : Absyn.ty -> ftv
+  val ftvTypbind : Absyn.typbind -> ftv
+  val ftvDatbind : Absyn.datbind -> ftv
+  val ftvDatdesc : Absyn.datdesc -> ftv
+  val ftvWheretype : Absyn.wheretype -> ftv
+  val substTy : (Absyn.loc -> Absyn.ty) Symbol.Map.map -> Absyn.ty -> Absyn.ty
+  val reduceTy : Absyn.typbind Symbol.Map.map -> Absyn.ty -> Absyn.ty
+  val reduceDatbind
+      : Absyn.datbind list * Absyn.withty option -> Absyn.datbind list
+end

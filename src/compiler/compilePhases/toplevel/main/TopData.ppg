@@ -54,7 +54,7 @@ in
 
   type toplevelContext =
       {
-        fixEnv: Elaborator.fixEnv,
+        fixEnv: Elaborator.fix_env,
         topEnv: NameEvalEnv.topEnv,
         version: IDCalc.version,
         builtinDecls: IDCalc.icdecl list
@@ -62,7 +62,7 @@ in
 
   type newContext =
       {
-        fixEnv: Elaborator.fixEnv,
+        fixEnv: Elaborator.fix_env,
         topEnv: NameEvalEnv.topEnv
       }
 

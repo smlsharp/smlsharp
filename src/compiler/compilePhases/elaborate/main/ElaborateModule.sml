@@ -5,352 +5,230 @@
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
  * @author Liu Bochao
-
-sig
-
-  val elabSigExp : Absyn.sigexp -> PatternCalc.plsigexp
-  val elabSpec : Absyn.spec -> PatternCalc.plspec
-  val elabTopDecs : Fixity.fixity SEnv.map
-                    -> Absyn.topdec list
-                    -> PatternCalc.pltopdec list * Fixity.fixity SEnv.map
-
-end
+ * @author Katsuhiro Ueno
  *)
 structure ElaborateModule =
 struct
-  structure EU = UserErrorUtils
-  structure E = ElaborateError
+  structure A = Absyn
+  structure P = PatternCalc
   datatype loc = datatype Loc.loc
 
-  structure A = Absyn
-  structure PC = PatternCalc
-
-  fun toSymbol ((sym, loc):A.vid) = {symbol = sym, loc = LOC loc}
+  fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
 
-  val emptyTvars = (nil, Loc.NOLOC) : PC.scopedTvars
+  val itId = Symbol.intern "it"
+  fun itLongvid loc = (false, (nil, (itId, loc), loc), loc) : A.op_longvid
 
-  datatype sigexpKind = Interface | OrdinarySig
+  fun elabValdesc (vid, ty, loc) =
+      let
+        val ftv = ElaborateTy.ftvTy ty
+        val btvs = ElaborateTy.toKindedTyvars ftv
+      in
+        ((btvs, LOC loc), toSymbol vid, ty, LOC loc)
+      end
 
-  fun elabBinds elaborator elements =
-      map (fn (label, element, loc) => (toSymbol label, elaborator element, LOC loc)) elements
+  fun elabTypdesc (tyvarseq, tycon, loc) =
+      (seq tyvarseq, toSymbol tycon)
 
-    fun elabSpec spec =
-        case spec of
-          A.SPECVAL(valBinds, loc) =>
-          let
-            val specs =
-                map (fn (vid, ty, _) => (emptyTvars, toSymbol vid, ty, LOC loc))
-                    valBinds
-          in
-            [PC.PLSPECVAL specs]
-          end
-        | A.SPECTYPE(tydescs, loc) =>
-          let
-            val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
-          in
-            [PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=LOC loc}]
-          end
-        (*
-      | A.SPECTYPE(tydescs, loc) =>
-          let
-            val _ =
-              checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
-          in
-            PC.PLSPECTYPE(tydescs, loc)
-          end
-*)
-        | A.SPECTYPEINC(maniftypedescs, loc) =>
-          let
-            fun elabTypeEquation (tvars, symbol, ty, _) =
-                PC.PLSPECTYPEEQUATION ((seq tvars, toSymbol symbol, ty), LOC loc)
-          in
-            map elabTypeEquation maniftypedescs
-          end
-        | A.SPECEQTYPE(tydescs, loc) =>
-          let
-            val tydescs = map (fn (tvars, symbol, _) => (seq tvars, toSymbol symbol)) tydescs
-          in
-            [PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=LOC loc}]
-          end
-(*
-      | A.SPECEQTYPE(tydescs, loc) =>
-          let
-            val _ =
-              checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
-          in
-            PC.PLSPECEQTYPE(tydescs, loc)
-          end
-*)
-        | A.SPECDATATYPE(dataDescs, loc) =>
-          [PC.PLSPECDATATYPE
-             (map (fn (tyvars, symbol, con, loc) =>
-                      {tyvars = seq tyvars, loc = LOC loc, symbol = toSymbol symbol,
-                       conbind = map (fn (id,ty, loc) => {symbol=toSymbol id, ty=ty, loc=LOC loc}) con})
-                  dataDescs,
-              LOC loc)]
-        | A.SPECDATATYPEREP(tyCon, longTyCon, loc) =>
-          [PC.PLSPECREPLIC(toSymbol tyCon, SymbolWithLoc.fromAbsyn longTyCon, LOC loc)]
-        | A.SPECEXCEPTION(exnDescs, loc) =>
-          let
-            val exnDescs =
-                map (fn (symbol, tyOpt, loc) => (toSymbol symbol, tyOpt, LOC loc)) exnDescs
-          in
-            [PC.PLSPECEXCEPTION(exnDescs, LOC loc)]
-          end
-        | A.SPECSTRUCTURE(strdescs, loc) =>
-          [PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs, LOC loc)]
-        | A.SPECINCLUDE(sigexp, loc)=>
-          [PC.PLSPECINCLUDE(elabSigExp sigexp, LOC loc)]
-        | A.SPECINCLUDE_ID(sigids, loc) =>
-          let
-            fun elabSigID sigid =
-                PC.PLSPECINCLUDE(PC.PLSIGID (toSymbol sigid), LOC loc)
-          in
-            map elabSigID sigids
-          end
-        | A.SPECSHARINGTYPE(spec, longTyCons, loc) =>
-          [PC.PLSPECSHARE (elabSpecList spec, map SymbolWithLoc.fromAbsyn longTyCons, LOC loc)]
-        | A.SPECSHARING(spec, longstrids, loc) =>
-          [PC.PLSPECSHARESTR (elabSpecList spec, map SymbolWithLoc.fromAbsyn longstrids, LOC loc)]
-        | A.SPECSEMICOLON _ => nil
+  fun elabTypdescs eq (typdescs, loc) =
+      P.PLSPECTYPE {tydecls = map elabTypdesc typdescs, eq = eq, loc = LOC loc}
 
-    and elabSpecList specs =
-        List.concat (map elabSpec specs)
+  fun elabCondesc (vid, ty, loc) =
+      {symbol = toSymbol vid, ty = ty, loc = LOC loc}
 
-    and elabSigExp sigexp =
-        case sigexp of
-          A.SIGBASIC(spec, loc) =>
-          PC.PLSIGEXPBASIC(elabSpecList spec, LOC loc)
-        | A.SIGID sigid =>
-          PC.PLSIGID (toSymbol sigid)
-        | A.SIGWHERE (sigexp, whtypes, loc) =>
-          foldl
-            (fn ((NONE, longsymbol, ty, _), plsigexp) =>
-                PC.PLSIGWHERE (plsigexp, (nil, SymbolWithLoc.fromAbsyn longsymbol, ty), LOC loc)
-              | ((SOME (tvars, _), longsymbol, ty, _), plsigexp) =>
-                PC.PLSIGWHERE (plsigexp, (tvars, SymbolWithLoc.fromAbsyn longsymbol, ty), LOC loc))
-            (elabSigExp sigexp)
-            whtypes
+  fun elabDatdesc (datdesc as (tyvarseq, tycon, condescs, loc)) =
+      {tyvars = seq tyvarseq,
+       symbol = toSymbol tycon,
+       conbind = map elabCondesc condescs,
+       loc = LOC loc}
 
-    and elabStrExp strexp =
-        case strexp of
-          A.STRBASIC(strdecs, loc) =>
-          let
-            val plstrdecs = elabStrDecs strdecs
-          in
-            PC.PLSTREXPBASIC(plstrdecs, LOC loc)
-          end
-        | A.STRID longid => PC.PLSTRID (SymbolWithLoc.fromAbsyn longid)
-        | A.STRCONSTRAINT(strexp, (A.TRANSPARENT, sigexp, _), loc) =>
-          PC.PLSTRTRANCONSTRAINT
-            (elabStrExp strexp, elabSigExp sigexp, LOC loc)
-        | A.STRCONSTRAINT(strexp, (A.OPAQUE, sigexp, _), loc) =>
-          PC.PLSTROPAQCONSTRAINT
-            (elabStrExp strexp, elabSigExp sigexp, LOC loc)
-        | A.STRAPP(funid, SOME (A.FUNARG (A.STRID longid)), loc) =>
-          PC.PLFUNCTORAPP(toSymbol funid, SymbolWithLoc.fromAbsyn longid, LOC loc)
-        | A.STRAPP(funid, SOME (A.FUNARG strexp), loc) =>
-          let
-            val newStrSymbol = {symbol = Symbol.generate NONE, loc = LOC loc}
-            val newStrLong = SymbolWithLoc.symbolToLongsymbol newStrSymbol
-            val plstrexp = elabStrExp strexp
-            val plstrbody = PC.PLFUNCTORAPP(toSymbol funid, newStrLong, LOC loc)
-            val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp, LOC loc)],LOC loc)]
-          in
-            PC.PLSTRUCTLET(plstrDecs, plstrbody, LOC loc)
-          end
-        | A.STRAPP (funid, SOME (A.FUNARG_DEC (strdecs, _)), loc) =>
-          elabStrExp (A.STRAPP (funid, SOME (A.FUNARG (A.STRBASIC (strdecs, loc))), loc))
-        | A.STRAPP (funid, NONE, loc) =>
-          elabStrExp (A.STRAPP (funid, SOME (A.FUNARG (A.STRBASIC (nil, loc))), loc))
-(*
-      | A.FUNCTORAPP(funid, strexp, loc) =>
-          PC.PLFUNCTORAPP(funid, elabStrExp env strexp, loc)
-*)
-      | A.STRLET(strdecs, strexp, loc) =>
+  fun elabExdesc (vid, ty, loc) =
+      (toSymbol vid, ty, LOC loc)
+
+  fun elabWheretype (wheretype as (tyvarseq, longtycon, ty, loc)) =
+      (seq tyvarseq, SymbolWithLoc.fromAbsyn longtycon, ty)
+
+  fun elabTypbind (typbind as (tyvarseq, tycon, ty, loc)) =
+      elabSpec
+        (A.SPECINCLUDE
+           (A.SIGWHERE
+              (A.SIGBASIC ([A.SPECTYPE ([(tyvarseq, tycon, loc)], loc)], loc),
+               [(tyvarseq, (nil, tycon, #2 tycon), ty, loc)],
+               loc),
+            loc))
+
+  and elabStrdesc (strid, sigexp, loc) =
+      (toSymbol strid, elabSigexp sigexp, LOC loc)
+
+  and elabSpec spec =
+      case spec of
+        A.SPECVAL (valdescs, loc) =>
+        [P.PLSPECVAL (map elabValdesc valdescs)]
+      | A.SPECTYPE typdescs =>
+        [elabTypdescs false typdescs]
+      | A.SPECEQTYPE typdescs =>
+        [elabTypdescs true typdescs]
+      | A.SPECTYPEINC (typbinds, loc) =>
+        List.concat (map elabTypbind typbinds)
+      | A.SPECDATATYPE (datdescs, loc) =>
+        [P.PLSPECDATATYPE (map elabDatdesc datdescs, LOC loc)]
+      | A.SPECDATATYPEREP (tycon, longtycon, loc) =>
+        [P.PLSPECREPLIC
+           (toSymbol tycon, SymbolWithLoc.fromAbsyn longtycon, LOC loc)]
+      | A.SPECEXCEPTION (exdescs, loc) =>
+        [P.PLSPECEXCEPTION (map elabExdesc exdescs, LOC loc)]
+      | A.SPECSTRUCTURE (strdescs, loc) =>
+        [P.PLSPECSTRUCT (map elabStrdesc strdescs, LOC loc)]
+      | A.SPECINCLUDE (sigexp, loc) =>
+        [P.PLSPECINCLUDE (elabSigexp sigexp, LOC loc)]
+      | A.SPECINCLUDE_ID (sigids, loc) =>
+        elabSpecs
+          (map (fn sigid => A.SPECINCLUDE (A.SIGID sigid, #2 sigid)) sigids)
+      | A.SPECSHARINGTYPE (specs, tycons, loc) =>
+        [P.PLSPECSHARE
+           (elabSpecs specs, map SymbolWithLoc.fromAbsyn tycons, LOC loc)]
+      | A.SPECSHARING (specs, strids, loc) =>
+        [P.PLSPECSHARESTR
+           (elabSpecs specs, map SymbolWithLoc.fromAbsyn strids, LOC loc)]
+      | A.SPECSEMICOLON _ => nil
+
+  and elabSpecs specs =
+      List.concat (map elabSpec specs)
+
+  and elabSigexp sigexp =
+      case sigexp of
+        A.SIGBASIC (specs, loc) =>
+        P.PLSIGEXPBASIC (elabSpecs specs, LOC loc)
+      | A.SIGID sigid =>
+        P.PLSIGID (toSymbol sigid)
+      | A.SIGWHERE (sigexp, wheretypes, loc) =>
+        foldl
+          (fn (wheretype, sigexp) =>
+              P.PLSIGWHERE (sigexp, elabWheretype wheretype, LOC loc))(*FIXME*)
+          (elabSigexp sigexp)
+          wheretypes
+
+  fun elabStrexp strexp =
+      case strexp of
+        A.STRBASIC (strdecs, loc) =>
+        P.PLSTREXPBASIC (elabStrdecs strdecs, LOC loc)
+      | A.STRID longid =>
+        P.PLSTRID (SymbolWithLoc.fromAbsyn longid)
+      | A.STRCONSTRAINT (strexp, (A.TRANSPARENT, sigexp, _), loc) =>
+        P.PLSTRTRANCONSTRAINT
+          (elabStrexp strexp, elabSigexp sigexp, LOC loc)
+      | A.STRCONSTRAINT (strexp, (A.OPAQUE, sigexp, _), loc) =>
+        P.PLSTROPAQCONSTRAINT
+          (elabStrexp strexp, elabSigexp sigexp, LOC loc)
+      | A.STRAPP (funid, SOME (A.FUNARG (A.STRID longid)), loc) =>
+        P.PLFUNCTORAPP (toSymbol funid, SymbolWithLoc.fromAbsyn longid, LOC loc)
+      | A.STRAPP (funid, SOME (A.FUNARG strexp), loc) =>
         let
-          val plstrdecs = elabStrDecs strdecs
+          val loc2 = AbsynUtils.strexpLoc strexp
+          val strid = (Symbol.generate NONE, loc2)
+          val longstrid = (nil, strid, loc2)
         in
-          PC.PLSTRUCTLET(plstrdecs, elabStrExp strexp, LOC loc)
+          elabStrexp
+            (A.STRLET
+               ([A.STRUCTURE ([(strid, NONE, strexp, loc2)], loc2)],
+                A.STRAPP (funid, SOME (A.FUNARG (A.STRID longstrid)), loc),
+                loc))
         end
+      | A.STRAPP (funid, SOME (A.FUNARG_DEC strdecs), loc) =>
+        elabStrexp
+          (A.STRAPP (funid, SOME (A.FUNARG (A.STRBASIC strdecs)), loc))
+      | A.STRAPP (funid, NONE, loc) =>
+        let
+          val strid = (Symbol.generate NONE, loc)
+          val longstrid = (nil , strid, loc)
+        in
+          elabStrexp
+            (A.STRLET
+               ([A.STRUCTURE
+                   ([(strid, NONE, A.STRBASIC (nil, loc), loc)], loc)],
+                A.STRAPP (funid, SOME (A.FUNARG (A.STRID longstrid)), loc),
+                loc))
+        end
+      | A.STRLET (strdecs, strexp, loc) =>
+        P.PLSTRUCTLET (elabStrdecs strdecs, elabStrexp strexp, LOC loc)
 
-    and elabStrBind strbind =
+  and elabStrbind strbind =
       case strbind of
-        (strid, SOME (A.TRANSPARENT, sigexp, _), strexp, loc) =>
-        (
-          toSymbol strid,
-          PC.PLSTRTRANCONSTRAINT
-            (elabStrExp strexp, elabSigExp sigexp, LOC loc),
-          LOC loc
-        )
-      | (strid, SOME (A.OPAQUE, sigexp, _), strexp, loc) =>
-        (
-          toSymbol strid,
-          PC.PLSTROPAQCONSTRAINT
-            (elabStrExp strexp, elabSigExp sigexp, LOC loc),
-          LOC loc
-        )
-      | (strid, NONE, strexp, loc) =>
-        (toSymbol strid, elabStrExp strexp, LOC loc)
+        (strid, NONE, strexp, loc) =>
+        (toSymbol strid, elabStrexp strexp, LOC loc)
+      | (strid, SOME sigcon, strexp, loc) =>
+        elabStrbind
+          (strid, NONE, A.STRCONSTRAINT (strexp, sigcon, #3 sigcon), loc)
 
-    and elabStrDec strdec =
+  and elabStrdec strdec =
       case strdec of
         A.STRDEC dec =>
-        let
-          val pldecs = ElaborateCore.elabDec dec
-        in
-          map PC.PLCOREDEC pldecs
-        end
-      | A.STRUCTURE(strbinds,loc) =>
-        [PC.PLSTRUCTBIND(map elabStrBind strbinds, LOC loc)]
-      | A.STRLOCAL(strdecs1, strdecs2, loc) =>
-        let
-          val plstrdecs1 = elabStrDecs strdecs1
-          val plstrdecs2 = elabStrDecs strdecs2
-        in
-          [PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, LOC loc)]
-        end
+        map P.PLCOREDEC (ElaborateCore.elabDec dec)
+      | A.STRUCTURE (strbinds, loc) =>
+        [P.PLSTRUCTBIND (map elabStrbind strbinds, LOC loc)]
+      | A.STRLOCAL (strdecs1, strdecs2, loc) =>
+        [P.PLSTRUCTLOCAL (elabStrdecs strdecs1, elabStrdecs strdecs2, LOC loc)]
       | A.STRSEMICOLON _ => nil
 
-    and elabStrDecs strdecs =
-        List.concat (map elabStrDec strdecs)
+  and elabStrdecs strdecs =
+      List.concat (map elabStrdec strdecs)
 
-    and elabFunBind funbind  =
-      case funbind of
-        (* functor F(A:sig1) : sig2 = str  =>
-                   functor F(A:sig1) = str : sig2 *)
-        (funid, param as SOME (A.FUNPARAM _),
-         SOME (A.TRANSPARENT, resSigexp, _),
-         strexp, loc) =>
-        let val newStrexp = A.STRCONSTRAINT(strexp, (A.TRANSPARENT, resSigexp, loc), loc)
-        in
-          elabFunBind (funid, param, NONE, newStrexp, loc)
-        end
-          (* functor F(A:sig1) :> sig2 = str  =>
-            functor F(A:sig1) = str :> sig2
-           *)
-      | (funid, param as SOME (A.FUNPARAM _),
-         SOME (A.OPAQUE, resSigexp, _),
-         strexp, loc) =>
-        let val newStrexp = A.STRCONSTRAINT(strexp, (A.OPAQUE, resSigexp, loc), loc)
-        in
-          elabFunBind (funid, param, NONE, newStrexp, loc)
-        end
-      (* functor F(spec) : sig = str  =>
-         functor F('x:sig spec end) = let open 'X in str:sig end
-       *)
-      | (funid, SOME (A.FUNPARAM_SPEC specLoc),
-         SOME (A.TRANSPARENT, resSigexp, _),
-         strexp, loc) =>
+  fun elabSigbind (strid, sigexp, loc) =
+      (toSymbol strid, elabSigexp sigexp, LOC loc)
+
+  fun elabFunbind ((funid, param, sigcon, strexp, loc) : A.funbind) =
+      case (param, sigcon) of
+        (SOME (A.FUNPARAM (strid, sigexp, _)), NONE) =>
+        {name = toSymbol funid,
+         argStrName = toSymbol strid,
+         argSig = elabSigexp sigexp,
+         body = elabStrexp strexp,
+         loc = LOC loc}
+      | (SOME (A.FUNPARAM _), SOME (sigcon as (_, _, loc2))) =>
+        elabFunbind
+          (funid, param, NONE, A.STRCONSTRAINT (strexp, sigcon, loc2), loc)
+      | (SOME (A.FUNPARAM_SPEC (spec as (_, loc2))), sigcon) =>
         let
-          val newStrid = Symbol.generate NONE
-          val newStrexp =
+          val strid = (Symbol.generate NONE, loc2)
+          val param = SOME (A.FUNPARAM (strid, A.SIGBASIC spec, loc2))
+          val strexp =
+              case sigcon of
+                NONE => strexp
+              | SOME sigcon => A.STRCONSTRAINT (strexp, sigcon, #3 sigcon)
+          val strexp =
               A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))],
-                 A.STRCONSTRAINT(strexp,(A.TRANSPARENT,resSigexp,loc),loc),
-                 loc)
-          val argSigExp = A.SIGBASIC specLoc
-          val newFunBind =
-              (funid, SOME (A.FUNPARAM ((newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
+                ([A.STRDEC (A.DECOPEN ([(nil, strid, #2 strid)], loc2))],
+                 strexp,
+                 AbsynUtils.strexpLoc strexp)
         in
-          elabFunBind newFunBind
+          elabFunbind (funid, param, NONE, strexp, loc)
         end
-      (* functor F(spec) :> sig = str  =>
-         functor F('x:sig spec end) = let open 'X in str:>sig end
-       *)
-      | (funid, SOME (A.FUNPARAM_SPEC specLoc),
-         SOME (A.OPAQUE, resSigexp, _),
-         strexp, loc) =>
+      | (NONE, _) =>
         let
-          val newStrid = Symbol.generate NONE
-          val newStrexp =
-              A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))],
-                 A.STRCONSTRAINT(strexp,(A.OPAQUE,resSigexp,loc),loc),
-                 loc)
-          val argSigExp = A.SIGBASIC specLoc
-          val newFunBind =
-              (funid, SOME (A.FUNPARAM ((newStrid, loc), argSigExp, #2 specLoc)), NONE, newStrexp, loc)
+          val strid = (Symbol.generate NONE, loc)
+          val param = SOME (A.FUNPARAM (strid, A.SIGBASIC (nil, loc), loc))
         in
-          elabFunBind newFunBind
-        end
-      (* functor F(spec) = str  =>
-         functor F('x:sig spec end) = let open 'X in str end
-       *)
-      | (funid, SOME (A.FUNPARAM_SPEC specLoc), NONE, strexp, loc) =>
-        let
-          val newStrid = Symbol.generate NONE
-          val newStrexp =
-              A.STRLET
-                ([A.STRDEC(A.DECOPEN([(nil, (newStrid, loc), loc)], loc))], strexp, loc)
-          val newFunBind =
-              (funid, SOME (A.FUNPARAM ((newStrid, loc), A.SIGBASIC specLoc, #2 specLoc)), NONE, newStrexp, loc)
-        in
-          elabFunBind newFunBind
-        end
-      | (funid, NONE, sigcon, strexp, loc) =>
-        let
-          val newStrid = Symbol.generate NONE
-          val newFunBind =
-              (funid, SOME (A.FUNPARAM ((newStrid, loc), A.SIGBASIC (nil, loc), loc)), sigcon, strexp, loc)
-        in
-          elabFunBind newFunBind
-        end
-      (* functor F(A:sig) = str
-       *)
-      | (funid, SOME (A.FUNPARAM (strid, argSigexp, _)), NONE, strexp, loc) =>
-        let
-          val newArgSigexp = elabSigExp argSigexp
-          val newStrexp = elabStrExp strexp
-        in
-          {name = toSymbol funid,
-           argStrName = toSymbol strid,
-           argSig=newArgSigexp,
-           body=newStrexp,
-           loc = LOC loc}
+          elabFunbind (funid, param, sigcon, strexp, loc)
         end
 
-    and elabTopDec topdec =
+  fun elabTopdec topdec =
       case topdec of
         A.TOPSTRDEC strdec =>
-          let
-            val plstrdecs = elabStrDec strdec
-          in
-            map PC.PLTOPDECSTR plstrdecs
-          end
-      | A.TOPSIGNATURE(sigdecs, loc) =>
-          let
-            val plsigdecs = elabBinds elabSigExp sigdecs
-          in
-            [PC.PLTOPDECSIG(plsigdecs, LOC loc)]
-          end
-      | A.TOPFUNCTOR(funbinds, loc) =>
-          let
-            val plfunbinds = map elabFunBind funbinds
-          in
-            [PC.PLTOPDECFUN(plfunbinds, LOC loc)]
-          end
-(*
-      | A.TOPDECFUN(funbinds, loc) =>
-          let val plfunbinds = map (elabFunBind env) funbinds
-          in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
-          end
-*)
+        map P.PLTOPDECSTR (elabStrdec strdec)
+      | A.TOPSIGNATURE (sigbinds, loc) =>
+        [P.PLTOPDECSIG (map elabSigbind sigbinds, LOC loc)]
+      | A.TOPFUNCTOR (funbinds, loc) =>
+        [P.PLTOPDECFUN (map elabFunbind funbinds, LOC loc)]
       | A.TOPEXP (exp, loc) =>
-        [PC.PLTOPDECSTR
-           (PC.PLCOREDEC
-              (PC.PDVAL
-                 (emptyTvars,
-                  [(PC.PLPATID (SymbolWithLoc.mkLongsymbol (nil, "it") (LOC loc)),
-                    ElaborateCore.elabExp exp,
-                    LOC loc)],
-                  nil,
-                  LOC loc)))]
+        elabTopdec
+          (A.TOPSTRDEC
+             (A.STRDEC
+                (A.DECVAL
+                   (NONE,
+                    [A.VALBIND (A.PATID (itLongvid loc), exp, loc)],
+                    loc))))
 
-    and elabTopDecs topdecs =
-        List.concat (map elabTopDec topdecs)
+  fun elabTopdecs topdecs =
+      List.concat (map elabTopdec topdecs)
 
 end

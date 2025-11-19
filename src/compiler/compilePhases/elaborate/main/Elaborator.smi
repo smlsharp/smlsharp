@@ -8,7 +8,8 @@ _require local "./UserTvarScope.smi"
 _require local "./ResolveInfix.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
@@ -16,18 +17,16 @@ _require "../../../extensions/usererror/main/UserError.ppg.smi"
 
 structure Elaborator =
 struct
-  type fixEnv = (Fixity.fixity * (Loc.pos * Loc.pos)) Symbol.Map.map
-  val extendFixEnv : fixEnv * fixEnv -> fixEnv
+  type fix_env = (Fixity.fixity * Absyn.loc) Symbol.Map.map
+  val extendFixEnv : fix_env * fix_env -> fix_env
   val elaborate :
-      fixEnv
+      fix_env
       -> AbsynInterfaceLoaded.compile_unit
-      -> fixEnv * PatternCalcInterface.compile_unit * UserError.errorInfo list
-
+      -> fix_env * PatternCalcInterface.compile_unit * UserError.errorInfo list
   val elaborateInterface :
-      fixEnv
+      fix_env
       -> AbsynInterfaceLoaded.interface_unit
-      -> fixEnv
+      -> fix_env
          * PatternCalcInterface.interface_unit
          * UserError.errorInfo list
-
 end

@@ -1,4 +1,5 @@
 _require local "../../../../basis.smi"
+_require local "../../../libs/list-utils/main/Snoc.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynUtils.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
@@ -7,18 +8,19 @@ _require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/Longsymbol.smi"
-_require "../../../data/symbols/main/SymbolWithLoc.smi"
+_require local "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require local "../../analyzefiles/main/Analyzers.smi"
 _require local "./ElaborateError.ppg.smi"
+_require local "./ElaborateTy.smi"
 _require local "./ElaborateSQL.smi"
 _require local "./ElaborateForeach.smi"
 
 structure ElaborateCore =
 struct
-  val elabFFITy : Absyn.ffi_ty -> PatternCalc.ffiTy
+  val elabFfiTy : Absyn.ffi_ty -> PatternCalc.ffiTy
   val elabExp : Absyn.exp -> PatternCalc.plexp
   val elabDec : Absyn.dec -> PatternCalc.pdecl list
-  val elabInfixPrec : string * Absyn.loc -> int
+  val elabInfixPrec : string option * Absyn.loc -> int
 end

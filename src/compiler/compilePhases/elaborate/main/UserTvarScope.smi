@@ -13,10 +13,6 @@ _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 
 structure UserTvarScope =
-  struct
-    (* an ordered set of user type varaibles *)
-    type tvset (= boxed)
-    val decide : PatternCalc.pltopdec list -> PatternCalc.pltopdec list
-    val decideSigexp : PatternCalc.plsigexp -> PatternCalc.plsigexp
-    val decideInterface : 'loc PatternCalcInterface.interface -> 'loc PatternCalcInterface.interface
-  end
+struct
+  val decide : PatternCalc.pltopdec list -> PatternCalc.pltopdec list
+end

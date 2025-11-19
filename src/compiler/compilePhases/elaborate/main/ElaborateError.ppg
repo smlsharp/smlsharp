@@ -1,18 +1,16 @@
 (**
  * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ElaborateError.ppg,v 1.23.6.1 2009/12/23 22:24:58 hiro-en Exp $
+ * @author Katsuhiro Ueno
  *)
 structure ElaborateError =
 struct
 
   (***************************************************************************)
-  
+
   (*%
    * @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar
-   * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
-   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
 
@@ -22,65 +20,20 @@ struct
    * </pre>
    *)
   (*%
-   * @format({tyCon, wants, given})
-   *   "type" +d "constructor" +d tyCon +d "given" +d given +d "arguments,"
-   *  +d "wants" +d wants
+   * @format({tycon, wants, given})
+   * "type" +d "constructor" +d tycon +d "given" +d given +d "arguments,"
+   * +d "wants" +d wants
    *)
-  ArityMismatchInTypeDeclaration of {tyCon : Symbol.symbol, wants : int, given : int}
+  ArityMismatchInTypeDeclaration of
+  {tycon : Symbol.symbol, wants : int, given : int}
 
   and
   (*%
-   * @format(id) "expression" +d "or" +d "pattern" +d "begins" +d
-   *            "with" +d "infix" +d "identifier" +d ":" +d id
+   * @format(id)
+   * "expression" +d "or" +d "pattern" +d "begins" +d "with" +d "infix"
+   * +d "identifier" +d ":" +d id
    *)
   BeginWithInfixID of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *   exception true of int
-   *   datatype dt = ref of int
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Binding" +d "reserved" +d "name:" + name
-   *)
-  BindReservedName of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *   datatype t1 = D and t2 = D
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
-   *      "datatype:" + name
-   *)
-  DuplicateConstructorNameInDatatype of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *   exception e1 of int and e1 = Fail
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
-   *      "exception:" + name
-   *)
-  DuplicateConstructorNameInException of Symbol.symbol
-					 
-  and
-  (**
-   * <pre>
-   *    type t and t
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "type" +d "constructor:" + name
-   *)
-  DuplicateTypDesc of Symbol.symbol
 
   and
   (**
@@ -89,183 +42,52 @@ struct
    * </pre>
    *)
   (*%
-   * @format(name) "Duplicate" +d  "type" +d "parameter:" + name
+   * @format(name)
+   * "Duplicate" +d  "type" +d "parameter:" + name
    *)
-  DuplicateTypParam of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *    type t and t
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "structure" +d "identifier:" + name
-   *)
-  DuplicateStrDesc of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *    type t and t
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "functor" +d "identifier:" + name
-   *)
-  DuplicateFunctorDesc of string
-
-  and
-  (**
-   * <pre>
-   *  val {a, a} = {a = 1, a = 2}
-   * </pre>
-   *)
-  (*%
-   * @format(label)
-   *    "duplicate" +d "label" +d "in" +d "record:" label
-   *)
-  DuplicateRecordLabel of RecordLabel.label
-
-  and
-  (**
-   * <pre>
-   *  val {a, a} = {a = 1, a = 2}
-   * </pre>
-   *)
-  (*%
-   * @format(label)
-   *  "duplicate" +d "label" +d "in" +d "record pattern:" label
-   *)
-  DuplicateRecordLabelInPat of RecordLabel.label
-
-  and
-  (**
-   * <pre>
-   *  val {a, a} = {a = 1, a = 2}
-   * </pre>
-   *)
-  (*%
-   * @format(label) "duplicate" +d "label" +d "in" +d "a record type:" label
-   *)
-  DuplicateRecordLabelInRawType of RecordLabel.label
-
-  and
-  (**
-   * <pre>
-   *   type t1 = int and t1 = string
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d "type:" + name
-   *)
-  DuplicateTypeNameInType of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *   datatype t1 = D and t1 = E
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d
-   *             "datatype:" + name
-   *)
-  DuplicateTypeNameInDatatype of Symbol.symbol
-
-  and 
-  (**
-   * <pre>
-   *    val x : int and x : bool
-   * </pre>
-   *)
-  (*%
-   * @format(name) "Duplicate" +d  "value" +d "identifier:" + name
-   *)
-  DuplicateValDesc of Symbol.symbol
-
-  and
-  (**
-   * <pre>
-   *  val rec f = exp and f = exp
-   * </pre>
-   *)
-  (*%
-   * @format(var)
-   *   "duplicate" +d "name" +d "in" +d "val rec:" +d var
-   *)
-  DuplicateVarNameInValRec of Symbol.symbol
+  DuplicateTypeParam of Symbol.symbol
 
   and
   (*%
-   * @format(id) "expression" +d "or" +d "pattern" +d "ends" +d
-   *            "with" +d "infix" +d "identifier" +d ":" +d id
+   * @format(id)
+   * "expression" +d "or" +d "pattern" +d "ends" +d "with" +d "infix"
+   * +d "identifier" +d ":" +d id
    *)
   EndWithInfixID of Symbol.symbol
 
-(*
   and
   (*%
-   * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
-   *)
- ArgWithInfixID of Longsymbol.longsymbol
-*)
-
-  and
-  (*%
-   * @format "can't" +d "find" +d "function" +d "arguments" +d "in" +d "clause"
+   * @format
+   * "can't" +d "find" +d "function" +d "arguments" +d "in" +d "clause"
    *)
   FunctionParameterNotFound
 
   and
   (*%
-   * @format "illegal" +d "function" +d "symbol" +d "in" +d "clause"
+   * @format
+   * "illegal" +d "function" +d "symbol" +d "in" +d "clause"
    *)
   IllegalFunctionSymbol
 
   and
   (*%
    * @format
-   * "improper" +d "infix" +d "pattern" +d "in" +d "function"
-   * +d "clause"
+   * "improper" +d "infix" +d "pattern" +d "in" +d "function" +d "clause"
    *)
   ImproperInfixPattern
 
   and
   (*%
-   * @format "infix" +d "operator" +d "required," +d "or" +d "delete" +d
-   *        "parentheses"
-   *)
-  InfixRequired
-
-  and
-  (*%
-   * @format(id) "infix" +d "symbol" +d id +d "used" +d "where" +d "a" +d
-   *            "nonfix" +d "identifier" +d "was" +d "expected"
-   *)
-  NonfixExpected of string
-
-  and
-  (* Only variable pattern optionally typed is accepted in elaboration.
-   *)
-  (*%
    * @format
-   * "only" +d "variable" +d "or" +d "typed" +d "variable" +d "pattern" +d
-   * "is" +d "allowed" +d "in" +d "val" +d "rec"
-   *)
-  NonVariablePatternInValRec
-
-  and
-  (*%
-   * @format "clauses" +d "don't" +d "all" +d "have" +d "same"
-              +d "function" +d "name"
+   * "clauses" +d "don't" +d "all" +d "have" +d "same" +d "function" +d "name"
    *)
   NotAllHaveSameFunctionName
 
   and
   (*%
-   * @format "clauses" +d "don't" +d "all" +d "have" +d "same" +d "number"
-   *        +d "of" +d "patterns"
+   * @format
+   * "clauses" +d "don't" +d "all" +d "have" +d "same" +d "number"
+   * +d "of" +d "patterns"
    *)
   NotAllHaveSameNumberPatterns
 
@@ -277,15 +99,15 @@ struct
    * </pre>
    *)
   (*%
-   * @format({tyvar}) "free" +d "type" +d "variable:" +d {tyvar}
+   * @format(tyvar)
+   * "free" +d "type" +d "variable:" +d tyvar
    *)
-  NotBoundTyvar of {tyvar : Symbol.symbol}
+  NotBoundTyvar of Symbol.symbol
 
   and
   (*%
    * @format
-   * "bound" +d "expression" +d "in" +d "val" +d "rec" +d "must" +d "be" +d
-   * "fn"
+   * "bound" +d "expression" +d "in" +d "val" +d "rec" +d "must" +d "be" +d "fn"
    *)
   NotFnBoundInValRec
 
@@ -295,7 +117,7 @@ struct
   (*%
    * @format
    * "no" +d "real" +d "constant" +d "may" +d "occur" +d "in" +d "a" +d
-   * "pattern."
+   * "pattern"
    *)
   RealConstantInPattern
 
@@ -303,47 +125,26 @@ struct
   (*
    *)
   (*%
-   * @format({attr})
+   * @format(attr)
    * "undefined" +d "foreign" +d "attribute:" +d attr
    *)
-  UndefinedFFIAttribute of {attr:string}
+  UndefinedFFIAttribute of string
 
   and
   (*%
-   * @format({tvar})
-   * "type" +d "variable" +d tvar +d "has" +d "inconsistent" +d "equality"
-   *)
-  DifferentEqOfSameTvar of {tvar: AbsynTy.tyvar}
-
-  and
-  (*%
-   * @format({tvar})
+   * @format(tvar)
    * "duplicate" +d "user" +d "type" +d "variable" +d "in" +d "declaration:"
    * +d tvar
    *)
-  DuplicateUserTvar of {tvar: AbsynTy.tyvar}
+  DuplicateUserTvar of AbsynTy.tyvar
 
   and
   (*%
-   * @format({tvar})
+   * @format(tvar)
    * "user" +d "type" +d "variable" +d tvar +d "is" +d "scoped" +d "at"
    * +d "outer" +d "declaration"
    *)
-  UserTvarScopedAtOuterDecl of {tvar: AbsynTy.tyvar}
-
-  and
-  (*%
-   * @format({filename, msg})
-   * "failed to load inteface file:" +d filename +d ":" +d msg
-   *)
-  LoadInterfaceFailed of {filename: string, msg: string}
-
-  and
-  (*%
-   * @format(string)
-   * "multiple" +d "_provide" +d "declaration:" +d string
-   *)
-  MultipleProvide of string
+  UserTvarScopedAtOuterDecl of AbsynTy.tyvar
 
   and
   (*%
@@ -370,38 +171,11 @@ struct
 
   and
   (*%
-   * @format(sigid)
-   * "signature" +d "is" +d "referenced" +d "by" +d "ID" +d "from" +d
-   * "interface:" +d sigid
-   *)
-  SigIDFoundInInterface of Symbol.symbol
-
-  and
-  (*%
-     @format
-        "abstype" +d "is" +d "obsolete;" +d "use" +d "opaque" +d "signature" +d "instead"
-   *)
-  AbstypeNotSupported
-
-  and
-  (*%
    * @format(id1 * id2)
    * "operators" +d "of" +d "same" +d "precedence" +d "with" +d "mixed" +d
    * "associativities:" +d id1 +d "and" +d id2
    *)
   InvalidOpAssociativity of Symbol.symbol * Symbol.symbol
-
-  and
-  (*%
-   * @format(id) "runtime" +d "type" +d "not" +d "found:" +d id
-   *)
-  RuntimeTyNotFound of string
-
-  and
-  (*%
-   * @format "invalid" +d "pattern" +d "for" +d "_jsoncase"
-   *)
-  InvalidPatternForJsonCase
 
   and
   (*%
@@ -416,5 +190,12 @@ struct
    * "provide" +d "check" +d "fails" +d "(infix mismatch):" +d id
    *)
   ProvideInfixMismatch of Symbol.symbol
+
+  and
+  (*%
+   * @format
+   * "identifier" +d "expected" +d "in" +d "constructor" +d "pattern"
+   *)
+  PatappWithoutIdentifier
 
 end
