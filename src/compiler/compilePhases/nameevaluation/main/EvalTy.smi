@@ -31,7 +31,6 @@ structure EvalTy =
 struct
   type tvarEnv = IDCalc.tvar Symbol.Map.map
   val emptyTvarEnv : tvarEnv
-  val genTvar : tvarEnv -> AbsynTy.tyvar -> tvarEnv * IDCalc.tvar
   val genTvarList : tvarEnv -> AbsynTy.tyvar list -> tvarEnv * IDCalc.tvar list
   val evalTy : tvarEnv -> NameEvalEnv.env -> AbsynTy.ty -> IDCalc.ty
   val evalTyWithFlex : tvarEnv -> NameEvalEnv.env -> AbsynTy.ty -> IDCalc.ty

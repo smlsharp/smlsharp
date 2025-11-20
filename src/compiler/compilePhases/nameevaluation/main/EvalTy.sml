@@ -39,7 +39,7 @@ in
   type tvarEnv = I.tvar Symbol.Map.map
   val emptyTvarEnv = Symbol.Map.empty : tvarEnv
 
-  fun genTvar (tvarEnv:tvarEnv) (isEq, symbol) : tvarEnv * I.tvar =
+  fun genTvar isEq (tvarEnv:tvarEnv) (_, symbol) : tvarEnv * I.tvar =
       let
         val id = TvarID.generate()
         val tvar = {symbol=toSymbol symbol, isEq=isEq, id=id, lifted=false}
@@ -48,7 +48,7 @@ in
       end
 
   fun genTvarList (tvarEnv:tvarEnv) tvarList : tvarEnv * I.tvar list =
-      U.evalTailList {env=tvarEnv, eval=genTvar} tvarList
+      U.evalTailList {env=tvarEnv, eval=genTvar false} tvarList
 
   fun checkCyclicKind tvarKindList =
       let
@@ -139,13 +139,13 @@ in
       end
 
   (* type variable evaluators *)
-  fun evalTvar (tvarEnv:tvarEnv) ((isEq, symbol) : A.tyvar) : I.tvar =
+  fun evalTvar (tvarEnv:tvarEnv) ((_, symbol) : A.tyvar) : I.tvar =
       case Symbol.Map.find(tvarEnv, #1 symbol) of
         SOME tvar => tvar
       | NONE =>
         (EU.enqueueError
            (Loc.LOC (#2 symbol), E.TvarNotFound("Ty-010",{symbol = #1 symbol}));
-         {symbol=toSymbol symbol, isEq=isEq, id=TvarID.generate(), lifted=false})
+         {symbol=toSymbol symbol, isEq=false, id=TvarID.generate(), lifted=false})
 
   (* type evaluators, which return a type etc and liftedtys *)
   fun evalTyAux allowFlex (tvarEnv:tvarEnv) (env:V.env) (ty:A.ty) : I.ty  =
@@ -326,9 +326,9 @@ in
   and evalKindedTvarList allowFlex (tvarEnv:tvarEnv) (env:V.env) (tvarKindList, tvarsLoc)
       : tvarEnv * I.kindedTvar list =
       let
-        fun evalTvar tvarEnv (tvar, kind, _)  =
+        fun evalTvar tvarEnv (tvar as (isEq, _), kind, _)  =
             let
-              val (tvarEnv, tvar) = genTvar tvarEnv tvar
+              val (tvarEnv, tvar) = genTvar isEq tvarEnv tvar
             in
               (tvarEnv, (tvar, kind))
             end
