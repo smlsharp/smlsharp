@@ -138,9 +138,12 @@ struct
                  (A.PATID (nilLongvid loc))
                  exps)
       | A.PATTYPED (pat, ty, loc) =>
-        P.PLPATTYPED (elabPat pat, ty, LOC loc)
+        P.PLPATTYPED (elabPat pat, ElaborateTy.elabMonoTy ty, LOC loc)
       | A.PATAS ((_, id, _), ty, pat, loc) =>
-        P.PLPATLAYERED(toSymbol id, ty, elabPat pat, LOC loc)
+        P.PLPATLAYERED (toSymbol id,
+                        Option.map ElaborateTy.elabMonoTy ty,
+                        elabPat pat,
+                        LOC loc)
       | A.PATPAREN (pat, loc) => elabPat pat
 
   and elabPatrow patrow =
@@ -209,10 +212,12 @@ struct
       end
 
   fun elabTypbind (tyvarseq, tycon, ty, loc) =
-      (seq tyvarseq, toSymbol tycon, ty, LOC loc)
+      (seq tyvarseq, toSymbol tycon, ElaborateTy.elabMonoTy ty, LOC loc)
 
   fun elabConbind ((_, vid, _), ty, loc) =
-      {symbol = toSymbol vid, ty = ty, loc = LOC loc}
+      {symbol = toSymbol vid,
+       ty = Option.map ElaborateTy.elabMonoTy ty,
+       loc = LOC loc}
 
   fun elabDatbind (tyvarseq, tycon, conbinds, loc) =
       {tyvars = seq tyvarseq,
@@ -236,7 +241,9 @@ struct
   fun elabExbind exbind =
       case exbind of
         A.EXBIND ((_, vid, _), ty, loc) =>
-        P.PLEXBINDDEF (toSymbol vid, ty, LOC loc)
+        P.PLEXBINDDEF (toSymbol vid,
+                       Option.map ElaborateTy.elabMonoTy ty,
+                       LOC loc)
       | A.EXBINDREP ((_, vid, _), (_, longvid, _), loc) =>
         P.PLEXBINDREP (toSymbol vid, SymbolWithLoc.fromAbsyn longvid, LOC loc)
 
@@ -274,7 +281,7 @@ struct
         A.EXPCONST (const, loc) =>
         P.PLCONSTANT (const, LOC loc)
       | A.EXPSIZEOF (ty, loc) =>
-        P.PLSIZEOF (ty, LOC loc)
+        P.PLSIZEOF (ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPID (_, longid, _) =>
         P.PLVAR (SymbolWithLoc.fromAbsyn longid)
       | A.EXPRECORD (exprows, loc) =>
@@ -309,7 +316,7 @@ struct
       | A.EXPSEQ (exps, loc) =>
         P.PLSEQ (map elabExp exps, LOC loc)
       | A.EXPTYPED (exp, ty, loc) =>
-        P.PLTYPED (elabExp exp, ty, LOC loc)
+        P.PLTYPED (elabExp exp, ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPANDALSO (exp1, exp2, loc) =>
         elabExp (A.EXPIF (exp1, exp2, A.EXPID (falseLongvid loc), loc))
       | A.EXPORELSE (exp1, exp2, loc) =>
@@ -383,19 +390,19 @@ struct
       | A.EXPEXTEND (exp1, exp2, loc) =>
         P.PLJOIN (false, elabExp exp1, elabExp exp2, LOC loc)
       | A.EXPDYNAMIC_AS (exp, ty, loc) =>
-        P.PLDYNAMIC (elabExp exp, ty, LOC loc)
+        P.PLDYNAMIC (elabExp exp, ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPDYNAMIC_OF (exp, ty, loc) =>
-        P.PLDYNAMICIS (elabExp exp, ty, LOC loc)
+        P.PLDYNAMICIS (elabExp exp, ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPDYNAMICNULL (ty, loc) =>
-        P.PLDYNAMICNULL (ty, LOC loc)
+        P.PLDYNAMICNULL (ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPDYNAMICTOP (ty, loc) =>
-        P.PLDYNAMICTOP (ty, LOC loc)
+        P.PLDYNAMICTOP (ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPDYNAMICVIEW (exp, ty, loc) =>
-        P.PLDYNAMICVIEW (elabExp exp, ty, LOC loc)
+        P.PLDYNAMICVIEW (elabExp exp, ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPDYNAMICCASE (exp, mrules, loc) =>
         P.PLDYNAMICCASE (elabExp exp, map elabDynamicMrule mrules, LOC loc)
       | A.EXPREIFYTY (ty, loc) =>
-        P.PLREIFYTY (ty, LOC loc)
+        P.PLREIFYTY (ElaborateTy.elabMonoTy ty, LOC loc)
       | A.EXPPAREN (exp, loc) => elabExp exp
 
   and elabValbind (pat, exp, loc) =
@@ -411,7 +418,7 @@ struct
       (case exp of
          A.EXPFN _ => ()
        | _ => enqueueError (loc, E.NotFnBoundInValRec);
-       (toSymbol vid, ty, elabExp exp, LOC loc))
+       (toSymbol vid, ElaborateTy.elabRank1Ty ty, elabExp exp, LOC loc))
 
   and elabFvalbind ((frules, loc) : A.fvalbind) =
       let

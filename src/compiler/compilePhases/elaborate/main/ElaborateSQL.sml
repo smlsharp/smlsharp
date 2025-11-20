@@ -336,11 +336,11 @@ struct
   fun Option NONE = None
     | Option (SOME x) = Some x
 
-  fun Ty_db (toyTy, connTy) =
-      TyCon [toyTy, connTy] Name.ty_db
+  fun Ty_db (toyTy, connTy) loc =
+      TyCon [toyTy, connTy] Name.ty_db loc
 
-  fun Ty_command (toyTy, connTy) =
-      TyCon [toyTy, connTy] Name.ty_command
+  fun Ty_command (toyTy, connTy) loc =
+      TyCon [toyTy, connTy] Name.ty_command loc
 
   fun Fun_not3 e =
       App (ExVar Name.fun_not3) e
@@ -2124,7 +2124,7 @@ struct
              NONE => String ""
            | SOME exp => Exp (#elabAbsynExp env exp),
            Exp (P.PLSQLSCHEMA {tyFnExp = ExVar Name.fun_ty loc,
-                               ty = schema,
+                               ty = ElaborateTy.elabMonoTy schema,
                                loc = LOC loc}))
           loc
 

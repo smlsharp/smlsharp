@@ -215,11 +215,6 @@ structure I = AbsynInterface
   | tytuple of A.ty list
   | tuplety of A.ty
   | ty of A.ty
-  | poly_tyrow_1 of A.tyrow
-  | poly_tyrow of A.tyrow list
-  | poly_ty1 of A.ty
-  | poly_tytuple of A.ty list
-  | poly_ty of A.ty
   | kind of A.id list * A.tyrow list option
   | kinded_tyvar of A.kinded_tyvar
   | kinded_free_tyvar of A.kinded_tyvar
@@ -288,15 +283,11 @@ ioverloadInst
 ivalbind
         : id COLON ty
           (I.VAL_EXTERN (id, ty, (idleft, tyright)))
-        | id COLON poly_ty
-          (I.VAL_EXTERN (id, poly_ty, (idleft, poly_tyright)))
         | id EQ longid
           (* 2012-1-4 ohori: variable alias in interface added *)
           (I.VAL_ALIAS (id, longid, (idleft, longidright)))
         | id EQ U_BUILTIN VAL id COLON ty
           (I.VAL_BUILTIN (id1, id2, ty, (id1left, tyright)))
-        | id EQ U_BUILTIN VAL id COLON poly_ty
-          (I.VAL_BUILTIN (id1, id2, poly_ty, (id1left, poly_tyright)))
         | id EQ ioverloadCase
           (I.VAL_OVERLOAD (id, ioverloadCase, (idleft, ioverloadCaseright)))
 
@@ -737,6 +728,11 @@ atty
           (A.TYRECORD (nil, false, (LBRACEleft, RBRACEright)))
         | LPAREN ty RPAREN
           (A.TYPAREN (ty, (LPARENleft, RPARENright)))
+        | LBRACKET kinded_tyvars PERIOD ty RBRACKET
+          (A.TYPOLY
+             ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
+              ty,
+              (LBRACKETleft, RBRACKETright)))
 
 appty
         : atty
@@ -775,56 +771,6 @@ ty
           (tuplety)
         | tuplety ARROW ty
           (A.TYFUN (tuplety, ty, (tupletyleft, tyright)))
-
-poly_tyrow_1
-        : lab COLON poly_ty
-          (lab, poly_ty, (lableft, poly_tyright))
-
-poly_tyrow
-        : poly_tyrow_1
-          ([poly_tyrow_1])
-        | poly_tyrow_1 COMMA poly_tyrow
-          (poly_tyrow_1 :: poly_tyrow)
-        | poly_tyrow_1 COMMA tyrow
-          (poly_tyrow_1 :: tyrow)
-        | tyrow_1 COMMA poly_tyrow
-          (tyrow_1 :: poly_tyrow)
-
-poly_ty1
-        : LBRACE poly_tyrow RBRACE
-          (A.TYRECORD (poly_tyrow, false, (LBRACEleft, RBRACEright)))
-        | LPAREN poly_ty RPAREN
-          (A.TYPAREN (poly_ty, (LPARENleft, RPARENright)))
-        | LBRACKET kinded_tyvars PERIOD ty RBRACKET
-          (A.TYPOLY ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
-                     ty,
-                     (LBRACKETleft, RBRACKETright)))
-        | LBRACKET kinded_tyvars PERIOD poly_ty RBRACKET
-          (A.TYPOLY ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
-                     poly_ty,
-                     (LBRACKETleft, RBRACKETright)))
-
-poly_tytuple
-        : poly_ty1 ASTERISK poly_tytuple
-          (poly_ty1 :: poly_tytuple)
-        | poly_ty1 ASTERISK tytuple
-          (poly_ty1 :: tytuple)
-        | poly_ty1 ASTERISK poly_ty1
-          ([poly_ty11, poly_ty12])
-        | poly_ty1 ASTERISK appty
-          ([poly_ty1, appty])
-        | appty ASTERISK poly_tytuple
-          (appty :: poly_tytuple)
-        | appty ASTERISK poly_ty1
-          ([appty, poly_ty1])
-
-poly_ty
-        : tuplety ARROW poly_ty
-          (A.TYFUN (tuplety, poly_ty, (tupletyleft, poly_tyright)))
-        | poly_tytuple
-          (A.TYTUPLE (poly_tytuple, (poly_tytupleleft, poly_tytupleright)))
-        | poly_ty1
-          (poly_ty1)
 
 kind
         : HASH LBRACE RBRACE
@@ -978,9 +924,7 @@ sigids
           (alphabetic_id :: sigids)
 
 valdesc_1
-        : id COLON poly_ty
-          (id, poly_ty, (idleft, poly_tyright))
-        | id COLON ty
+        : id COLON ty
           (id, ty, (idleft, tyright))
 
 valdesc

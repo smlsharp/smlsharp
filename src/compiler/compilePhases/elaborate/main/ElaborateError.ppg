@@ -206,4 +206,11 @@ struct
    *)
   UserTyvarImplicitlyBoundAtPolyRec of AbsynTy.tyvar
 
+  and
+  (*%
+   * @format
+   * "polymorphic" +d "type" +d "is" +d "not" +d "allowed" +d "here"
+   *)
+  MustBeMonoTy
+
 end

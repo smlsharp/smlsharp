@@ -55,13 +55,14 @@ struct
         val env = union (env, union (singleton tyvar, ftvTy ty))
       in
         {tyvar = tyvar,
-         expTy = ty,
+         expTy = ElaborateTy.elabMonoTy ty,
          matches = map (elabOverloadMrule env) mrules,
          loc = LOC loc}
       end
 
   and elabOverloadMrule env (ty, inst, loc) =
-      {instTy = ty, instance = elabOverloadInst env inst}
+      {instTy = ElaborateTy.elabMonoTy ty,
+       instance = elabOverloadInst env inst}
 
   and elabOverloadInst env inst =
       case inst of
@@ -77,7 +78,7 @@ struct
         I.VAL_EXTERN (id, ty, loc) =>
         P.PIVAL {scopedTvars = toScopedTvars (ElaborateTy.ftvTy ty) loc,
                  symbol = toSymbol id,
-                 body = P.VAL_EXTERN {ty = ty},
+                 body = P.VAL_EXTERN {ty = ElaborateTy.elabRank1Ty ty},
                  loc = LOC loc}
       | I.VAL_ALIAS (id, longid, loc) =>
         P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
@@ -87,7 +88,8 @@ struct
       | I.VAL_BUILTIN (id, name, ty, loc) =>
         P.PIVAL {scopedTvars = toScopedTvars (ElaborateTy.ftvTy ty) loc,
                  symbol = toSymbol id,
-                 body = P.VAL_BUILTIN {builtinSymbol = toSymbol name, ty = ty},
+                 body = P.VAL_BUILTIN {builtinSymbol = toSymbol name,
+                                       ty = ElaborateTy.elabRank1Ty ty},
                  loc = LOC loc}
       | I.VAL_OVERLOAD (id, exp, loc) =>
         P.PIVAL {scopedTvars = toScopedTvars (ftvOverloadCase exp) loc,
@@ -98,7 +100,9 @@ struct
   fun elabExbind exbind =
       case exbind of
         I.EXBIND ((_, id, _), ty, loc) =>
-        P.PIEXCEPTION {symbol = toSymbol id, ty = ty, loc = LOC loc}
+        P.PIEXCEPTION {symbol = toSymbol id,
+                       ty = Option.map ElaborateTy.elabMonoTy ty,
+                       loc = LOC loc}
       | I.EXBINDREP ((_, id, _), (_, longid, _), loc) =>
         P.PIEXCEPTIONREP {symbol = toSymbol id,
                           longsymbol = SymbolWithLoc.fromAbsyn longid,
@@ -123,12 +127,14 @@ struct
       I.TYPBIND (tyvars, tycon, ty, loc) =>
       P.PITYPE {tyvars = seq tyvars,
                 symbol = toSymbol tycon,
-                ty = ty,
+                ty = ElaborateTy.elabMonoTy ty,
                 loc = LOC loc}
     | I.TYPDESC typdesc => elabTypdesc false typdesc
 
   fun elabConbind ((_, vid, _), ty, loc) =
-      {symbol = toSymbol vid, ty = ty, loc = LOC loc}
+      {symbol = toSymbol vid,
+       ty = Option.map ElaborateTy.elabMonoTy ty,
+       loc = LOC loc}
 
   fun elabDatbind (tyvarseq, tycon, conbinds, loc) =
       {tyvars = seq tyvarseq,
@@ -151,7 +157,10 @@ struct
           P.PIDATATYPE
             {datbind = map elabDatbind datbinds,
              withty = map (fn (tvars, id, ty, loc) =>
-                              (seq tvars, toSymbol id, ty, LOC loc))
+                              (seq tvars,
+                               toSymbol id,
+                               ElaborateTy.elabMonoTy ty,
+                               LOC loc))
                           (seq withty),
              loc = LOC loc}
           :: map (elabTypbind o I.TYPBIND) (seq withty)

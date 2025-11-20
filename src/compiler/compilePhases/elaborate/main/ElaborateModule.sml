@@ -22,7 +22,7 @@ struct
   fun elabValdesc (vid, ty, loc) =
       ((ElaborateTy.toKindedTyvars (ElaborateTy.ftvTy ty), LOC loc),
        toSymbol vid,
-       ty,
+       ElaborateTy.elabRank1Ty ty,
        LOC loc)
 
   fun elabTypdesc (tyvarseq, tycon, loc) =
@@ -32,7 +32,9 @@ struct
       P.PLSPECTYPE {tydecls = map elabTypdesc typdescs, eq = eq, loc = LOC loc}
 
   fun elabCondesc (vid, ty, loc) =
-      {symbol = toSymbol vid, ty = ty, loc = LOC loc}
+      {symbol = toSymbol vid,
+       ty = Option.map ElaborateTy.elabMonoTy ty,
+       loc = LOC loc}
 
   fun elabDatdesc (datdesc as (tyvarseq, tycon, condescs, loc)) =
       {tyvars = seq tyvarseq,
@@ -41,10 +43,12 @@ struct
        loc = LOC loc}
 
   fun elabExdesc (vid, ty, loc) =
-      (toSymbol vid, ty, LOC loc)
+      (toSymbol vid, Option.map ElaborateTy.elabMonoTy ty, LOC loc)
 
   fun elabWheretype (wheretype as (tyvarseq, longtycon, ty, loc)) =
-      (seq tyvarseq, SymbolWithLoc.fromAbsyn longtycon, ty)
+      (seq tyvarseq,
+       SymbolWithLoc.fromAbsyn longtycon,
+       ElaborateTy.elabMonoTy ty)
 
   fun elabTypbind (typbind as (tyvarseq, tycon, ty, loc)) =
       elabSpec

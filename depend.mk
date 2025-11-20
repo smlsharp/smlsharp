@@ -18562,7 +18562,10 @@ src/compiler/compilePhases/elaborate/main/ElaborateTy.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateTy.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o: \
@@ -18788,8 +18791,6 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
- src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
- src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
@@ -18797,6 +18798,9 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
+ src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.smi \
+ src/compiler/compilePhases/elaborate/main/ElaborateTy.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateSQL.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ElaborateForeach.o: \
@@ -19428,31 +19432,27 @@ src/compiler/compilePhases/elaborate/main/UserTvarScope.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
- src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/data/symbols/main/Longsymbol.smi \
- src/compiler/data/symbols/main/SymbolWithLoc.smi \
- src/compiler/libs/list-utils/main/ListSorter.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Longsymbol.smi \
+ src/compiler/data/symbols/main/SymbolWithLoc.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
- src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/extensions/debug/main/Bug.smi \
- src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
+ src/compiler/compilePhases/elaborate/main/ElaborateTy.smi \
  src/compiler/compilePhases/elaborate/main/UserTvarScope.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ResolveInfix.o: \

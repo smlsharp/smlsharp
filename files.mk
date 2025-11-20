@@ -630,8 +630,8 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o \
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o \
 src/compiler/libs/util/main/CompileUtils.o \
 src/compiler/compilerIRs/absyn/main/Fixity.o \
-src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
+src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o \
 src/compiler/compilePhases/elaborate/main/ElaborateSQL.o \
 src/compiler/compilePhases/elaborate/main/ElaborateForeach.o \
@@ -1062,8 +1062,8 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o \
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o \
 src/compiler/libs/util/main/CompileUtils.o \
 src/compiler/compilerIRs/absyn/main/Fixity.o \
-src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
+src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o \
 src/compiler/compilePhases/elaborate/main/ElaborateSQL.o \
 src/compiler/compilePhases/elaborate/main/ElaborateForeach.o \
@@ -1604,8 +1604,8 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o \
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o \
 src/compiler/libs/util/main/CompileUtils.o \
 src/compiler/compilerIRs/absyn/main/Fixity.o \
-src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
+src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o \
 src/compiler/compilePhases/elaborate/main/ElaborateSQL.o \
 src/compiler/compilePhases/elaborate/main/ElaborateForeach.o \
@@ -2171,8 +2171,8 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o \
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o \
 src/compiler/libs/util/main/CompileUtils.o \
 src/compiler/compilerIRs/absyn/main/Fixity.o \
-src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynUtils.o \
+src/compiler/compilePhases/elaborate/main/ElaborateTy.o \
 src/compiler/compilePhases/elaborate/main/ElaborateErrorSQL.ppg.o \
 src/compiler/compilePhases/elaborate/main/ElaborateSQL.o \
 src/compiler/compilePhases/elaborate/main/ElaborateForeach.o \

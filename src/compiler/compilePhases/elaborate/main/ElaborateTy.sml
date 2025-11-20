@@ -271,4 +271,37 @@ struct
     | appendTyvarseq (NONE, tyvars as h :: t) =
       SOME (tyvars, foldl Loc.mergeRange (#3 h) (map #3 t))
 
+  fun checkPolyTy poly ty =
+      case ty of
+        A.TYVAR _ => ()
+      | A.TYRECORD (rows, _, _) => app (checkPolyTyrow poly) rows
+      | A.TYCON (tyseq, _, _) => app (checkPolyTy false) (seq tyseq)
+      | A.TYTUPLE (tys, _) => app (checkPolyTy poly) tys
+      | A.TYFUN (ty1, ty2, _) => (checkPolyTy false ty1; checkPolyTy poly ty2)
+      | A.TYPAREN (ty, _) => checkPolyTy poly ty
+      | A.TYWILD _ => ()
+      | A.TYVAR_FREE tyvar => checkPolyKindedTyvar false tyvar
+      | A.TYPOLY ((tyvars, _), bodyTy, loc) =>
+        if poly
+        then (app (checkPolyKindedTyvar false) tyvars; checkPolyTy poly bodyTy)
+        else enqueueError (loc, E.MustBeMonoTy)
+
+  and checkPolyTyrow poly (lab, ty, loc) =
+      checkPolyTy poly ty
+
+  and checkPolyKindedTyvar poly (tyvar, NONE, loc) = ()
+    | checkPolyKindedTyvar poly (tyvar, SOME kind, loc) =
+      checkPolyKind poly kind
+
+  and checkPolyKind poly kind =
+      case kind of
+        A.UNIV _ => ()
+      | A.REC (ids, rows, loc) => app (checkPolyTyrow poly) rows
+
+  fun elabMonoTy ty =
+      (checkPolyTy false ty; ty)
+
+  fun elabRank1Ty ty =
+      (checkPolyTy true ty; ty)
+
 end
