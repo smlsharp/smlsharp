@@ -14,10 +14,10 @@ struct
   val unionList : ftv list -> ftv
   val intersect : 'a Symbol.Map.map * ftv -> 'a Symbol.Map.map
   val setMinus : 'a Symbol.Map.map * ftv -> 'a Symbol.Map.map
-  val tyvarsToSet : Absyn.tyvar list -> ftv
-  val kindedTyvarsToSet : Absyn.kinded_tyvar list -> ftv
+  val tyvarseqToSet : Absyn.tyvarseq option -> ftv
+  val kindedTyvarseqToSet : Absyn.kinded_tyvarseq option -> ftv
   val toKindedTyvars : ftv -> Absyn.kinded_tyvar list
-  val ftvKindedTyvar : Absyn.kinded_tyvar -> ftv
+  val ftvKindedTyvarseq : Absyn.kinded_tyvarseq option -> ftv
   val ftvTy : Absyn.ty -> ftv
   val ftvTypbind : Absyn.typbind -> ftv
   val ftvDatbind : Absyn.datbind -> ftv
@@ -27,4 +27,7 @@ struct
   val reduceTy : Absyn.typbind Symbol.Map.map -> Absyn.ty -> Absyn.ty
   val reduceDatbind
       : Absyn.datbind list * Absyn.withty option -> Absyn.datbind list
+  val appendTyvarseq
+      : Absyn.kinded_tyvarseq option * Absyn.kinded_tyvar list
+        -> Absyn.kinded_tyvarseq option
 end

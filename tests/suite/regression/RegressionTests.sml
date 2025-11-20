@@ -1931,6 +1931,15 @@ val tests = TestList [
     ("388_utvar",
      fn () => ignore (compile ["regression/388_utvar.sml"])),
 
+  Test
+    ("389_utvar",
+     fn () =>
+        (compile ["regression/389_utvar.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+               (_, [(_,_,T.TyConListMismatch _),
+                    (_,_,T.TyConListMismatch _)]) => ()),
+
   TestList nil (* placeholder *)
 ]
 end

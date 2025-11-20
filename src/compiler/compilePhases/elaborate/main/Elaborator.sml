@@ -33,15 +33,15 @@ struct
                 (SOME interface, requireFixEnv, provideFixEnv, topdecsInclude)
 
         val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
-        val (topdecsIncludeFixEnv, ptopdecsInclude) =
+        val (topdecsIncludeFixEnv, topdecsInclude) =
             ResolveInfix.resolveTopdecs fixEnv topdecsInclude
-        val ptopdecsInclude = ElaborateModule.elabTopdecs ptopdecsInclude
-        val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
+        val topdecsInclude = UserTvarScope.decideTopdecs topdecsInclude
+        val ptopdecsInclude = ElaborateModule.elabTopdecs topdecsInclude
         val fixEnv = extendFixEnv (fixEnv, topdecsIncludeFixEnv)
-        val (topdecsSourceFixEnv, ptopdecsSource) =
+        val (topdecsSourceFixEnv, topdecsSource) =
             ResolveInfix.resolveTopdecs fixEnv topdecsSource
-        val ptopdecsSource = ElaborateModule.elabTopdecs ptopdecsSource
-        val ptopdecsSource = UserTvarScope.decide ptopdecsSource
+        val topdecsSource = UserTvarScope.decideTopdecs topdecsSource
+        val ptopdecsSource = ElaborateModule.elabTopdecs topdecsSource
 
         (* provide check *)
         val _ =
@@ -79,10 +79,10 @@ struct
                           provideTopdecs = nil,
                           topdecsInclude = topdecsInclude}}
         val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
-        val (topdecsIncludeFixEnv, ptopdecsInclude) =
+        val (topdecsIncludeFixEnv, topdecsInclude) =
             ResolveInfix.resolveTopdecs fixEnv topdecsInclude
+        val topdecsInclude = UserTvarScope.decideTopdecs topdecsInclude
         val ptopdecsInclude = ElaborateModule.elabTopdecs topdecsInclude
-        val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
         val resultFixEnv = extendFixEnv (requireFixEnv, topdecsIncludeFixEnv)
         val plunit =
             {interfaceDecs = #interfaceDecs interface,

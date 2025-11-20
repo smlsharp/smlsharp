@@ -49,8 +49,14 @@ struct
         Symbol.Map.empty
         tyvars
 
+  fun tyvarseqToSet (tyvarseq : A.tyvarseq option) =
+      tyvarsToSet (seq tyvarseq)
+
   fun kindedTyvarsToSet (tyvars : A.kinded_tyvar list) =
       tyvarsToSet (map #1 tyvars)
+
+  fun kindedTyvarseqToSet (tyvarseq : A.kinded_tyvarseq option) =
+      tyvarsToSet (map #1 (seq tyvarseq))
 
   fun toKindedTyvars (ftv : ftv) : A.kinded_tyvar list =
       map (fn (tv as (_, (_, loc)), _) => (tv, NONE, loc))
@@ -81,14 +87,18 @@ struct
         setMinus (union (unionList (map ftvKindedTyvar tyvars), ftvTy ty),
                   kindedTyvarsToSet tyvars)
 
+  fun ftvKindedTyvarseq NONE = Symbol.Map.empty
+    | ftvKindedTyvarseq (SOME (tyvars, _)) =
+      unionList (map ftvKindedTyvar tyvars)
+
   fun ftvTypbind (tyvarseq, _, ty, _ : A.loc) =
-      setMinus (ftvTy ty, tyvarsToSet (seq tyvarseq))
+      setMinus (ftvTy ty, tyvarseqToSet tyvarseq)
 
   fun ftvConbind (_, NONE, _) = Symbol.Map.empty
     | ftvConbind (_, SOME ty, _) = ftvTy ty
 
   fun ftvDatbind (tyvarseq, _, conbinds, _) =
-      setMinus (unionList (map ftvConbind conbinds), tyvarsToSet (seq tyvarseq))
+      setMinus (unionList (map ftvConbind conbinds), tyvarseqToSet tyvarseq)
 
   val ftvWheretype = ftvTypbind
 
@@ -254,5 +264,11 @@ struct
         then datbinds
         else map (reduceTyDatbind tyfuns) datbinds
       end
+
+  fun appendTyvarseq (NONE, nil) = NONE
+    | appendTyvarseq (SOME (tyvars, loc), tyvars2) =
+      SOME (tyvars @ tyvars2, loc)
+    | appendTyvarseq (NONE, tyvars as h :: t) =
+      SOME (tyvars, foldl Loc.mergeRange (#3 h) (map #3 t))
 
 end

@@ -29,4 +29,5 @@ structure ElaborateError =
     exception ArityMismatchInTypeDeclaration of
               {given : int, tycon : Symbol.symbol, wants : int}
     exception PatappWithoutIdentifier
+    exception UserTyvarImplicitlyBoundAtPolyRec of AbsynTy.tyvar
   end

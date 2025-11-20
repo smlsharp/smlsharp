@@ -20,12 +20,10 @@ struct
   fun itLongvid loc = (false, (nil, (itId, loc), loc), loc) : A.op_longvid
 
   fun elabValdesc (vid, ty, loc) =
-      let
-        val ftv = ElaborateTy.ftvTy ty
-        val btvs = ElaborateTy.toKindedTyvars ftv
-      in
-        ((btvs, LOC loc), toSymbol vid, ty, LOC loc)
-      end
+      ((ElaborateTy.toKindedTyvars (ElaborateTy.ftvTy ty), LOC loc),
+       toSymbol vid,
+       ty,
+       LOC loc)
 
   fun elabTypdesc (tyvarseq, tycon, loc) =
       (seq tyvarseq, toSymbol tycon)
