@@ -41,7 +41,7 @@ struct
      *)
     fun formatElements
             isTyConArguments
-            (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+            elementFormatter (separator, prefixIfNotNull, suffixIfNotNull) =
         fn [] => [FE.Term (0, "")]
          | [e] =>
            if isTyConArguments
@@ -66,7 +66,7 @@ struct
                 (
                   SOME{cut = true, strength = 0, direction = FE.Neutral},
                   (SMLFormat.BasicFormatters.format_list
-                     (elementFormatter, separator) list)
+                     elementFormatter separator list)
                 )
            :: suffixIfNotNull
   in
@@ -80,12 +80,12 @@ struct
       non nil => [e1,...,en] 
    *)
   fun formatListWithEnclosure
-      (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+      elementFormatter (separator, prefixIfNotNull, suffixIfNotNull) =
       fn [] => nil
        | list =>
          FE.Sequence prefixIfNotNull ::
          FE.Sequence (SMLFormat.BasicFormatters.format_list
-                         (elementFormatter, separator) list) ::
+                        elementFormatter separator list) ::
          suffixIfNotNull
 
   (*
@@ -95,13 +95,13 @@ struct
       [e1,...,en] => opne e1 sep e2 sep ... sep en close
    *)
   fun formatListWithEnclosureIfMoreThanOne
-      (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+      elementFormatter (separator, prefixIfNotNull, suffixIfNotNull) =
       fn [] => [FE.Term (0, "")]
        | [value] => elementFormatter value
        | list =>
          FE.Sequence prefixIfNotNull ::
          FE.Sequence (SMLFormat.BasicFormatters.format_list
-                        (elementFormatter, separator) list) ::
+                        elementFormatter separator list) ::
          suffixIfNotNull
 
  (*%
@@ -143,9 +143,9 @@ struct
       *)
      (SymbolWithLoc.symbol * 'a) list
 
-  fun formatSymbolWithLocMap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
+  fun formatSymbolWithLocMap elementFormatter (lparen, bindsep,itemsep, rparen) smap =
       format_varenvSymbol
-        (elementFormatter,lparen, bindsep,itemsep, rparen) 
+        elementFormatter (lparen, bindsep,itemsep, rparen)
         (ListSorter.sort 
            (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
            (SymbolWithLocEnv.listItemsi smap))
@@ -165,16 +165,16 @@ struct
      (SymbolWithLoc.symbol * 'a) list
 
   fun formatGenericSymbolWithLocMap
-        (elementFormatter, sname, lparen, itemsep, rparen) smap =
+        elementFormatter (sname, lparen, itemsep, rparen) smap =
       format_genericSymbolWithLocVarenv
-        (elementFormatter, sname, lparen, itemsep, rparen)
+        elementFormatter (sname, lparen, itemsep, rparen)
         (ListSorter.sort 
            (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
            (SymbolWithLocEnv.listItemsi smap))
 
   fun formatSymbolWithLocMapWithEnclosure
+          elementFormatter
           (
-            elementFormatter,
             bindsep,
             itemsep,
             prefixIfNotNull,
@@ -183,22 +183,22 @@ struct
           smap
     =
       format_varenvSymbolWithEnclosure
-      (elementFormatter, bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
+      elementFormatter (bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
         (ListSorter.sort 
            (fn ((s1, _), (s2, _)) => SymbolWithLoc.compareLoc(s1,s2))
            (SymbolWithLocEnv.listItemsi smap))
 
-  fun formatPrependedOpt (formatter, prefixIfSome) =
+  fun formatPrependedOpt formatter prefixIfSome =
       fn NONE => [FE.Term (0, "")]
        | SOME value => FE.Sequence prefixIfSome :: formatter value
 
-  fun formatEnclosedOpt (formatter, prefixIfSome, suffixIfSome) =
+  fun formatEnclosedOpt formatter (prefixIfSome, suffixIfSome) =
       fn NONE => [FE.Term (0, "")]
        | SOME value => FE.Sequence prefixIfSome ::
                        FE.Sequence (formatter value) ::
                        suffixIfSome
 
-  fun formatOptWithDefault (formatter, default) =
+  fun formatOptWithDefault formatter default =
       fn NONE => default
        | SOME value => formatter value
 

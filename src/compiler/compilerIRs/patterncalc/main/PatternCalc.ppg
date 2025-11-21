@@ -17,7 +17,7 @@ struct
     fun insert2 (ins1, ins2) nil = [ins1]
       | insert2 (ins1, ins2) (h::t) = insert ins1 h :: map (insert ins2) t
   in
-  fun format_prepend (format, sep1, ins1, sep2, ins2) l =
+  fun format_prepend format (sep1, ins1, sep2, ins2) l =
       case insert2 (ins1, ins2) (map format l) of
         nil => nil
       | h::t => Sequence sep1

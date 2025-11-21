@@ -29,17 +29,17 @@ structure TermFormat :> sig
    * (basic formatter)                 1          1,2,3,...,n
    *)
   val formatEnclosedList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatAppList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatSeqList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatOptionalList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatDeclList
-      : 'a formatter * format * format -> 'a list formatter
+      : 'a formatter -> format * format -> 'a list formatter
   val formatCaseList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
 
   (*
    * formatting options:
@@ -49,11 +49,11 @@ structure TermFormat :> sig
    * (basic formatter)                  x
    *)
   val formatEnclosedOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
   val formatOptionalOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
   val formatOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
 
   (*
    * formatting maps:
@@ -62,22 +62,22 @@ structure TermFormat :> sig
    *)
   val formatEnclosedMap
       : 'k formatter -> ('a -> ('k * 'v) list)
-        -> 'v formatter * format * format * format * format
+        -> 'v formatter -> format * format * format * format
         -> 'a formatter
 
   val formatEnclosedSEnv
-      : 'a formatter * format * format * format * format
+      : 'a formatter -> format * format * format * format
         -> 'a SEnv.map formatter
 
   val formatEnclosedLabelMap
-      : 'a formatter * format * format * format * format
+      : 'a formatter -> format * format * format * format
         -> 'a RecordLabel.Map.map formatter
 
   val formatEnclosedSEnvPlain
-      : 'a formatter * format * format -> 'a SEnv.map formatter
+      : 'a formatter -> format * format -> 'a SEnv.map formatter
 
   val formatEnclosedSymbolWithLocEnvPlain
-      : 'a formatter * format * format -> 'a SymbolWithLocEnv.map formatter
+      : 'a formatter -> format * format -> 'a SymbolWithLocEnv.map formatter
 
   (* formatting records and tuples *)
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
@@ -231,7 +231,7 @@ struct
     | intersperse sep (h::t) = Sequence h :: Sequence sep :: intersperse sep t
 
   (**** formatters for basic types ****)
-  fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
+  fun formatEnclosedList formatter (lparen, comma, rparen) elems =
       begin_
         $lparen
         guard_ cutAssoc
@@ -248,40 +248,40 @@ struct
       end_
 *)
 
-  fun formatAppList (formatter, lparen, comma, rparen) nil =
+  fun formatAppList formatter (lparen, comma, rparen) nil =
       Sequence lparen :: rparen
-    | formatAppList (formatter, lparen, comma, rparen) [x] = formatter x
-    | formatAppList args elems = formatEnclosedList args elems
+    | formatAppList formatter (lparen, comma, rparen) [x] = formatter x
+    | formatAppList fmt args elems = formatEnclosedList fmt args elems
 
-  fun formatSeqList (formatter, lparen, comma, rparen) nil = nil
-    | formatSeqList (formatter, lparen, comma, rparen) [x] = formatter x
-    | formatSeqList args elems = formatEnclosedList args elems
+  fun formatSeqList formatter (lparen, comma, rparen) nil = nil
+    | formatSeqList formatter (lparen, comma, rparen) [x] = formatter x
+    | formatSeqList fmt args elems = formatEnclosedList fmt args elems
 
-  fun formatOptionalList (formatter, lparen, comma, rparen) nil = nil
-    | formatOptionalList args elems = formatEnclosedList args elems
+  fun formatOptionalList formatter (lparen, comma, rparen) nil = nil
+    | formatOptionalList fmt args elems = formatEnclosedList fmt args elems
 
-  fun formatDeclList (formatter, head, sep) nil = nil
-    | formatDeclList (formatter, head, sep) (elem::elems) =
+  fun formatDeclList formatter (head, sep) nil = nil
+    | formatDeclList formatter (head, sep) (elem::elems) =
       Sequence head :: Sequence (formatter elem)
       :: map (fn x => Sequence (Sequence sep :: formatter x)) elems
 
-  fun formatCaseList (formatter, head, sep, last) nil = Sequence head :: last
-    | formatCaseList (formatter, head, sep, last) elems =
+  fun formatCaseList formatter (head, sep, last) nil = Sequence head :: last
+    | formatCaseList formatter (head, sep, last) elems =
       Sequence head
       :: foldr (fn (x,z) => Sequence (formatter x) :: Sequence sep :: z)
                last elems
 
-  fun formatEnclosedOption (formatter, lparen, rparen) NONE =
+  fun formatEnclosedOption formatter (lparen, rparen) NONE =
       Sequence lparen :: rparen
-    | formatEnclosedOption (formatter, lparen, rparen) (SOME x) =
+    | formatEnclosedOption formatter (lparen, rparen) (SOME x) =
       Sequence lparen :: Sequence (formatter x) :: rparen
 
-  fun formatOptionalOption (formatter, lparen, rparen) NONE = nil
-    | formatOptionalOption (formatter, lparen, rparen) (SOME x) =
+  fun formatOptionalOption formatter (lparen, rparen) NONE = nil
+    | formatOptionalOption formatter (lparen, rparen) (SOME x) =
       Sequence lparen :: Sequence (formatter x) :: rparen
 
-  fun formatOption (formatter, lparen, rparen) NONE = [term "NONE"]
-    | formatOption (formatter, lparen, rparen) (SOME x) =
+  fun formatOption formatter (lparen, rparen) NONE = [term "NONE"]
+    | formatOption formatter (lparen, rparen) (SOME x) =
       term "SOME(" :: Sequence lparen :: Sequence (formatter x)
       :: Sequence rparen :: term ")" :: nil
 
@@ -293,23 +293,24 @@ struct
       end_
 
   fun formatEnclosedMap formatKey listItemsi
-                        (format, lparen, comma, mapsto, rparen) map =
+                        format (lparen, comma, mapsto, rparen) map =
       formatEnclosedList
         (fn (key, value) =>
-            keyValuePair (formatKey key, mapsto, format value),
-         lparen, comma, rparen)
+            keyValuePair (formatKey key, mapsto, format value))
+        (lparen, comma, rparen)
         (listItemsi map)
 
-  fun formatEnclosedSEnv args map =
-      formatEnclosedMap (fn x => [term x]) SEnv.listItemsi args map
+  fun formatEnclosedSEnv fmt args map =
+      formatEnclosedMap (fn x => [term x]) SEnv.listItemsi fmt args map
 
-  fun formatEnclosedLabelMap args map =
+  fun formatEnclosedLabelMap fmt args map =
       formatEnclosedMap RecordLabel.format_label
                         RecordLabel.Map.listItemsi
+                        fmt
                         args
                         map
 
-  fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
+  fun formatEnclosedList formatter (lparen, comma, rparen) elems =
       begin_
         $lparen
         guard_ cutAssoc
@@ -318,7 +319,7 @@ struct
         end_
       end_
 
-  fun formatEnclosedSEnvPlain (formatter, comma, mapsto) senv =
+  fun formatEnclosedSEnvPlain formatter (comma, mapsto) senv =
       formatDeclList
         (fn (string, value) =>
             begin_
@@ -327,13 +328,13 @@ struct
                  $mapsto
                  $(formatter value)
               end_
-            end_,
-         comma,
+            end_)
+        (comma,
          comma
         )
         (SEnv.listItemsi senv)
 
-  fun formatEnclosedSymbolWithLocEnvPlain (formatter, comma, mapsto) senv =
+  fun formatEnclosedSymbolWithLocEnvPlain formatter (comma, mapsto) senv =
       formatDeclList
         (fn (symbol, value) =>
             begin_
@@ -342,8 +343,8 @@ struct
                  $mapsto
                  $(formatter value)
               end_
-            end_,
-         comma,
+            end_)
+        (comma,
          comma
         )
         (SymbolWithLocEnv.listItemsi senv)
@@ -354,12 +355,12 @@ struct
     fun assocList (formatKey, formatValue) pairs =
         formatEnclosedMap
           formatKey (fn x => x)
-          (formatValue, [term "{"], [term ","], [dsp,term "=>"], [term "}"])
+          formatValue ([term "{"], [term ","], [dsp,term "=>"], [term "}"])
           pairs
     fun record fields =
         formatEnclosedList
-          (fn (key, value) => keyValuePair ([term key], [dsp,term "="], value),
-           [term "{"], [term ","], [term "}"])
+          (fn (key, value) => keyValuePair ([term key], [dsp,term "="], value))
+          ([term "{"], [term ","], [term "}"])
           fields
   end
 
@@ -368,10 +369,10 @@ struct
   fun formatRecordExp formatter smap =
       if RecordLabel.isTupleMap smap
       then formatEnclosedList
-             (formatter, [term "("], [term ","], [term ")"])
+             formatter ([term "("], [term ","], [term ")"])
              (RecordLabel.Map.listItems smap)
       else formatEnclosedLabelMap
-             (formatter, [term "{"], [term ","], [dsp, term "="], [term "}"])
+             formatter ([term "{"], [term ","], [dsp, term "="], [term "}"])
              smap
 
   fun formatRecordTy formatter smap =
@@ -386,12 +387,12 @@ struct
                  smap)
            end_ end_ end_
       else formatEnclosedLabelMap
-             (formatter, [term "{"], [term ","], [term ":"], [term "}"])
+             formatter ([term "{"], [term ","], [term ":"], [term "}"])
              smap
 
   fun formatDummyRecordTy formatter smap =
       formatEnclosedLabelMap
-         (formatter, [term "{"], [term ","], [term ":"], [term "...}"])
+         formatter ([term "{"], [term ","], [term ":"], [term "...}"])
          smap
 
   (**** for fine-tuning ****)
@@ -517,7 +518,7 @@ struct
               tyvars
       in
         SMLFormat.BasicFormatters.format_list
-          (formatBtv formatKind, commaSpace)
+          (formatBtv formatKind) commaSpace
           tyvars
 (*
         SMLFormat.BasicFormatters.format_list
@@ -540,7 +541,7 @@ struct
               tyvars
       in
         SMLFormat.BasicFormatters.format_list
-          (formatBtvWithType formatKind, commaSpace)
+          (formatBtvWithType formatKind) commaSpace
           tyvars
 (*
         SMLFormat.BasicFormatters.format_list
@@ -552,8 +553,8 @@ struct
   structure FormatComb =
   struct
     open FormatComb
-    fun list f l = formatEnclosedList (f, [term "["], [term ","], [term "]"]) l
-    fun tuple f l = formatEnclosedList (f, [term "("], [term ","], [term ")"]) l
+    fun list f l = formatEnclosedList f ([term "["], [term ","], [term "]"]) l
+    fun tuple f l = formatEnclosedList f ([term "("], [term ","], [term ")"]) l
     fun tuple2 (f1, f2) (x1, x2) =
         tuple (fn x => x) [f1 x1, f2 x2]
     fun tuple3 (f1, f2, f3) (x1, x2, x3) =

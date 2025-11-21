@@ -52,7 +52,7 @@ struct
 
   fun format_exn exn = !format_exn_Ref exn
 
-  fun format_array (elementFormatter, separator) array =
+  fun format_array elementFormatter separator array =
       (* This function can be implemented by using Array.foldri.
        * But, the signature of Array.fordri differs depending on Basis version.
        * In order to compile both on SML/NJ and on SML#, we do not use
@@ -87,7 +87,7 @@ struct
       (array, 0, NONE)
 *)
 
-  fun format_vector (elementFormatter, separator) vector =
+  fun format_vector elementFormatter separator vector =
       let
         fun scan index expressions =
             let val expression = elementFormatter (Vector.sub (vector, index))
@@ -133,8 +133,8 @@ struct
       | General.EQUAL => [FE.Term (5, "EQUAL")]
       | General.GREATER => [FE.Term (7, "GREATER")]
 
-  fun format_list (elementFormatter, separator) [] = []
-    | format_list (elementFormatter, separator) values =
+  fun format_list elementFormatter separator [] = []
+    | format_list elementFormatter separator values =
       let
         fun format [] = []
           | format [value] = elementFormatter value

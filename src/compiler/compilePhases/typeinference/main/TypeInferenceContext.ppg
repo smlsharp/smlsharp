@@ -36,29 +36,27 @@ struct
        *)
       T.ty TvarMap.map
 
-  fun formatList (formatter, sep) nil = nil
-    | formatList (formatter, sep) (elem::elems) =
+  fun formatList formatter sep nil = nil
+    | formatList formatter sep (elem::elems) =
       FE.Sequence (formatter elem)
       :: map (fn x => FE.Sequence (FE.Sequence sep :: formatter x)) elems
 
-  fun formatEnclosedVarMap (formatter, mapsto, comma) map =
+  fun formatEnclosedVarMap formatter (mapsto, comma) map =
       formatList
         (fn (var, item) =>
             FE.Sequence (IDCalc.format_varInfo var)
             :: FE.Sequence mapsto
-            :: formatter item,
-         comma
-        )
+            :: formatter item)
+        comma
         (VarMap.listItemsi map)
 
-  fun formatEnclosedOPrimMap (formatter, mapsto, comma) map =
+  fun formatEnclosedOPrimMap formatter (mapsto, comma) map =
       formatList
         (fn (oprimInfo, item) =>
             FE.Sequence (IDCalc.format_oprimInfo oprimInfo)
             :: FE.Sequence mapsto
-            :: formatter item,
-         comma
-        )
+            :: formatter item)
+        comma
         (OPrimMap.listItemsi map)
 
   (*%

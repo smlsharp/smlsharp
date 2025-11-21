@@ -328,7 +328,7 @@ struct
   type compile_unit =
       (*%
        * @format({interface:i interface interfaceOpt, topdecsSource: dec decs, topdecsInclude:inc incs})
-       * interfaceOpt(interface())(,)
+       * interfaceOpt(interface()())(,)
        * 2[ incs:decList(inc)(+1, +1) ]
        * 2[ decs:decList(dec)(+1, +1) ]
        * +1 "end"
@@ -415,7 +415,7 @@ struct
        *          topdecsInclude:inctopdec inctopdecs,
        *          topdecsSource:srctopdec srctopdecs})
        * "interface" \n
-       * interfaceOpt(interface())(,)
+       * interfaceOpt(interface()())(,)
        * \n
        * "topdecsInclude" \n
          inctopdecs:declist(inctopdec)(+1, +1)

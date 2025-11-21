@@ -296,7 +296,8 @@ struct
         TESTFORMATARRAY0001_EXPECTED
         (U.normalize
            (BF.format_array
-             (BF.format_string, [FE.Term(1, ":")])
+             BF.format_string
+             [FE.Term(1, ":")]
              TESTFORMATARRAY0001_VALUE));
         ()
       )
@@ -311,8 +312,9 @@ struct
         U.assertEqualFormatExpressionList
         TESTFORMATARRAY0002_EXPECTED
         (BF.format_array
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATARRAY0002_VALUE);
+           BF.format_string
+           [FE.Term(1, ":")]
+           TESTFORMATARRAY0002_VALUE);
         ()
       )
   end
@@ -327,8 +329,9 @@ struct
         TESTFORMATARRAY0003_EXPECTED
         (U.normalize
            (BF.format_array
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATARRAY0003_VALUE));
+              BF.format_string
+              [FE.Term(1, ":")]
+              TESTFORMATARRAY0003_VALUE));
         ()
       )
   end
@@ -352,8 +355,9 @@ struct
         TESTFORMATVECTOR0001_EXPECTED
         (U.normalize
            (BF.format_vector
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATVECTOR0001_VALUE));
+              BF.format_string
+              [FE.Term(1, ":")]
+              TESTFORMATVECTOR0001_VALUE));
         ()
       )
   end
@@ -367,8 +371,9 @@ struct
         U.assertEqualFormatExpressionList
         TESTFORMATVECTOR0002_EXPECTED
         (BF.format_vector
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATVECTOR0002_VALUE);
+           BF.format_string
+           [FE.Term(1, ":")]
+           TESTFORMATVECTOR0002_VALUE);
         ()
       )
   end
@@ -383,8 +388,9 @@ struct
         TESTFORMATVECTOR0003_EXPECTED
         (U.normalize
            (BF.format_vector
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATVECTOR0003_VALUE));
+              BF.format_string
+              [FE.Term(1, ":")]
+              TESTFORMATVECTOR0003_VALUE));
         ()
       )
   end
@@ -520,8 +526,9 @@ struct
         TESTFORMATLIST0001_EXPECTED
         (U.normalize
            (BF.format_list
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATLIST0001_VALUE));
+              BF.format_string
+              [FE.Term(1, ":")]
+              TESTFORMATLIST0001_VALUE));
         ()
       )
   end
@@ -535,8 +542,9 @@ struct
         U.assertEqualFormatExpressionList
         TESTFORMATLIST0002_EXPECTED
         (BF.format_list
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATLIST0002_VALUE);
+           BF.format_string
+           [FE.Term(1, ":")]
+           TESTFORMATLIST0002_VALUE);
         ()
       )
   end
@@ -550,8 +558,9 @@ struct
         U.assertEqualFormatExpressionList
         TESTFORMATLIST0003_EXPECTED
         (BF.format_list
-             (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATLIST0003_VALUE);
+           BF.format_string
+           [FE.Term(1, ":")]
+           TESTFORMATLIST0003_VALUE);
         ()
       )
   end

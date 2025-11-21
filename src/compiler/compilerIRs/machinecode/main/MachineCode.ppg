@@ -1003,8 +1003,8 @@ struct
    *)
   datatype topdata = datatype RuntimeCalc.topdata
 
-  fun formatSlotMap args smap =
-      SMLFormat.BasicFormatters.format_list args (SlotID.Map.listItemsi smap)
+  fun formatSlotMap f args smap =
+      SMLFormat.BasicFormatters.format_list f args (SlotID.Map.listItemsi smap)
   fun ifempty (x, y) smap =
       if SlotID.Map.isEmpty smap then x else y
 

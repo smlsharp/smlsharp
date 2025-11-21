@@ -13,37 +13,37 @@ struct
   type 'a formatter = 'a -> format
   type 'a formatParam = 'a list
   val formatEnclosedList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatAppList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatSeqList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatOptionalList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatDeclList
-      : 'a formatter * format * format -> 'a list formatter
+      : 'a formatter -> format * format -> 'a list formatter
   val formatCaseList
-      : 'a formatter * format * format * format -> 'a list formatter
+      : 'a formatter -> format * format * format -> 'a list formatter
   val formatEnclosedOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
   val formatOptionalOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
   val formatOption
-      : ('a formatter * format * format) -> 'a option formatter
+      : 'a formatter -> format * format -> 'a option formatter
   val formatEnclosedMap
       : 'k formatter -> ('a -> ('k * 'v) list)
-        -> 'v formatter * format * format * format * format
+        -> 'v formatter -> format * format * format * format
         -> 'a formatter
   val formatEnclosedSEnv
-      : 'a formatter * format * format * format * format
+      : 'a formatter -> format * format * format * format
         -> 'a SEnv.map formatter
   val formatEnclosedLabelMap
-      : 'a formatter * format * format * format * format
+      : 'a formatter -> format * format * format * format
         -> 'a RecordLabel.Map.map formatter
   val formatEnclosedSEnvPlain
-      : 'a formatter * format * format -> 'a SEnv.map formatter
+      : 'a formatter -> format * format -> 'a SEnv.map formatter
   val formatEnclosedSymbolWithLocEnvPlain
-      : 'a formatter * format * format -> 'a SymbolWithLocEnv.map formatter
+      : 'a formatter -> format * format -> 'a SymbolWithLocEnv.map formatter
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatDummyRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter

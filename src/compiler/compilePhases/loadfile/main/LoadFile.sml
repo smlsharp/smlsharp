@@ -98,8 +98,8 @@ struct
         SMLFormat.BasicFormatters.format_list
           (fn (k, v) =>
               [Term (Filename.toString k), ind_d,
-               Term "->", ind_d, F.Sequence (fmt v)],
-           [F.Newline])
+               Term "->", ind_d, F.Sequence (fmt v)])
+          [F.Newline]
           (keysFoldr (fn (k,z) => (k, Filename.Map.lookup (smap, k)) :: z)
                      nil keys)
   end
@@ -259,7 +259,8 @@ struct
       Term "BASE" :: ind_d :: F.Sequence (format_base_dir baseDir) :: F.Newline
       :: Term "PATH" :: ind_d
       :: SMLFormat.BasicFormatters.format_list
-           (InterfaceName.format_source, [ind_d])
+           InterfaceName.format_source
+           [ind_d]
            loadPath
   fun format_eval_result er =
       case er of
@@ -275,7 +276,8 @@ struct
               | NONE => [Term "-"])
         :: Term ":" :: ind_d
         :: F.Sequence (SMLFormat.BasicFormatters.format_list
-                         (InterfaceID.format_id o #interfaceId o #1, [ind_d])
+                         (InterfaceID.format_id o #interfaceId o #1)
+                         [ind_d]
                          (Assoc.listItems requires))
         :: ind_d :: InterfaceName.format_file_dependency_node node
 

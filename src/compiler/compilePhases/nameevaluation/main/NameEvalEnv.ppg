@@ -213,20 +213,20 @@ local
        *)
       I.varInfo
 
-  fun formatEnclosedSet listItems (format, lparen, comma, rparen) map =
+  fun formatEnclosedSet listItems format (lparen, comma, rparen) map =
       TermFormat.formatOptionalList
-        (fn value => format value, lparen, comma, rparen)
+        (fn value => format value) (lparen, comma, rparen)
         (listItems map)
 
   fun formatEnclosedTypidSet (lparen, comma, rparen)  map =
       formatEnclosedSet
         TypID.Set.listItems 
-        (format_typId, lparen, comma, rparen)
+        format_typId (lparen, comma, rparen)
         map
   fun formatEnclosedExnIdSet (lparen, comma, rparen)  map =
       formatEnclosedSet
         ExnID.Set.listItems 
-        (format_exnId, lparen, comma, rparen)
+        format_exnId (lparen, comma, rparen)
         map
 
   fun preferSecond arg =

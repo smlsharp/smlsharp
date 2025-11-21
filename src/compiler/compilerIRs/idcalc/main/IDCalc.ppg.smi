@@ -278,7 +278,7 @@ struct
   val emptyLiftedTys : liftedTys
   val formatEnclosedTvarMap
     : ('a -> TermFormat.format) 
-      * TermFormat.format 
+      -> TermFormat.format
       * TermFormat.format
       * TermFormat.format
       * TermFormat.format

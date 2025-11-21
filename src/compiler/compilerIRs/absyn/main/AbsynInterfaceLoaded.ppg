@@ -102,7 +102,7 @@ struct
       (*%
        * @format({interface:i interface interfaceOpt, topdecsSource: dec decs})
        * !N0{
-       *   interfaceOpt(interface())
+       *   interfaceOpt(interface()())
        *   interfaceOpt:ifsome()(decs:ifcons()(+1,),)
        *   decs(dec)(+1)
        * }

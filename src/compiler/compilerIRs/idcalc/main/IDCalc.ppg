@@ -285,16 +285,16 @@ in
 
   fun formatEnclosedTvarSet (lparen, comma, rparen) map =
       TermFormat.formatOptionalList
-        (format_tvar, lparen, comma, rparen)
+        format_tvar (lparen, comma, rparen)
         (TvarSet.listItems map)
 
-  fun formatEnclosedTvarMap (formatter, lparen, mapsto, comma, rparen)  map =
+  fun formatEnclosedTvarMap formatter (lparen, mapsto, comma, rparen)  map =
       TermFormat.formatOptionalList
         (fn (tvar, item) =>
             SMLFormat.FormatExpression.Sequence (format_tvar tvar)
             :: SMLFormat.FormatExpression.Sequence mapsto
-            :: formatter item,
-         lparen,
+            :: formatter item)
+        (lparen,
          comma,
          rparen
         )
@@ -2370,7 +2370,7 @@ in
        *)
       (*% @prefix print_
          @format(idstatus senv)
-            senv:formatGenericSymbolWithLocMap(idstatus,sname)(\n,+1,)
+            senv:formatGenericSymbolWithLocMap(idstatus)(sname,\n,+1,)
        *)
       idstatus SymbolWithLocEnv.map
 

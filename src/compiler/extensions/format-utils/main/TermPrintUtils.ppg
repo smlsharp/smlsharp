@@ -219,8 +219,8 @@ in
       end
 
   (* from smlformat/lib/BasicFormatter.ppg *)
-  fun format_listWithDeffered (elementFormatter, separator, separaterDeffered) [] = []
-    | format_listWithDeffered (elementFormatter, separator, separaterDeffered) values =
+  fun format_listWithDeffered elementFormatter (separator, separaterDeffered) [] = []
+    | format_listWithDeffered elementFormatter (separator, separaterDeffered) values =
       let
         fun format [] = []
           | format [value] = elementFormatter value
@@ -246,7 +246,7 @@ in
 
 
   (* list format with bound and ellipsis *)
-  fun formatElements (elementFormatter, separator, separatorDeffered) list =
+  fun formatElements elementFormatter (separator, separatorDeffered) list =
     let
       val count = List.length list
       val (contents, hasEllipsis) =
@@ -258,15 +258,15 @@ in
             (list, false)
     in
       if hasEllipsis then 
-        FE.Sequence (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) ::
+        FE.Sequence (format_listWithDeffered elementFormatter (separator, separatorDeffered) contents) ::
         FE.Sequence separator ::
         ellipsis
       else
-        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
+        format_listWithDeffered elementFormatter (separator, separatorDeffered) contents
     end
 
 
-  fun format_lazyArray (elementFormatter, separator, separatorDeffered) lazyFn =
+  fun format_lazyArray elementFormatter (separator, separatorDeffered) lazyFn =
       let
 (*
         val {contents, hasEllipsis} = lazyFn (SOME (!C.printMaxDepth))
@@ -274,23 +274,23 @@ in
         val {contents, hasEllipsis} = lazyFn NONE
       in
       if hasEllipsis then 
-        FE.Sequence (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) ::
+        FE.Sequence (format_listWithDeffered elementFormatter (separator, separatorDeffered) contents) ::
         FE.Sequence separator ::
         ellipsis
       else
-        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
+        format_listWithDeffered elementFormatter (separator, separatorDeffered) contents
       end            
 
 
-  fun formatOptCase (formatter, ifnone, ifsome) =
+  fun formatOptCase formatter (ifnone, ifsome) =
       fn NONE => ifnone
        | SOME _ => ifsome
 
-  fun formatPrependedOpt (formatter, prefixIfSome) =
+  fun formatPrependedOpt formatter prefixIfSome =
       fn NONE => [FE.Term (0, "")]
        | SOME value => FE.Sequence prefixIfSome :: formatter value
 
-  fun formatOption (formatter, prefixIfSome, suffixIfSome) =
+  fun formatOption formatter (prefixIfSome, suffixIfSome) =
       fn NONE => [FE.Term (4, "NONE")]
        | SOME value => FE.Term (4, "SOME") ::
                        FE.Sequence prefixIfSome ::
@@ -323,8 +323,8 @@ in
       *)
      (string * 'a) list
 
-  fun formatSEnvMap (formatter, labelsep) env =
-      format_fieldList(formatter,labelsep) (SEnv.listItemsi env)
+  fun formatSEnvMap formatter labelsep env =
+      format_fieldList formatter labelsep (SEnv.listItemsi env)
 
  (*%
   * @params(labelsep)
@@ -341,8 +341,8 @@ in
       *)
      (TypID.id * 'a) list
 
-  fun formatTypIDMap (formatter, labelsep) env =
-      format_typIdMap(formatter,labelsep) (TypID.Map.listItemsi env)
+  fun formatTypIDMap formatter labelsep env =
+      format_typIdMap formatter labelsep (TypID.Map.listItemsi env)
 
 end
 end

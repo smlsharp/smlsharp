@@ -53,12 +53,10 @@ sig
   val format_exn_Ref : (exn -> format) ref
 
   (** the formatter for array type. *)
-  val format_array :
-      ('a formatter * format) -> 'a array -> format
+  val format_array : 'a formatter -> format -> 'a array -> format
 
   (** the formatter for vector type. *)
-  val format_vector :
-      ('a formatter * format) -> 'a vector -> format
+  val format_vector : 'a formatter -> format -> 'a vector -> format
 
   (** the formatter for ref type. *)
   val format_ref : 'a formatter -> 'a ref -> format
@@ -73,7 +71,7 @@ sig
   val format_order : order -> format
 
   (** the formatter for list type. *)
-  val format_list : ('a formatter * format) -> 'a list -> format
+  val format_list : 'a formatter -> format -> 'a list -> format
 
   (***************************************************************************)
 

@@ -13,7 +13,8 @@ struct
       TermFormat.formatEnclosedMap
         (fn x => Types.format_ty (Types.BOUNDVARty x))
         (map (fn k => (k, k)) o BoundTypeVarID.Set.listItems)
-        (BoundTypeVarID.format_id, l, c, e, r)
+        BoundTypeVarID.format_id
+        (l, c, e, r)
         btvset
 
   (*%

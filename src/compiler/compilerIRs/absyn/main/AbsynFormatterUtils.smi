@@ -13,18 +13,16 @@ struct
       : SMLFormat.format * SMLFormat.format -> 'a list -> SMLFormat.format
   val decs
       : (SMLFormat.format -> 'a -> SMLFormat.format)
-        * SMLFormat.format
-        * SMLFormat.format
-        * SMLFormat.format
+        -> SMLFormat.format * SMLFormat.format * SMLFormat.format
         -> 'a list
         -> SMLFormat.format
   val decs2
       : (SMLFormat.format * SMLFormat.format -> 'a -> SMLFormat.format)
-        * SMLFormat.format
-        * SMLFormat.format
-        * SMLFormat.format
-        * SMLFormat.format
-        * SMLFormat.format
+        -> SMLFormat.format
+           * SMLFormat.format
+           * SMLFormat.format
+           * SMLFormat.format
+           * SMLFormat.format
         -> 'a list
         -> SMLFormat.format
 

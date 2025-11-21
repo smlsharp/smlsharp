@@ -38,20 +38,20 @@ struct
   val format_IntInf : IntInf.int -> format
   val format_IntInfJson : IntInf.int -> format
   val formatElements 
-    : 'a SMLFormat.BasicFormatters.formatter * format * format -> 'a list -> format
+    : 'a SMLFormat.BasicFormatters.formatter -> format * format -> 'a list -> format
   val format_lazyArray 
-    : 'a SMLFormat.BasicFormatters.formatter * format * format
+    : 'a SMLFormat.BasicFormatters.formatter -> format * format
        -> (int option -> {contents:'a list, hasEllipsis:bool}) -> format
   val formatPrependedOpt 
-    : ('a -> format) * format -> 'a option -> format
+    : ('a -> format) -> format -> 'a option -> format
   val formatOptCase 
-    : ('a -> format) * format * format -> 'a option -> format
+    : ('a -> format) -> format * format -> 'a option -> format
   val formatOption
-    : ('a -> format) * format * format -> 'a option -> format
+    : ('a -> format) -> format * format -> 'a option -> format
   val formatIfCons : format -> 'a list -> format
   val formatNonEmptyTypIDMap : format -> 'a TypID.Map.map -> format
   val formatSEnvMap
-    : 'a SMLFormat.BasicFormatters.formatter * format -> 'a SEnv.map -> format
+    : 'a SMLFormat.BasicFormatters.formatter -> format -> 'a SEnv.map -> format
   val formatTypIDMap
-    : 'a SMLFormat.BasicFormatters.formatter * format -> 'a TypID.Map.map -> format
+    : 'a SMLFormat.BasicFormatters.formatter -> format -> 'a TypID.Map.map -> format
 end

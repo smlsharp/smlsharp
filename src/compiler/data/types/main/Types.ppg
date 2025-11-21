@@ -32,15 +32,16 @@ struct
   val dummy = ()
   end
 
-  fun helper_listWithBound (formatter, comma, ellipsis) list =
+  fun helper_listWithBound formatter (comma, ellipsis) list =
       if length list > !Control.printMaxOverloadInstances
       then SMLFormat.FormatExpression.Sequence
              (SMLFormat.BasicFormatters.format_list
-                (formatter, comma)
+                formatter
+                comma
                 (List.take (list, !Control.printMaxOverloadInstances)))
            :: SMLFormat.FormatExpression.Sequence comma
            :: ellipsis
-      else SMLFormat.BasicFormatters.format_list (formatter, comma) list
+      else SMLFormat.BasicFormatters.format_list formatter comma list
 
   (*%
    * @formatter(Symbol.symbol) Symbol.format_symbol
@@ -380,9 +381,10 @@ struct
       fn formatter => fn map =>
          helper_format_boundTvars formatter (BoundTypeVarID.Map.listItemsi map)
   val helper_print_boundTvars =
-      fn (formatter, env as {btvOrder, ...}) => fn map =>
+      fn formatter => fn env as {btvOrder, ...} => fn map =>
          helper_print_boundTvars
-           (formatter, env)
+           formatter
+           env
            (ListSorter.sort
               (fn ((x, _), (y, _)) =>
                   Int.compare

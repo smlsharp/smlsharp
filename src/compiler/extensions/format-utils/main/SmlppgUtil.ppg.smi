@@ -11,32 +11,32 @@ struct
   val format_word32 : Word32.word -> format
   val format_IntInf : IntInf.int -> format
   val formatTyConArgumentTypes
-    : ('a -> format) * format * format * format -> 'a list -> format
+    : ('a -> format) -> format * format * format -> 'a list -> format
   val formatListWithEnclosureOne 
-    : ('a -> format) * format * format * format -> 'a list -> format
+    : ('a -> format) -> format * format * format -> 'a list -> format
   val formatListWithEnclosure
-    : ('a -> format) * format * format * format -> 'a list -> format
+    : ('a -> format) -> format * format * format -> 'a list -> format
   val formatListWithEnclosureIfMoreThanOne
-    : ('a -> format) * format * format * format
+    : ('a -> format) -> format * format * format
       -> 'a list -> format
   val formatSymbolWithLocMap
-    : ('a -> format) * format * format * format * format
+    : ('a -> format) -> format * format * format * format
       -> 'a SymbolWithLocEnv.map -> format
   val formatGenericSymbolWithLocMap
-    : ('a * format * format -> 'b -> format) * 'a * format * format * format
+    : ('a * format * format -> 'b -> format) -> 'a * format * format * format
       -> 'b SymbolWithLocEnv.map -> format
   val formatSymbolWithLocMapWithEnclosure
-    : ('a -> format) * format * format * format * format
+    : ('a -> format) -> format * format * format * format
       -> 'a SymbolWithLocEnv.map -> format
   val formatPrependedOpt 
-    : ('a -> format) * format -> 'a option -> format
+    : ('a -> format) -> format -> 'a option -> format
   val formatEnclosedOpt 
-    : ('a -> format) * format * format -> 'a option -> format
+    : ('a -> format) -> format * format -> 'a option -> format
   val formatOptWithDefault 
-      : ('a -> 'b) * 'b -> 'a option -> 'b
+      : ('a -> 'b) -> 'b -> 'a option -> 'b
   val formatBinaryChoice 
       : 'a * 'a -> bool -> 'a
   val format_map 
-     : ('key -> format) * ('element -> format) * format * format * format * format
+     : ('key -> format) * ('element -> format) -> format * format * format * format
        -> ('key * 'element) list -> format
 end

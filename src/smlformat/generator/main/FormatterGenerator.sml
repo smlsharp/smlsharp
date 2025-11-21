@@ -506,9 +506,12 @@ struct
                          templates
                in
                  formatter ^
-                 "(" ^
-                 (U.interleaveString "," (instanceCodes @ templateCodes)) ^
-                 ")" ^
+                 (if null instanceCodes
+                  then ""
+                  else "(" ^ U.interleaveString "," instanceCodes ^ ")") ^
+                 (if null templateCodes
+                  then ""
+                  else "(" ^ U.interleaveString "," templateCodes ^ ")") ^
                  (if isArgPosition then "" else id)
                end
              | (F.MarkInstance(instance, region)) =>
@@ -1209,10 +1212,12 @@ struct
             (zipEq (valconBinds, exps))
       in
         formatterName ^
-        (if (null formatterNames) andalso (null params)
-         then " "
-         else
-           "(" ^ (U.interleaveString ", " (formatterNames @ params)) ^ ")") ^
+        (if null formatterNames
+         then ""
+         else "(" ^ U.interleaveString "," formatterNames ^ ")") ^
+        (if null params
+         then ""
+         else "(" ^ U.interleaveString "," params ^ ")") ^
         " " ^ varNameForFormatterArg ^ " = " ^
         "case " ^ varNameForFormatterArg ^ " of " ^ newline ^
         (U.interleaveString (newline ^ " | ") rules) ^ newline
@@ -1283,12 +1288,12 @@ struct
                 (primaryTag, localTags, isDefault, varNameForArg, ty)
       in
         formatterName ^
-        (if (null formatterNames) andalso (null formatParams)
-         then " "
-         else
-           "(" ^
-           (U.interleaveString ", " (formatterNames @ formatParams)) ^
-           ")") ^
+        (if null formatterNames
+         then ""
+         else "(" ^ U.interleaveString "," formatterNames ^ ")") ^
+        (if null formatParams
+         then ""
+         else "(" ^ U.interleaveString "," formatParams ^ ")") ^
         " " ^ varNameForArg ^ " = " ^ newline ^ exp ^ newline
       end
 

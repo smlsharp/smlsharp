@@ -44,8 +44,8 @@ struct
 
   fun format_path path =
       SMLFormat.BasicFormatters.format_list
-        (SMLFormat.BasicFormatters.format_string o StringEscape.toString,
-         SMLFormat.BasicFormatters.format_string "/")
+        (SMLFormat.BasicFormatters.format_string o StringEscape.toString)
+        (SMLFormat.BasicFormatters.format_string "/")
         path
 
   fun beginsWithDot ("." :: _) = true
