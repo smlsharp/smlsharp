@@ -6563,6 +6563,7 @@ src/compiler/compilerIRs/absyn/main/RequirePath.o: \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/absyn/main/AbsynTy.o: \
@@ -15668,6 +15669,7 @@ src/compiler/compilerIRs/absyn/main/AbsynFormatter.o: \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
@@ -15792,6 +15794,7 @@ src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
@@ -15919,6 +15922,7 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
@@ -17508,6 +17512,7 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
  src/compiler/extensions/debug/main/Bug.smi \
@@ -34366,6 +34371,7 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
  src/compiler/libs/list-utils/main/Snoc.smi \
@@ -34401,7 +34407,6 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilePhases/datatypecompilation/main/DatatypeCompilation.smi \
  src/compiler/compilerIRs/bitmapcalc/main/BitmapCalc2.ppg.smi \
  src/compiler/compilePhases/bitmapcompilation/main/BitmapCompilation.smi \
- src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  src/compiler/data/name/main/ExternSymbol.smi \
  src/compiler/compilerIRs/closurecalc/main/ClosureCalc.ppg.smi \
  src/compiler/compilePhases/closureconversion/main/ClosureConversion2.smi \

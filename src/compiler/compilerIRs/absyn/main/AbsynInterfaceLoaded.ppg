@@ -25,7 +25,7 @@ struct
        *          provideTopdecs: dec decs})
        * !N0{
        *   "_interface" +d interfaceId
-       *   2[+1] "as" +d interfaceName
+       *   2[+1] "as" +d !N0{ interfaceName }
        *   reqs:ifcons()(2[+1],)
        *   reqs(req)(2[+1])
        *   decs:ifcons()(2[+1],)
@@ -50,30 +50,39 @@ struct
    *)
   type 'loc interface =
       (*%
-       * @format({interfaceDecs: dec decs, provide})
+       * @format(
+       *   {interfaceDecs: dec decs,
+       *    provide:
+       *      {requiredIds: req reqs,
+       *       locallyRequiredIds: lreq lreqs,
+       *       provideTopdecs: topdec topdecs,
+       *       topdecsInclude: inc incs}}
+       * )
        * !N0{
        *   decs(dec)(+1)
        *   decs:ifcons()(+1,)
-       *   provide
-       * }
-       * @format:provide({requiredIds: req reqs, locallyRequiredIds: lreq lreqs,
-       *                  provideTopdecs: dec decs, topdecsInclude: inc incs})
-       * !N0{
-       *   "_provide"
-       *   reqs:ifcons()(2[+1],)
-       *   reqs(req)(2[+1])
-       *   lreqs:ifcons()(2[+1],)
-       *   lreqs(req)(2[+1])
-       *   decs:ifcons()(2[+1],)
-       *   decs(dec)(2[+1])
-       *   incs:ifcons()(2[+1],)
-       *   incs(inc)(2[+1])
-       *   +1 "end"
+       *   !N0{
+       *     "_provide"
+       *     reqs:ifcons()(2[+1],)
+       *     reqs(req)(2[+1])
+       *     lreqs:ifcons()(2[+1],)
+       *     lreqs(lreq)(2[+1])
+       *     topdecs:ifcons()(2[+1],)
+       *     topdecs(topdec)(2[+1])
+       *     +1 "end"
+       *   }
+       *   +1
+       *   !N0{
+       *     "include"
+       *     incs:ifcons()(2[+1],)
+       *     incs(inc)(2[+1])
+       *     +1 "end"
+       *   }
        * }
        * @format:req({id, loc})
        * !N0{ "_require" +1 id }
        * @format:lreq({id, loc})
-       * !N0{ "_require" +d "local" +d id }
+       * !N0{ "_require" +d "local" +1 id }
        *)
       {
         interfaceDecs : interface_dec list,

@@ -125,7 +125,7 @@ struct
   datatype 'exp exp =
       (*%
        * @format(exp * loc)
-       * "(" !N0{ "..." exp } ")"
+       * !N0{ "(..." 2[1] exp 1 ")" }
        *)
       EXP_EMBED of 'exp * loc
     | (*%
@@ -165,7 +165,7 @@ struct
       KWEXP of bool * 'exp kwexp * loc
     | (*%
        * @format(sql * exp query * loc)
-       * "(" !N0{ sql:iftrue()("_sql" +d,) query(exp) } ")"
+       * "(" !N0{ sql:iftrue()("_sql" +1,) query(exp) } ")"
        *)
       EXP_SUBQUERY of bool * 'exp query * loc
     | (*%
@@ -190,16 +190,17 @@ struct
       PAREN of 'exp exp * loc
     | (*%
        * @format(e1 exp1 * e2 exp2 * loc)
-       * !N0{ exp1(e1) 2[+1] exp2(e2) }
+       * L9{ exp1(e1) 2[+1] exp2(e2) }
        *)
       APP of 'exp exp * 'exp exp * loc
     | (*%
        * @format(e1 exp1 * vid * e2 exp2 * loc)
-       * !N0{ exp1(e1) 2[+1] vid 2[+1] exp2(e2) }
+       * N9{ exp1(e1) 2[+1] vid 2[+2] exp2(e2) }
        *)
       INFIX of 'exp exp * vid * 'exp exp * loc
     | (*%
        * @format(vid * e exp * loc)
+       * L9{ "(" vid ")" 2[1] exp(e) }
        *)
       CAST of vid * 'exp exp * loc
     | (*%
@@ -211,7 +212,7 @@ struct
   and 'exp kwexp =
       (*%
        * @format(exp query * loc)
-       * "exists(" 2[1] !N0{ query(exp) } 1 ")"
+       * !N0{ "exists(" 2[1] query(exp) 1 ")" }
        *)
       EXISTS of 'exp query * loc
 
@@ -223,12 +224,12 @@ struct
       TABLE of table_selector
     | (*%
        * @format(e table * lab * loc)
-       * !N0{ table(e) +1 "as" +d lab }
+       * L6{ table(e) +1 "as" +d lab }
        *)
       TABLE_AS of 'exp table * lab * loc
     | (*%
        * @format(e1 table1 * inner * e2 table2 * e3 exp3 * loc)
-       * !N0{
+       * L2{
        *   table1(e1)
        *   +1
        *   !N0{ inner:iftrue()("inner" +d,) "join" +1 table2(e2) }
@@ -239,7 +240,7 @@ struct
       TABLE_INNER_JOIN of 'exp table * bool * 'exp table * 'exp exp * loc
     | (*%
        * @format(e1 table1 * e2 table2 * loc)
-       * !N0{
+       * L2{
        *   table1(e1)
        *   +1
        *   !N0{ "cross" +d "join" +1 table2(e2) }
@@ -248,7 +249,7 @@ struct
       TABLE_CROSS_JOIN of 'exp table * 'exp table * loc
     | (*%
        * @format(e1 table1 * e2 table2 * loc)
-       * !N0{
+       * L2{
        *   table1(e1)
        *   +1
        *   !N0{ "natural" +d "join" +1 table2(e2) }
@@ -257,7 +258,7 @@ struct
       TABLE_NATURAL_JOIN of 'exp table * 'exp table * loc
     | (*%
        * @format(sql * e query * loc)
-       * "(" sql:iftrue()("_sql" +d,) !N0{ query(e) } ")"
+       * "(" !N0{ sql:iftrue()("_sql" +1,) query(e) } ")"
        *)
       TABLE_SUBQUERY of bool * 'exp query * loc
     | (*%
@@ -274,7 +275,7 @@ struct
       FROM of 'exp table list * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "from" +d "...(" 2[1] !N0{ exp } 1 ")" }
+       * !N0{ "from" d "...(" 2[1] exp 1 ")" }
        *)
       FROM_EMBED of 'exp * loc
 
@@ -286,7 +287,7 @@ struct
       WHERE of 'exp exp * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "from" +d "...(" 2[1] !N0{ exp } 1 ")" }
+       * !N0{ "where" d "...(" 2[1] exp 1 ")" }
        *)
       WHERE_EMBED of 'exp * loc
 
@@ -305,7 +306,7 @@ struct
       ORDERBY of 'exp order_key list * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "order" +d "by" +d "...(" 2[1] !N0{ exp } 1 ")" }
+       * !N0{ "order" +d "by" d "...(" 2[1] exp 1 ")" }
        *)
       ORDERBY_EMBED of 'exp * loc
 
@@ -317,7 +318,7 @@ struct
       LIMIT of 'exp limit_clause * 'exp limit_offset_clause option * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "limit" +d "...(" 2[1] !N0{ exp } 1 ")" }
+       * !N0{ "limit" d "...(" 2[1] exp 1 ")" }
        *)
       LIMIT_EMBED of 'exp * loc
 
@@ -329,7 +330,7 @@ struct
       OFFSET of 'exp offset_clause * 'exp fetch_clause option * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "offset" +d "...(" !N0{ 2[1] exp 1 } ")" }
+       * !N0{ "offset" d "...(" 2[1] exp 1 ")" }
        *)
       OFFSET_EMBED of 'exp * loc
 
@@ -347,7 +348,7 @@ struct
       SELECT of distinct_all option * ('exp select_row list * loc) * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "select" +d "...(" 2[1] !N0{ exp } 1 ")" }
+       * !N0{ "select" d "...(" 2[1] exp 1 ")" }
        *)
       SELECT_EMBED of 'exp * loc
 
@@ -382,7 +383,7 @@ struct
                * loc
     | (*%
        * @format(exp * loc)
-       * "select" +d "...(" 2[1] !N0{ exp } 1 ")"
+       * !N0{ "select" d "...(" 2[1] exp 1 ")" }
        *)
       QUERY_EMBED of 'exp * loc
 
@@ -408,7 +409,7 @@ struct
   and 'exp select_row =
       (*%
        * @format(e exp * lab labOpt * loc)
-       * !N0{ exp(e) labOpt:ifsome()(2[+1] "as" +d labOpt(lab),) }
+       * !N0{ exp(e) labOpt:ifsome()(+1 "as" +d labOpt(lab),) }
        *)
       'exp exp * lab option * loc
 
@@ -451,11 +452,9 @@ struct
       (*%
        * @format(first * e exp expOpt * rows * loc)
        * !N0{
-       *   first
-       *   expOpt:ifsome()(
-       *     2[+1] expOpt(exp(e)) +1,
-       *     +d
-       *   )
+       *   "fetch"
+       *   +d first
+       *   expOpt:ifsome()(2[+1] expOpt(exp(e)) 2[+1], +d)
        *   rows
        *   +d "only"
        * }
@@ -628,7 +627,7 @@ struct
   datatype 'exp step =
       (*%
        * @format(prefix * exp con * loc)
-       * !N0{ prefix:iftrue()("_sql" +d,) con(exp) }
+       * !N0{ prefix:iftrue()("_sql" +1,) con(exp) }
        *)
       STEP of bool * 'exp con * loc
     | (*%
@@ -643,7 +642,7 @@ struct
   datatype 'exp body =
       (*%
        * @format(prefix * e con * loc)
-       * !N0{ prefix:iftrue()("_sql" +d,) con(e) }
+       * !N0{ prefix:iftrue()("_sql" +1,) con(e) }
        *)
       CON of bool * 'exp con * loc
     | (*%
@@ -668,22 +667,22 @@ struct
   datatype ('exp, 'pat, 'ty) top =
       (*%
        * @format(exp expOpt * ty * loc)
-       * !N0{
+       * L6{
        *   "_sqlserver"
-       *   expOpt:ifsome()(+1,)
+       *   expOpt:ifsome()(2[+1],)
        *   expOpt(exp)
-       *   +1 ":" +d ty
+       *   2[+1] ":" +d ty
        * }
        *)
       SQLSERVER of 'exp option * 'ty * loc
     | (*%
        * @format(pat * exp body * loc)
-       * !N0{ "_sql" +d !N0{ pat +d "=>" +1 body(exp) } }
+       * R2{ "_sql" +d !N0{ pat +d "=>" +1 body(exp) } }
        *)
       SQLFN of 'pat * 'exp body * loc
     | (*%
        * @format(exp body * loc)
-       * !N0{ "_sql" +d body(exp) }
+       * !N0{ "_sql" +1 body(exp) }
        *)
       SQL of 'exp body * loc
 

@@ -6,6 +6,16 @@
  * @author Liu Bochao
  * @author Katsuhiro Ueno
  *)
+(*
+ * 9 apply #
+ * 8 * (tuplety)
+ * 7 -> (funty)
+ * 6 : as of
+ * 5 andalso
+ * 4 orelse
+ * 3 handle
+ * 2 raise if while case fn join(SQL)
+ *)
 structure Absyn =
 struct
   open AbsynTy
@@ -79,11 +89,13 @@ struct
        *)
       RequirePath.path * loc
 
-  (*% *)
+  (*%
+   * @formatter(string) ConstFormat.format_string_ML
+   *)
   type extern_name =
       (*%
        * @format(name * loc)
-       * "\"" name "\""
+       * name
        *)
       string * loc
 
@@ -98,7 +110,6 @@ struct
   (*%
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
-   * @formatter(N0ifsome) AbsynFormatterUtils.N0ifsome
    *)
   datatype pat =
       (*%
@@ -136,26 +147,26 @@ struct
       PATPAREN of pat * loc
     | (*%
        * @format(pat1 * pat2 * loc)
-       * !N0{ pat1 2[+1] pat2 }
+       * L9{ pat1 2[+1] pat2 }
        *)
       PATAPP of pat * pat * loc
     | (*%
        * @format(pat1 * vid * pat2 * loc)
-       * !N0{ pat1 2[+1] vid 2[+1] pat2 }
+       * N9{ pat1 2[+1] vid 2[+2] pat2 }
        *)
       PATINFIX of pat * vid * pat * loc
     | (*%
        * @format(pat * ty * loc)
-       * !N0{ pat +1 ":" +d ty }
+       * L6{ pat +1 ":" +d ty }
        *)
       PATTYPED of pat * ty * loc
     | (*%
        * @format(vid * ty tyOpt * pat * loc)
-       * !N0{
-       *   tyOpt:N0ifsome()(
+       * R6{
+       *   !N0{
        *     vid
        *     tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
-       *   )
+       *   }
        *   +1 "as" +d pat
        * }
        *)
@@ -164,18 +175,18 @@ struct
   and patrow =
       (*%
        * @format(lab * pat * loc)
-       * !N0{ lab +1 "=" +d pat }
+       * !N0{ lab +d "=" 2[+1] pat }
        *)
       PATROW of lab * pat * loc
     | (*%
        * @format(vid * ty tyOpt * pat patOpt * loc)
-       * patOpt:N0ifsome()(
-       *   tyOpt:N0ifsome()(
+       * !N0{
+       *   !N0{
        *     vid
        *     tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
-       *   )
+       *   }
        *   patOpt:ifsome()(+1 "as" +d patOpt(pat),)
-       * )
+       * }
        *)
       PATROWVAR of vid * ty option * pat option * loc
 
@@ -249,10 +260,12 @@ struct
       (*%
        * @format(tyvarseq tyvarseqOpt * tycon * conbind conbinds * loc)
        * !N0{
-       *   head
-       *   tyvarseqOpt(tyvarseq)
-       *   tyvarseqOpt:ifsome()(+d,)
-       *   tycon
+       *   !N0{
+       *     head
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+1,)
+       *     tycon
+       *   }
        *   +d "="
        *   conbinds:ifcons()(2[+1],)
        *   conbinds(conbind)(+1 "|" +d)
@@ -280,7 +293,8 @@ struct
    *)
   datatype exp =
       (*%
-       * @format(const * loc) const
+       * @format(const * loc)
+       * const
        *)
       EXPCONST of constant * loc
     | (*%
@@ -321,7 +335,7 @@ struct
        *   decs(dec)(2[+1])
        *   +1 "in"
        *   exps:ifcons()(2[+1],)
-       *   exps(exp)(2[+1])
+       *   exps(exp)(";" 2[+1])
        *   +1 "end"
        * }
        *)
@@ -333,42 +347,49 @@ struct
       EXPPAREN of exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * !N0{ exp1 2[+1] exp2 }
+       * L9{ exp1 2[+1] exp2 }
        *)
       EXPAPP of exp * exp * loc
     | (*%
        * @format(exp1 * vid * exp2 * loc)
-       * !N0{ exp1 2[+1] vid 2[+1] exp2 }
+       * N9{ exp1 2[+1] vid 2[+2] exp2 }
        *)
       EXPINFIX of exp * vid * exp * loc
     | (*%
        * @format(exp * ty * loc)
-       * !N0{ exp +1 ":" +d ty }
+       * L6{ exp +1 ":" +d ty }
        *)
       EXPTYPED of exp * ty * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * !N0{ exp1 +1 "andalso" +d exp2 }
+       * L5{ exp1 +1 "andalso" +2 exp2 }
        *)
       EXPANDALSO of exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * !N0{ exp1 +1 "orelse" +d exp2 }
+       * L4{ exp1 +1 "orelse" +2 exp2 }
        *)
       EXPORELSE of exp * exp * loc
     | (*%
        * @format(exp * mrule mrules * loc)
-       * !N0{ exp +1 !N0{ "handle" 2[+1] mrules(mrule)(+1 "|" +d) } }
+       * R3{
+       *   exp +1
+       *   !N0{
+       *     "handle"
+       *     mrules:ifcons()(2[+1],)
+       *     mrules(mrule)(+1 "|" +d)
+       *   }
+       * }
        *)
       EXPHANDLE of exp * mrule list * loc
     | (*%
        * @format(exp * loc)
-       * !N0{ "raise" 2[+1] exp }
+       * R2{ "raise" 2[+1] exp }
        *)
       EXPRAISE of exp * loc
     | (*%
        * @format(exp1 * exp2 * exp3 * loc)
-       * !N0{
+       * R2{
        *   !N0{ "if" 2[+1] exp1 }
        *   +1
        *   !N0{ "then" 2[+1] exp2 }
@@ -379,42 +400,46 @@ struct
       EXPIF of exp * exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * !N0{ "while" +d exp1 +1 "do" +d exp2 }
+       * R2{ "while" 2[+1] exp1 +1 "do" 2[+1] exp2 }
        *)
       EXPWHILE of exp * exp * loc
     | (*%
        * @format(exp * mrule mrules * loc)
-       * !N0{ !N0{ "case" 2[+1] exp +1 "of" } 2[+1] mrules(mrule)(+1 "|" +d) }
+       * R2{
+       *   !N0{ "case" 2[+1] exp +1 "of" }
+       *   mrules:ifcons()(2[+1],)
+       *   mrules(mrule)(+1 "|" +d)
+       * }
        *)
       EXPCASE of exp * mrule list * loc
     | (*%
        * @format(mrule mrules * loc)
-       * !N0{ "f" !N0{ "n" +d mrules(mrule)(+1 "|" +d) } }
+       * R2{ "f" !N0{ "n" +d mrules(mrule)(+1 "|" +d) } }
        *)
       EXPFN of mrule list * loc
     | (*%
        * @format(ty * loc)
-       * "_sizeof(" !N0{ ty } ")"
+       * !N0{ "_sizeof(" 2[1] ty 1 ")" }
        *)
       EXPSIZEOF of ty * loc
     | (*%
        * @format(exp * row rows * loc)
-       * !N0{ exp +1 "#" +d "{" !N0{ rows(row)("," +1) } "}" }
+       * L9{ exp +1 "#" +d "{" 2[1] !N0{ rows(row)("," +1) } 1 "}" }
        *)
       EXPRECORD_UPDATE of exp * exprow list * loc
     | (*%
        * @format(exp * row rows * loc)
-       * !N0{ exp +1 "#" +d "(" !N0{ rows(row)("," +1) } ")" }
+       * L9{ exp +1 "#" +d "(" 2[1] !N0{ rows(row)("," +1) } 1 ")" }
        *)
       EXPTUPLE_UPDATE of exp * exp list * loc
     | (*%
        * @format(name * ty * loc)
-       * !N0{ "_import" +d name +1 ":" +d ty }
+       * L6{ "_import" +d name +1 ":" +d ty }
        *)
       EXPIMPORT_NAME of extern_name * ffi_ty * loc
     | (*%
        * @format(exp * ty * loc)
-       * !N0{ exp +1 ":" +d "_import" +d ty }
+       * L6{ exp +1 ":" +d "_import" +d ty }
        *)
       EXPIMPORT_EXP of exp * ffi_ty * loc
     | (*%
@@ -449,52 +474,52 @@ struct
       EXPFOREACH_ARRAY of vid * exp * pat * exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * "_join(" !N0{ exp1 "," +1 exp2 } ")"
+       * !N0{ "_join(" 2[1] exp1 "," +1 exp2 1 ")" }
        *)
       EXPJOIN of exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * "_extend(" !N0{ exp1 "," +1 exp2 } ")"
+       * !N0{ "_extend(" 2[1] exp1 "," +1 exp2 1 ")" }
        *)
       EXPEXTEND of exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * "_update(" !N0{ exp1 "," +1 exp2 } ")"
+       * !N0{ "_update(" 2[1] exp1 "," +1 exp2 1 ")" }
        *)
       EXPUPDATE1 of exp * exp * loc
     | (*%
        * @format(exp1 * exp2 * loc)
-       * !N0{ exp1 +1 "#" +d "{" !N0{ exp2 } "}" }
+       * L9{ exp1 +1 "#" +d "{" 2[1] !N0{ exp2 } 1 "}" }
        *)
       EXPUPDATE2 of exp * exp * loc
     | (*%
        * @format(exp * ty * loc)
-       * !N0{ "_dynamic" +d exp +1 "as" +d ty }
+       * L6{ "_dynamic" 2[+1] exp +1 !N0{ "as" 2[+1] ty } }
        *)
       EXPDYNAMIC_AS of exp * ty * loc
     | (*%
        * @format(exp * ty * loc)
-       * !N0{ "_dynamic" +d exp +1 "of" +d ty }
+       * L6{ "_dynamic" 2[+1] exp +1 !N0{ "of" 2[+1] ty } }
        *)
       EXPDYNAMIC_OF of exp * ty * loc
     | (*%
        * @format(exp * ty * loc)
-       * !N0{ "_dynamicview" +d exp +1 "of" +d ty }
+       * L6{ "_dynamicview" 2[+1] exp +1 !N0{ "of" 2[+1] ty } }
        *)
       EXPDYNAMICVIEW of exp * ty * loc
     | (*%
        * @format(ty * loc)
-       * !N0{ "_dynamicnull" +d "as" +d ty }
+       * L6{ "_dynamicnull" 2[+1] !N0{ "as" 2[+1] ty } }
        *)
       EXPDYNAMICNULL of ty * loc
     | (*%
        * @format(ty * loc)
-       * !N0{ "_dynamictop" +d "as" +d ty }
+       * L6{ "_dynamictop" 2[+1] !N0{ "as" 2[+1] ty } }
        *)
       EXPDYNAMICTOP of ty * loc
     | (*%
        * @format(exp * mrule mrules * loc)
-       * !N0{
+       * R2{
        *   !N0{ "_dynamiccase" 2[+1] exp +1 "of" }
        *   2[+1]
        *   mrules(mrule)(+1 "|" +d)
@@ -503,7 +528,7 @@ struct
       EXPDYNAMICCASE of exp * dynamic_mrule list * loc
     | (*%
        * @format(ty * loc)
-       * "_reifyTy(" 2[1] !N0{ ty } 1 ")"
+       * !N0{ "_reifyTy(" 2[1] ty 1 ")" }
        *)
       EXPREIFYTY of ty * loc
 
@@ -688,9 +713,8 @@ struct
        *     head
        *     pat
        *     tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
-       *     +1
        *   }
-       *   "=" +1
+       *   +d "=" +1
        *   exp
        * }
        *)
@@ -1105,12 +1129,12 @@ struct
       TOPDEC of topdec list * loc
     | (*%
        * @format(path * loc)
-       * "use" +d path
+       * !N0{ "use" +1 path }
        *)
       USE of require_path * loc
     | (*%
        * @format(path * loc)
-       * "_use" +d path
+       * !N0{ "_use" +1 path }
        *)
       U_USE of require_path * loc
     | (*%
@@ -1125,7 +1149,7 @@ struct
   type interface =
       (*%
        * @format(path * loc)
-       * "_interface" +d path
+       * !N0{ "_interface" +1 path }
        *)
       require_path * loc
 

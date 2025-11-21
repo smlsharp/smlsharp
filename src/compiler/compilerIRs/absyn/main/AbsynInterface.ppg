@@ -96,7 +96,7 @@ struct
   and overload_case =
       (*%
        * @format(tyvar * ty * mrule mrules * loc)
-       * !N0{
+       * R2{
        *   !N0{ "case" 2[+1] !N0{ tyvar +1 "in" +d ty } +1 "of" }
        *   2[+1]
        *   mrules(mrule:overload_mrule)(+1 "|" +d)
@@ -240,7 +240,7 @@ struct
       STRID of longstrid
     | (*%
        * @format(funid * longstrid * loc)
-       * !N0{ funid "(" 2[1] !N0{ longstrid } 1 ")" }
+       * !N0{ funid "(" 2[1] longstrid 1 ")" }
        *)
       STRAPP of funid * longstrid * loc
 
@@ -258,7 +258,7 @@ struct
        * !N0{
        *   head
        *   funid
-       *   "(" 2[1] !N0{ paramOpt(param) } 1 ")"
+       *   "(" 2[1] paramOpt(param) 1 ")"
        *   +d "=" +1
        *   strexp
        * }
@@ -316,20 +316,20 @@ struct
   datatype require =
       (*%
        * @format(path * prop props * loc)
-       * !N0{ "_require" +d path !N0{ props:ifcons()(+1,) props(prop)(+1) } }
+       * !N0{ "_require" +1 path !N0{ props:ifcons()(+1,) props(prop)(+1) } }
        *)
       REQUIRE of require_path * id list * loc
     | (*%
        * @format(path * prop props * loc)
        * !N0{
-       *   "_require" +d "local" +d path
+       *   "_require" +d "local" +1 path
        *   !N0{ props:ifcons()(+1,) props(prop)(+1) }
        * }
        *)
       REQUIRE_LOCAL of require_path * id list * loc
     | (*%
        * @format(path * loc)
-       * !N0{ "_use" +d "local" +d path }
+       * !N0{ "_use" +d "local" +1 path }
        *)
       USE_LOCAL of require_path * loc
     | (*%
@@ -342,7 +342,7 @@ struct
   datatype include_dec =
       (*%
        * @format(path * loc)
-       * !N0{ "include" +d path }
+       * !N0{ "include" +1 path }
        *)
       INCLUDE of require_path * loc
     | (*%

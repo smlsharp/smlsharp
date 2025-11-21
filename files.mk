@@ -1282,9 +1282,9 @@ src/compiler/compilerIRs/absyn/main/AbsynTy.o \
 src/compiler/compilerIRs/absyn/main/AbsynConst.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQL.o \
 src/compiler/compilerIRs/absyn/main/Absyn.o \
+src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.o \
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o \
-src/compiler/compilerIRs/absyn/main/ConstFormat.o \
 src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.o \
 src/compiler/compilerIRs/absyn/main/AbsynFormatter.o \

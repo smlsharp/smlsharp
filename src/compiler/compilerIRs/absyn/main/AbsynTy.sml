@@ -61,15 +61,14 @@ struct
       bool * id
 
   (*%
-   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
-   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
+   * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
    *)
   type tyvarseq =
       (*%
        * @format(tyvar tyvars * loc)
-       * tyvars:ifcons2()("(",)
-       * tyvars:N0ifcons2()(tyvars(tyvar)("," +1))
-       * tyvars:ifcons2()(")",)
+       * tyvars:ifsingle()(,"(")
+       * !N0{ tyvars(tyvar)("," +1) }
+       * tyvars:ifsingle()(,")")
        *)
       tyvar list * loc
 
@@ -79,16 +78,17 @@ struct
   type op_longvid =
       (*%
        * @format(op1 * longvid * loc)
-       * op1:iftrue()("op" +d,)
-       * longvid
+       * !N0{
+       *   op1:iftrue()("op" +1,)
+       *   longvid
+       * }
        *)
       bool * longvid * loc
 
   (*%
    * @formatter(iftrue) AbsynFormatterUtils.iftrue
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
-   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
-   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
+   * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
    *)
   datatype ty =
@@ -104,17 +104,17 @@ struct
       TYRECORD of tyrow list * bool * loc
     | (*%
        * @format(tyseq tyseqOpt * longtycon * loc)
-       * !N0{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
+       * L9{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
        *)
       TYCON of tyseq option * longtycon * loc
     | (*%
        * @format(ty tys * loc)
-       * !N0{ tys(ty)(+1 "*" +d) }
+       * N8{ tys(ty)(+1 "*" +d) }
        *)
       TYTUPLE of ty list * loc
     | (*%
-       * @format(argTy * retTy * loc)
-       * !N0{ argTy +1 "->" +d retTy }
+       * @format(ty1 * ty2 * loc)
+       * R7{ ty1 +1 "->" +d ty2 }
        *)
       TYFUN of ty * ty * loc
     | (*%
@@ -141,22 +141,22 @@ struct
   and kind =
       (*%
        * @format(prop props * loc)
-       * props:ifcons()("#",)
-       * props(prop)("#")
+       * props:ifcons()(d "#",)
+       * props(prop)(d "#")
        *)
       UNIV of id list * loc
     | (*%
        * @format(prop props * row rows * loc)
-       * props:ifcons()("#",)
-       * props(prop)("#")
-       * "#{" !N0{ rows(row)("," 2[+1]) } "}"
+       * props:ifcons()(d "#",)
+       * props(prop)(d "#")
+       * d "#{" 2[1] rows(row)("," 2[+1]) 1 "}"
        *)
       REC of id list * tyrow list * loc
 
   withtype kinded_tyvar =
       (*%
        * @format(tyvar * kind kindOpt * loc)
-       * tyvar kindOpt(kind)
+       * !N0{ tyvar kindOpt(kind) }
        *)
       tyvar * kind option * loc
 
@@ -177,45 +177,42 @@ struct
   and tyseq =
       (*%
        * @format(ty tys * loc)
-       * tys:ifcons2()("(",)
-       * tys:N0ifcons2()(tys(ty)("," +1))
-       * tys:ifcons2()(")",)
+       * tys:ifsingle()(,"(")
+       * !N0{ tys(ty)("," +1) }
+       * tys:ifsingle()(,")")
        *)
       ty list * loc
 
   (*%
-   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
-   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
+   * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
    *)
   type kinded_tyvarseq =
       (*%
        * @format(tyvar tyvars * loc)
-       * tyvars:ifcons2()("(",)
-       * tyvars:N0ifcons2()(tyvars(tyvar)("," +1))
-       * tyvars:ifcons2()(")",)
+       * tyvars:ifsingle()(,"(")
+       * !N0{ tyvars(tyvar)("," +1) }
+       * tyvars:ifsingle()(,")")
        *)
       kinded_tyvar list * loc
 
   (*%
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
-   * @formatter(N0ifcons) AbsynFormatterUtils.N0ifcons
    *)
   type ffi_attr =
       (*%
        * @format(prop props * loc)
-       * props:ifcons()("__attribute__(",)
-       * props:N0ifcons()(props(prop)("," +1))
-       * props:ifcons()(")",)
+       * !N0{
+       *   props:ifcons()("__attribute__(" 2[1],)
+       *   props(prop)("," 2[+1])
+       *   props:ifcons()(1 ")",)
+       * }
        *)
       id list * loc
 
   (*%
    * @formatter(ifsome) AbsynFormatterUtils.ifsome
-   * @formatter(ifcons2) AbsynFormatterUtils.ifcons2
    * @formatter(ifsingle) AbsynFormatterUtils.ifsingle
-   * @formatter(N0ifcons2) AbsynFormatterUtils.N0ifcons2
-   * @formatter(N0ifnotsingle) AbsynFormatterUtils.N0ifnotsingle
-   * @formatter(ifsome) AbsynFormatterUtils.ifsome
+   * @formatter(ifcons) AbsynFormatterUtils.ifcons
    *)
   datatype ffi_ty =
       (*%
@@ -230,17 +227,17 @@ struct
       FFITYRECORD of ffi_tyrow list * loc
     | (*%
        * @format(tyseq tyseqOpt * longtycon * loc)
-       * !N0{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
+       * L9{ tyseqOpt(tyseq) tyseqOpt:ifsome()(2[+1],) longtycon }
        *)
       FFITYCON of ffi_tyseq option * longtycon * loc
     | (*%
        * @format(ty tys * loc)
-       * !N0{ tys(ty)(+1 "*" +d) }
+       * N8{ tys(ty)(+1 "*" +d) }
        *)
       FFITYTUPLE of ffi_ty list * loc
     | (*%
        * @format(attr attrOpt * arg * ret * loc)
-       * !N0{ attrOpt(attr) attrOpt:ifsome()(+1,) arg +1 "->" +d ret }
+       * R7{ attrOpt(attr) attrOpt:ifsome()(+1,) arg +1 "->" +d ret }
        *)
       FFITYFUN of ffi_attr option * ffi_arg * ffi_ret * loc
     | (*%
@@ -259,25 +256,26 @@ struct
   and ffi_tyseq =
       (*%
        * @format(ty tys * loc)
-       * tys:ifcons2()("(",)
-       * tys:N0ifcons2()(tys(ty)("," +1))
-       * tys:ifcons2()(")",)
+       * tys:ifsingle()(,"(")
+       * !N0{ tys(ty)("," +1) }
+       * tys:ifsingle()(,")")
        *)
       ffi_ty list * loc
 
   and ffi_arg =
       (*%
        * @format(arg args * varg vargs vargOpt * loc)
+       * args:ifsingle()(vargOpt:ifsome()("(",), "(")
        * !N0{
-       *   "("
-       *   !N0{
-       *     args(arg)("," +1)
-       *     vargOpt:ifsome()("," +d "...(",)
-       *     !N0{ vargOpt(vargs(varg)("," +1)) }
-       *     vargOpt:ifsome()(")",)
-       *   }
-       *   ")"
+       *   args(arg)("," +1)
+       *   vargOpt:ifsome()(
+       *     args:ifcons()("," +1,)
+       *     "...(" 2[1]
+       *     !N0{ vargOpt(vargs(varg)("," 2[+1])) }
+       *     1 ")",
+       *   )
        * }
+       * args:ifsingle()(vargOpt:ifsome()(")",), ")")
        *)
       ffi_ty list * ffi_ty list option * loc
 
@@ -285,7 +283,7 @@ struct
       (*%
        * @format(ty tys * loc)
        * tys:ifsingle()(,"(")
-       * tys:N0ifnotsingle()(tys(ty)("," +1))
+       * !N0{ tys(ty)("," +1) }
        * tys:ifsingle()(,")")
        *)
       ffi_ty list * loc

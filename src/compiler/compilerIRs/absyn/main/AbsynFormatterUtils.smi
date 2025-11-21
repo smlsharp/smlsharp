@@ -9,18 +9,8 @@ struct
       : SMLFormat.format * SMLFormat.format -> 'a option -> SMLFormat.format
   val ifcons
       : SMLFormat.format * SMLFormat.format -> 'a list -> SMLFormat.format
-  val ifcons2
-      : SMLFormat.format * SMLFormat.format -> 'a list -> SMLFormat.format
   val ifsingle
       : SMLFormat.format * SMLFormat.format -> 'a list -> SMLFormat.format
-  val N0ifnotsingle
-      : SMLFormat.format -> 'a list -> SMLFormat.format
-  val N0ifcons
-      : SMLFormat.format -> 'a list -> SMLFormat.format
-  val N0ifcons2
-      : SMLFormat.format -> 'a list -> SMLFormat.format
-  val N0ifsome
-      : SMLFormat.format -> 'a option -> SMLFormat.format
   val decs
       : (SMLFormat.format -> 'a -> SMLFormat.format)
         * SMLFormat.format
