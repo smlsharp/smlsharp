@@ -743,6 +743,27 @@ colonexp
           (A.EXPTYPED (colonexp, ty, (colonexpleft, tyright)))
         | colonexp COLON U_IMPORT ffity
           (A.EXPIMPORT_EXP (colonexp, ffity, (colonexpleft, ffityright)))
+        | U_IMPORT STRING COLON ffity
+          (A.EXPIMPORT_NAME
+             ((STRING, (STRINGleft, STRINGright)),
+              ffity,
+              (U_IMPORTleft, ffityright)))
+        | U_SQLSERVER COLON ty
+          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (U_SQLSERVERleft, tyright))))
+        | U_SQLSERVER appexp COLON ty
+          (A.EXPSQL
+             (AbsynSQL.SQLSERVER
+                (SOME appexp, ty, (U_SQLSERVERleft, tyright))))
+        | U_DYNAMIC exp AS ty
+          (A.EXPDYNAMIC_AS (exp, ty, (U_DYNAMICleft, tyright)))
+        | U_DYNAMIC exp OF ty
+          (A.EXPDYNAMIC_OF (exp, ty, (U_DYNAMICleft, tyright)))
+        | U_DYNAMICVIEW exp AS ty
+          (A.EXPDYNAMICVIEW (exp, ty, (U_DYNAMICVIEWleft, tyright)))
+        | U_DYNAMICNULL AS ty
+          (A.EXPDYNAMICNULL (ty, (U_DYNAMICNULLleft, tyright)))
+        | U_DYNAMICVOID AS ty
+          (A.EXPDYNAMICTOP (ty, (U_DYNAMICVOIDleft, tyright)))
 
 conjexp
         : colonexp
@@ -767,27 +788,6 @@ miscexp
           (A.EXPCASE (exp, match, (CASEleft, matchright)))
         | FN match
           (A.EXPFN (match, (FNleft, matchright)))
-        | U_IMPORT STRING COLON ffity
-          (A.EXPIMPORT_NAME
-             ((STRING, (STRINGleft, STRINGright)),
-              ffity,
-              (U_IMPORTleft, ffityright)))
-        | U_SQLSERVER COLON ty
-          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (U_SQLSERVERleft, tyright))))
-        | U_SQLSERVER colonexp COLON ty
-          (A.EXPSQL
-             (AbsynSQL.SQLSERVER
-                (SOME colonexp, ty, (U_SQLSERVERleft, tyright))))
-        | U_DYNAMIC exp AS ty
-          (A.EXPDYNAMIC_AS (exp, ty, (U_DYNAMICleft, tyright)))
-        | U_DYNAMIC exp OF ty
-          (A.EXPDYNAMIC_OF (exp, ty, (U_DYNAMICleft, tyright)))
-        | U_DYNAMICVIEW exp AS ty
-          (A.EXPDYNAMICVIEW (exp, ty, (U_DYNAMICVIEWleft, tyright)))
-        | U_DYNAMICNULL AS ty
-          (A.EXPDYNAMICNULL (ty, (U_DYNAMICNULLleft, tyright)))
-        | U_DYNAMICVOID AS ty
-          (A.EXPDYNAMICTOP (ty, (U_DYNAMICVOIDleft, tyright)))
         | U_DYNAMICCASE exp OF dynmatch
           (A.EXPDYNAMICCASE (exp, dynmatch, (U_DYNAMICCASEleft, dynmatchright)))
 
