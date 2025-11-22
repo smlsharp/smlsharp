@@ -172,7 +172,7 @@ struct
   datatype spec =
       SPECVAL of valdesc list * loc
     | SPECTYPE of typdesc list * loc
-    | SPECTYPEINC of typbind list * loc
+    | SPECTYPBIND of typbind list * loc
     | SPECEQTYPE of typdesc list * loc
     | SPECDATATYPE of datdesc list * loc
     | SPECDATATYPEREP of tycon * longtycon * loc

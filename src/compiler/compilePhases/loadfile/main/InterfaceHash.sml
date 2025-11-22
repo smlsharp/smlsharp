@@ -53,25 +53,25 @@ struct
 
   fun listNamesDec prefix pidec =
       case pidec of
-        A.VAL (valbind, loc) =>
+        A.DECVAL (valbind, loc) =>
         listNamesValbind prefix valbind
-      | A.TYPE (typbinds, loc) =>
+      | A.DECTYPE (typbinds, loc) =>
         List.concat (map (listNamesTypbindOrTypdesc prefix) typbinds)
-      | A.EQTYPE (typdescs, loc) =>
+      | A.DECEQTYPE (typdescs, loc) =>
         List.concat (map (listNamesTypdesc prefix) typdescs)
-      | A.DATATYPE (datbinds, NONE, loc) =>
+      | A.DECDATATYPE (datbinds, NONE, loc) =>
         List.concat (map (listNamesDatbind prefix) datbinds)
-      | A.DATATYPE (datbinds, SOME (typbinds, _), loc) =>
+      | A.DECDATATYPE (datbinds, SOME (typbinds, _), loc) =>
         List.concat (map (listNamesDatbind prefix) datbinds
                      @ map (listNamesTypbind prefix) typbinds)
-      | A.DATATYPEREP (id, longtycon, loc) =>
+      | A.DECDATATYPEREP (id, longtycon, loc) =>
         [prefix ^ ".T" ^ idToString id]
-      | A.TYPEBUILTIN (id, name, loc) =>
+      | A.DECTYPEBUILTIN (id, name, loc) =>
         [prefix ^ ".T" ^ idToString id]
-      | A.EXCEPTION (exbinds, loc) =>
+      | A.DECEXCEPTION (exbinds, loc) =>
         List.concat (map (listNamesExbind prefix) exbinds)
-      | A.STRUCTURE (strbind, loc) => listNamesStrbind prefix strbind
-      | A.SEMICOLON loc => nil
+      | A.DECSTRUCTURE (strbind, loc) => listNamesStrbind prefix strbind
+      | A.DECSEMICOLON loc => nil
 
   and listNamesStrbind prefix (strid, strexp, loc) =
       listNamesStrexp (prefix ^ ".S" ^ idToString strid) strexp
@@ -88,17 +88,17 @@ struct
 
   fun listNamesTopdec itopdec =
       case itopdec of
-        A.DEC dec => listNamesDec "" dec
-      | A.FUNCTOR (funbind, loc) => listNamesFunbind funbind
-      | A.INFIX (SOME n, ids, loc) =>
+        A.TOPDEC dec => listNamesDec "" dec
+      | A.TOPFUNCTOR (funbind, loc) => listNamesFunbind funbind
+      | A.TOPINFIX (SOME n, ids, loc) =>
         map (fn id => "infix" ^ n ^ " " ^ idToString id) ids
-      | A.INFIX (NONE, ids, loc) =>
+      | A.TOPINFIX (NONE, ids, loc) =>
         map (fn id => "infix " ^ idToString id) ids
-      | A.INFIXR (SOME n, ids, loc) =>
+      | A.TOPINFIXR (SOME n, ids, loc) =>
         map (fn id => "infixr" ^ n ^ " " ^ idToString id) ids
-      | A.INFIXR (NONE, ids, loc) =>
+      | A.TOPINFIXR (NONE, ids, loc) =>
         map (fn id => "infixr " ^ idToString id) ids
-      | A.NONFIX (ids, loc) =>
+      | A.TOPNONFIX (ids, loc) =>
         map (fn id => "nonfix " ^ idToString id) ids
 
   fun generate {filename, requires, topdecs} =

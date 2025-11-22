@@ -176,17 +176,17 @@ struct
        * @format(valbind * loc)
        * !N0{ valbind()("val" +d) }
        *)
-      VAL of valbind * loc
+      DECVAL of valbind * loc
     | (*%
        * @format(typbind typbinds * loc)
        * !N0{ "ty" typbinds:decs(typbind)("pe" +d, +1 "an", "d" +d) }
        *)
-      TYPE of typbind list * loc
+      DECTYPE of typbind list * loc
     | (*%
        * @format(typdesc typdescs * loc)
        * !N0{ "eq" typdescs:decs(typdesc)("type" +d, +1 "an", "d" +d) }
        *)
-      EQTYPE of typdesc list * loc
+      DECEQTYPE of typdesc list * loc
     | (*%
        * @format(datbind datbinds * withty withtyOpt * loc)
        * !N0{
@@ -195,32 +195,32 @@ struct
        *   withtyOpt(withty)
        * }
        *)
-      DATATYPE of Absyn.datbind list * Absyn.withty option * loc
+      DECDATATYPE of Absyn.datbind list * Absyn.withty option * loc
     | (*%
        * @format(tycon * longtycon * loc)
        * !N0{ "datatype" +d tycon +d "=" +1 "datatype" +d longtycon }
        *)
-      DATATYPEREP of tycon * longtycon * loc
+      DECDATATYPEREP of tycon * longtycon * loc
     | (*%
        * @format(tycon * name * loc)
        * !N0{ "datatype" +d tycon +d "=" +1 "_builtin" +d "datatype" +d name }
        *)
-      TYPEBUILTIN of tycon * tycon * loc
+      DECTYPEBUILTIN of tycon * tycon * loc
     | (*%
        * @format(exbind exbinds * loc)
        * !N0{ "ex" exbinds:decs(exbind)("ception" +d, +1 "an", "d" +d) }
        *)
-      EXCEPTION of exbind list * loc
+      DECEXCEPTION of exbind list * loc
     | (*%
        * @format(strbind * loc)
        * !N0{ strbind()("structure" +d) }
        *)
-      STRUCTURE of strbind * loc
+      DECSTRUCTURE of strbind * loc
     | (*%
        * @format(loc)
        * ";"
        *)
-      SEMICOLON of loc
+      DECSEMICOLON of loc
 
   and strexp =
       (*%
@@ -274,12 +274,12 @@ struct
        * @format(dec)
        * dec
        *)
-      DEC of dec
+      TOPDEC of dec
     | (*%
        * @format(funbind * loc)
        * !N0{ funbind()("functor" +d) }
        *)
-      FUNCTOR of funbind * loc
+      TOPFUNCTOR of funbind * loc
     | (*%
        * @format(prec precOpt * vid vids * loc)
        * !N0{
@@ -289,7 +289,7 @@ struct
        *   !N0{ vids(vid)(+1) }
        * }
        *)
-      INFIX of string option * vid list * loc
+      TOPINFIX of string option * vid list * loc
     | (*%
        * @format(prec precOpt * vid vids * loc)
        * !N0{
@@ -299,7 +299,7 @@ struct
        *   !N0{ vids(vid)(+1) }
        * }
        *)
-      INFIXR of string option * vid list * loc
+      TOPINFIXR of string option * vid list * loc
     | (*%
        * @format(vid vids * loc)
        * !N0{
@@ -308,7 +308,7 @@ struct
        *   !N0{ vids(vid)(+1) }
        * }
        *)
-      NONFIX of vid list * loc
+      TOPNONFIX of vid list * loc
 
   (*%
    * @formatter(ifcons) AbsynFormatterUtils.ifcons

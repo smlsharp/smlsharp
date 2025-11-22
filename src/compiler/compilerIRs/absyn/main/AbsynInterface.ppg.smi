@@ -59,15 +59,15 @@ struct
     | TYPDESC of typdesc
 
   datatype dec =
-      VAL of valbind * loc
-    | TYPE of typbind list * loc
-    | EQTYPE of typdesc list * loc
-    | DATATYPE of Absyn.datbind list * Absyn.withty option * loc
-    | DATATYPEREP of tycon * longtycon * loc
-    | TYPEBUILTIN of tycon * tycon * loc
-    | EXCEPTION of exbind list * loc
-    | STRUCTURE of (strid * strexp * loc) * loc
-    | SEMICOLON of loc
+      DECVAL of valbind * loc
+    | DECTYPE of typbind list * loc
+    | DECEQTYPE of typdesc list * loc
+    | DECDATATYPE of Absyn.datbind list * Absyn.withty option * loc
+    | DECDATATYPEREP of tycon * longtycon * loc
+    | DECTYPEBUILTIN of tycon * tycon * loc
+    | DECEXCEPTION of exbind list * loc
+    | DECSTRUCTURE of (strid * strexp * loc) * loc
+    | DECSEMICOLON of loc
 
   and strexp =
       STRBASIC of dec list * loc
@@ -79,11 +79,11 @@ struct
   type funbind = funid * fun_param option * strexp * loc
 
   datatype topdec =
-      DEC of dec
-    | FUNCTOR of funbind * loc
-    | INFIX of string option * vid list * loc
-    | INFIXR of string option * vid list * loc
-    | NONFIX of vid list * loc
+      TOPDEC of dec
+    | TOPFUNCTOR of funbind * loc
+    | TOPINFIX of string option * vid list * loc
+    | TOPINFIXR of string option * vid list * loc
+    | TOPNONFIX of vid list * loc
 
   datatype require =
       REQUIRE of require_path * id list * loc

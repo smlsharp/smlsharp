@@ -327,27 +327,27 @@ itypbind
 
 idec
         : VAL ivalbind
-          (I.VAL (ivalbind, (VALleft, ivalbindright)))
+          (I.DECVAL (ivalbind, (VALleft, ivalbindright)))
         | TYPE itypbind
-          (I.TYPE (itypbind, (TYPEleft, itypbindright)))
+          (I.DECTYPE (itypbind, (TYPEleft, itypbindright)))
         | EQTYPE itypdesc
-          (I.EQTYPE (itypdesc, (EQTYPEleft, itypdescright)))
+          (I.DECEQTYPE (itypdesc, (EQTYPEleft, itypdescright)))
         | DATATYPE datbind
-          (I.DATATYPE (datbind, NONE, (DATATYPEleft, datbindright)))
+          (I.DECDATATYPE (datbind, NONE, (DATATYPEleft, datbindright)))
         | DATATYPE datbind WITHTYPE typbind
-          (I.DATATYPE
+          (I.DECDATATYPE
              (datbind,
               SOME (typbind, (WITHTYPEleft, typbindright)),
               (DATATYPEleft, typbindright)))
         | DATATYPE id_noEQSTAR EQ DATATYPE longid
-          (I.DATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
+          (I.DECDATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
         | DATATYPE id_noEQSTAR EQ U_BUILTIN DATATYPE id_noSTAR
-          (I.TYPEBUILTIN
+          (I.DECTYPEBUILTIN
              (id_noEQSTAR, id_noSTAR, (DATATYPEleft, id_noSTARright)))
         | EXCEPTION exbind
-          (I.EXCEPTION (exbind, (EXCEPTIONleft, exbindright)))
+          (I.DECEXCEPTION (exbind, (EXCEPTIONleft, exbindright)))
         | STRUCTURE istrbind
-          (I.STRUCTURE (istrbind, (STRUCTUREleft, istrbindright)))
+          (I.DECSTRUCTURE (istrbind, (STRUCTUREleft, istrbindright)))
 
 idecs
         : (* none *)
@@ -355,7 +355,7 @@ idecs
         | idec idecs
           (idec :: idecs)
         | SEMICOLON idecs
-          (I.SEMICOLON (SEMICOLONleft, SEMICOLONright) :: idecs)
+          (I.DECSEMICOLON (SEMICOLONleft, SEMICOLONright) :: idecs)
 
 istrexp
         : STRUCT idecs END
@@ -376,15 +376,15 @@ ifunbind
 
 itopdec
         : idec
-          (I.DEC idec)
+          (I.TOPDEC idec)
         | FUNCTOR ifunbind
-          (I.FUNCTOR (ifunbind, (FUNCTORleft, ifunbindright)))
+          (I.TOPFUNCTOR (ifunbind, (FUNCTORleft, ifunbindright)))
         | INFIX prec vids
-          (I.INFIX (prec, vids, (INFIXleft, vidsright)))
+          (I.TOPINFIX (prec, vids, (INFIXleft, vidsright)))
         | INFIXR prec vids
-          (I.INFIXR (prec, vids, (INFIXRleft, vidsright)))
+          (I.TOPINFIXR (prec, vids, (INFIXRleft, vidsright)))
         | NONFIX vids
-          (I.NONFIX (vids, (NONFIXleft, vidsright)))
+          (I.TOPNONFIX (vids, (NONFIXleft, vidsright)))
 
 itopdecs
         : itopdec
@@ -392,7 +392,8 @@ itopdecs
         | itopdecs itopdec
           (itopdecs ::> itopdec)
         | itopdecs SEMICOLON
-          (itopdecs ::> I.DEC (I.SEMICOLON (SEMICOLONleft, SEMICOLONright)))
+          (itopdecs
+           ::> I.TOPDEC (I.DECSEMICOLON (SEMICOLONleft, SEMICOLONright)))
 
 isigdec
         : SIGNATURE sigbind
@@ -886,7 +887,7 @@ atomicspec
         | TYPE typdesc
           (A.SPECTYPE (typdesc, (TYPEleft, typdescright)))
         | TYPE typbind
-          (A.SPECTYPEINC (typbind, (TYPEleft, typbindright)))
+          (A.SPECTYPBIND (typbind, (TYPEleft, typbindright)))
         | EQTYPE typdesc
           (A.SPECEQTYPE (typdesc, (EQTYPEleft, typdescright)))
         | DATATYPE datdesc

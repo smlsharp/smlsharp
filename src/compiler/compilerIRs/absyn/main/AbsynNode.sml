@@ -263,7 +263,7 @@ struct
       | WHERETYPE _ => "WHERETYPE"
       | SPEC (A.SPECVAL _) => "SPEC:SPECVAL"
       | SPEC (A.SPECTYPE _) => "SPEC:SPECTYPE"
-      | SPEC (A.SPECTYPEINC _) => "SPEC:SPECTYPEINC"
+      | SPEC (A.SPECTYPBIND _) => "SPEC:SPECTYPBIND"
       | SPEC (A.SPECEQTYPE _) => "SPEC:SPECEQTYPE"
       | SPEC (A.SPECDATATYPE _) => "SPEC:SPECDATATYPE"
       | SPEC (A.SPECDATATYPEREP _) => "SPEC:SPECDATATYPEREP"
@@ -403,25 +403,25 @@ struct
       | IVALBIND (I.VAL_BUILTIN _) => "IVALBIND:VAL_BUILTIN"
       | IVALBIND (I.VAL_OVERLOAD _) => "IVALBIND:VAL_OVERLOAD"
       | ITYPDESC _ => "ITYPDESC"
-      | IDEC (I.VAL _) => "IDEC:VAL"
-      | IDEC (I.TYPE _) => "IDEC:TYPE"
-      | IDEC (I.EQTYPE _) => "IDEC:EQTYPE"
-      | IDEC (I.DATATYPE _) => "IDEC:DATATYPE"
-      | IDEC (I.DATATYPEREP _) => "IDEC:DATATYPEREP"
-      | IDEC (I.TYPEBUILTIN _) => "IDEC:TYPEBUILTIN"
-      | IDEC (I.EXCEPTION _) => "IDEC:EXCEPTION"
-      | IDEC (I.STRUCTURE _) => "IDEC:STRUCTURE"
-      | IDEC (I.SEMICOLON _) => "IDEC:SEMICOLON"
+      | IDEC (I.DECVAL _) => "IDEC:DECVAL"
+      | IDEC (I.DECTYPE _) => "IDEC:DECTYPE"
+      | IDEC (I.DECEQTYPE _) => "IDEC:DECEQTYPE"
+      | IDEC (I.DECDATATYPE _) => "IDEC:DECDATATYPE"
+      | IDEC (I.DECDATATYPEREP _) => "IDEC:DECDATATYPEREP"
+      | IDEC (I.DECTYPEBUILTIN _) => "IDEC:DECTYPEBUILTIN"
+      | IDEC (I.DECEXCEPTION _) => "IDEC:DECEXCEPTION"
+      | IDEC (I.DECSTRUCTURE _) => "IDEC:DECSTRUCTURE"
+      | IDEC (I.DECSEMICOLON _) => "IDEC:DECSEMICOLON"
       | ISTREXP (I.STRBASIC _) => "ISTREXP:STRBASIC"
       | ISTREXP (I.STRID _) => "ISTREXP:STRID"
       | ISTREXP (I.STRAPP _) => "ISTREXP:STRAPP"
       | ISTRBIND _ => "ISTRBIND"
       | IFUNBIND _ => "IFUNBIND"
-      | ITOPDEC (I.DEC _) => "ITOPDEC:DEC"
-      | ITOPDEC (I.FUNCTOR _) => "ITOPDEC:FUNCTOR"
-      | ITOPDEC (I.INFIX _) => "ITOPDEC:INFIX"
-      | ITOPDEC (I.INFIXR _) => "ITOPDEC:INFIXR"
-      | ITOPDEC (I.NONFIX _) => "ITOPDEC:NONFIX"
+      | ITOPDEC (I.TOPDEC _) => "ITOPDEC:TOPDEC"
+      | ITOPDEC (I.TOPFUNCTOR _) => "ITOPDEC:TOPFUNCTOR"
+      | ITOPDEC (I.TOPINFIX _) => "ITOPDEC:TOPINFIX"
+      | ITOPDEC (I.TOPINFIXR _) => "ITOPDEC:TOPINFIXR"
+      | ITOPDEC (I.TOPNONFIX _) => "ITOPDEC:TOPNONFIX"
       | IREQUIRE (I.REQUIRE _) => "IREQUIRE:REQUIRE"
       | IREQUIRE (I.REQUIRE_LOCAL _) => "IREQUIRE:REQUIRE_LOCAL"
       | IREQUIRE (I.USE_LOCAL _) => "IREQUIRE:USE_LOCAL"
@@ -568,7 +568,7 @@ struct
       | WHERETYPE (_, _, _, loc) => loc
       | SPEC (A.SPECVAL (_, loc)) => loc
       | SPEC (A.SPECTYPE (_, loc)) => loc
-      | SPEC (A.SPECTYPEINC (_, loc)) => loc
+      | SPEC (A.SPECTYPBIND (_, loc)) => loc
       | SPEC (A.SPECEQTYPE (_, loc)) => loc
       | SPEC (A.SPECDATATYPE (_, loc)) => loc
       | SPEC (A.SPECDATATYPEREP (_, _, loc)) => loc
@@ -705,25 +705,25 @@ struct
       | IVALBIND (I.VAL_BUILTIN (_, _, _, loc)) => loc
       | IVALBIND (I.VAL_OVERLOAD (_, _, loc)) => loc
       | ITYPDESC (_, _, _, loc) => loc
-      | IDEC (I.VAL (_, loc)) => loc
-      | IDEC (I.TYPE (_, loc)) => loc
-      | IDEC (I.EQTYPE (_, loc)) => loc
-      | IDEC (I.DATATYPE (_, _, loc)) => loc
-      | IDEC (I.DATATYPEREP (_, _, loc)) => loc
-      | IDEC (I.TYPEBUILTIN (_, _, loc)) => loc
-      | IDEC (I.EXCEPTION (_, loc)) => loc
-      | IDEC (I.STRUCTURE (_, loc)) => loc
-      | IDEC (I.SEMICOLON loc) => loc
+      | IDEC (I.DECVAL (_, loc)) => loc
+      | IDEC (I.DECTYPE (_, loc)) => loc
+      | IDEC (I.DECEQTYPE (_, loc)) => loc
+      | IDEC (I.DECDATATYPE (_, _, loc)) => loc
+      | IDEC (I.DECDATATYPEREP (_, _, loc)) => loc
+      | IDEC (I.DECTYPEBUILTIN (_, _, loc)) => loc
+      | IDEC (I.DECEXCEPTION (_, loc)) => loc
+      | IDEC (I.DECSTRUCTURE (_, loc)) => loc
+      | IDEC (I.DECSEMICOLON loc) => loc
       | ISTREXP (I.STRBASIC (_, loc)) => loc
       | ISTREXP (I.STRID (_, _, loc)) => loc
       | ISTREXP (I.STRAPP (_, _, loc)) => loc
       | ISTRBIND (_, _, loc) => loc
       | IFUNBIND (_, _, _, loc) => loc
-      | ITOPDEC (I.DEC dec) => getLoc (IDEC dec)
-      | ITOPDEC (I.FUNCTOR (_, loc)) => loc
-      | ITOPDEC (I.INFIX (_, _, loc)) => loc
-      | ITOPDEC (I.INFIXR (_, _, loc)) => loc
-      | ITOPDEC (I.NONFIX (_, loc)) => loc
+      | ITOPDEC (I.TOPDEC dec) => getLoc (IDEC dec)
+      | ITOPDEC (I.TOPFUNCTOR (_, loc)) => loc
+      | ITOPDEC (I.TOPINFIX (_, _, loc)) => loc
+      | ITOPDEC (I.TOPINFIXR (_, _, loc)) => loc
+      | ITOPDEC (I.TOPNONFIX (_, loc)) => loc
       | IREQUIRE (I.REQUIRE (_, _, loc)) => loc
       | IREQUIRE (I.REQUIRE_LOCAL (_, _, loc)) => loc
       | IREQUIRE (I.USE_LOCAL (_, loc)) => loc
@@ -915,7 +915,7 @@ struct
         [TYVARSEQ tyvarseq, LONGTYCON tycon, TY ty]
       | SPEC (A.SPECVAL (valdescs, loc)) => map VALDESC valdescs
       | SPEC (A.SPECTYPE (typdescs, loc)) => map TYPDESC typdescs
-      | SPEC (A.SPECTYPEINC (typbinds, loc)) => map TYPBIND typbinds
+      | SPEC (A.SPECTYPBIND (typbinds, loc)) => map TYPBIND typbinds
       | SPEC (A.SPECEQTYPE (typdescs, loc)) => map TYPDESC typdescs
       | SPEC (A.SPECDATATYPE (datdescs, loc)) => map DATDESC datdescs
       | SPEC (A.SPECDATATYPEREP (tycon, longtycon, loc)) =>
@@ -1112,22 +1112,22 @@ struct
         [TYCON tycon, OPAQUE_IMPL impl]
       | ITYPDESC (SOME tyvarseq, tycon, impl, loc) =>
         [TYVARSEQ tyvarseq, TYCON tycon, OPAQUE_IMPL impl]
-      | IDEC (I.VAL (valbind, loc)) => [IVALBIND valbind]
-      | IDEC (I.TYPE (typbinds, loc)) =>
+      | IDEC (I.DECVAL (valbind, loc)) => [IVALBIND valbind]
+      | IDEC (I.DECTYPE (typbinds, loc)) =>
         map (fn I.TYPBIND typbind => TYPBIND typbind
               | I.TYPDESC typdesc => ITYPDESC typdesc)
             typbinds
-      | IDEC (I.EQTYPE (typdescs, loc)) => map ITYPDESC typdescs
-      | IDEC (I.DATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds
-      | IDEC (I.DATATYPE (datbinds, SOME withty, loc)) =>
+      | IDEC (I.DECEQTYPE (typdescs, loc)) => map ITYPDESC typdescs
+      | IDEC (I.DECDATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds
+      | IDEC (I.DECDATATYPE (datbinds, SOME withty, loc)) =>
         map DATBIND datbinds @ [WITHTY withty]
-      | IDEC (I.DATATYPEREP (tycon, longtycon, loc)) =>
+      | IDEC (I.DECDATATYPEREP (tycon, longtycon, loc)) =>
         [TYCON tycon, LONGTYCON longtycon]
-      | IDEC (I.TYPEBUILTIN (tycon1, tycon2, loc)) =>
+      | IDEC (I.DECTYPEBUILTIN (tycon1, tycon2, loc)) =>
         [TYCON tycon1, TYCON tycon2]
-      | IDEC (I.EXCEPTION (exbinds, loc)) => map EXBIND exbinds
-      | IDEC (I.STRUCTURE (strbind, loc)) => [ISTRBIND strbind]
-      | IDEC (I.SEMICOLON _) => nil
+      | IDEC (I.DECEXCEPTION (exbinds, loc)) => map EXBIND exbinds
+      | IDEC (I.DECSTRUCTURE (strbind, loc)) => [ISTRBIND strbind]
+      | IDEC (I.DECSEMICOLON _) => nil
       | ISTREXP (I.STRBASIC (decs, loc)) => map IDEC decs
       | ISTREXP (I.STRID id) => [LONGSTRID id]
       | ISTREXP (I.STRAPP (funid, strid, loc)) => [FUNID funid, LONGSTRID strid]
@@ -1135,11 +1135,11 @@ struct
       | IFUNBIND (funid, NONE, strexp, loc) => [FUNID funid, ISTREXP strexp]
       | IFUNBIND (funid, SOME param, strexp, loc) =>
         [FUNID funid, FUN_PARAM param, ISTREXP strexp]
-      | ITOPDEC (I.DEC dec) => [IDEC dec]
-      | ITOPDEC (I.FUNCTOR (funbind, loc)) => [IFUNBIND funbind]
-      | ITOPDEC (I.INFIX (prec, ids, loc)) => map VID ids
-      | ITOPDEC (I.INFIXR (prec, ids, loc)) => map VID ids
-      | ITOPDEC (I.NONFIX (ids, loc)) => map VID ids
+      | ITOPDEC (I.TOPDEC dec) => [IDEC dec]
+      | ITOPDEC (I.TOPFUNCTOR (funbind, loc)) => [IFUNBIND funbind]
+      | ITOPDEC (I.TOPINFIX (prec, ids, loc)) => map VID ids
+      | ITOPDEC (I.TOPINFIXR (prec, ids, loc)) => map VID ids
+      | ITOPDEC (I.TOPNONFIX (ids, loc)) => map VID ids
       | IREQUIRE (I.REQUIRE (path, ids, loc)) => REQUIRE_PATH path :: map ID ids
       | IREQUIRE (I.REQUIRE_LOCAL (path, ids, loc)) =>
         REQUIRE_PATH path :: map ID ids

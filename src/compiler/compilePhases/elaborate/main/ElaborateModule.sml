@@ -70,7 +70,7 @@ struct
         [elabTypdescs false typdescs]
       | A.SPECEQTYPE typdescs =>
         [elabTypdescs true typdescs]
-      | A.SPECTYPEINC (typbinds, loc) =>
+      | A.SPECTYPBIND (typbinds, loc) =>
         List.concat (map elabTypbind typbinds)
       | A.SPECDATATYPE (datdescs, loc) =>
         [P.PLSPECDATATYPE (map elabDatdesc datdescs, LOC loc)]

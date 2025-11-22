@@ -144,13 +144,13 @@ struct
 
   fun elabDec dec =
       case dec of
-        I.VAL (valbind, loc) =>
+        I.DECVAL (valbind, loc) =>
         [elabValbind (valbind, loc)]
-      | I.TYPE (typbinds, _) =>
+      | I.DECTYPE (typbinds, _) =>
         map elabTypbind typbinds
-      | I.EQTYPE (typdescs, _) =>
+      | I.DECEQTYPE (typdescs, _) =>
         map (elabTypdesc true) typdescs
-      | I.DATATYPE (datbinds, withty, loc) =>
+      | I.DECDATATYPE (datbinds, withty, loc) =>
         let
           val datbinds = ElaborateTy.reduceDatbind (datbinds, withty)
         in
@@ -165,21 +165,21 @@ struct
              loc = LOC loc}
           :: map (elabTypbind o I.TYPBIND) (seq withty)
         end
-      | I.DATATYPEREP (tycon, longtycon, loc) =>
+      | I.DECDATATYPEREP (tycon, longtycon, loc) =>
         [P.PITYPEREP {symbol = toSymbol tycon,
                       longsymbol = SymbolWithLoc.fromAbsyn longtycon,
                       loc = LOC loc}]
-      | I.TYPEBUILTIN (tycon, builtin, loc) =>
+      | I.DECTYPEBUILTIN (tycon, builtin, loc) =>
         [P.PITYPEBUILTIN {symbol = toSymbol tycon,
                           builtinSymbol = toSymbol builtin,
                           loc = LOC loc}]
-      | I.EXCEPTION (exbind, _) =>
+      | I.DECEXCEPTION (exbind, _) =>
         map elabExbind exbind
-      | I.STRUCTURE ((strid, strexp, loc), _) =>
+      | I.DECSTRUCTURE ((strid, strexp, loc), _) =>
         [P.PISTRUCTURE {symbol = toSymbol strid,
                         strexp = elabStrexp strexp,
                         loc = LOC loc}]
-      | I.SEMICOLON _ => nil
+      | I.DECSEMICOLON _ => nil
 
   and elabDecs decs =
       List.concat (map elabDec decs)
@@ -225,15 +225,15 @@ struct
 
   fun elabTopdec itopdec =
       case itopdec of
-      I.DEC dec =>
+      I.TOPDEC dec =>
       (Symbol.Map.empty, map P.PIDEC (elabDec dec))
-    | I.FUNCTOR (funbind, _) =>
+    | I.TOPFUNCTOR (funbind, _) =>
       (Symbol.Map.empty, [elabFunbind funbind])
-    | I.INFIX (n, ids, loc) =>
+    | I.TOPINFIX (n, ids, loc) =>
       (toFixEnv (Fixity.INFIX (ElaborateCore.elabInfixPrec (n, loc))) ids, nil)
-    | I.INFIXR (n, ids, loc) =>
+    | I.TOPINFIXR (n, ids, loc) =>
       (toFixEnv (Fixity.INFIXR (ElaborateCore.elabInfixPrec (n, loc))) ids, nil)
-    | I.NONFIX (ids, _) =>
+    | I.TOPNONFIX (ids, _) =>
       (toFixEnv Fixity.NONFIX ids, nil)
 
   fun elabTopdecs decs =

@@ -833,7 +833,7 @@ struct
        * @format(typbind typbinds * loc)
        * !N0{ "ty" typbinds:decs(typbind)("pe" +d, +1 "an", "d" +d) }
        *)
-      SPECTYPEINC of typbind list * loc
+      SPECTYPBIND of typbind list * loc
     | (*%
        * @format(typdesc typdescs * loc)
        * !N0{ "eq" typdescs:decs(typdesc)("type" +d, +1 "an", "d" +d) }

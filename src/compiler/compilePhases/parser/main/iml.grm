@@ -2158,7 +2158,7 @@ atomicspec
         | TYPE typdesc
           (A.SPECTYPE (typdesc, (TYPEleft, typdescright)))
         | TYPE typbind
-          (A.SPECTYPEINC (typbind, (TYPEleft, typbindright)))
+          (A.SPECTYPBIND (typbind, (TYPEleft, typbindright)))
         | EQTYPE typdesc
           (A.SPECEQTYPE (typdesc, (EQTYPEleft, typdescright)))
         | DATATYPE datdesc
