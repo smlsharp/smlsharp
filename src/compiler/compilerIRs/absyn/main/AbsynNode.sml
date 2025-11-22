@@ -117,6 +117,7 @@ struct
     | OVERLOAD_MRULE of AbsynInterface.overload_mrule
     | OVERLOAD_CASE of AbsynInterface.overload_case
     | IVALBIND of AbsynInterface.valbind
+    | ITYPBIND of AbsynInterface.typbind
     | ITYPDESC of AbsynInterface.typdesc
     | IDEC of AbsynInterface.dec
     | ISTREXP of AbsynInterface.strexp
@@ -402,6 +403,8 @@ struct
       | IVALBIND (I.VAL_ALIAS _) => "IVALBIND:VAL_ALIAS"
       | IVALBIND (I.VAL_BUILTIN _) => "IVALBIND:VAL_BUILTIN"
       | IVALBIND (I.VAL_OVERLOAD _) => "IVALBIND:VAL_OVERLOAD"
+      | ITYPBIND (I.TYPBIND _) => "ITYPBIND:TYPBIND"
+      | ITYPBIND (I.TYPDESC _) => "ITYPBIND:TYPDESC"
       | ITYPDESC _ => "ITYPDESC"
       | IDEC (I.DECVAL _) => "IDEC:DECVAL"
       | IDEC (I.DECTYPE _) => "IDEC:DECTYPE"
@@ -704,6 +707,8 @@ struct
       | IVALBIND (I.VAL_ALIAS (_, _, loc)) => loc
       | IVALBIND (I.VAL_BUILTIN (_, _, _, loc)) => loc
       | IVALBIND (I.VAL_OVERLOAD (_, _, loc)) => loc
+      | ITYPBIND (I.TYPBIND (_, _, _, loc)) => loc
+      | ITYPBIND (I.TYPDESC (_, _, _, loc)) => loc
       | ITYPDESC (_, _, _, loc) => loc
       | IDEC (I.DECVAL (_, loc)) => loc
       | IDEC (I.DECTYPE (_, loc)) => loc
@@ -1108,15 +1113,13 @@ struct
         [VID id1, VID id2, TY ty]
       | IVALBIND (I.VAL_OVERLOAD (id, ovcase, loc)) =>
         [VID id, OVERLOAD_CASE ovcase]
-      | ITYPDESC (NONE, tycon, impl, loc) =>
-        [TYCON tycon, OPAQUE_IMPL impl]
+      | ITYPBIND (I.TYPBIND typbind) => [TYPBIND typbind]
+      | ITYPBIND (I.TYPDESC typdesc) => [ITYPDESC typdesc]
+      | ITYPDESC (NONE, tycon, impl, loc) => [TYCON tycon, OPAQUE_IMPL impl]
       | ITYPDESC (SOME tyvarseq, tycon, impl, loc) =>
         [TYVARSEQ tyvarseq, TYCON tycon, OPAQUE_IMPL impl]
       | IDEC (I.DECVAL (valbind, loc)) => [IVALBIND valbind]
-      | IDEC (I.DECTYPE (typbinds, loc)) =>
-        map (fn I.TYPBIND typbind => TYPBIND typbind
-              | I.TYPDESC typdesc => ITYPDESC typdesc)
-            typbinds
+      | IDEC (I.DECTYPE (typbinds, loc)) => map ITYPBIND typbinds
       | IDEC (I.DECEQTYPE (typdescs, loc)) => map ITYPDESC typdescs
       | IDEC (I.DECDATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds
       | IDEC (I.DECDATATYPE (datbinds, SOME withty, loc)) =>

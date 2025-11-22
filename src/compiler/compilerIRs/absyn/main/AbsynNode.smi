@@ -115,6 +115,7 @@ struct
     | OVERLOAD_MRULE of AbsynInterface.overload_mrule
     | OVERLOAD_CASE of AbsynInterface.overload_case
     | IVALBIND of AbsynInterface.valbind
+    | ITYPBIND of AbsynInterface.typbind
     | ITYPDESC of AbsynInterface.typdesc
     | IDEC of AbsynInterface.dec
     | ISTREXP of AbsynInterface.strexp
