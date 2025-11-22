@@ -250,11 +250,11 @@ struct
         (newFixEnv, plunit)
       end
 
-  fun doElabInterface {outputWarnings, ...} {fixEnv, ...} abunit =
+  fun doElabInterface {outputWarnings, ...} abunit =
       let
         val _ = #start Counter.elaborationTimeCounter ()
         val (newFixEnv, plunit, warnings) =
-            Elaborator.elaborateInterface fixEnv abunit
+            Elaborator.elaborateInterface abunit
         val _ =  #stop Counter.elaborationTimeCounter()
         val _ = case warnings of nil => () | l => outputWarnings l
         val _ = printPatternCalcInterface
@@ -774,7 +774,7 @@ struct
   fun loadInterfaces (options as {stopAt, ...}) context sources =
       let
         val (dependency, abunit) = doLoadInterface options sources
-        val (newFixEnv, plunit) = doElabInterface options context abunit
+        val (newFixEnv, plunit) = doElabInterface options abunit
         val _ = if stopAt = SyntaxCheck then raise Return dependency else ()
         val newTopEnv = doNameEvalInterface options context plunit
       in
@@ -792,7 +792,7 @@ struct
             {fixEnv = Symbol.Map.empty,
              topEnv = NameEvalEnv.emptyTopEnv}
         val (dependency, abunit) = doLoadInterface options [source]
-        val (newFixEnv, plunit) = doElabInterface options context abunit
+        val (newFixEnv, plunit) = doElabInterface options abunit
         val topdecs =
             case plunit of
               {interfaceDecs = [{requiredIds = nil, provideTopdecs, ...}],

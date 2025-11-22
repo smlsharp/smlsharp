@@ -644,12 +644,10 @@ struct
        *)
       PLTOPDECSTR of plstrdec
     | (*%
-       * @format(bind binds * loc)
-       * !R0{ binds:prepend(bind)(, "signature" +d, +1, "and" +d) }
-       * @format:bind(id * sigexp * loc)
-       * !R0{ id +d "=" 1[ +1 sigexp ] }
+       * @format(sigdec)
+       * sigdec
        *)
-      PLTOPDECSIG of (symbol * plsigexp * loc) list * loc
+      PLTOPDECSIG of plsigdec
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "functor" +d, +1, "and" +d) }
@@ -700,6 +698,16 @@ struct
        * !R0 { head pat +d "=" +1 exp }
        *)
       plpat * plexp * loc
+
+  and plsigdec =
+      (*%
+       * @format(bind binds * loc)
+       * !R0{ binds:prepend(bind)(, "signature" +d, +1, "and" +d) }
+       * @format:bind(id * sigexp * loc)
+       * !R0{ id +d "=" 1[ +1 sigexp ] }
+       *)
+      (symbol * plsigexp * loc) list * loc
+
 
   fun getLocExp plexp =
       case plexp of

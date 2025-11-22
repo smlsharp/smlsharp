@@ -2824,13 +2824,7 @@ val _ = U.print "compileUnitSpliced\n"
 val _ = U.printCompileUnitSpliced compileUnitSpliced
 val _ = U.print "\n"
 *)
-        val {interfaceDecs, requiredIds, locallyRequiredIds, provideTopdecs} =
-            case interface of
-              SOME x => x
-            | NONE => {interfaceDecs = nil,
-                       requiredIds = nil,
-                       locallyRequiredIds = nil,
-                       provideTopdecs = nil}
+        val {interfaceDecs, requiredIds, locallyRequiredIds, provideTopdecs, ...} = interface
 
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
 
@@ -2948,9 +2942,7 @@ val _ = U.print "*** after checkPitopdecList\n"
       let
         val _ = EU.initializeErrorQueue()
         val topdecsInclude =
-            map (fn P.PLTOPDECSIG x => PI.TOPDECSIG x
-                  | _ => raise Bug.Bug "non sig entry in topdecsInclude")
-                topdecsInclude
+            map PI.TOPDECSIG topdecsInclude
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
         val _ = (* for error checking *)
             InterfaceID.Map.foldl

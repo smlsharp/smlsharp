@@ -58,6 +58,7 @@ struct
   val format_strbind : SMLFormat.format -> Absyn.strbind -> SMLFormat.format
   val format_fun_param : Absyn.fun_param -> SMLFormat.format
   val format_funbind : SMLFormat.format -> Absyn.funbind -> SMLFormat.format
+  val format_sigdec : Absyn.sigdec -> SMLFormat.format
   val format_topdec : Absyn.topdec -> SMLFormat.format
   val format_top : Absyn.top -> SMLFormat.format
   val format_interface : Absyn.interface -> SMLFormat.format

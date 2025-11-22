@@ -224,9 +224,11 @@ struct
 
   type funbind = funid * fun_param option * sigconstraint option * strexp * loc
 
+  type sigdec = sigbind list * loc
+
   datatype topdec =
       TOPSTRDEC of strdec
-    | TOPSIGNATURE of sigbind list * loc
+    | TOPSIGNATURE of sigdec
     | TOPFUNCTOR of funbind list * loc
     | TOPEXP of exp * loc
 

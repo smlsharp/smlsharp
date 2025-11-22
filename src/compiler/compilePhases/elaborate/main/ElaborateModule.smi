@@ -14,5 +14,6 @@ _require local "./ElaborateCore.smi"
 structure ElaborateModule =
 struct
   val elabSigexp : Absyn.sigexp -> PatternCalc.plsigexp
+  val elabSigdec : Absyn.sigdec -> PatternCalc.plsigdec
   val elabTopdecs : Absyn.topdec list -> PatternCalc.pltopdec list
 end

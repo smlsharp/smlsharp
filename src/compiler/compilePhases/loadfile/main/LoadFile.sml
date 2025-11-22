@@ -234,7 +234,7 @@ struct
   type toplevel_additionals =
       {initRequisites : (L.interface_dec * N.init_requisite) Assoc.assoc,
        locallyRequiredIds : (L.interface_dec * L.loc) Assoc.assoc,
-       topdecsInclude : A.topdec list Assoc.assoc}
+       topdecsInclude : A.sigdec list Assoc.assoc}
 
   datatype eval_result =
       SML of {node : N.file_dependency_node,
@@ -243,7 +243,7 @@ struct
               node : N.file_dependency_node,
               inits : (L.interface_dec * N.init_requisite) Assoc.assoc,
               requires : (L.interface_dec * L.loc) Assoc.assoc,
-              topdecs : A.topdec list Assoc.assoc}
+              topdecs : A.sigdec list Assoc.assoc}
     | CYCLE
 
   datatype ('eval_result, 'parse_result) new_or_loaded =
@@ -381,8 +381,8 @@ struct
   fun maxInit (N.INIT_ALWAYS, _) = N.INIT_ALWAYS
     | maxInit (N.INIT_IFNEEDED, x) = x
 
-  fun toTopdec (I.SIGNATURE sigdec) = [A.TOPSIGNATURE sigdec]
-    | toTopdec (I.SIGSEMICOLON _) = []
+  fun toSigdec (I.SIGNATURE sigdec) = [sigdec]
+    | toSigdec (I.SIGSEMICOLON _) = []
 
   fun evalRequireOptions symbols inits =
       let
@@ -504,7 +504,7 @@ val _ = print "\n"
           val loaded = Assoc.append (loaded, #2 source, CYCLE)
           val (loaded, {edges, inits, requires, topdecs = topdecsAssoc}) =
               loadIncludeList loaded loader mode includes
-          val topdecs = List.concat (map toTopdec sigdecs)
+          val topdecs = List.concat (map toSigdec sigdecs)
           val result =
               {dec = NONE,
                node = N.FILE {source = source,
@@ -628,8 +628,8 @@ val _ = print "\n"
               {interfaceDecs = interfaceDecs,
                provide = {requiredIds = #requiredIds dec,
                           locallyRequiredIds = locallyRequiredIds,
-                          provideTopdecs = #provideTopdecs dec,
-                          topdecsInclude = List.concat topdecsInclude}}
+                          provideTopdecs = #provideTopdecs dec},
+               topdecsInclude = List.concat topdecsInclude}
           val prelude : N.toplevel_prelude =
               {toplevelName = SOME (#interfaceName dec),
                initRequisites = initRequisites}

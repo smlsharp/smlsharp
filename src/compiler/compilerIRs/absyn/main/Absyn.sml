@@ -1098,6 +1098,16 @@ struct
   (*%
    * @formatter(decs) AbsynFormatterUtils.decs
    *)
+  type sigdec =
+      (*%
+       * @format(sigbind sigbinds * loc)
+       * !N0{ sigbinds:decs(sigbind)("signature" +d, +1, "and" +d) }
+       *)
+      sigbind list * loc
+
+  (*%
+   * @formatter(decs) AbsynFormatterUtils.decs
+   *)
   datatype topdec =
       (*%
        * @format(strdec)
@@ -1105,10 +1115,10 @@ struct
        *)
       TOPSTRDEC of strdec
     | (*%
-       * @format(sigbind sigbinds * loc)
-       * !N0{ sigbinds:decs(sigbind)("signature" +d, +1, "and" +d) }
+       * @format(sigdec)
+       * sigdec
        *)
-      TOPSIGNATURE of sigbind list * loc
+      TOPSIGNATURE of sigdec
     | (*%
        * @format(funbind funbinds * loc)
        * !N0{ funbinds:decs(funbind)("functor" +d, +1, "and" +d) }

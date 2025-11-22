@@ -46,20 +46,16 @@ in
           (PI.TOPDECFUN (List.rev funbindListRev, loc)::topdecRev, fundeclEnv)
         end
 
-  fun spliceProvideFundecl ({interface,
-                             topdecsInclude,
-                             topdecsSource} :PI.compile_unit) 
+  fun spliceProvideFundecl ({interface, topdecsSource} : PI.compile_unit)
       : PI.compile_unit_spliced =
       let
-        val provideTopdecs  =
-            case interface of NONE => nil
-                            | SOME {provideTopdecs, ...} => provideTopdecs
+        val {provideTopdecs, topdecsInclude, ...} = interface
         val fundeclEnv = filterFundecls provideTopdecs
         val (topdecsIncludeRev, fundeclEnv) =
             foldl
             spliceTopdec
             (nil, fundeclEnv)
-            topdecsInclude
+            (map PL.PLTOPDECSIG topdecsInclude)
         val (topdecsSourceRev, fundeclEnv) =
             foldl
             spliceTopdec

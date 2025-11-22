@@ -157,6 +157,7 @@ struct
        conbind: {symbol: symbol, ty: ty option, loc:loc} list}
   type typbind
     = tvar list * symbol * ty * loc
+  type plsigdec = (symbol * plsigexp * loc) list * loc
 
   val format_caseKind
       : caseKind -> SMLFormat.format
@@ -178,6 +179,8 @@ struct
       : plsigexp -> SMLFormat.format
   val format_plspec
       : plspec -> SMLFormat.format
+  val format_plsigdec
+      : plsigdec -> SMLFormat.format
   val format_pltopdec
       : pltopdec -> SMLFormat.format
 

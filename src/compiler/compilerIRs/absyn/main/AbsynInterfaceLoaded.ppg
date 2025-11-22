@@ -46,7 +46,7 @@ struct
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
    * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(AbsynInterface.topdec) AbsynInterface.format_topdec
-   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
+   * @formatter(Absyn.sigdec) AbsynFormatter.format_sigdec
    *)
   type 'loc interface =
       (*%
@@ -55,8 +55,8 @@ struct
        *    provide:
        *      {requiredIds: req reqs,
        *       locallyRequiredIds: lreq lreqs,
-       *       provideTopdecs: topdec topdecs,
-       *       topdecsInclude: inc incs}}
+       *       provideTopdecs: topdec topdecs},
+       *    topdecsInclude: inc incs}
        * )
        * !N0{
        *   decs(dec)(+1)
@@ -89,8 +89,8 @@ struct
         provide :
           {requiredIds : {id : InterfaceID.id, loc : 'loc} list,
            locallyRequiredIds : {id : InterfaceID.id, loc : 'loc} list,
-           provideTopdecs : AbsynInterface.topdec list,
-           topdecsInclude: Absyn.topdec list}
+           provideTopdecs : AbsynInterface.topdec list},
+        topdecsInclude: Absyn.sigdec list
       }
 
   (*%
@@ -116,7 +116,7 @@ struct
   (*%
    * @formatter(ifcons) AbsynFormatterUtils.ifcons
    * @formatter(InterfaceID.id) InterfaceID.format_id
-   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
+   * @formatter(Absyn.sigdec) AbsynFormatter.format_sigdec
    *)
   type interface_unit =
       (*%
@@ -141,7 +141,7 @@ struct
       {
         interfaceDecs : interface_dec list,
         requiredIds : {id : InterfaceID.id, loc : unit} list,
-        topdecsInclude : Absyn.topdec list
+        topdecsInclude : Absyn.sigdec list
       }
 
 end

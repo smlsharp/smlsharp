@@ -10,6 +10,7 @@ _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require local "./ElaborateError.ppg.smi"
 _require local "./ElaborateTy.smi"
@@ -22,6 +23,5 @@ struct
       : 'loc AbsynInterfaceLoaded.interface
         -> {interface : 'loc PatternCalcInterface.interface,
             requireFixEnv : (Fixity.fixity * Absyn.loc) Symbol.Map.map,
-            provideFixEnv : (Fixity.fixity * Absyn.loc) Symbol.Map.map,
-            topdecsInclude : Absyn.topdec list}
+            provideFixEnv : (Fixity.fixity * Absyn.loc) Symbol.Map.map}
 end

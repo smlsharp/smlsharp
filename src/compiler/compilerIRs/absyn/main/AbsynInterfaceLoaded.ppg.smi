@@ -26,8 +26,8 @@ struct
         provide :
           {requiredIds : {id : InterfaceID.id, loc : 'loc} list,
            locallyRequiredIds : {id : InterfaceID.id, loc : 'loc} list,
-           provideTopdecs : AbsynInterface.topdec list,
-           topdecsInclude: Absyn.topdec list}
+           provideTopdecs : AbsynInterface.topdec list},
+        topdecsInclude: Absyn.sigdec list
       }
 
   type compile_unit =
@@ -40,7 +40,7 @@ struct
       {
         interfaceDecs : interface_dec list,
         requiredIds : {id : InterfaceID.id, loc : unit} list,
-        topdecsInclude : Absyn.topdec list
+        topdecsInclude : Absyn.sigdec list
       }
 
   val format_interface_dec : interface_dec -> SMLFormat.format

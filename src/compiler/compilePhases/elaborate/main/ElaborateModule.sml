@@ -213,12 +213,15 @@ struct
           elabFunbind (funid, param, sigcon, strexp, loc)
         end
 
+  fun elabSigdec (sigbinds, loc) =
+      (map elabSigbind sigbinds, LOC loc)
+
   fun elabTopdec topdec =
       case topdec of
         A.TOPSTRDEC strdec =>
         map P.PLTOPDECSTR (elabStrdec strdec)
-      | A.TOPSIGNATURE (sigbinds, loc) =>
-        [P.PLTOPDECSIG (map elabSigbind sigbinds, LOC loc)]
+      | A.TOPSIGNATURE sigdec =>
+        [P.PLTOPDECSIG (elabSigdec sigdec)]
       | A.TOPFUNCTOR (funbinds, loc) =>
         [P.PLTOPDECFUN (map elabFunbind funbinds, LOC loc)]
       | A.TOPEXP (exp, loc) =>

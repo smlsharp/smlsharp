@@ -272,12 +272,13 @@ struct
         {}
         decs
 
-  fun elaborate ({interfaceDecs, provide} : 'a AbsynInterfaceLoaded.interface) =
+  fun elaborate ({interfaceDecs, provide, topdecsInclude}
+                 : 'a AbsynInterfaceLoaded.interface) =
       let
-        val {requiredIds, locallyRequiredIds, provideTopdecs, topdecsInclude} =
-            provide
+        val {requiredIds, locallyRequiredIds, provideTopdecs} = provide
         val (interfaceEnv, pinterfaceDecs) = elabInterfaceDecs interfaceDecs
         val (provideFixEnv, provideTopdecs) = elabTopdecs provideTopdecs
+        val topdecsInclude = map ElaborateModule.elabSigdec topdecsInclude
 
         (* check duplicate infix among interfaces *)
         val _ = InterfaceID.Map.foldl
@@ -289,7 +290,8 @@ struct
             {interfaceDecs = pinterfaceDecs,
              requiredIds = requiredIds,
              locallyRequiredIds = locallyRequiredIds,
-             provideTopdecs = provideTopdecs}
+             provideTopdecs = provideTopdecs,
+             topdecsInclude = topdecsInclude}
         val requireFixEnv =
             foldl
               (fn ({id, ...}, z) =>
@@ -301,8 +303,7 @@ struct
       in
         {interface = interface,
          provideFixEnv = provideFixEnv,
-         requireFixEnv = requireFixEnv,
-         topdecsInclude = topdecsInclude}
+         requireFixEnv = requireFixEnv}
       end
 
 end

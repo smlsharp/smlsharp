@@ -24,8 +24,7 @@ struct
       -> AbsynInterfaceLoaded.compile_unit
       -> fix_env * PatternCalcInterface.compile_unit * UserError.errorInfo list
   val elaborateInterface :
-      fix_env
-      -> AbsynInterfaceLoaded.interface_unit
+      AbsynInterfaceLoaded.interface_unit
       -> fix_env
          * PatternCalcInterface.interface_unit
          * UserError.errorInfo list
