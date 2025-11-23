@@ -19,6 +19,7 @@ struct
   type longtycon = Absyn.longtycon
   type tyvar = Absyn.tyvar
   type tyvarseq = Absyn.tyvarseq
+  type kinded_tyvarseq = Absyn.kinded_tyvarseq
   type ty = Absyn.ty
   type strid = Absyn.strid
   type sigid = Absyn.sigid
@@ -59,7 +60,7 @@ struct
     | TYPDESC of typdesc
 
   datatype dec =
-      DECVAL of valbind * loc
+      DECVAL of kinded_tyvarseq option * valbind * loc
     | DECTYPE of typbind list * loc
     | DECEQTYPE of typdesc list * loc
     | DECDATATYPE of Absyn.datbind list * Absyn.withty option * loc

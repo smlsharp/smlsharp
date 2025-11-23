@@ -710,7 +710,7 @@ struct
       | ITYPBIND (I.TYPBIND (_, _, _, loc)) => loc
       | ITYPBIND (I.TYPDESC (_, _, _, loc)) => loc
       | ITYPDESC (_, _, _, loc) => loc
-      | IDEC (I.DECVAL (_, loc)) => loc
+      | IDEC (I.DECVAL (_, _, loc)) => loc
       | IDEC (I.DECTYPE (_, loc)) => loc
       | IDEC (I.DECEQTYPE (_, loc)) => loc
       | IDEC (I.DECDATATYPE (_, _, loc)) => loc
@@ -1118,7 +1118,9 @@ struct
       | ITYPDESC (NONE, tycon, impl, loc) => [TYCON tycon, OPAQUE_IMPL impl]
       | ITYPDESC (SOME tyvarseq, tycon, impl, loc) =>
         [TYVARSEQ tyvarseq, TYCON tycon, OPAQUE_IMPL impl]
-      | IDEC (I.DECVAL (valbind, loc)) => [IVALBIND valbind]
+      | IDEC (I.DECVAL (NONE, valbind, loc)) => [IVALBIND valbind]
+      | IDEC (I.DECVAL (SOME tyvarseq, valbind, loc)) =>
+        [KINDED_TYVARSEQ tyvarseq, IVALBIND valbind]
       | IDEC (I.DECTYPE (typbinds, loc)) => map ITYPBIND typbinds
       | IDEC (I.DECEQTYPE (typdescs, loc)) => map ITYPDESC typdescs
       | IDEC (I.DECDATATYPE (datbinds, NONE, loc)) => map DATBIND datbinds

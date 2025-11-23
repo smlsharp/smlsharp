@@ -53,7 +53,7 @@ struct
 
   fun listNamesDec prefix pidec =
       case pidec of
-        A.DECVAL (valbind, loc) =>
+        A.DECVAL (_, valbind, loc) =>
         listNamesValbind prefix valbind
       | A.DECTYPE (typbinds, loc) =>
         List.concat (map (listNamesTypbindOrTypdesc prefix) typbinds)

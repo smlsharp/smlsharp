@@ -33,6 +33,12 @@ struct
   (*% @formatter(Absyn.tyvarseq) AbsynTyFormatter.format_tyvarseq *)
   type tyvarseq = Absyn.tyvarseq
 
+  (*%
+   * @formatter(Absyn.kinded_tyvarseq)
+   * AbsynTyFormatter.format_kinded_tyvarseq
+   *)
+  type kinded_tyvarseq = Absyn.kinded_tyvarseq
+
   (*% @formatter(Absyn.ty) AbsynTyFormatter.format_ty *)
   type ty = Absyn.ty
 
@@ -173,10 +179,16 @@ struct
    *)
   datatype dec =
       (*%
-       * @format(valbind * loc)
-       * !N0{ valbind()("val" +d) }
+       * @format(tyvarseq tyvarseqOpt * valbind * loc)
+       * !N0{
+       *   valbind()(
+       *     "val" +d
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+d,)
+       *   )
+       * }
        *)
-      DECVAL of valbind * loc
+      DECVAL of kinded_tyvarseq option * valbind * loc
     | (*%
        * @format(typbind typbinds * loc)
        * !N0{ "ty" typbinds:decs(typbind)("pe" +d, +1 "an", "d" +d) }

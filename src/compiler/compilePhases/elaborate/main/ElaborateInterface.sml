@@ -14,6 +14,7 @@ struct
   fun enqueueError (loc, exn) = UserErrorUtils.enqueueError (LOC loc, exn)
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
+  fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, NOLOC)
 
   type fix_env = (Fixity.fixity * Absyn.loc) Symbol.Map.map
   val emptyFixEnv = Symbol.Map.empty : fix_env
@@ -73,26 +74,35 @@ struct
       | I.INST_PAREN (inst, loc) =>
         elabOverloadInst env inst
 
-  fun elabValbind (valbind, loc) =
+  fun elabScopedTvars tyvarseq ftv =
+      let
+        open ElaborateTy
+        val implicitlyScoped = setMinus (ftv, kindedTyvarseqToSet tyvarseq)
+        val (tyvarseq, loc) = seq' tyvarseq
+      in
+        (tyvarseq @ toKindedTyvars implicitlyScoped, loc)
+      end
+
+  fun elabValbind (tyvarseq, valbind, loc) =
       case valbind of
         I.VAL_EXTERN (id, ty, loc) =>
-        P.PIVAL {scopedTvars = toScopedTvars (ElaborateTy.ftvTy ty) loc,
+        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ElaborateTy.ftvTy ty),
                  symbol = toSymbol id,
                  body = P.VAL_EXTERN {ty = ElaborateTy.elabRank1Ty ty},
                  loc = LOC loc}
       | I.VAL_ALIAS (id, longid, loc) =>
-        P.PIVAL {scopedTvars = (nil, Loc.NOLOC),
+        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq Symbol.Map.empty,
                  symbol = toSymbol id,
                  body = P.VALALIAS_EXTERN (SymbolWithLoc.fromAbsyn longid),
                  loc = LOC loc}
       | I.VAL_BUILTIN (id, name, ty, loc) =>
-        P.PIVAL {scopedTvars = toScopedTvars (ElaborateTy.ftvTy ty) loc,
+        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ElaborateTy.ftvTy ty),
                  symbol = toSymbol id,
                  body = P.VAL_BUILTIN {builtinSymbol = toSymbol name,
                                        ty = ElaborateTy.elabRank1Ty ty},
                  loc = LOC loc}
       | I.VAL_OVERLOAD (id, exp, loc) =>
-        P.PIVAL {scopedTvars = toScopedTvars (ftvOverloadCase exp) loc,
+        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ftvOverloadCase exp),
                  symbol = toSymbol id,
                  body = P.VAL_OVERLOAD (elabOverloadCase Symbol.Map.empty exp),
                  loc = LOC loc}
@@ -144,8 +154,8 @@ struct
 
   fun elabDec dec =
       case dec of
-        I.DECVAL (valbind, loc) =>
-        [elabValbind (valbind, loc)]
+        I.DECVAL decval =>
+        [elabValbind decval]
       | I.DECTYPE (typbinds, _) =>
         map elabTypbind typbinds
       | I.DECEQTYPE (typdescs, _) =>

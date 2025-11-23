@@ -218,6 +218,8 @@ structure I = AbsynInterface
   | kind of A.id list * A.tyrow list option
   | kinded_tyvar of A.kinded_tyvar
   | kinded_free_tyvar of A.kinded_tyvar
+  | kinded_tyvarseq of A.kinded_tyvarseq
+  | kinded_tyvars_comma of A.kinded_tyvar list
   | kinded_tyvars of A.kinded_tyvar list
   | sigexpbasic of A.sigexp
   | wheretype of A.wheretype
@@ -327,7 +329,9 @@ itypbind
 
 idec
         : VAL ivalbind
-          (I.DECVAL (ivalbind, (VALleft, ivalbindright)))
+          (I.DECVAL (NONE, ivalbind, (VALleft, ivalbindright)))
+        | VAL kinded_tyvarseq ivalbind
+          (I.DECVAL (SOME kinded_tyvarseq, ivalbind, (VALleft, ivalbindright)))
         | TYPE itypbind
           (I.DECTYPE (itypbind, (TYPEleft, itypbindright)))
         | EQTYPE itypdesc
@@ -806,6 +810,20 @@ kinded_free_tyvar
            | (properties, SOME tyrow) =>
              SOME (A.REC (properties, tyrow, (kindleft, kindright))),
            (free_tyvarleft, kindright))
+
+kinded_tyvarseq
+        : kinded_tyvar
+          ([kinded_tyvar], (kinded_tyvarleft, kinded_tyvarright))
+        | LPAREN kinded_tyvar RPAREN (* not in the definition *)
+          ([kinded_tyvar], (LPARENleft, RPARENright))
+        | LPAREN kinded_tyvars_comma RPAREN
+          (kinded_tyvars_comma, (LPARENleft, RPARENright))
+
+kinded_tyvars_comma
+        : kinded_tyvar COMMA kinded_tyvar
+          ([kinded_tyvar1, kinded_tyvar2])
+        | kinded_tyvar COMMA kinded_tyvars_comma
+          (kinded_tyvar :: kinded_tyvars_comma)
 
 kinded_tyvars
         : kinded_tyvar
