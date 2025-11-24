@@ -271,37 +271,57 @@ struct
     | appendTyvarseq (NONE, tyvars as h :: t) =
       SOME (tyvars, foldl Loc.mergeRange (#3 h) (map #3 t))
 
-  fun checkPolyTy poly ty =
+  fun checkTy flags ty =
       case ty of
         A.TYVAR _ => ()
-      | A.TYRECORD (rows, _, _) => app (checkPolyTyrow poly) rows
-      | A.TYCON (tyseq, _, _) => app (checkPolyTy false) (seq tyseq)
-      | A.TYTUPLE (tys, _) => app (checkPolyTy poly) tys
-      | A.TYFUN (ty1, ty2, _) => (checkPolyTy false ty1; checkPolyTy poly ty2)
-      | A.TYPAREN (ty, _) => checkPolyTy poly ty
-      | A.TYWILD _ => ()
-      | A.TYVAR_FREE tyvar => checkPolyKindedTyvar false tyvar
+      | A.TYRECORD (rows, flex, loc) =>
+        (app (checkTyrow flags) rows;
+         if flex andalso not (#wildcard flags)
+         then enqueueError (loc, E.FlexRecordTyNotAllowed)
+         else ())
+      | A.TYCON (tyseq, _, _) => app (checkTy flags) (seq tyseq)
+      | A.TYTUPLE (tys, _) => app (checkTy flags) tys
+      | A.TYFUN (ty1, ty2, _) =>
+        (checkTy (flags # {rank1 = false}) ty1; checkTy flags ty2)
+      | A.TYPAREN (ty, _) => checkTy flags ty
+      | A.TYWILD loc =>
+        if #wildcard flags
+        then ()
+        else enqueueError (loc, E.WildTyNotAllowed)
+      | A.TYVAR_FREE (tyvar as (_, _, loc)) =>
+        if #wildcard flags
+        then ()
+        else enqueueError (loc, E.FreeTyNotAllowed)
       | A.TYPOLY ((tyvars, _), bodyTy, loc) =>
-        if poly
-        then (app (checkPolyKindedTyvar false) tyvars; checkPolyTy poly bodyTy)
-        else enqueueError (loc, E.MustBeMonoTy)
+        if #rank1 flags
+        then (app (checkKindedTyvar (flags # {rank1 = false})) tyvars;
+              checkTy flags bodyTy)
+        else enqueueError (loc, E.PolyTyNotAllowed)
 
-  and checkPolyTyrow poly (lab, ty, loc) =
-      checkPolyTy poly ty
+  and checkTyrow flags (lab, ty, loc) =
+      checkTy flags ty
 
-  and checkPolyKindedTyvar poly (tyvar, NONE, loc) = ()
-    | checkPolyKindedTyvar poly (tyvar, SOME kind, loc) =
-      checkPolyKind poly kind
+  and checkKindedTyvar flags (tyvar, NONE, loc) = ()
+    | checkKindedTyvar flags (tyvar, SOME kind, loc) =
+      checkKind flags kind
 
-  and checkPolyKind poly kind =
+  and checkKind flags kind =
       case kind of
         A.UNIV _ => ()
-      | A.REC (ids, rows, loc) => app (checkPolyTyrow poly) rows
+      | A.REC (ids, rows, loc) => app (checkTyrow flags) rows
 
   fun elabMonoTy ty =
-      (checkPolyTy false ty; ty)
+      (checkTy {wildcard = false, rank1 = false} ty; ty)
 
   fun elabRank1Ty ty =
-      (checkPolyTy true ty; ty)
+      (checkTy {wildcard = false, rank1 = true} ty; ty)
+
+  fun elabMonoTyAnnot ty =
+      (checkTy {wildcard = true, rank1 = false} ty; ty)
+
+  fun elabUserTyvars NONE = (nil, Loc.NOLOC)
+    | elabUserTyvars (SOME (tyvars, loc)) =
+      (app (checkKindedTyvar {wildcard = false, rank1 = false}) tyvars;
+       (tyvars, Loc.LOC loc))
 
 end

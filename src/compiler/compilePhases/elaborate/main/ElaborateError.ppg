@@ -211,6 +211,28 @@ struct
    * @format
    * "polymorphic" +d "type" +d "is" +d "not" +d "allowed" +d "here"
    *)
-  MustBeMonoTy
+  PolyTyNotAllowed
+
+  and
+  (*%
+   * @format
+   * "flex" +d "record" +d "type" +d "is" +d "not" +d "allowed" +d "here"
+   *)
+  FlexRecordTyNotAllowed
+
+  and
+  (*%
+   * @format
+   * "wildcard" +d "type" +d "annotation" +d "is" +d "not" +d "allowed"
+   * +d "here"
+   *)
+  WildTyNotAllowed
+
+  and
+  (*%
+   * @format
+   * "free" +d "tyvar" +d "annotation" +d "is" +d "not" +d "allowed" +d "here"
+   *)
+  FreeTyNotAllowed
 
 end

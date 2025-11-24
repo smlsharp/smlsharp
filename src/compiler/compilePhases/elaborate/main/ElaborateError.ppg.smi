@@ -30,5 +30,8 @@ structure ElaborateError =
               {given : int, tycon : Symbol.symbol, wants : int}
     exception PatappWithoutIdentifier
     exception UserTyvarImplicitlyBoundAtPolyRec of AbsynTy.tyvar
-    exception MustBeMonoTy
+    exception PolyTyNotAllowed
+    exception FlexRecordTyNotAllowed
+    exception WildTyNotAllowed
+    exception FreeTyNotAllowed
   end

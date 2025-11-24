@@ -16,7 +16,6 @@ struct
   fun enqueueError (loc, exn) = UserErrorUtils.enqueueError (LOC loc, exn)
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
-  fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, Loc.NOLOC)
 
   val trueId = Symbol.intern "true"
   val falseId = Symbol.intern "false"
@@ -138,10 +137,10 @@ struct
                  (A.PATID (nilLongvid loc))
                  exps)
       | A.PATTYPED (pat, ty, loc) =>
-        P.PLPATTYPED (elabPat pat, ElaborateTy.elabMonoTy ty, LOC loc)
+        P.PLPATTYPED (elabPat pat, ElaborateTy.elabMonoTyAnnot ty, LOC loc)
       | A.PATAS ((_, id, _), ty, pat, loc) =>
         P.PLPATLAYERED (toSymbol id,
-                        Option.map ElaborateTy.elabMonoTy ty,
+                        Option.map ElaborateTy.elabMonoTyAnnot ty,
                         elabPat pat,
                         LOC loc)
       | A.PATPAREN (pat, loc) => elabPat pat
@@ -271,7 +270,7 @@ struct
       ([elabPat pat], elabExp exp, LOC loc)
 
   and elabDynamicMrule (tyvars, pat, exp, loc) =
-      (seq' tyvars, elabPat pat, elabExp exp, LOC loc)
+      (ElaborateTy.elabUserTyvars tyvars, elabPat pat, elabExp exp, LOC loc)
 
   and elabExprow exprow =
       case exprow of
@@ -324,7 +323,7 @@ struct
       | A.EXPSEQ (exps, loc) =>
         P.PLSEQ (map elabExp exps, LOC loc)
       | A.EXPTYPED (exp, ty, loc) =>
-        P.PLTYPED (elabExp exp, ElaborateTy.elabMonoTy ty, LOC loc)
+        P.PLTYPED (elabExp exp, ElaborateTy.elabMonoTyAnnot ty, LOC loc)
       | A.EXPANDALSO (exp1, exp2, loc) =>
         elabExp (A.EXPIF (exp1, exp2, A.EXPID (falseLongvid loc), loc))
       | A.EXPORELSE (exp1, exp2, loc) =>
@@ -459,17 +458,22 @@ struct
         let
           val (valbinds, recbinds) = classifyValbinds valbinds
         in
-          [P.PDVAL (seq' tyvarseq,
+          [P.PDVAL (ElaborateTy.elabUserTyvars tyvarseq,
                     map elabValbind (Snoc.toList valbinds),
                     map elabRecbind (Snoc.toList recbinds),
                     LOC loc)]
         end
       | A.DECVALREC (tyvarseq, valrecbinds, loc) =>
-        [P.PDVAL (seq' tyvarseq, nil, map elabValbind valrecbinds, LOC loc)]
+        [P.PDVAL (ElaborateTy.elabUserTyvars tyvarseq,
+                  nil,
+                  map elabValbind valrecbinds,
+                  LOC loc)]
       | A.DECPOLYREC (pvalbinds, loc) =>
         [P.PDVALPOLYREC (map elabPvalbind pvalbinds, LOC loc)]
-      | A.DECFUN (tyvs, fvalbinds, loc) =>
-        [P.PDDECFUN (seq' tyvs, map elabFvalbind fvalbinds, LOC loc)]
+      | A.DECFUN (tyvarseq, fvalbinds, loc) =>
+        [P.PDDECFUN (ElaborateTy.elabUserTyvars tyvarseq,
+                     map elabFvalbind fvalbinds,
+                     LOC loc)]
       | A.DECTYPE (typbinds, loc) =>
         [P.PDTYPE (map elabTypbind typbinds, LOC loc)]
       | A.DECDATATYPE (datbinds, withty, loc) =>
