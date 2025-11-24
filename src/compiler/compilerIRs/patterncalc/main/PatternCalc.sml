@@ -105,7 +105,6 @@ struct
     | EXPID of longvid
     | EXPRECORD of exprow list * loc
     | EXPSELECT of lab * loc
-    | EXPSEQ of exp list * loc
     | EXPLET of dec list * exp * loc
     | EXPAPP of exp * exp * loc
     | EXPTYPED of exp * annot ty * loc
@@ -375,8 +374,6 @@ struct
         A.EXPRECORD (map absynExprow rows, loc)
       | EXPSELECT (lab, _) =>
         A.EXPSELECT (lab, loc)
-      | EXPSEQ (exps, _) =>
-        A.EXPSEQ (map absynExp exps, loc)
       | EXPLET (decs, exp, _) =>
         A.EXPLET (map absynDec decs, ([absynExp exp], loc), loc)
       | EXPAPP (exp1, exp2, _) =>

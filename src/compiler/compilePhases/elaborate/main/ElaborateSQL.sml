@@ -318,11 +318,11 @@ struct
   fun Typed (exp, ty) loc =
       P.EXPTYPED (exp loc, ty loc, LOC loc)
 
-  fun Ignore exp loc =
-      P.EXPSEQ ([exp loc, Unit loc], LOC loc)
+  fun Ignore exp =
+      Case1 exp (PatWild, Unit)
 
-  fun Seq (exp1, exp2) loc =
-      P.EXPSEQ ([exp1 loc, exp2 loc], LOC loc)
+  fun Seq (exp1, exp2) =
+      Case1 exp1 (PatWild, exp2)
 
   fun Join (exp1, exp2) loc =
       P.EXPJOIN (P.JOIN, exp1 loc, exp2 loc, LOC loc)

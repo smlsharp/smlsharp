@@ -1131,7 +1131,6 @@ local
             )
         | P.EXPSELECT ((label, _), loc) =>
           I.ICRECORD_SELECTOR (label, loc)
-        | P.EXPSEQ (plexpList, loc) => I.ICSEQ (map evalExp plexpList, loc)
         | P.EXPIMPORT_EXP (plexp, ffiTy, loc) =>
           I.ICFFIIMPORT (I.ICFFIFUN (evalPlexp tvarEnv env plexp),
                          Ty.evalFfity tvarEnv env ffiTy,

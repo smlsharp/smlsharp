@@ -311,8 +311,13 @@ struct
              (A.EXPID (true, (nil, vid, #2 vid), #2 vid),
               A.EXPTUPLE ([exp1, exp2], loc),
               loc))
-      | A.EXPSEQ (exps, loc) =>
-        P.EXPSEQ (map elabExp exps, LOC loc)
+      | A.EXPSEQ (nil, loc) =>
+        elabExp (A.EXPCONST (A.UNITCONST, loc))
+      | A.EXPSEQ ([exp], loc) =>
+        elabExp exp
+      | A.EXPSEQ (exp :: exps, loc) =>
+        elabExp
+          (A.EXPCASE (exp, [(A.PATWILD loc, A.EXPSEQ (exps, loc), loc)], loc))
       | A.EXPTYPED (exp, ty, loc) =>
         P.EXPTYPED (elabExp exp, ElaborateTy.elabAnnotTy ty, LOC loc)
       | A.EXPANDALSO (exp1, exp2, loc) =>
@@ -362,11 +367,7 @@ struct
       | A.EXPFN (mrules, loc) =>
         P.EXPFN (map elabMrule mrules, LOC loc)
       | A.EXPLET (decs, (exps, loc1), loc) =>
-        P.EXPLET (elabDecs decs,
-                 case map elabExp exps of
-                   [exp] => exp
-                 | exps => P.EXPSEQ (exps, LOC loc1),
-                 LOC loc)
+        P.EXPLET (elabDecs decs, elabExp (A.EXPSEQ (exps, loc1)), LOC loc)
       | A.EXPIMPORT_NAME ((name, _), ty, loc) =>
         P.EXPIMPORT_NAME (name, elabFfiTy ty, LOC loc)
       | A.EXPIMPORT_EXP (exp, ty, loc) =>

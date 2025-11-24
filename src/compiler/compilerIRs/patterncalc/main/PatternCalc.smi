@@ -105,7 +105,6 @@ struct
     | EXPID of longvid
     | EXPRECORD of exprow list * loc
     | EXPSELECT of lab * loc
-    | EXPSEQ of exp list * loc
     | EXPLET of dec list * exp * loc
     | EXPAPP of exp * exp * loc
     | EXPTYPED of exp * annot ty * loc
