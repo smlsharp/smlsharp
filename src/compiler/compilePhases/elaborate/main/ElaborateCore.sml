@@ -131,11 +131,14 @@ struct
         elabPat (A.PATCONST (A.UNITCONST, loc))
       | A.PATTUPLE (pats, loc) =>
         elabPat (A.PATRECORD (tuplePatrows pats, false, loc))
-      | A.PATLIST (exps, loc) =>
-        elabPat
-          (foldr (fn (exp, z) => A.PATINFIX (exp, consVid loc, z, loc))(*FIXME*)
-                 (A.PATID (nilLongvid loc))
-                 exps)
+      | A.PATLIST (nil, loc) =>
+        elabPat (A.PATID (nilLongvid loc))
+      | A.PATLIST (exp :: exps, loc) =>
+        let
+          val loc1 = AbsynUtils.patLoc exp
+        in
+          elabPat (A.PATINFIX (exp, consVid loc1, A.PATLIST (exps, loc), loc1))
+        end
       | A.PATTYPED (pat, ty, loc) =>
         P.PLPATTYPED (elabPat pat, ElaborateTy.elabMonoTyAnnot ty, LOC loc)
       | A.PATAS ((_, id, _), ty, pat, loc) =>
@@ -307,11 +310,14 @@ struct
         elabExp (A.EXPCONST (A.UNITCONST, loc))
       | A.EXPTUPLE (exps, loc) =>
         elabExp (A.EXPRECORD (tupleExprows exps, loc))
-      | A.EXPLIST (exps, loc) =>
-        elabExp
-          (foldr (fn (exp, z) => A.EXPINFIX (exp, consVid loc, z, loc))(*FIXME*)
-                 (A.EXPID (nilLongvid loc))
-                 exps)
+      | A.EXPLIST (nil, loc) =>
+        elabExp (A.EXPID (nilLongvid loc))
+      | A.EXPLIST (exp :: exps, loc) =>
+        let
+          val loc1 = AbsynUtils.expLoc exp
+        in
+          elabExp (A.EXPINFIX (exp, consVid loc1, A.EXPLIST (exps, loc), loc1))
+        end
       | A.EXPAPP (exp1, exp2, loc) =>
         P.PLAPPM (elabExp exp1, [elabExp exp2], LOC loc)
       | A.EXPINFIX (exp1, vid, exp2, loc) =>
