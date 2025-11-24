@@ -321,7 +321,7 @@ in
             defTupleTemplate
               # {{category = Dynamic.tagOf cat}}
               # {(idstatusInfo idstatus)}
-              # {defSymInfo}
+              # {(defSymInfo)}
               # {{sourceFileId = topSourceFileId()}}
         val _ = IM.insertDefMap defInfo
       in
@@ -351,8 +351,8 @@ in
       val defInfo =
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
-            # {defSymInfo}
-            # {tstrInfo}
+            # {(defSymInfo)}
+            # {(tstrInfo)}
             # {{sourceFileId = topSourceFileId()}}
             # {{tfunKind = tfunKind,
                 internalId = internalId}}
@@ -374,7 +374,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{kind = "STR"}}
             # {definedSymbol = definedSymbol}
             # {{sourceFileId = topSourceFileId()}}
@@ -396,7 +396,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{kind = "SIG"}}
             # {{sourceFileId = topSourceFileId()}}
             # {(defRangeInfo defRange)}
@@ -417,7 +417,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf cat}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{kind = "FUN"}}
             # {{sourceFileId = topSourceFileId()}}
             # {(defRangeInfo defRange)}
@@ -439,7 +439,7 @@ in
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
             # {(idstatusInfo idstatus)}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{sourceFileId = topSourceFileId()}}
       val _ = IM.insertDefMap defInfo
     in
@@ -468,8 +468,8 @@ in
       val defInfo =
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
-            # {defSymInfo}
-            # {tstrInfo}
+            # {(defSymInfo)}
+            # {(tstrInfo)}
             # {{sourceFileId = topSourceFileId()}}
             # {{tfunKind = tfunKind,
                 internalId = internalId}}
@@ -490,7 +490,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {definedSymbol = definedSymbol}
             # {{kind = "STR"}}
             # {(defRangeInfo defRange)}
@@ -511,7 +511,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{kind = "SIG"}}
             # {(defRangeInfo defRange)}
             # {{sourceFileId = topSourceFileId()}}
@@ -531,7 +531,7 @@ in
       val defInfo : defTuple = 
           defTupleTemplate
             # {{category = Dynamic.tagOf TOPENV}}
-            # {defSymInfo}
+            # {(defSymInfo)}
             # {{kind = "FUN"}}
             # {(defRangeInfo defRange)}
             # {{sourceFileId = topSourceFileId()}}
@@ -554,7 +554,7 @@ in
         val refInfo =
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {(idstatusInfo idstatus)}
               # {{sourceFileId = topSourceFileId()}}
@@ -576,8 +576,8 @@ in
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
-              # {tstrInfo}
-              # {refSymInfo}
+              # {(tstrInfo)}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {{sourceFileId = topSourceFileId()}}
         val _ = IM.insertRefMap (locKey, refInfo)
@@ -598,7 +598,7 @@ in
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {{kind = "STR"}}
               # {definedSymbol = definedSymbol}
@@ -621,7 +621,7 @@ in
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {{kind = "SIG"}}
               # {(defRangeInfo loc)}
@@ -643,7 +643,7 @@ in
         val refInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf FIND}}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {{kind = "FUN"}}
               # {(defRangeInfo loc)}
@@ -666,7 +666,7 @@ in
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}
               # {(idstatusInfo idstatus)}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
               # {{sourceFileId = topSourceFileId()}}
         val _ = IM.insertRefMap (locKey, provideInfo)
@@ -688,7 +688,7 @@ in
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}
               # {{kind = "IDCON"}}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {definedSymbol = definedSymbol}
               # {(#defSymInfo (defSymLocInfo sym))}
         val _ = IM.insertRefMap (locKey, provideInfo)
@@ -709,8 +709,8 @@ in
         val provideInfo = 
             refTupleTemplate
               # {{category = Dynamic.tagOf PROVIDE}}
-              # {tstrInfo}
-              # {refSymInfo}
+              # {(tstrInfo)}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
         val _ = IM.insertRefMap (locKey, provideInfo)
       in
@@ -733,7 +733,7 @@ in
               # {{kind = "STR"}}
               # {(defRangeInfo defRange)}
               # {definedSymbol = definedSymbol}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
           val _ = IM.insertRefMap (locKey, provideInfo)
         in
@@ -754,7 +754,7 @@ in
               # {{category = Dynamic.tagOf PROVIDE}}
               # {{kind = "SIG"}}
               # {(defRangeInfo defRange)}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
           val _ = IM.insertRefMap (locKey, provideInfo)
         in
@@ -775,7 +775,7 @@ in
               # {{category = Dynamic.tagOf PROVIDE}}
               # {{kind = "FUN"}}
               # {(defRangeInfo defRange)}
-              # {refSymInfo}
+              # {(refSymInfo)}
               # {(#defSymInfo (defSymLocInfo sym))}
           val _ = IM.insertRefMap (locKey, provideInfo)
         in

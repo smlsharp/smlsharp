@@ -75,7 +75,7 @@ struct
       map A.PATROW (tupleRows AbsynUtils.patLoc pats)
 
   fun tupleExprows exps =
-      tupleRows AbsynUtils.expLoc exps
+      map A.EXPROW (tupleRows AbsynUtils.expLoc exps)
 
   fun elabFfiTyrow ((lab, _), ffiTy, loc) =
       (lab, elabFfiTy ffiTy)
@@ -273,8 +273,16 @@ struct
   and elabDynamicMrule (tyvars, pat, exp, loc) =
       (seq' tyvars, elabPat pat, elabExp exp, LOC loc)
 
-  and elabExprow ((lab, _), exp, loc) =
-      (lab, elabExp exp)
+  and elabExprow exprow =
+      case exprow of
+        A.EXPROW ((lab, _), exp, loc) => (lab, elabExp exp)
+      | A.EXPROWVAR (vid, NONE, loc) =>
+        (RecordLabel.fromSymbol (#1 vid),
+         elabExp (A.EXPID (false, (nil, vid, #2 vid), #2 vid)))
+      | A.EXPROWVAR (vid, SOME ty, loc) =>
+        (RecordLabel.fromSymbol (#1 vid),
+         elabExp
+           (A.EXPTYPED (A.EXPID (false, (nil, vid, #2 vid), #2 vid), ty, loc)))
 
   and elabExp ast =
       case ast of

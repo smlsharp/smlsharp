@@ -610,8 +610,11 @@ struct
   and resolveDecs env decs =
       resolveList resolveDec env decs
 
-  and resolveExprow env (lab, exp, loc) : A.exprow =
-      (lab, resolveExp env exp, loc)
+  and resolveExprow env exprow =
+      case exprow of
+        A.EXPROW (lab, exp, loc) =>
+        A.EXPROW (lab, resolveExp env exp, loc)
+      | A.EXPROWVAR _ => exprow
 
   and resolveMrule env (pat, exp, loc) : A.mrule =
       (resolvePat env pat, resolveExp env exp, loc)

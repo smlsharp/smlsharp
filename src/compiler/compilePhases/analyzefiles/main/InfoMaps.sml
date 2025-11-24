@@ -58,7 +58,7 @@ in
                  (sourceTupleTemplate
                   # {{filePlace = Dynamic.tagOf p, 
                       fileName = Filename.toString f}}
-                  # {sourceInfo})
+                  # {(sourceInfo)})
              :: sourceTable)
              nil
              (!sourceMap)
@@ -76,8 +76,8 @@ in
              FileIDMap.foldri
              (fn (key:fileIDKey, fileInfo:fileMapInfo, fileTable) =>
                  (fileMapTupleTemplate
-                  # {key}
-                  # {fileInfo})
+                  # {(key)}
+                  # {(fileInfo)})
              :: fileTable)
              nil
              (!fileMapMap)
@@ -95,8 +95,8 @@ in
              (fn (key:fileIDIntKey, 
                   fileDependInfo:fileDependInfo, fileDependTable) =>
                  (fileDependTupleTemplate
-                  # {key}
-                  # {fileDependInfo})
+                  # {(key)}
+                  # {(fileDependInfo)})
              :: fileDependTable)
              nil
              (!fileDependMap)

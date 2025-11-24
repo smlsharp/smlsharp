@@ -81,7 +81,7 @@ struct
   datatype exp =
       EXPCONST of constant * loc
     | EXPID of bool * longvid * loc
-    | EXPRECORD of (lab * exp * loc) list * loc
+    | EXPRECORD of exprow list * loc
     | EXPSELECT of lab * loc
     | EXPTUPLE of exp list * loc
     | EXPLIST of exp list * loc
@@ -100,7 +100,7 @@ struct
     | EXPCASE of exp * (pat * exp * loc) list * loc
     | EXPFN of (pat * exp * loc) list * loc
     | EXPSIZEOF of ty * loc
-    | EXPRECORD_UPDATE of exp * (lab * exp * loc) list * loc
+    | EXPRECORD_UPDATE of exp * exprow list * loc
     | EXPTUPLE_UPDATE of exp * exp list * loc
     | EXPIMPORT_NAME of extern_name * ffi_ty * loc
     | EXPIMPORT_EXP of exp * ffi_ty * loc
@@ -118,6 +118,10 @@ struct
     | EXPDYNAMICTOP of ty * loc
     | EXPDYNAMICCASE of exp * (exist_quant option * pat * exp * loc) list * loc
     | EXPREIFYTY of ty * loc
+
+  and exprow =
+      EXPROW of lab * exp * loc
+    | EXPROWVAR of vid * ty option * loc
 
   and valbind =
       VALBIND of pat * exp * loc
@@ -143,8 +147,6 @@ struct
     | DECPOLYREC of (vid * ty * exp * loc) list * loc
 
   type sqlexp = (exp, pat, ty) AbsynSQL.top
-
-  type exprow = lab * exp * loc
 
   type let_body = exp list * loc
 

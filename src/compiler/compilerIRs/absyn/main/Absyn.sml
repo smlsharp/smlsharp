@@ -532,6 +532,21 @@ struct
        *)
       EXPREIFYTY of ty * loc
 
+  and exprow =
+      (*%
+       * @format(lab * exp * loc)
+       * !N0{ lab +d "=" 2[+1] exp }
+       *)
+      EXPROW of lab * exp * loc
+    | (*%
+       * @format(vid * ty tyOpt * loc)
+       * !N0{
+       *   vid
+       *   tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
+       * }
+       *)
+      EXPROWVAR of vid * ty option * loc
+
   and (*% @params(head) *) valbind =
       (*%
        * @format(pat * exp * loc)
@@ -697,13 +712,6 @@ struct
        * sqltop(exp, pat, ty)
        *)
       (exp, pat, ty) AbsynSQL.top
-
-  and exprow =
-      (*%
-       * @format(lab * exp * loc)
-       * !N0{ lab +d "=" 2[+1] exp }
-       *)
-      lab * exp * loc
 
   and mrule =
       (*%

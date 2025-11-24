@@ -334,8 +334,10 @@ struct
       | A.DECINFIXR _ => empty
       | A.DECNONFIX _ => empty
 
-  and ftvExprow ((lab, exp, loc) : A.exprow) =
-      ftvExp exp
+  and ftvExprow exprow =
+      case exprow of
+        A.EXPROW (lab, exp, loc) => ftvExp exp
+      | A.EXPROWVAR (vid, ty, loc) => ftvOpt ftvTy ty
 
   and ftvMrule ((pat, exp, loc) : A.mrule) =
       union (ftvPat pat, ftvExp exp)
@@ -760,8 +762,11 @@ struct
       | A.DECINFIXR _ => dec
       | A.DECNONFIX _ => dec
 
-  and decideExprow env (lab, exp, loc) : A.exprow =
-      (lab, decideExp env exp, loc)
+  and decideExprow env exprow =
+      case exprow of
+        A.EXPROW (lab, exp, loc) =>
+        A.EXPROW (lab, decideExp env exp, loc)
+      | A.EXPROWVAR _ => exprow
 
   and decideMrule env (pat, exp, loc) : A.mrule =
       (pat, decideExp env exp, loc)

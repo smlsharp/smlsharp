@@ -699,7 +699,11 @@ lab
 
 exprow_1
         : lab EQ exp
-          (lab, exp, (lableft, expright))
+          (A.EXPROW (lab, exp, (lableft, expright)))
+        | id
+          (A.EXPROWVAR (id, NONE, (idleft, idright)))
+        | id COLON ty
+          (A.EXPROWVAR (id, SOME ty, (idleft, tyright)))
 
 exprow
         : exprow_1
@@ -726,8 +730,8 @@ appexp
           (atexp)
         | appexp atexp
           (A.EXPAPP (appexp, atexp, (appexpleft, atexpright)))
-        | appexp HASH LBRACE atexp RBRACE
-          (A.EXPUPDATE2 (appexp, atexp, (appexpleft, RBRACEright)))
+        | appexp HASH LBRACE atexp_noID RBRACE
+          (A.EXPUPDATE2 (appexp, atexp_noID, (appexpleft, RBRACEright)))
         | appexp HASH LBRACE exprow RBRACE
           (A.EXPRECORD_UPDATE
              (appexp, Snoc.toList exprow, (appexpleft, RBRACEright)))

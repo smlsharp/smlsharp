@@ -251,7 +251,8 @@ struct
       | DEC (A.DECINFIXR _) => "DEC:DECINFIXR"
       | DEC (A.DECNONFIX _) => "DEC:DECNONFIX"
       | DEC (A.DECPOLYREC _) => "DEC:DECPOLYREC"
-      | EXPROW _ => "EXPROW"
+      | EXPROW (A.EXPROW _) => "EXPROW:EXPROW"
+      | EXPROW (A.EXPROWVAR _) => "EXPROW:EXPROWVAR"
       | LET_BODY _ => "LET_BODY"
       | MRULE _ => "MRULE"
       | DYNAMIC_MRULE _ => "DYNAMIC_MRULE"
@@ -560,7 +561,8 @@ struct
       | DEC (A.DECINFIXR (_, _, loc)) => loc
       | DEC (A.DECNONFIX (_, loc)) => loc
       | DEC (A.DECPOLYREC (_, loc)) => loc
-      | EXPROW (_, _, loc) => loc
+      | EXPROW (A.EXPROW (_, _, loc)) => loc
+      | EXPROW (A.EXPROWVAR (_, _, loc)) => loc
       | LET_BODY (_, loc) => loc
       | MRULE (_, _, loc) => loc
       | DYNAMIC_MRULE (_, _, _, loc) => loc
@@ -901,7 +903,9 @@ struct
       | DEC (A.DECINFIXR (prec, ids, loc)) => map VID ids
       | DEC (A.DECNONFIX (ids, loc)) => map VID ids
       | DEC (A.DECPOLYREC (pvalbinds, loc)) => map PVALBIND pvalbinds
-      | EXPROW (lab, exp, loc) => [LAB lab, EXP exp]
+      | EXPROW (A.EXPROW (lab, exp, loc)) => [LAB lab, EXP exp]
+      | EXPROW (A.EXPROWVAR (vid, NONE, loc)) => [VID vid]
+      | EXPROW (A.EXPROWVAR (vid, SOME ty, loc)) => [VID vid, TY ty]
       | LET_BODY (exps, loc) => map EXP exps
       | MRULE (pat, exp, loc) => [PAT pat, EXP exp]
       | DYNAMIC_MRULE (NONE, pat, exp, loc) => [PAT pat, EXP exp]
