@@ -113,6 +113,7 @@ struct
   fun decLoc dec =
       case dec of
         A.DECVAL (_, _, loc) => loc
+      | A.DECVALREC (_, _, loc) => loc
       | A.DECFUN (_, _, loc) => loc
       | A.DECTYPE (_, loc) => loc
       | A.DECDATATYPE (_, _, loc) => loc

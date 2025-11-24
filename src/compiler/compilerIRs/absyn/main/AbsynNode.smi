@@ -55,6 +55,7 @@ struct
     | MRULE of Absyn.mrule
     | DYNAMIC_MRULE of Absyn.dynamic_mrule
     | FRULE of Absyn.frule
+    | VALRECBIND of Absyn.valrecbind
     | FVALBIND of Absyn.fvalbind
     | PVALBIND of Absyn.pvalbind
     | VALDESC of Absyn.valdesc

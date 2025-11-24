@@ -297,7 +297,8 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | free_tyvar of A.tyvar
   | tyvarseq of A.tyvarseq
   | tyvars_comma of A.tyvar list
-  | valbind_1 of A.valbind
+  | valbind_1 of A.valrecbind
+  | valrecbind of A.valrecbind list
   | valbind of A.valbind list
   | pvalbind_1 of A.pvalbind
   | pvalbind of A.pvalbind list
@@ -1425,6 +1426,9 @@ dec
           (A.DECVAL (NONE, valbind, (VALleft, valbindright)))
         | VAL kinded_tyvarseq valbind
           (A.DECVAL (SOME kinded_tyvarseq, valbind, (VALleft, valbindright)))
+        | VAL REC kinded_tyvarseq valrecbind
+          (A.DECVALREC
+             (SOME kinded_tyvarseq, valrecbind, (VALleft, valrecbindright)))
         | VAL U_POLYREC pvalbind
           (A.DECPOLYREC (pvalbind, (VALleft, pvalbindright)))
         | FUN fvalbind
@@ -1566,13 +1570,19 @@ tyvars_comma
 
 valbind_1
         : pat EQ expOrSQL
-          (A.VALBIND (pat, expOrSQL, (patleft, expOrSQLright)))
+          (pat, expOrSQL, (patleft, expOrSQLright))
+
+valrecbind
+        : valbind_1
+          ([valbind_1])
+        | valbind_1 AND valrecbind
+          (valbind_1 :: valrecbind)
 
 valbind
         : valbind_1
-          ([valbind_1])
+          ([A.VALBIND valbind_1])
         | valbind_1 AND valbind
-          (valbind_1 :: valbind)
+          (A.VALBIND valbind_1 :: valbind)
         | REC valbind
           ([A.VALREC (valbind, (RECleft, valbindright))])
 

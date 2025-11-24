@@ -57,6 +57,7 @@ struct
     | MRULE of Absyn.mrule
     | DYNAMIC_MRULE of Absyn.dynamic_mrule
     | FRULE of Absyn.frule
+    | VALRECBIND of Absyn.valrecbind
     | FVALBIND of Absyn.fvalbind
     | PVALBIND of Absyn.pvalbind
     | VALDESC of Absyn.valdesc
@@ -236,6 +237,7 @@ struct
       | VALBIND (A.VALBIND _) => "VALBIND:VALBIND"
       | VALBIND (A.VALREC _) => "VALBIND:VALREC"
       | DEC (A.DECVAL _) => "DEC:DECVAL"
+      | DEC (A.DECVALREC _) => "DEC:DECVALREC"
       | DEC (A.DECFUN _) => "DEC:DECFUN"
       | DEC (A.DECTYPE _) => "DEC:DECTYPE"
       | DEC (A.DECDATATYPE _) => "DEC:DECDATATYPE"
@@ -254,6 +256,7 @@ struct
       | MRULE _ => "MRULE"
       | DYNAMIC_MRULE _ => "DYNAMIC_MRULE"
       | FRULE _ => "FRULE"
+      | VALRECBIND _ => "VALRECBIND"
       | FVALBIND _ => "FVALBIND"
       | PVALBIND _ => "PVALBIND"
       | VALDESC _ => "VALDESC"
@@ -543,6 +546,7 @@ struct
       | VALBIND (A.VALBIND (_, _, loc)) => loc
       | VALBIND (A.VALREC (_, loc)) => loc
       | DEC (A.DECVAL (_, _, loc)) => loc
+      | DEC (A.DECVALREC (_, _, loc)) => loc
       | DEC (A.DECFUN (_, _, loc)) => loc
       | DEC (A.DECTYPE (_, loc)) => loc
       | DEC (A.DECDATATYPE (_, _, loc)) => loc
@@ -561,6 +565,7 @@ struct
       | MRULE (_, _, loc) => loc
       | DYNAMIC_MRULE (_, _, _, loc) => loc
       | FRULE (_, _, _, loc) => loc
+      | VALRECBIND (_, _, loc) => loc
       | FVALBIND (_, loc) => loc
       | PVALBIND (_, _, _, loc) => loc
       | VALDESC (_, _, loc) => loc
@@ -873,6 +878,9 @@ struct
       | DEC (A.DECVAL (NONE, valbinds, loc)) => map VALBIND valbinds
       | DEC (A.DECVAL (SOME tyvarseq, valbinds, loc)) =>
         KINDED_TYVARSEQ tyvarseq :: map VALBIND valbinds
+      | DEC (A.DECVALREC (NONE, valbinds, loc)) => map VALRECBIND valbinds
+      | DEC (A.DECVALREC (SOME tyvarseq, valbinds, loc)) =>
+        KINDED_TYVARSEQ tyvarseq :: map VALRECBIND valbinds
       | DEC (A.DECFUN (NONE, fvalbinds, loc)) => map FVALBIND fvalbinds
       | DEC (A.DECFUN (SOME tyvarseq, fvalbinds, loc)) =>
         KINDED_TYVARSEQ tyvarseq :: map FVALBIND fvalbinds
@@ -901,6 +909,7 @@ struct
         [EXIST_QUANT exists, PAT pat, EXP exp]
       | FRULE (pat, NONE, exp, loc) => [PAT pat, EXP exp]
       | FRULE (pat, SOME ty, exp, loc) => [PAT pat, TY ty, EXP exp]
+      | VALRECBIND (pat, exp, loc) => [PAT pat, EXP exp]
       | FVALBIND (frules, loc) => map FRULE frules
       | PVALBIND (vid, ty, exp, loc) => [VID vid, TY ty, EXP exp]
       | VALDESC (vid, ty, loc) => [VID vid, TY ty]

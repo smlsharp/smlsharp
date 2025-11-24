@@ -569,10 +569,16 @@ struct
       | A.VALREC (valbinds, loc) =>
         A.VALREC (map (resolveValbind env) valbinds, loc)
 
+  and resolveValrecbind env (pat, exp, loc) =
+      (resolvePat env pat, resolveExp env exp, loc)
+
   and resolveDec env dec =
       case dec of
         A.DECVAL (tyvars, valbinds, loc) =>
         (emptyEnv, A.DECVAL (tyvars, map (resolveValbind env) valbinds, loc))
+      | A.DECVALREC (tyvars, valbinds, loc) =>
+        (emptyEnv,
+         A.DECVALREC (tyvars, map (resolveValrecbind env) valbinds, loc))
       | A.DECFUN (tyvars, fvalbinds, loc) =>
         (emptyEnv, A.DECFUN (tyvars, map (resolveFvalbind env) fvalbinds, loc))
       | A.DECTYPE _ => (emptyEnv, dec)

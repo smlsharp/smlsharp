@@ -456,6 +456,8 @@ struct
                     map elabRecbind (Snoc.toList recbinds),
                     LOC loc)]
         end
+      | A.DECVALREC (tyvarseq, valrecbinds, loc) =>
+        [P.PDVAL (seq' tyvarseq, nil, map elabValbind valrecbinds, LOC loc)]
       | A.DECPOLYREC (pvalbinds, loc) =>
         [P.PDVALPOLYREC (map elabPvalbind pvalbinds, LOC loc)]
       | A.DECFUN (tyvs, fvalbinds, loc) =>

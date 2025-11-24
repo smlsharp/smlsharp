@@ -309,9 +309,13 @@ struct
         A.VALBIND (pat, exp, loc) => union (ftvPat pat, ftvExp exp)
       | A.VALREC (valbinds, loc) => ftvList ftvValbind valbinds
 
+  and ftvValrecbind (pat, exp, loc) =
+      union (ftvPat pat, ftvExp exp)
+
   and ftvDec dec =
       case dec of
         A.DECVAL _ => empty (* guard point *)
+      | A.DECVALREC _ => empty (* guard point *)
       | A.DECFUN _ => empty (* guard point *)
       | A.DECPOLYREC _ => empty (* guard point *)
       | A.DECTYPE (typbinds, loc) => ftvList ftvTypbind typbinds
@@ -704,6 +708,9 @@ struct
       | A.VALREC (valbinds, loc) =>
         A.VALREC (map (decideValbind env) valbinds, loc)
 
+  and decideValrecbind env (pat, exp, loc) =
+      (pat, decideExp env exp, loc)
+
   and decideDec env dec =
       case dec of
         A.DECVAL (decl as (tyvarseq, valbinds, loc)) =>
@@ -711,6 +718,12 @@ struct
           val (env, tyvarseq) = decideScope ftvValbind env decl
         in
           A.DECVAL (tyvarseq, map (decideValbind env) valbinds, loc)
+        end
+      | A.DECVALREC (decl as (tyvarseq, valrecbinds, loc)) =>
+        let
+          val (env, tyvarseq) = decideScope ftvValrecbind env decl
+        in
+          A.DECVALREC (tyvarseq, map (decideValrecbind env) valrecbinds, loc)
         end
       | A.DECFUN (decl as (tyvars, fvalbinds, loc)) =>
         let

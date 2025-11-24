@@ -125,6 +125,7 @@ struct
 
   and dec =
       DECVAL of kinded_tyvarseq option * valbind list * loc
+    | DECVALREC of kinded_tyvarseq option * (pat * exp * loc) list * loc
     | DECFUN of kinded_tyvarseq option
                 * ((pat * ty option * exp * loc) list * loc) list
                 * loc
@@ -152,6 +153,8 @@ struct
   type dynamic_mrule = exist_quant option * pat * exp * loc
 
   type frule = pat * ty option * exp * loc
+
+  type valrecbind = pat * exp * loc
 
   type fvalbind = frule list * loc
 

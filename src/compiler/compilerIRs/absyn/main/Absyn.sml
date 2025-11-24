@@ -558,6 +558,20 @@ struct
        *)
       DECVAL of kinded_tyvarseq option * valbind list * loc
     | (*%
+       * @format(tyvarseq tyvarseqOpt * valbind valbinds * loc)
+       * !N0{
+       *   "val" +d
+       *   valbinds:decs(valbind)(
+       *     "rec" +d
+       *     tyvarseqOpt(tyvarseq)
+       *     tyvarseqOpt:ifsome()(+d,),
+       *     +1 "and" +d,
+       *   )
+       * }
+       *)
+      (* successor ML syntax *)
+      DECVALREC of kinded_tyvarseq option * valrecbind list * loc
+    | (*%
        * @format(tyvarseq tyvarseqOpt * fvalbind fvalbinds * loc)
        * !N0{
        *   "fu"
@@ -704,6 +718,13 @@ struct
        * !N0{ existsOpt(exists) existsOpt:ifsome()(+1,) pat +d "=>" +1 exp }
        *)
       exist_quant option * pat * exp * loc
+
+  and (*% @params(head) *) valrecbind =
+      (*%
+       * @format(pat * exp * loc)
+       * !N0{ head pat +d "=" +1 exp }
+       *)
+      pat * exp * loc
 
   and (*% @params(head) *) frule =
       (*%

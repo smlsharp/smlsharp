@@ -232,6 +232,7 @@ struct
   and scanDec c dec =
       case dec of
         A.DECVAL (tvars, rules, loc) => [S.ValDec]
+      | A.DECVALREC (tvars, rules, loc) => [S.ValrecDec]
       | A.DECPOLYREC (binds, loc1) => [S.ValrecDec]
       | A.DECFUN (tvars, frules, loc) => [S.FunDec]
       | A.DECTYPE x => [scanTypeDec c x]
