@@ -694,6 +694,11 @@ struct
        *)
       DECNONFIX of vid list * loc
     | (*%
+       * @format(exp * loc)
+       * !N0{ "do" +1 exp }
+       *)
+      DECDO of exp * loc
+    | (*%
        * @format(pvalbind pvalbinds * loc)
        * !N0{
        *   "val" +d

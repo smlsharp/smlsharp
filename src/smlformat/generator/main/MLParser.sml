@@ -246,6 +246,7 @@ struct
       | A.DECINFIX (prec, ids, loc) => [S.FixDec]
       | A.DECINFIXR (prec, ids, loc) => [S.FixDec]
       | A.DECNONFIX (ids, loc) => [S.FixDec]
+      | A.DECDO (exp, loc) => [S.ValDec]
       | A.DECSEMICOLON _ => []
 
   and scanDecList c decList =

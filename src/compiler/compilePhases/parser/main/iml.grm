@@ -1468,6 +1468,8 @@ dec
           (A.DECINFIXR (prec, vids, (INFIXRleft, vidsright)))
         | NONFIX vids
           (A.DECNONFIX (vids, (NONFIXleft, vidsright)))
+        | DO expOrSQL
+          (A.DECDO (expOrSQL, (DOleft, expOrSQLright)))
 
 prec
         : int

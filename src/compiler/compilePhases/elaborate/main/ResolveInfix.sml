@@ -604,6 +604,8 @@ struct
         (makeEnv (resolveFixity F.INFIXR loc prec) vids, dec)
       | A.DECNONFIX (vids, loc) =>
         (makeEnv F.NONFIX vids, dec)
+      | A.DECDO (exp, loc) =>
+        (emptyEnv, A.DECDO (resolveExp env exp, loc))
       | A.DECPOLYREC (pvalbinds, loc) =>
         (emptyEnv, A.DECPOLYREC (map (resolvePvalbind env) pvalbinds, loc))
 

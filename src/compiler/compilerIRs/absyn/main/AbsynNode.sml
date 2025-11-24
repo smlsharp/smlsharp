@@ -250,6 +250,7 @@ struct
       | DEC (A.DECINFIX _) => "DEC:DECINFIX"
       | DEC (A.DECINFIXR _) => "DEC:DECINFIXR"
       | DEC (A.DECNONFIX _) => "DEC:DECNONFIX"
+      | DEC (A.DECDO _) => "DEC:DECDO"
       | DEC (A.DECPOLYREC _) => "DEC:DECPOLYREC"
       | EXPROW (A.EXPROW _) => "EXPROW:EXPROW"
       | EXPROW (A.EXPROWVAR _) => "EXPROW:EXPROWVAR"
@@ -560,6 +561,7 @@ struct
       | DEC (A.DECINFIX (_, _, loc)) => loc
       | DEC (A.DECINFIXR (_, _, loc)) => loc
       | DEC (A.DECNONFIX (_, loc)) => loc
+      | DEC (A.DECDO (_, loc)) => loc
       | DEC (A.DECPOLYREC (_, loc)) => loc
       | EXPROW (A.EXPROW (_, _, loc)) => loc
       | EXPROW (A.EXPROWVAR (_, _, loc)) => loc
@@ -902,6 +904,7 @@ struct
       | DEC (A.DECINFIX (prec, ids, loc)) => map VID ids
       | DEC (A.DECINFIXR (prec, ids, loc)) => map VID ids
       | DEC (A.DECNONFIX (ids, loc)) => map VID ids
+      | DEC (A.DECDO (exp, loc)) => [EXP exp]
       | DEC (A.DECPOLYREC (pvalbinds, loc)) => map PVALBIND pvalbinds
       | EXPROW (A.EXPROW (lab, exp, loc)) => [LAB lab, EXP exp]
       | EXPROW (A.EXPROWVAR (vid, NONE, loc)) => [VID vid]

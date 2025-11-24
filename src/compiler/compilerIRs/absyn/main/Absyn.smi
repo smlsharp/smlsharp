@@ -144,6 +144,7 @@ struct
     | DECINFIX of string option * vid list * loc
     | DECINFIXR of string option * vid list * loc
     | DECNONFIX of vid list * loc
+    | DECDO of exp * loc
     | DECPOLYREC of (vid * ty * exp * loc) list * loc
 
   type sqlexp = (exp, pat, ty) AbsynSQL.top

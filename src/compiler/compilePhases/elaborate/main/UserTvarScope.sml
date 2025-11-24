@@ -333,6 +333,7 @@ struct
       | A.DECINFIX _ => empty
       | A.DECINFIXR _ => empty
       | A.DECNONFIX _ => empty
+      | A.DECDO (exp, loc) => ftvExp exp
 
   and ftvExprow exprow =
       case exprow of
@@ -761,6 +762,8 @@ struct
       | A.DECINFIX _ => dec
       | A.DECINFIXR _ => dec
       | A.DECNONFIX _ => dec
+      | A.DECDO (exp, loc) =>
+        A.DECDO (decideExp env exp, loc)
 
   and decideExprow env exprow =
       case exprow of

@@ -500,6 +500,9 @@ struct
         [P.PDINFIXRDEC(elabInfixPrec (n, loc), map toSymbol idlist, LOC loc)]
       | A.DECNONFIX (idlist, loc) =>
         [P.PDNONFIXDEC(map toSymbol idlist, LOC loc)]
+      | A.DECDO (exp, loc) =>
+        elabDec
+          (A.DECVAL (NONE, [A.VALBIND (A.PATTUPLE (nil, loc), exp, loc)], loc))
       | A.DECSEMICOLON _ =>
         nil
 
