@@ -12,7 +12,7 @@ _require local "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 
 structure Elaborator =

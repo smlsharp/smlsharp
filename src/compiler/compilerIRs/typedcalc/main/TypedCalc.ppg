@@ -97,10 +97,10 @@ structure TypedCalc = struct
       Types.btvEnv
 
   (*%
-    @formatter(PatternCalc.caseKind) PatternCalc.format_caseKind
+    @formatter(IDCalc.caseKind) IDCalc.format_caseKind
    *)
   (*% @prefix formatWithType_
-    @formatter(PatternCalc.caseKind) PatternCalc.format_caseKind
+    @formatter(IDCalc.caseKind) IDCalc.format_caseKind
    *)
   type caseKind
     = (*%
@@ -109,7 +109,7 @@ structure TypedCalc = struct
       (*% @prefix formatWithType_
         @format(x) x
        *)
-      PatternCalc.caseKind
+      IDCalc.caseKind
 
   (*%
     @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant

@@ -12,7 +12,6 @@ struct
   structure TB = TypesBasics
   structure TIU = TypeInferenceUtils
   structure BT = BuiltinTypes
-  structure PC = PatternCalc
   structure TC = TypedCalc
   structure UP = UserLevelPrimitive
   (* structure RU = ReifyUtils *)
@@ -206,7 +205,7 @@ struct
                      loc = loc}
               val caseExp =
                   TC.TPCASEM
-                    {caseKind = PC.MATCH,
+                    {caseKind = IDCalc.MATCH,
                      expList = [dynamicExp],
                      expTyList = [patTy],
                      loc = loc,

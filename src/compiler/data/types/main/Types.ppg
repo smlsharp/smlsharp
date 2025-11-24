@@ -273,6 +273,7 @@ struct
 
   datatype kindProperty = REIFY | BOXED | UNBOXED | EQ
   fun propertiesOf x = x
+  fun toProperties x = x
   val emptyProperties =
       {reify = false, boxed = false, unboxed = false, eq = false}
   val eqProperties =

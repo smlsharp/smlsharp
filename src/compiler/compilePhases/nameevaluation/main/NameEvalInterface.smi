@@ -12,7 +12,7 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TvarMap.smi"
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require local "./EvalSig.smi"
 _require local "./EvalTy.smi"
 _require local "./FunctorUtils.smi"
@@ -30,7 +30,7 @@ _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require local "../../analyzefiles/main/Analyzers.smi"
 _require local "../../analyzefiles/main/DBSchema.smi"
@@ -41,19 +41,19 @@ _require local "./NameEvalEnvPrims.smi"
 structure NameEvalInterface =
 struct
   type interfaceEnv = {decls: IDCalc.icdecl list,
-                       source: PatternCalcInterface.pitopdec list,
+                       source: PatternCalcInterface.topdec list,
                        topEnv: NameEvalEnv.topEnv} InterfaceID.Map.map
   val evalPitopdecList : IDCalc.version
                          -> NameEvalEnv.topEnv
-                         -> Longsymbol.Set.set * PatternCalcInterface.pitopdec list
+                         -> Longsymbol.Set.set * PatternCalcInterface.topdec list
                          -> Longsymbol.Set.set * NameEvalEnv.topEnv * IDCalc.icdecl list
   val evalPistr : IDCalc.version
                   -> SymbolWithLoc.symbol list
                   -> NameEvalEnv.topEnv
-                     -> Longsymbol.Set.set * PatternCalcInterface.pistrexp
+                     -> Longsymbol.Set.set * PatternCalcInterface.strexp
                         -> Longsymbol.Set.set * NameEvalEnv.strEntry * IDCalc.icdecl list
   val internalizeEnv : NameEvalEnv.env -> NameEvalEnv.env
   val evalInterfaces : NameEvalEnv.topEnv
-                       -> PatternCalcInterface.interfaceDec list
+                       -> PatternCalcInterface.interface_dec list
                           -> interfaceEnv
 end

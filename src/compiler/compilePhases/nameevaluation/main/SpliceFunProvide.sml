@@ -7,8 +7,10 @@ struct
 local
   structure PL = PatternCalc
   structure PI = PatternCalcInterface
+  structure PI1 = PatternCalcInterface1
   structure EU = UserErrorUtils
   structure E = NameEvalError
+  fun toSymbol (sym, loc) = {symbol = sym, loc = Loc.LOC loc}
 in
   fun filterFundecls provideList =
       let
@@ -16,9 +18,9 @@ in
             foldl
             (fn (pitopdec, fundeclEnv) =>
                 case pitopdec of
-                  PI.PIDEC _ => fundeclEnv
-                | PI.PIFUNDEC (funbind as {functorSymbol,...}) => 
-                  Symbol.Map.insert(fundeclEnv, #symbol functorSymbol, funbind)
+                  PI.TOPDEC _ => fundeclEnv
+                | PI.TOPFUNCTOR (funbind as {1=functorSymbol,...}) =>
+                  Symbol.Map.insert(fundeclEnv, #1 functorSymbol, funbind)
             )
             Symbol.Map.empty
             provideList
@@ -26,9 +28,9 @@ in
         fundeclEnv
       end
 
-  fun spliceFunbind (funbind as {name, ...}, (funbindsRev, fundeclEnv)) =
+  fun spliceFunbind (funbind as {1=name, ...}, (funbindsRev, fundeclEnv)) =
       let
-        val (fundeclEnv, providedecl) = Symbol.Map.remove(fundeclEnv, #symbol name)
+        val (fundeclEnv, providedecl) = Symbol.Map.remove(fundeclEnv, #1 name)
       in
         ({pltopdec=funbind, pitopdec=SOME providedecl}::funbindsRev, fundeclEnv)
       end
@@ -36,18 +38,18 @@ in
 
   fun spliceTopdec (topdec, (topdecRev, fundeclEnv)) =
       case topdec of
-        PL.PLTOPDECSTR plstrdec => (PI.TOPDECSTR plstrdec::topdecRev, fundeclEnv)
-      | PL.PLTOPDECSIG (sigdeclList, loc) =>
-        (PI.TOPDECSIG (sigdeclList, loc)::topdecRev, fundeclEnv)
-      | PL.PLTOPDECFUN (funbindList, loc) =>
+        PL.TOPSTRDEC plstrdec => (PI1.TOPDECSTR plstrdec::topdecRev, fundeclEnv)
+      | PL.TOPSIGNATURE (sigdeclList, loc) =>
+        (PI1.TOPDECSIG (map (fn (s,e,l) => (toSymbol s, e, l)) sigdeclList, loc)::topdecRev, fundeclEnv)
+      | PL.TOPFUNCTOR (funbindList, loc) =>
         let
           val (funbindListRev, fundeclEnv) = foldl spliceFunbind (nil,fundeclEnv) funbindList 
         in
-          (PI.TOPDECFUN (List.rev funbindListRev, loc)::topdecRev, fundeclEnv)
+          (PI1.TOPDECFUN (List.rev funbindListRev, loc)::topdecRev, fundeclEnv)
         end
 
   fun spliceProvideFundecl ({interface, topdecsSource} : PI.compile_unit)
-      : PI.compile_unit_spliced =
+      : PI1.compile_unit_spliced =
       let
         val {provideTopdecs, topdecsInclude, ...} = interface
         val fundeclEnv = filterFundecls provideTopdecs
@@ -55,17 +57,17 @@ in
             foldl
             spliceTopdec
             (nil, fundeclEnv)
-            (map PL.PLTOPDECSIG topdecsInclude)
+            (map PL.TOPSIGNATURE topdecsInclude)
         val (topdecsSourceRev, fundeclEnv) =
             foldl
             spliceTopdec
             (nil, fundeclEnv)
             topdecsSource
         val _ = Symbol.Map.app
-                  (fn {functorSymbol, ...} =>
+                  (fn {1=functorSymbol, ...} =>
                       EU.enqueueError
-                        (#loc functorSymbol,
-                         E.ProvideUndefinedFunctor("200",{symbol= #symbol functorSymbol}))
+                        (Loc.LOC (#2 functorSymbol),
+                         E.ProvideUndefinedFunctor("200",{symbol= #1 functorSymbol}))
                   )
                   fundeclEnv
       in

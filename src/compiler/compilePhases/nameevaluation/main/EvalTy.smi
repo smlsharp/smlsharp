@@ -20,10 +20,9 @@ _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
 _require "./NameEvalEnv.ppg.smi"
 _require local "./NameEvalEnvPrims.smi"
 
@@ -31,18 +30,19 @@ structure EvalTy =
 struct
   type tvarEnv = IDCalc.tvar Symbol.Map.map
   val emptyTvarEnv : tvarEnv
-  val genTvarList : tvarEnv -> AbsynTy.tyvar list -> tvarEnv * IDCalc.tvar list
-  val evalTy : tvarEnv -> NameEvalEnv.env -> AbsynTy.ty -> IDCalc.ty
-  val evalTyWithFlex : tvarEnv -> NameEvalEnv.env -> AbsynTy.ty -> IDCalc.ty
+  val genTvarList : tvarEnv -> PatternCalc.tyvar list -> tvarEnv * IDCalc.tvar list
+  val evalTy : tvarEnv -> NameEvalEnv.env -> PatternCalc.mono_ty -> IDCalc.ty
+  val evalPolyTy : tvarEnv -> NameEvalEnv.env -> PatternCalc.poly_ty -> IDCalc.ty
+  val evalTyWithFlex : tvarEnv -> NameEvalEnv.env -> PatternCalc.annot_ty -> IDCalc.ty
   val getProperty : tvarEnv -> NameEvalEnv.env -> PatternCalcInterface.opaque_impl -> Loc.loc -> IDCalc.property
   val compatProperty : {abs:IDCalc.property, impl:IDCalc.property} -> bool
-  val evalTvar : tvarEnv -> AbsynTy.tyvar -> IDCalc.tvar
-  val evalFfity : tvarEnv -> NameEvalEnv.env -> PatternCalc.ffiTy -> IDCalc.ffiTy
+  val evalTvar : tvarEnv -> PatternCalc.tyvar -> IDCalc.tvar
+  val evalFfity : tvarEnv -> NameEvalEnv.env -> PatternCalc.ffi_ty -> IDCalc.ffiTy
   val emptyScopedTvars : IDCalc.scopedTvars
   val evalScopedTvars : 
       tvarEnv 
       -> NameEvalEnv.env
-      -> PatternCalc.scopedTvars
+      -> PatternCalc.kinded_tyvarseq
       -> tvarEnv * IDCalc.kindedTvar list
   val evalDatatype :
       NameEvalEnv.env

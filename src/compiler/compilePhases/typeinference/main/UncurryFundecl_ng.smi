@@ -6,7 +6,7 @@ _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 (* _require local "../../../libs/env/main/SEnv.smi" *)
 
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 (* _require local "../../../compilerIRs/typedcalc/main/TCAlphaRename.smi" *)
 _require local "../../../data/types/main/TyAlphaRename.smi"

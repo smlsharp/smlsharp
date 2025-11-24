@@ -14,7 +14,6 @@ struct
   fun enqueueError (loc, exn) = UserErrorUtils.enqueueError (LOC loc, exn)
   fun toSymbol ((sym, loc) : A.vid) = {symbol = sym, loc = LOC loc}
   fun seq (SOME (items, _)) = items | seq NONE = nil
-  fun seq' (SOME (items, loc)) = (items, LOC loc) | seq' NONE = (nil, NOLOC)
 
   type fix_env = (Fixity.fixity * Absyn.loc) Symbol.Map.map
   val emptyFixEnv = Symbol.Map.empty : fix_env
@@ -41,6 +40,12 @@ struct
       union (ftvTy ty, ftvOverloadInstance inst)
   and ftvOverloadCase (tyvar, ty, mrules, loc) =
       unionList (singleton tyvar :: ftvTy ty :: map ftvOverloadMrule mrules)
+  fun ftvValbind valbind =
+      case valbind of
+        I.VAL_EXTERN (id, ty, loc) => ftvTy ty
+      | I.VAL_ALIAS (id, longid, loc) => Symbol.Map.empty
+      | I.VAL_BUILTIN (id, name, ty, loc) => ftvTy ty
+      | I.VAL_OVERLOAD (id, ovcase, loc) => ftvOverloadCase ovcase
   end
 
   fun toScopedTvars ftv loc =
@@ -55,107 +60,58 @@ struct
             else ()
         val env = union (env, union (singleton tyvar, ftvTy ty))
       in
-        {tyvar = tyvar,
-         expTy = ElaborateTy.elabMonoTy ty,
-         matches = map (elabOverloadMrule env) mrules,
-         loc = LOC loc}
+        (#2 tyvar,
+         ElaborateTy.elabMonoTy ty,
+         map (elabOverloadMrule env) mrules,
+         LOC loc)
       end
 
   and elabOverloadMrule env (ty, inst, loc) =
-      {instTy = ElaborateTy.elabMonoTy ty,
-       instance = elabOverloadInst env inst}
+      (ElaborateTy.elabMonoTy ty, elabOverloadInst env inst, LOC loc)
 
   and elabOverloadInst env inst =
       case inst of
         I.INST_OVERLOAD ovcase =>
         P.INST_OVERLOAD (elabOverloadCase env ovcase)
       | I.INST_LONGVID id =>
-        P.INST_LONGVID {longsymbol = SymbolWithLoc.fromAbsyn id}
+        P.INST_LONGVID id
       | I.INST_PAREN (inst, loc) =>
         elabOverloadInst env inst
 
-  fun elabScopedTvars tyvarseq ftv =
-      let
-        open ElaborateTy
-        val implicitlyScoped = setMinus (ftv, kindedTyvarseqToSet tyvarseq)
-        val (tyvarseq, loc) = seq' tyvarseq
-      in
-        (tyvarseq @ toKindedTyvars implicitlyScoped, loc)
-      end
-
-  fun elabValbind (tyvarseq, valbind, loc) =
+  fun elabValbind valbind =
       case valbind of
         I.VAL_EXTERN (id, ty, loc) =>
-        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ElaborateTy.ftvTy ty),
-                 symbol = toSymbol id,
-                 body = P.VAL_EXTERN {ty = ElaborateTy.elabRank1Ty ty},
-                 loc = LOC loc}
+        P.VAL_EXTERN (id, ElaborateTy.elabPolyTy ty, LOC loc)
       | I.VAL_ALIAS (id, longid, loc) =>
-        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq Symbol.Map.empty,
-                 symbol = toSymbol id,
-                 body = P.VALALIAS_EXTERN (SymbolWithLoc.fromAbsyn longid),
-                 loc = LOC loc}
+        P.VAL_ALIAS (id, longid, LOC loc)
       | I.VAL_BUILTIN (id, name, ty, loc) =>
-        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ElaborateTy.ftvTy ty),
-                 symbol = toSymbol id,
-                 body = P.VAL_BUILTIN {builtinSymbol = toSymbol name,
-                                       ty = ElaborateTy.elabRank1Ty ty},
-                 loc = LOC loc}
-      | I.VAL_OVERLOAD (id, exp, loc) =>
-        P.PIVAL {scopedTvars = elabScopedTvars tyvarseq (ftvOverloadCase exp),
-                 symbol = toSymbol id,
-                 body = P.VAL_OVERLOAD (elabOverloadCase Symbol.Map.empty exp),
-                 loc = LOC loc}
+        P.VAL_BUILTIN (id, name, ElaborateTy.elabPolyTy ty, LOC loc)
+      | I.VAL_OVERLOAD (id, ovcase as (_, _, _, loc1), loc) =>
+        P.VAL_OVERLOAD (id, elabOverloadCase Symbol.Map.empty ovcase, LOC loc)
 
-  fun elabExbind exbind =
-      case exbind of
-        I.EXBIND ((_, id, _), ty, loc) =>
-        P.PIEXCEPTION {symbol = toSymbol id,
-                       ty = Option.map ElaborateTy.elabMonoTy ty,
-                       loc = LOC loc}
-      | I.EXBINDREP ((_, id, _), (_, longid, _), loc) =>
-        P.PIEXCEPTIONREP {symbol = toSymbol id,
-                          longsymbol = SymbolWithLoc.fromAbsyn longid,
-                          loc = LOC loc}
-
-  fun elabOpaqueImpl impl =
-      case impl of
-        I.IMPL_TY longid => P.IMPL_TY (SymbolWithLoc.fromAbsyn longid)
-      | I.IMPL_TUPLE _ => P.IMPL_TUPLE
-      | I.IMPL_RECORD _ => P.IMPL_RECORD
-      | I.IMPL_FUNC _ => P.IMPL_FUNC
-
-  fun elabTypdesc eq (tyvars, tycon, runtimeTy, loc) =
-      P.PIOPAQUE_TYPE {eq = eq,
-                       tyvars = seq tyvars,
-                       symbol = toSymbol tycon,
-                       runtimeTy = elabOpaqueImpl runtimeTy,
-                       loc = LOC loc}
+  fun elabTypdesc eq (tyvars, tycon, impl, loc) =
+      P.DECTYPDESC (eq, (map #2 (seq tyvars), tycon, impl, LOC loc))
 
   fun elabTypbind typbind =
       case typbind of
-      I.TYPBIND (tyvars, tycon, ty, loc) =>
-      P.PITYPE {tyvars = seq tyvars,
-                symbol = toSymbol tycon,
-                ty = ElaborateTy.elabMonoTy ty,
-                loc = LOC loc}
-    | I.TYPDESC typdesc => elabTypdesc false typdesc
-
-  fun elabConbind ((_, vid, _), ty, loc) =
-      {symbol = toSymbol vid,
-       ty = Option.map ElaborateTy.elabMonoTy ty,
-       loc = LOC loc}
-
-  fun elabDatbind (tyvarseq, tycon, conbinds, loc) =
-      {tyvars = seq tyvarseq,
-       symbol = toSymbol tycon,
-       conbind = map elabConbind conbinds,
-       loc = LOC loc}
+      I.TYPBIND typbind =>
+      P.DECTYPBIND (ElaborateCore.elabTypbind typbind)
+    | I.TYPDESC typdesc =>
+      elabTypdesc false typdesc
 
   fun elabDec dec =
       case dec of
-        I.DECVAL decval =>
-        [elabValbind decval]
+        I.DECVAL (tyvarseq, valbind, _) =>
+        let
+          val ftv = ftvValbind valbind
+          val btv = ElaborateTy.kindedTyvarseqToSet tyvarseq
+          val implicitlyScoped = ElaborateTy.setMinus (ftv, btv)
+          val tyvars = ElaborateTy.toKindedTyvars implicitlyScoped
+          val tyvarseq = ElaborateTy.appendTyvarseq (tyvarseq, tyvars)
+          val tyvarseq = ElaborateTy.elabKindedTyvarseq tyvarseq
+        in
+          [P.DECVAL (tyvarseq, elabValbind valbind)]
+        end
       | I.DECTYPE (typbinds, _) =>
         map elabTypbind typbinds
       | I.DECEQTYPE (typdescs, _) =>
@@ -163,32 +119,20 @@ struct
       | I.DECDATATYPE (datbinds, withty, loc) =>
         let
           val datbinds = ElaborateTy.reduceDatbind (datbinds, withty)
+          val datbinds = map ElaborateCore.elabDatbind datbinds
+          val typbinds = map ElaborateCore.elabTypbind (seq withty)
         in
-          P.PIDATATYPE
-            {datbind = map elabDatbind datbinds,
-             withty = map (fn (tvars, id, ty, loc) =>
-                              (seq tvars,
-                               toSymbol id,
-                               ElaborateTy.elabMonoTy ty,
-                               LOC loc))
-                          (seq withty),
-             loc = LOC loc}
-          :: map (elabTypbind o I.TYPBIND) (seq withty)
+          P.DECDATATYPE (datbinds, typbinds, LOC loc)
+          :: map P.DECTYPBIND typbinds
         end
       | I.DECDATATYPEREP (tycon, longtycon, loc) =>
-        [P.PITYPEREP {symbol = toSymbol tycon,
-                      longsymbol = SymbolWithLoc.fromAbsyn longtycon,
-                      loc = LOC loc}]
+        [P.DECDATATYPEREP (tycon, longtycon, LOC loc)]
       | I.DECTYPEBUILTIN (tycon, builtin, loc) =>
-        [P.PITYPEBUILTIN {symbol = toSymbol tycon,
-                          builtinSymbol = toSymbol builtin,
-                          loc = LOC loc}]
+        [P.DECTYPEBUILTIN (tycon, builtin, LOC loc)]
       | I.DECEXCEPTION (exbind, _) =>
-        map elabExbind exbind
+        map (P.DECEXCEPTION o ElaborateCore.elabExbind) exbind
       | I.DECSTRUCTURE ((strid, strexp, loc), _) =>
-        [P.PISTRUCTURE {symbol = toSymbol strid,
-                        strexp = elabStrexp strexp,
-                        loc = LOC loc}]
+        [P.DECSTRUCTURE (strid, elabStrexp strexp, LOC loc)]
       | I.DECSEMICOLON _ => nil
 
   and elabDecs decs =
@@ -197,35 +141,30 @@ struct
   and elabStrexp strexp =
       case strexp of
         I.STRBASIC (decs, loc) =>
-        P.PISTRUCT {decs = elabDecs decs, loc = LOC loc}
-      | I.STRID (strid as (_, _, loc)) =>
-        P.PISTRUCTREP
-          {longsymbol = SymbolWithLoc.fromAbsyn strid, loc = LOC loc}
+        P.STRBASIC (elabDecs decs, LOC loc)
+      | I.STRID strid =>
+        P.STRID strid
       | I.STRAPP (funid, strid, loc) =>
-        P.PIFUNCTORAPP {functorSymbol = toSymbol funid,
-                        argument = SymbolWithLoc.fromAbsyn strid,
-                        loc = LOC loc}
+        P.STRAPP (funid, strid, LOC loc)
 
   fun elabFunbind ((funid, param, strexp, loc):I.funbind) =
       let
-        val param =
+        val (strid, sigexp) =
             case param of
               SOME (I.FUNPARAM (symbol, sigexp, loc)) =>
-              {strSymbol = toSymbol symbol,
-               sigexp = ElaborateModule.elabSigexp sigexp}
+              (symbol, sigexp)
             | SOME (I.FUNPARAM_SPEC (specLoc as (_, loc))) =>
               (enqueueError (loc, E.DerivedFormFunArg);
-               {strSymbol = {symbol = Symbol.generate NONE, loc = LOC loc},
-                sigexp = ElaborateModule.elabSigexp (A.SIGBASIC specLoc)})
+               ((Symbol.generate NONE, loc), A.SIGBASIC specLoc))
             | NONE =>
               (enqueueError (loc, E.DerivedFormFunArg);
-               {strSymbol = {symbol = Symbol.generate NONE, loc = LOC loc},
-                sigexp = ElaborateModule.elabSigexp (A.SIGBASIC (nil, loc))})
+               ((Symbol.generate NONE, loc), A.SIGBASIC (nil, loc)))
       in
-         P.PIFUNDEC {functorSymbol = toSymbol funid,
-                     param = param,
-                     strexp = elabStrexp strexp,
-                     loc = LOC loc}
+        (funid,
+         strid,
+         ElaborateModule.elabSigexp sigexp,
+         elabStrexp strexp,
+         LOC loc)
       end
 
   fun toFixEnv fixity ids =
@@ -236,9 +175,9 @@ struct
   fun elabTopdec itopdec =
       case itopdec of
       I.TOPDEC dec =>
-      (Symbol.Map.empty, map P.PIDEC (elabDec dec))
+      (Symbol.Map.empty, map P.TOPDEC (elabDec dec))
     | I.TOPFUNCTOR (funbind, _) =>
-      (Symbol.Map.empty, [elabFunbind funbind])
+      (Symbol.Map.empty, [P.TOPFUNCTOR (elabFunbind funbind)])
     | I.TOPINFIX (n, ids, loc) =>
       (toFixEnv (Fixity.INFIX (ElaborateCore.elabInfixPrec (n, loc))) ids, nil)
     | I.TOPINFIXR (n, ids, loc) =>
@@ -264,7 +203,7 @@ struct
                          provideTopdecs} : AbsynInterfaceLoaded.interface_dec) =
       let
         val (fixEnv, provideTopdecs) = elabTopdecs provideTopdecs
-        val dec : P.interfaceDec =
+        val dec : P.interface_dec =
             {interfaceId = interfaceId,
              interfaceName = interfaceName,
              requiredIds = requiredIds,

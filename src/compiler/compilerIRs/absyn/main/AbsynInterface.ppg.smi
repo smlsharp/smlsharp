@@ -107,6 +107,9 @@ struct
   val format_overload_instance : overload_instance -> SMLFormat.format
   val format_overload_case : overload_case -> SMLFormat.format
   val format_valbind : SMLFormat.format -> valbind -> SMLFormat.format
+  val format_dec : dec -> SMLFormat.format
+  val format_strexp : strexp -> SMLFormat.format
+  val format_funbind : SMLFormat.format -> funbind -> SMLFormat.format
   val format_topdec : topdec -> SMLFormat.format
 
 end

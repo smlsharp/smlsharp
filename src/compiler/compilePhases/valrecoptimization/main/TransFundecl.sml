@@ -57,7 +57,7 @@ in
               foldr
                 (fn (argVar, body) =>
                     ICFNM([{args = [ICPATVAR_TRANS argVar], body = body}], loc))
-                (ICCASEM (map ICVAR argVarList, rules, PatternCalc.MATCH, loc))
+                (ICCASEM (map ICVAR argVarList, rules, IDCalc.MATCH, loc))
                 argVarList
             end
       in

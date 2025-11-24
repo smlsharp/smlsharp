@@ -23,7 +23,7 @@ _require local "../../../compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi"
 _require local "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
-_require local "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
 _require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 (* _require local "../../../data/types/main/VarMap.smi" *)
 _require "../../../compilePhases/parser/main/Parser.smi"

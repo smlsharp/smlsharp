@@ -5,9 +5,7 @@ _require local "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Longsymbol.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
 structure NameEvalError =
@@ -16,7 +14,7 @@ structure NameEvalError =
     exception CyclicKind of (code * {tvarList: IDCalc.tvar list})
     exception IllegalBuiltinTy of code * {symbol: Longsymbol.longsymbol}
     exception InvalidOverloadInst of code * {longsymbol: Longsymbol.longsymbol}
-    exception FFIFunTyIsNotAllowedHere of code * PatternCalc.ffiTy
+    exception FFIFunTyIsNotAllowedHere of code * PatternCalc.ffi_ty
     exception ProvideFunctorMismatch of code * {longsymbol: Longsymbol.longsymbol}
     exception ProvideFunparamMismatch of code * 
                                          {longsymbol: Longsymbol.longsymbol}
@@ -144,8 +142,8 @@ structure NameEvalError =
     exception DuplicateSigname of code * Symbol.symbol
     exception ImproperSigshare of code * {longsymbol: Longsymbol.longsymbol}
     exception ImproperSigwhere of code * {longsymbol: Longsymbol.longsymbol}
-    exception NonConstructor of code * {pat:PatternCalc.plpat}
-    exception IlleagalFunID of code * {pat:PatternCalc.plpat}
+    exception NonConstructor of code * {pat:PatternCalc.pat}
+    exception IlleagalFunID of code * {pat:PatternCalc.pat}
     exception TvarNotFound of code * {symbol: Symbol.symbol}
     exception TypNotFound of code * {longsymbol: Longsymbol.longsymbol}
     exception VarNotFound of code * {longsymbol: Longsymbol.longsymbol}
@@ -159,9 +157,9 @@ structure NameEvalError =
     exception StrNotFound of code * {longsymbol: Longsymbol.longsymbol}
     exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Longsymbol.longsymbol})
     exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Longsymbol.longsymbol})
-    exception InvalidKind of code * AbsynTy.kind
+    exception InvalidKind of code * PatternCalc.mono PatternCalc.kind
+    exception InvalidAnnotKind of code * PatternCalc.annot PatternCalc.kind
     exception InvalidKindName of code * string
-    exception FlexRecordNotAllowed of code * AbsynTy.ty
     exception LIFTEDPropNotAllowedInOpaqueInterface of code * {symbol:Symbol.symbol}
     exception BindReservedName of Symbol.symbol
     exception SigIDFoundInInterfaceFunArg of Symbol.symbol

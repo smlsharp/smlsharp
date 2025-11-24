@@ -5,8 +5,6 @@ _require local "../../../extensions/debug/main/Bug.smi"
 (* _require local "../../../libs/env/main/SEnv.smi" *)
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
-(* _require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi" *)
-(* _require local "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi" *)
 _require local "../../../data/types/main/TvarMap.smi"
 (* _require local "../../../compilerIRs/idcalc/main/EvalIty.smi" *)
 (* _require local "./EvalSig.smi" *)

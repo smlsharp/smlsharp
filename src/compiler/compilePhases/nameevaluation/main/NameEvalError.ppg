@@ -26,11 +26,12 @@ in
 
   (*%
      @formatter(IDCalc.tvar) IDCalc.format_tvar
-     @formatter(PatternCalc.plpat) PatternCalc.format_plpat
-     @formatter(PatternCalc.ffiTy) PatternCalc.format_ffiTy
+     @formatter(PatternCalc.pat) PatternCalc.format_pat
+     @formatter(PatternCalc.ffi_ty) PatternCalc.format_ffi_ty
      @formatter(RecordLabel.label) RecordLabel.format_label
-     @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty
-     @formatter(AbsynTy.kind) AbsynTyFormatter.format_kind
+     @formatter(PatternCalc.ty) PatternCalc.format_ty
+     @formatter(PatternCalc.mono_kind) PatternCalc.format_mono_kind
+     @formatter(PatternCalc.annot_kind) PatternCalc.format_annot_kind
    *)
   exception
   (*%
@@ -137,7 +138,7 @@ in
      "variable" +d "pattern" +d "expected" +d "for" +d "function" +d "id:"
      +1 pat 
    *)
-  IlleagalFunID of (code * {pat : PatternCalc.plpat})
+  IlleagalFunID of (code * {pat : PatternCalc.pat})
 
   and
   (*%
@@ -146,7 +147,7 @@ in
     "constructor" +d "expected" +d "in" +d "a"
     +d "constructor" +d "pattern:" +1 pat 
    *)
-  NonConstructor of (code * {pat : PatternCalc.plpat})
+  NonConstructor of (code * {pat : PatternCalc.pat})
 
   and
   (*%
@@ -1278,7 +1279,7 @@ in
      "foreign" +d "function" +d "type" +d "is" +d "not" +d "allowed" +d "here:"
      +d ty
    *)
-  FFIFunTyIsNotAllowedHere of (code * PatternCalc.ffiTy)
+  FFIFunTyIsNotAllowedHere of (code * PatternCalc.ffi_ty)
 
   and
   (**
@@ -1308,19 +1309,17 @@ in
      "(name evaluation" +d code ")" +d
      "invalid" +d "kind:" +d s
    *)
-  InvalidKind of code * AbsynTy.kind
+  InvalidKind of code * PatternCalc.mono_kind
 
   and
   (**
    *)
   (*%
-     @format(code * ty)
+     @format(code * s)
      "(name evaluation" +d code ")" +d
-     "partial" +d "record" +d "type" +d "not"
-     +d "allowed" +d "in" +d "type" +d "declaration:"
-     +d ty
+     "invalid" +d "kind:" +d s
    *)
-  FlexRecordNotAllowed of code * AbsynTy.ty
+  InvalidAnnotKind of code * PatternCalc.annot_kind
 
   and
   (**

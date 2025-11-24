@@ -8,7 +8,7 @@ _require "../../../data/types/main/Types.ppg.smi"
 (* _require "../../../extensions/reflection/main/ReifyUtils.smi" *)
 _require local "../../../extensions/reflection/main/ReifiedTyData.smi"
 (* _require local "../../../compilerIRs/absyn/main/Absyn.ppg.smi" *)
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 (* _require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi" *)
 (* _require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi" *)
 (* _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi" *)

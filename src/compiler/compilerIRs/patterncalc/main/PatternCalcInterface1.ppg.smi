@@ -1,0 +1,32 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
+_require "./PatternCalc.smi"
+_require "./PatternCalcInterface.smi"
+
+structure PatternCalcInterface1 =
+struct
+  type loc = Loc.loc
+
+  type symbol = SymbolWithLoc.symbol
+
+  datatype topdec
+    = TOPDECSTR of PatternCalc.strdec
+    | TOPDECSIG of (symbol * PatternCalc.sigexp * loc) list * loc
+    | TOPDECFUN of
+      {pltopdec: PatternCalc.funbind,
+       pitopdec: PatternCalcInterface.funbind option}
+        list * loc
+
+  type compile_unit_spliced =
+      {
+        interface : (Loc.pos * Loc.pos) PatternCalcInterface.interface,
+        topdecsInclude : topdec list,
+        topdecsSource : topdec list
+      }
+
+  val format_compile_unit_spliced : compile_unit_spliced -> SMLFormat.format
+
+end

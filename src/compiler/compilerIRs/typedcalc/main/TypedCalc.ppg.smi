@@ -7,11 +7,10 @@ _require "../../../data/name/main/CodeLabel.smi"
 
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 
 structure TypedCalc =
   struct
@@ -39,7 +38,7 @@ structure TypedCalc =
     datatype tpexp
       = TPAPPM of {argExpList:tpexp list, funExp:tpexp, funTy:Types.ty,
                    loc:Loc.loc}
-      | TPCASEM of {caseKind:PatternCalc.caseKind, expList:tpexp list,
+      | TPCASEM of {caseKind:IDCalc.caseKind, expList:tpexp list,
                     expTyList:Types.ty list, loc:Loc.loc, ruleBodyTy:Types.ty,
                     ruleList:{args:tppat list, body:tpexp} list}
       | TPSWITCH of

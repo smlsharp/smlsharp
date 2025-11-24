@@ -15,7 +15,7 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 (* _require local "../../../compilerIRs/idcalc/main/EvalIty.smi" *)
 _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TvarMap.smi"
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require local "./CheckProvide.smi"
 _require local "./EvalSig.smi"
 _require local "./EvalTy.smi"
@@ -31,7 +31,8 @@ _require local "./TfunVars.smi"
 _require local "./SpliceFunProvide.smi"
 _require local "./RenameLongsymbol.smi"
 
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
@@ -55,7 +56,7 @@ structure NameEval =
                        warnings : UserError.errorInfo list}
 
     val evalBuiltin
-        : PatternCalcInterface.pitopdec list
+        : PatternCalcInterface.topdec list
           -> NameEvalEnv.topEnv * IDCalc.icdecl list
 
     val nameEvalInterface

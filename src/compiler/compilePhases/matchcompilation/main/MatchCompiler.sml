@@ -55,7 +55,6 @@ local
   structure C = Control
   structure A = AbsynConst
   structure T = Types
-  structure PC = PatternCalc
   structure TC = TypedCalc
   structure TB = TypesBasics
   structure TCU = TypedCalcUtils
@@ -1385,9 +1384,9 @@ in
                  (ListPair.zip (expList, expTyList))
 	   val caseKind = 
 	       case caseKind
-	       of PC.MATCH => Match
-	        | PC.BIND => Bind
-	        | PC.HANDLE => 
+	       of IDCalc.MATCH => Match
+	        | IDCalc.BIND => Bind
+	        | IDCalc.HANDLE =>
                     (case topVarList of
                        [v] => (Handle v)
                      | _ =>

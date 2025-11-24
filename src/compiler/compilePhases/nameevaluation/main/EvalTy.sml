@@ -15,7 +15,6 @@ local
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
-  structure A = AbsynTy
   structure L = SetLiftedTys
   structure PI = PatternCalcInterface
   structure R = RuntimeTypes
@@ -39,7 +38,7 @@ in
   type tvarEnv = I.tvar Symbol.Map.map
   val emptyTvarEnv = Symbol.Map.empty : tvarEnv
 
-  fun genTvar isEq (tvarEnv:tvarEnv) (_, symbol) : tvarEnv * I.tvar =
+  fun genTvar isEq (tvarEnv:tvarEnv) symbol : tvarEnv * I.tvar =
       let
         val id = TvarID.generate()
         val tvar = {symbol=toSymbol symbol, isEq=isEq, id=id, lifted=false}
@@ -139,7 +138,7 @@ in
       end
 
   (* type variable evaluators *)
-  fun evalTvar (tvarEnv:tvarEnv) ((_, symbol) : A.tyvar) : I.tvar =
+  fun evalTvar (tvarEnv:tvarEnv) (symbol : P.tyvar) : I.tvar =
       case Symbol.Map.find(tvarEnv, #1 symbol) of
         SOME tvar => tvar
       | NONE =>
@@ -148,55 +147,33 @@ in
          {symbol=toSymbol symbol, isEq=false, id=TvarID.generate(), lifted=false})
 
   (* type evaluators, which return a type etc and liftedtys *)
-  fun evalTyAux allowFlex (tvarEnv:tvarEnv) (env:V.env) (ty:A.ty) : I.ty  =
+  fun evalTyAux extFn (tvarEnv:tvarEnv) (env:V.env) (ty:'t P.ty) : I.ty =
     case ty of
-      A.TYWILD loc => I.TYWILD
-    | A.TYVAR tvar => I.TYVAR (evalTvar tvarEnv tvar)
-    | A.TYVAR_FREE ((isEq, symbol), tvarKind, _) =>
-      (case Symbol.toString (#1 symbol) of
-         "'_" =>
-         let
-           val id = TvarID.generate()
-           val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
-         in
-           I.TYFREE_TYVAR {symbol=toSymbol symbol, isEq=isEq, id=id, tvarKind=tvarKind}
-         end
-       | _ => 
-         let
-           val id = findFreeTvarId (#1 symbol)
-           val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
-         in
-           I.TYFREE_TYVAR {symbol=toSymbol symbol, isEq=isEq, id=id, tvarKind=tvarKind}
-         end
-      )
-    | A.TYRECORD (tyFields, ifFlex, loc) =>
+      P.TY ext => extFn tvarEnv env ext
+    | P.TYVAR tvar => I.TYVAR (evalTvar tvarEnv tvar)
+    | P.TYRECORD (tyFields, loc) =>
       (EU.checkRecordLabelDuplication
-         (fn ((label, _), _, _) => label) tyFields (Loc.LOC loc)
+         (fn ((label, _), _, _) => label) tyFields loc
          (fn s => E.DuplicateRecordLabelInRawType("Ty-020",s));
-       if not allowFlex andalso ifFlex then
-         EU.enqueueError
-           (Loc.LOC loc, E.FlexRecordNotAllowed("Ty-025",ty))
-       else ();
        I.TYRECORD
-         {ifFlex = ifFlex,
+         {ifFlex = false,
           fields = 
           foldl
             (fn (((l,_),ty,_), fields) =>
-                RecordLabel.Map.insert(fields, l, evalTyAux allowFlex tvarEnv env ty))
+                RecordLabel.Map.insert(fields, l, evalTyAux extFn tvarEnv env ty))
             RecordLabel.Map.empty
             tyFields
          }
       )
-    | A.TYCON (tyvarseq, path, loc) =>
+    | P.TYCON (tyList, path, loc) =>
       let
-        val tyList = case tyvarseq of SOME (tys, _) => tys | NONE => nil
         val path = SymbolWithLoc.fromAbsyn path
         exception Arity
       in
         let
           fun makeTy tfun =
               let
-                val tyList = map (evalTyAux allowFlex tvarEnv env) tyList
+                val tyList = map (evalTyAux extFn tvarEnv env) tyList
                 val _ = if length tyList = I.tfunArity tfun then ()
                         else raise Arity
               in
@@ -221,73 +198,24 @@ in
             SOME (sym, V.TSTR {tfun,...}) => makeTy tfun
           | SOME (sym, V.TSTR_DTY {tfun, ...}) => makeTy tfun
           | NONE => 
-            (EU.enqueueError (Loc.LOC loc, E.TypNotFound("Ty-040",{longsymbol = SymbolWithLoc.toLongsymbol path}));
+            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = SymbolWithLoc.toLongsymbol path}));
              I.TYERROR
             )
         end
         handle Arity =>
-               (EU.enqueueError (Loc.LOC loc, E.TypArity("Ty-030",{longsymbol = SymbolWithLoc.toLongsymbol path}));
+               (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol = SymbolWithLoc.toLongsymbol path}));
                 I.TYERROR
                )
       end
-    | A.TYTUPLE(nil, loc) => BT.unitITy
-    | A.TYTUPLE(tyList, loc) =>
-      evalTyAux allowFlex tvarEnv env 
-                (A.TYRECORD
-                   (map (fn (l,t) => ((l,loc),t,loc)) (RecordLabel.tupleList tyList),
-                    false, loc))
-    | A.TYFUN(ty1,ty2, loc) =>
-      I.TYFUNM([evalTyAux allowFlex tvarEnv env ty1], evalTyAux allowFlex tvarEnv env ty2)
-    | A.TYPOLY ((kindedTvarList, loc2), ty, loc) =>
+    | P.TYFUN(ty1,ty2, loc) =>
+      I.TYFUNM([evalTyAux extFn tvarEnv env ty1], evalTyAux extFn tvarEnv env ty2)
+  and evalTvarKindAux extFn InvalidKind (tvarEnv:tvarEnv) (env:V.env) (kind:'t P.kind) : I.tvarKind  =
       let
-        val (tvarEnv, kindedTvarList) =
-            evalKindedTvarList allowFlex tvarEnv env (kindedTvarList, LOC loc2)
-(*
-        val cyclicTvars = checkCyclicKind kindedTvarList 
-        fun tvarLoc {symbol, id, eq, lifted} = #loc symbol
-        val kindedTvarList =
-            case cyclicTvars of
-              nil => kindedTvarList
-            | tvar1 :: rest => 
-              let
-                val tvarsLoc =
-                    foldl
-                    (fn (loc1, loc) => Loc.mergeLoc (loc1, loc))
-                    (tvarLoc tvar1)
-                    (map tvarLoc rest)
-              in
-                (EU.enqueueError
-                 (tvarsLoc, 
-                  E.CyclicKind("Ty-045", {tvarList = cyclicTvars}));
-                 map (fn (tvar, kind) => (tvar, I.UNIV)) kindedTvarList)
-*)
-        val ty = evalTyAux allowFlex tvarEnv env ty
-      in
-        I.TYPOLY (kindedTvarList,ty)
-      end
-    | A.TYPAREN (ty, loc) => evalTyAux allowFlex tvarEnv env ty
-  and evalTvarKindAux allowFlex (tvarEnv:tvarEnv) (env:V.env) kind : I.tvarKind  =
-      let
-        fun transProperties props loc =
-            foldr
-            (fn  (prop, kindList) =>
-                 case Symbol.toString (#1 prop) of
-                   "reify" => Types.addProperties I.REIFY kindList
-                 | "boxed" => Types.addProperties I.BOXED kindList
-                 | "unboxed" => Types.addProperties I.UNBOXED kindList
-                 | "eq" => Types.addProperties I.EQ kindList
-                 | name =>
-                   (EU.enqueueError (Loc.LOC loc, E.InvalidKindName("Ty-060", name));
-                    kindList)
-            )
-            I.emptyProperties
-            props
       in
         case kind of
-          NONE => I.UNIV I.emptyProperties
-        | SOME (kind as A.UNIV (props, loc)) =>
+          (props, P.UNIV, loc) =>
           let
-            val props = transProperties props loc
+            val props = Types.toProperties props
           in
             (* check kind consistency *)
             case DynamicKindUtils.kindOfStaticKind
@@ -295,23 +223,23 @@ in
                                 tvarKind = Types.UNIV,
                                 dynamicKind = NONE}) of
               SOME _ => ()
-            | NONE => EU.enqueueError (Loc.LOC loc, E.InvalidKind("Ty-061", kind));
+            | NONE => EU.enqueueError (loc, InvalidKind("Ty-061", kind));
             I.UNIV props
           end
-        | SOME (kind as A.REC (properties, recordKind, loc)) =>
+        | (props, P.REC recordKind, loc) =>
           let
-            val props = transProperties properties loc
+            val props = Types.toProperties props
             val newRecordKind =
                 foldl
                   (fn (((l,_),ty, _), fields) =>
                       RecordLabel.Map.insert
-                        (fields, l, evalTyAux allowFlex tvarEnv env ty)
+                        (fields, l, evalTyAux extFn tvarEnv env ty)
                   )
                   RecordLabel.Map.empty
                   recordKind
           in
             EU.checkRecordLabelDuplication
-              (fn ((label, _), _, _) => label) recordKind (Loc.LOC loc)
+              (fn ((label, _), _, _) => label) recordKind loc
               (fn s => E.DuplicateRecordLabelInKind("Ty-050",s));
             (* check kind consistency *)
             case DynamicKindUtils.kindOfStaticKind
@@ -319,23 +247,23 @@ in
                                 tvarKind = Types.REC RecordLabel.Map.empty,
                                 dynamicKind = NONE}) of
               SOME _ => ()
-            | NONE => EU.enqueueError (Loc.LOC loc, E.InvalidKind("Ty-061", kind));
+            | NONE => EU.enqueueError (loc, InvalidKind("Ty-061", kind));
             I.REC {properties = props, recordKind = newRecordKind}
           end
       end
-  and evalKindedTvarList allowFlex (tvarEnv:tvarEnv) (env:V.env) (tvarKindList, tvarsLoc)
+  and evalKindedTvarList extFn InvalidKind (tvarEnv:tvarEnv) (env:V.env) (tvarKindList, tvarsLoc)
       : tvarEnv * I.kindedTvar list =
       let
-        fun evalTvar tvarEnv (tvar as (isEq, _), kind, _)  =
+        fun evalTvar tvarEnv (tvar, kind, _)  =
             let
-              val (tvarEnv, tvar) = genTvar isEq tvarEnv tvar
+              val (tvarEnv, tvar) = genTvar (#eq (#1 kind)) tvarEnv tvar
             in
               (tvarEnv, (tvar, kind))
             end
         val (tvarEnv, tvarKindList) =
             U.evalTailList {env=tvarEnv,eval=evalTvar} tvarKindList
         val tvarKindList =
-            map (fn (tvar, kind) => (tvar, evalTvarKindAux allowFlex tvarEnv env kind))
+            map (fn (tvar, kind) => (tvar, evalTvarKindAux extFn InvalidKind tvarEnv env kind))
                 tvarKindList
         val cyclicTvars = checkCyclicKind tvarKindList
         fun tvarLoc {symbol, id, isEq, lifted} = #loc symbol
@@ -361,8 +289,82 @@ in
         (tvarEnv, tvarKindList)
       end
 
-  val evalTy = fn tvarEnv => fn env => fn ty => evalTyAux false tvarEnv env ty
-  val evalTyWithFlex = fn tvarEnv => fn env => fn ty => evalTyAux true tvarEnv env ty
+  fun evalMono tvarEnv env (P.TYMONO ty) =
+      evalTyAux evalMono tvarEnv env ty
+
+  fun evalTy tvarEnv env ty =
+      evalTyAux evalMono tvarEnv env ty
+
+  fun evalPoly tvarEnv env ty =
+      case ty of
+      P.TYPOLY ((kindedTvarList, loc2), ty, loc) =>
+      let
+        val (tvarEnv, kindedTvarList) =
+            evalKindedTvarList evalMono E.InvalidKind tvarEnv env (kindedTvarList, loc2)
+(*
+        val cyclicTvars = checkCyclicKind kindedTvarList
+        fun tvarLoc {symbol, id, eq, lifted} = #loc symbol
+        val kindedTvarList =
+            case cyclicTvars of
+              nil => kindedTvarList
+            | tvar1 :: rest =>
+              let
+                val tvarsLoc =
+                    foldl
+                    (fn (loc1, loc) => Loc.mergeLoc (loc1, loc))
+                    (tvarLoc tvar1)
+                    (map tvarLoc rest)
+              in
+                (EU.enqueueError
+                 (tvarsLoc,
+                  E.CyclicKind("Ty-045", {tvarList = cyclicTvars}));
+                 map (fn (tvar, kind) => (tvar, I.UNIV)) kindedTvarList)
+*)
+        val ty = evalTyAux evalPoly tvarEnv env ty
+      in
+        I.TYPOLY (kindedTvarList,ty)
+      end
+
+  fun evalPolyTy tvarEnv env ty =
+      evalTyAux evalPoly tvarEnv env ty
+
+  fun evalAnnot tvarEnv env ty =
+      case ty of
+      P.TYWILD loc => I.TYWILD
+    | P.TYVAR_FREE (symbol, tvarKind as ({eq = isEq, ...}, _, _), _) =>
+      (case Symbol.toString (#1 symbol) of
+         "'_" =>
+         let
+           val id = TvarID.generate()
+           val tvarKind = evalTvarKindAux evalAnnot E.InvalidAnnotKind tvarEnv env tvarKind
+         in
+           I.TYFREE_TYVAR {symbol=toSymbol symbol, isEq=isEq, id=id, tvarKind=tvarKind}
+         end
+       | _ =>
+         let
+           val id = findFreeTvarId (#1 symbol)
+           val tvarKind = evalTvarKindAux evalAnnot E.InvalidAnnotKind tvarEnv env tvarKind
+         in
+           I.TYFREE_TYVAR {symbol=toSymbol symbol, isEq=isEq, id=id, tvarKind=tvarKind}
+         end
+      )
+    | P.TYFLEXRECORD (tyFields, loc) =>
+      (EU.checkRecordLabelDuplication
+         (fn ((label, _), _, _) => label) tyFields loc
+         (fn s => E.DuplicateRecordLabelInRawType("Ty-020",s));
+       I.TYRECORD
+         {ifFlex = true,
+          fields =
+          foldl
+            (fn (((l,_),ty,_), fields) =>
+                RecordLabel.Map.insert(fields, l, evalTyAux evalAnnot tvarEnv env ty))
+            RecordLabel.Map.empty
+            tyFields
+         }
+      )
+
+  fun evalTyWithFlex tvarEnv env ty =
+      evalTyAux evalAnnot tvarEnv env ty
 
   fun compatProperty {abs, impl} =
       case (abs, impl) of
@@ -370,11 +372,12 @@ in
       | (I.PROP prop1, I.PROP prop2) => R.canBeRegardedAs (prop2, prop1)
       | _ => false
 
-  fun getProperty _ _ PI.IMPL_TUPLE _ = I.PROP R.recordProp
-    | getProperty _ _ PI.IMPL_RECORD _ = I.PROP R.recordProp
-    | getProperty _ _ PI.IMPL_FUNC _ = I.PROP R.recordProp
+  fun getProperty _ _ (PI.IMPL_TUPLE _) _ = I.PROP R.recordProp
+    | getProperty _ _ (PI.IMPL_RECORD _) _ = I.PROP R.recordProp
+    | getProperty _ _ (PI.IMPL_FUNC _) _ = I.PROP R.recordProp
     | getProperty tvarEnv evalEnv (PI.IMPL_TY runtimeTyLongsymbol) loc =
       let
+        val runtimeTyLongsymbol = SymbolWithLoc.fromAbsyn runtimeTyLongsymbol
         val loc = SymbolWithLoc.longsymbolToLoc runtimeTyLongsymbol
         val tstr =
             case VP.findTstr(evalEnv, runtimeTyLongsymbol) of
@@ -400,22 +403,19 @@ in
 
   fun ffiTyToAbsynTy ffiTy =
       case ffiTy of
-        P.FFIFUNTY (attributes, [argTy], NONE, [retTy], loc) =>
-        A.TYFUN (ffiTyToAbsynTy argTy, ffiTyToAbsynTy retTy, loc)
-      | P.FFIFUNTY (attributes, argTys, varargTys, retTys, loc) =>
-        (EU.enqueueError (LOC loc, E.FFIFunTyIsNotAllowedHere("Ty-080", ffiTy));
-         A.TYTUPLE (nil, loc))  (* dummy *)
-      | P.FFITYVAR (tvar, loc) =>
-        A.TYVAR tvar
-      | P.FFIRECORDTY (fields, loc) =>
-        A.TYRECORD
-          (map (fn (label, ty) => ((label, loc), ffiTyToAbsynTy ty, loc)) fields,
-           false,
+        P.FFITYFUN (attributes, ([argTy], NONE), [retTy], loc) =>
+        P.TYFUN (ffiTyToAbsynTy argTy, ffiTyToAbsynTy retTy, loc)
+      | P.FFITYFUN (attributes, (argTys, varargTys), retTys, loc) =>
+        (EU.enqueueError (loc, E.FFIFunTyIsNotAllowedHere("Ty-080", ffiTy));
+         P.TYRECORD (nil, loc))  (* dummy *)
+      | P.FFITYVAR tvar =>
+        P.TYVAR tvar
+      | P.FFITYRECORD (fields, loc) =>
+        P.TYRECORD
+          (map (fn (label, ty, loc) => (label, ffiTyToAbsynTy ty, loc)) fields,
            loc)
-      | P.FFICONTY (argTyList, longtycon, loc) =>
-        A.TYCON (case argTyList of
-                   nil => NONE
-                 | _ ::_ => SOME (map ffiTyToAbsynTy argTyList, loc),
+      | P.FFITYCON (argTyList, longtycon, loc) =>
+        P.TYCON (map ffiTyToAbsynTy argTyList,
                  longtycon,
                  loc)
 
@@ -457,22 +457,22 @@ in
         exception LookupTstr
       in
         case ffiTy of
-          P.FFIFUNTY (ffiAttributesOption, argTys, varTys, retTys, loc) =>
+          P.FFITYFUN (ffiAttributesOption, (argTys, varTys), retTys, loc) =>
           I.FFIFUNTY (ffiAttributesOption,
                       map evalFfity argTys,
                       Option.map (map evalFfity) varTys,
                       map evalFfity retTys,
-                      LOC loc)
-        | P.FFITYVAR (tvar, loc) =>
+                      loc)
+        | P.FFITYVAR (_, loc) =>
           I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), LOC loc)
-        | P.FFIRECORDTY (stringFfityList, loc) =>
+        | P.FFITYRECORD (stringFfityList, loc) =>
           (EU.checkRecordLabelDuplication
-             (fn (label, _) => label) stringFfityList (Loc.LOC loc)
+             (fn ((label, _), _, _) => label) stringFfityList loc
              (fn s => E.DuplicateRecordLabelInRawType("Ty-020",s));
            I.FFIRECORDTY
-             (map (fn (l, ty) => (l, evalFfity ty)) stringFfityList,
-              LOC loc))
-        | P.FFICONTY (argTyList, typath, loc) =>
+             (map (fn ((l, _), ty, _) => (l, evalFfity ty)) stringFfityList,
+              loc))
+        | P.FFITYCON (argTyList, typath, loc) =>
           let
             val longsymbol = SymbolWithLoc.fromAbsyn typath
             val tfun =
@@ -490,27 +490,27 @@ in
                        TvarMap.empty
                        (ListPair.zipEq (formals, argTyList))
                in
-                 tyToFfiTy tvarEnv env subst (realizerTy, LOC loc)
+                 tyToFfiTy tvarEnv env subst (realizerTy, loc)
                end
-            | _ => I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), LOC loc)
+            | _ => I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), loc)
           end
           handle LookupTstr => 
                  (EU.enqueueError
-                    (LOC loc, E.TypNotFound("Ty-100",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
-                  I.FFIBASETY (I.TYERROR, LOC loc))
+                    (loc, E.TypNotFound("Ty-100",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
+                  I.FFIBASETY (I.TYERROR, loc))
                | UnqeualLengths =>
                  (EU.enqueueError
-                    (LOC loc, E.TypArity("Ty-110",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
-                  I.FFIBASETY (I.TYERROR, LOC loc))
+                    (loc, E.TypArity("Ty-110",{longsymbol = SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn typath)}));
+                  I.FFIBASETY (I.TYERROR, loc))
       end
 
   val emptyScopedTvars = nil : I.scopedTvars
-  fun evalScopedTvars (tvarEnv:tvarEnv) (env:V.env) (tvars:P.scopedTvars) =
+  fun evalScopedTvars (tvarEnv:tvarEnv) (env:V.env) (tvars:P.kinded_tyvarseq) =
       (EU.checkSymbolDuplication
-         (fn ((_, id), _, _) => toSymbol id)
+         (fn (tvar, _, _) => toSymbol tvar)
          (#1 tvars)
          (fn s => E.DuplicateUserTvar ("Ty-115", s));
-       evalKindedTvarList false tvarEnv env tvars)
+       evalKindedTvarList evalMono E.InvalidKind tvarEnv env tvars)
  
   fun evalDatatype 
         (env:V.env) 
@@ -519,28 +519,29 @@ in
        =
       let
         val _ = EU.checkSymbolDuplication
-                  (fn x => x)
-                  (map #symbol datbindList @ map #2 typbindList)
+                  toSymbol
+                  (map #2 datbindList @ map #2 typbindList)
                   (fn s => E.DuplicateTypInDty("Ty-120",s))
         val _ = EU.checkSymbolDuplication
-                  (fn {symbol, ty=tyOption, loc} => symbol)
+                  (fn (symbol, tyOption, loc) => toSymbol symbol)
                   (foldl
-                     (fn ({tyvars, symbol, conbind, loc}, allCons) =>
+                     (fn ((tyvars, symbol, conbind, loc), allCons) =>
                          allCons@conbind)
                      nil
                      datbindList)
                   (fn s => E.DuplicateConNameInDty("Ty-130",s))
         val _ = checkReservedName
                   reservedConNameSet
-                  (fn {symbol, ...} => symbol)
-                  (List.concat (map #conbind datbindList))
+                  (fn (symbol, _, _) => toSymbol symbol)
+                  (List.concat (map #3 datbindList))
         val (newEnv, datbindListRev) =
             foldl
-              (fn ({tyvars=tvarList,symbol,conbind, loc=datBindLoc},
+              (fn ((tvarList, symbol, conbind, datBindLoc),
                    (newEnv, datbindListRev)) =>
                   let
+                    val symbol = toSymbol symbol
                     val _ = EU.checkSymbolDuplication
-                              (fn (isEq, symbol) => toSymbol symbol)
+                              toSymbol
                               tvarList
                               (fn s => E.DuplicateTypParms("Ty-140",s))
                     val (tvarEnv, tvarList)=
@@ -592,9 +593,10 @@ in
                       }
                 val (conVarE, conSpec, conIDSet) =
                     foldl
-                    (fn ({symbol,ty=tyOption, loc},
+                    (fn ((symbol, tyOption, loc),
                          (conVarE,conSpec, conIDSet)) =>
                       let
+                        val symbol = toSymbol symbol
 (*
                         val longsymbol = 
                             Symbol.prefixPath(path, symbol)

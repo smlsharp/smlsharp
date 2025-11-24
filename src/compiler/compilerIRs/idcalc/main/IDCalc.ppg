@@ -282,6 +282,14 @@ in
        *)
      {symbol:symbol, id:tvarId, isEq:bool, lifted:bool}
 
+  (*% *)
+  datatype caseKind =
+      (*% @format "(*bind*)" *)
+      BIND
+    | (*% @format "(*match*)" *)
+      MATCH
+    | (*% @format "(*handle*)" *)
+      HANDLE
 
   fun formatEnclosedTvarSet (lparen, comma, rparen) map =
       TermFormat.formatOptionalList
@@ -1548,7 +1556,7 @@ in
        *)
       ICCASEM of icexp list 
                * {args:icpat list, body:icexp} list 
-               * PatternCalc.caseKind 
+               * caseKind
                * loc  (* primitive; caseKind added *)
     | (*%
          @format(exp * field fields * loc)

@@ -153,7 +153,7 @@ in
                         (fn {args,body}=>{args=args,body=uncurryExp  nil body})
                         ruleList,
                       ruleBodyTy = bodyTy,
-                      caseKind = PatternCalc.MATCH,
+                      caseKind = IDCalc.MATCH,
                       loc = loc}
                   }
         )

@@ -34,4 +34,5 @@ structure ElaborateError =
     exception FlexRecordTyNotAllowed
     exception WildTyNotAllowed
     exception FreeTyNotAllowed
+    exception InvalidKindName of Symbol.symbol
   end

@@ -1,0 +1,107 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require local "../../absyn/main/AbsynInterfaceLoaded.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "./PatternCalc.smi"
+
+structure PatternCalcInterface =
+struct
+  type loc = PatternCalc.loc
+
+  type vid = PatternCalc.vid
+  type longvid = PatternCalc.longvid
+  type tycon = PatternCalc.tycon
+  type longtycon = PatternCalc.longtycon
+  type strid = PatternCalc.strid
+  type longstrid = PatternCalc.longstrid
+  type funid = PatternCalc.funid
+  type tyvar = PatternCalc.tyvar
+  type kinded_tyvarseq = PatternCalc.kinded_tyvarseq
+  datatype ty = datatype PatternCalc.ty
+  datatype mono = datatype PatternCalc.mono
+  datatype poly = datatype PatternCalc.poly
+  datatype sigexp = datatype PatternCalc.sigexp
+
+  datatype opaque_impl = datatype AbsynInterface.opaque_impl
+
+  datatype overload_instance =
+      INST_OVERLOAD of overload_case
+    | INST_LONGVID of longvid
+
+  withtype overload_case =
+      tyvar * mono ty * (mono ty * overload_instance * loc) list * loc
+
+  type overload_mrule = mono ty * overload_instance * loc
+
+  datatype valbind =
+      VAL_EXTERN of vid * poly ty * loc
+    | VAL_ALIAS of vid * longvid * loc
+    | VAL_BUILTIN of vid * vid * poly ty * loc
+    | VAL_OVERLOAD of vid * overload_case * loc
+
+  type datbind = PatternCalc.datbind
+  type typbind = PatternCalc.typbind
+  type typdesc = tyvar list * tycon * opaque_impl * loc
+  datatype exbind = datatype PatternCalc.exbind
+
+  datatype dec =
+      DECVAL of kinded_tyvarseq * valbind
+    | DECTYPBIND of typbind
+    | DECTYPDESC of bool * typdesc
+    | DECDATATYPE of datbind list * PatternCalc.typbind list * loc
+    | DECDATATYPEREP of tycon * longtycon * loc
+    | DECTYPEBUILTIN of tycon * tycon * loc
+    | DECEXCEPTION of exbind
+    | DECSTRUCTURE of strbind
+
+  and strexp =
+      STRBASIC of dec list * loc
+    | STRID of longstrid
+    | STRAPP of funid * longstrid * loc
+
+  withtype strbind = strid * strexp * loc
+
+  type funbind = funid * strid * sigexp * strexp * loc
+
+  datatype topdec =
+      TOPDEC of dec
+    | TOPFUNCTOR of funbind
+
+  type interface_id = InterfaceID.id
+
+  type interface_dec =
+      {interfaceId: interface_id,
+       interfaceName: InterfaceName.interface_name,
+       requiredIds: {id: interface_id, loc: Loc.pos * Loc.pos} list,
+       provideTopdecs: topdec list}
+
+  type 'loc interface =
+      {interfaceDecs : interface_dec list,
+       requiredIds : {id: interface_id, loc: 'loc} list,
+       locallyRequiredIds: {id: interface_id, loc: 'loc} list,
+       provideTopdecs : topdec list,
+       topdecsInclude : PatternCalc.sigdec list}
+
+  type compile_unit =
+      {interface : (Loc.pos * Loc.pos) interface,
+       topdecsSource : PatternCalc.topdec list}
+
+  type interface_unit =
+      {interfaceDecs : interface_dec list,
+       requiredIds : {id : interface_id, loc : unit} list,
+       topdecsInclude : PatternCalc.sigdec list}
+
+  val topdecLoc : topdec -> loc
+
+  val format_dec : dec -> SMLFormat.format
+  val format_strexp : strexp -> SMLFormat.format
+  val format_funbind : SMLFormat.format -> funbind -> SMLFormat.format
+  val format_topdec : topdec -> SMLFormat.format
+  val format_interface_dec : interface_dec -> SMLFormat.format
+  val format_interface : 'a interface -> SMLFormat.format
+  val format_compile_unit : compile_unit -> SMLFormat.format
+  val format_interface_unit : interface_unit -> SMLFormat.format
+end

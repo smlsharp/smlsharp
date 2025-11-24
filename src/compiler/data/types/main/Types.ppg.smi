@@ -32,6 +32,8 @@ struct
 
   val propertiesOf
       : kindPropertyList -> {boxed:bool, unboxed:bool, reify:bool, eq:bool}
+  val toProperties
+      : {boxed:bool, unboxed:bool, reify:bool, eq:bool} -> kindPropertyList
   val isProperties : kindProperty -> kindPropertyList -> bool
   val isSubProperties : kindPropertyList -> kindPropertyList -> bool
   val unionProperties : kindPropertyList -> kindPropertyList -> kindPropertyList

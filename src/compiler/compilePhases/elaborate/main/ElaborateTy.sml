@@ -7,7 +7,9 @@
 structure ElaborateTy =
 struct
   structure A = Absyn
+  structure P = PatternCalc
   structure E = ElaborateError
+  datatype loc = datatype Loc.loc
   fun enqueueError (loc, exn) = UserErrorUtils.enqueueError (Loc.LOC loc, exn)
 
   type ftv = (Absyn.tyvar * Absyn.tyvar list) Symbol.Map.map
@@ -271,57 +273,123 @@ struct
     | appendTyvarseq (NONE, tyvars as h :: t) =
       SOME (tyvars, foldl Loc.mergeRange (#3 h) (map #3 t))
 
-  fun checkTy flags ty =
+  fun tupleRows toLoc exps =
+      map (fn (lab, exp) => case toLoc exp of loc => ((lab, loc), exp, loc))
+          (RecordLabel.tupleList exps)
+
+  fun elabKindProps isEq props =
+      foldl
+        (fn ((symbol, loc), propset) =>
+            case Symbol.toString symbol of
+              "reify" => propset # {reify = true}
+            | "boxed" => propset # {boxed = true}
+            | "unboxed" => propset # {unboxed = true}
+            | "eq" => propset # {eq = true}
+            | _ => (enqueueError (loc, E.InvalidKindName symbol); propset))
+        (PatternCalc.emptyKindProp # {eq = isEq})
+        props
+
+  fun errorTy loc =
+      P.TYVAR (Symbol.intern "ERROR", loc)
+
+  fun polyTyNotAllowed (_, _, loc) =
+      (enqueueError (loc, E.PolyTyNotAllowed); errorTy loc)
+
+  fun flexRecordTyNotAllowed (_, loc) =
+      (enqueueError (loc, E.FlexRecordTyNotAllowed); errorTy loc)
+
+  fun wildTyNotAllowed loc =
+      (enqueueError (loc, E.WildTyNotAllowed); errorTy loc)
+
+  fun freeTyNotAllowed (_, _, loc) =
+      (enqueueError (loc, E.FreeTyNotAllowed); errorTy loc)
+
+  val monoEnv =
+      {TYWILD = wildTyNotAllowed,
+       TYFLEXRECORD = flexRecordTyNotAllowed,
+       TYVAR_FREE = freeTyNotAllowed,
+       TYPOLY = polyTyNotAllowed}
+
+  fun mustBeMono env =
+      env # {TYPOLY = polyTyNotAllowed}
+
+  fun elabTy env ty =
       case ty of
-        A.TYVAR _ => ()
+        A.TYVAR (_, tyvar) =>
+        P.TYVAR tyvar
       | A.TYRECORD (rows, flex, loc) =>
-        (app (checkTyrow flags) rows;
-         if flex andalso not (#wildcard flags)
-         then enqueueError (loc, E.FlexRecordTyNotAllowed)
-         else ())
-      | A.TYCON (tyseq, _, _) => app (checkTy flags) (seq tyseq)
-      | A.TYTUPLE (tys, _) => app (checkTy flags) tys
-      | A.TYFUN (ty1, ty2, _) =>
-        (checkTy (flags # {rank1 = false}) ty1; checkTy flags ty2)
-      | A.TYPAREN (ty, _) => checkTy flags ty
-      | A.TYWILD loc =>
-        if #wildcard flags
-        then ()
-        else enqueueError (loc, E.WildTyNotAllowed)
-      | A.TYVAR_FREE (tyvar as (_, _, loc)) =>
-        if #wildcard flags
-        then ()
-        else enqueueError (loc, E.FreeTyNotAllowed)
-      | A.TYPOLY ((tyvars, _), bodyTy, loc) =>
-        if #rank1 flags
-        then (app (checkKindedTyvar (flags # {rank1 = false})) tyvars;
-              checkTy flags bodyTy)
-        else enqueueError (loc, E.PolyTyNotAllowed)
+        if flex
+        then #TYFLEXRECORD env (rows, loc)
+        else P.TYRECORD (map (elabTyrow env) rows, LOC loc)
+      | A.TYTUPLE (tys, loc) =>
+        elabTy env (A.TYRECORD (tupleRows AbsynUtils.tyLoc tys, false, loc))
+      | A.TYCON (tyseq, tycon, loc) =>
+        P.TYCON (map (elabTy (mustBeMono env)) (seq tyseq), tycon, LOC loc)
+      | A.TYFUN (ty1, ty2, loc) =>
+        P.TYFUN (elabTy (mustBeMono env) ty1, elabTy env ty2, LOC loc)
+      | A.TYPAREN (ty, loc) =>
+        elabTy env ty
+      | A.TYWILD arg => #TYWILD env arg
+      | A.TYVAR_FREE arg => #TYVAR_FREE env arg
+      | A.TYPOLY arg => #TYPOLY env arg
 
-  and checkTyrow flags (lab, ty, loc) =
-      checkTy flags ty
+  and elabTyrow env (lab, ty, loc) : 't P.tyrow =
+      (lab, elabTy env ty, LOC loc)
 
-  and checkKindedTyvar flags (tyvar, NONE, loc) = ()
-    | checkKindedTyvar flags (tyvar, SOME kind, loc) =
-      checkKind flags kind
-
-  and checkKind flags kind =
+  fun elabKindedTyvar env ((isEq, tyvar), kind, loc) =
       case kind of
-        A.UNIV _ => ()
-      | A.REC (ids, rows, loc) => app (checkTyrow flags) rows
+        NONE =>
+        (tyvar,
+         (PatternCalc.emptyKindProp # {eq = isEq}, P.UNIV, LOC loc),
+         LOC loc)
+      | SOME (A.UNIV (props, loc1)) =>
+        (tyvar, (elabKindProps isEq props, P.UNIV, LOC loc1), LOC loc)
+      | SOME (A.REC (props, rows, loc1)) =>
+        (tyvar,
+         (elabKindProps isEq props, P.REC (map (elabTyrow env) rows), LOC loc1),
+         LOC loc)
 
-  fun elabMonoTy ty =
-      (checkTy {wildcard = false, rank1 = false} ty; ty)
+  fun elabMonoTy ty : P.mono_ty =
+      elabTy monoEnv ty
 
-  fun elabRank1Ty ty =
-      (checkTy {wildcard = false, rank1 = true} ty; ty)
+  fun elabPoly ((tyvars, loc1), ty, loc) =
+      P.TY (P.TYPOLY ((map (elabKindedTyvar monoEnv) tyvars, LOC loc1),
+                      elabPolyTy ty,
+                      LOC loc))
 
-  fun elabMonoTyAnnot ty =
-      (checkTy {wildcard = true, rank1 = false} ty; ty)
+  and elabPolyTy ty =
+      elabTy (monoEnv # {TYPOLY = elabPoly}) ty
 
-  fun elabUserTyvars NONE = (nil, Loc.NOLOC)
-    | elabUserTyvars (SOME (tyvars, loc)) =
-      (app (checkKindedTyvar {wildcard = false, rank1 = false}) tyvars;
-       (tyvars, Loc.LOC loc))
+  fun elabWild loc =
+      P.TY (P.TYWILD (LOC loc))
+
+  and elabTyvarFree tyvar =
+      P.TY (P.TYVAR_FREE (elabKindedTyvar (annotEnv ()) tyvar))
+
+  and elabFlexRecord (rows, loc) =
+      P.TY (P.TYFLEXRECORD (map (elabTyrow (annotEnv ())) rows, LOC loc))
+
+  and annotEnv () =
+      {TYWILD = elabWild,
+       TYVAR_FREE = elabTyvarFree,
+       TYFLEXRECORD = elabFlexRecord,
+       TYPOLY = polyTyNotAllowed}
+
+  fun elabAnnotTy ty =
+      elabTy (annotEnv ()) ty
+
+  fun elabKindedTyvarseq NONE = (nil, Loc.NOLOC)
+    | elabKindedTyvarseq (SOME (tyvars, loc)) =
+      (map (elabKindedTyvar monoEnv) tyvars, Loc.LOC loc)
+
+  fun makePolyTy ty =
+      case toKindedTyvars (ftvTy ty) of
+        nil => ty
+      | tyvars =>
+        let
+          val loc = AbsynUtils.tyLoc ty
+        in
+          A.TYPOLY ((tyvars, loc), ty, loc)
+        end
 
 end

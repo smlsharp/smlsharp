@@ -14,8 +14,9 @@ _require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/control/main/Control.smi"
 (* _require "../../../data/symbols/main/RecordLabel.smi" *)
 (* _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
@@ -73,13 +74,13 @@ structure NameEvalUtils =
     val printExp : IDCalc.icexp -> unit
     val printPat : IDCalc.icpat -> unit
     val printDecl : IDCalc.icdecl -> unit
-    val printPlstrDecl : PatternCalc.plstrdec -> unit
-    val printPlstrexp : PatternCalc.plstrexp -> unit
-    val printPlsigexp : PatternCalc.plsigexp -> unit
-    val printPitopdec : PatternCalcInterface.pitopdec -> unit
-    val printPltopdec : PatternCalc.pltopdec -> unit
-    val printPidec : PatternCalcInterface.pidec -> unit
-    val printPiinterfacedec : PatternCalcInterface.interfaceDec -> unit
+    val printPlstrDecl : PatternCalc.strdec -> unit
+    val printPlstrexp : PatternCalc.strexp -> unit
+    val printPlsigexp : PatternCalc.sigexp -> unit
+    val printPitopdec : PatternCalcInterface.topdec -> unit
+    val printPltopdec : PatternCalc.topdec -> unit
+    val printPidec : PatternCalcInterface.dec -> unit
+    val printPiinterfacedec : PatternCalcInterface.interface_dec -> unit
     val printCastEnv
         : {conIdEnv:'a,
            tfunEnv:(IDCalc.tfun * 'b * IDCalc.tfun) TypID.Map.map,
@@ -100,7 +101,7 @@ structure NameEvalUtils =
     val printTfvMap : string list TfvMap.map -> unit
     val printCompileUnit : PatternCalcInterface.compile_unit -> unit
     val printLoc : Loc.loc -> unit
-    val printCompileUnitSpliced : PatternCalcInterface.compile_unit_spliced -> unit
+    val printCompileUnitSpliced : PatternCalcInterface1.compile_unit_spliced -> unit
     val evalList : {emptyEnv:'a, eval:'b -> 'a * 'c, unionEnv:'a * 'a -> 'a}
                    -> 'b list -> 'a * 'c list
     val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}

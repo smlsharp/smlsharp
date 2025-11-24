@@ -16,6 +16,7 @@ local
   structure S = Subst
   structure P = PatternCalc
   structure PI = PatternCalcInterface
+  structure PI1 = PatternCalcInterface1
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
@@ -94,7 +95,7 @@ local
     let
       fun stripTy pat =
           case pat of
-            P.PLPATTYPED(pat, ty, loc) =>
+            P.PATTYPED(pat, ty, loc) =>
             let
               val (pat, tyList) = stripTy pat
             in
@@ -104,23 +105,22 @@ local
       val (idPat, tyList) = stripTy funIdPat
       val {funVarInfo, funSymbol, tyList} =
           case idPat of
-            P.PLPATID longsymbol =>
-            (
-              case SymbolWithLoc.toSymbolList longsymbol of
-                [funSymbol] =>
+            P.PATID (nil, funSymbol, _) =>
                 let
-                  val longsymbol = SymbolWithLoc.prefixPath(path, longsymbol)
+                  val funSymbol = toSymbol funSymbol
+                  val longsymbol = SymbolWithLoc.prefixPath'(path, funSymbol)
                 in
                   {funVarInfo= {longsymbol=longsymbol, id=VarID.generate()},
                    funSymbol=funSymbol,
                    tyList=tyList
                   }
                 end
-              | _ =>
+          | P.PATID (longsymbol as (_, _, loc)) =>
                 (EU.enqueueError
-                   (PatternCalc.getLocPat funIdPat,
+                   (Loc.LOC loc,
                     E.IlleagalFunID ("010",{pat = funIdPat}));
                  let
+                   val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
                    val longsymbol = SymbolWithLoc.prefixPath (path, longsymbol)
                  in
                    {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
@@ -129,14 +129,13 @@ local
                    }
                  end
                 )
-            )
           | _ => 
                let
                  val symbol = SymbolWithLoc.generate ()
                  val longsymbol = SymbolWithLoc.prefixPath' (path, symbol)
                in
                  (EU.enqueueError
-                    (PatternCalc.getLocPat funIdPat,
+                    (PatternCalc.patLoc funIdPat,
                      E.IlleagalFunID ("010",{pat = funIdPat}));
                   {funVarInfo = {longsymbol=longsymbol, id = VarID.generate()},
                    funSymbol = symbol,
@@ -157,11 +156,12 @@ local
         fun evalTy' ty = Ty.evalTyWithFlex tvarEnv env ty
       in
         case plpat of
-          P.PLPATWILD loc => (V.emptyEnv, I.ICPATWILD loc)
-        | P.PLPATID refLongsymbol =>
-          (case SymbolWithLoc.toSymbolList refLongsymbol of
-             nil => raise bug "nil longsymbol"
-           | [symbol] => 
+          P.PATWILD loc => (V.emptyEnv, I.ICPATWILD loc)
+        | P.PATID (refLongsymbol as (nil, symbol, _)) =>
+          let
+            val symbol = toSymbol symbol
+            val refLongsymbol = SymbolWithLoc.fromAbsyn refLongsymbol
+          in
              (case VP.findCon(env, refLongsymbol) of
                 NONE =>
                 let
@@ -199,7 +199,11 @@ local
                 )
               | _ => raise bug "findCon retrun non conid"
              )
-           | _ =>
+          end
+        | P.PATID refLongsymbol =>
+          let
+            val refLongsymbol = SymbolWithLoc.fromAbsyn refLongsymbol
+          in
              (case VP.findCon(env, refLongsymbol) of
                 NONE =>
                 (EU.enqueueError
@@ -225,10 +229,11 @@ local
                 )
               | _ => raise bug "findCon retrun non conid"
              )
-          )
-        | P.PLPATCONSTANT constant => (V.emptyEnv, I.ICPATCONSTANT constant)
-        | P.PLPATCONSTRUCT (plpat1, plpat2, loc) =>
+          end
+        | P.PATCONST constant => (V.emptyEnv, I.ICPATCONSTANT constant)
+        | P.PATCON (longvid, plpat2, loc) =>
           let
+            val plpat1 = P.PATID longvid
             val (env1, icpat1) = evalPat plpat1
             val (env2, icpat2) = evalPat plpat2
             val env = VP.unionEnv "200" (env1, env2)
@@ -278,16 +283,16 @@ local
           in
             (env, I.ICPATCONSTRUCT {con=icpat1, arg=icpat2, loc=loc})
           end
-        | P.PLPATRECORD (bool, patfieldList, loc) =>
+        | P.PATRECORD (patfieldList, bool, loc) =>
           let
-            fun evalField (l,pat) =
+            fun evalField ((l, _), pat, _) =
                 let
                   val (returnEnv, icpat) = evalPat pat
                 in
                   (returnEnv, (l, icpat))
                 end
             val _ = EU.checkRecordLabelDuplication
-                      (fn (label, _) => label)
+                      (fn ((label, _), _, _) => label)
                       patfieldList
                       loc
                       (fn s => E.DuplicateRecordLabelInPat("085",s))
@@ -302,8 +307,9 @@ local
              I.ICPATRECORD {flex=bool, fields=icpatfieldList, loc=loc}
             )
           end
-        | P.PLPATLAYERED (symbol, tyOption, plpat, loc) =>
+        | P.PATAS (symbol, tyOption, plpat, loc) =>
           let
+            val symbol = toSymbol symbol
             fun isId (env, symbol)  =
                 let
                   val V.ENV {varE,...} = env
@@ -351,7 +357,7 @@ local
             (returnEnv,
              I.ICPATLAYERED {patVar=varInfo,tyOpt=tyOption,pat=icpat,loc=loc})
           end
-        | P.PLPATTYPED (plpat, ty, loc) =>
+        | P.PATTYPED (plpat, ty, loc) =>
           let
             val (returnEnv, icpat) = evalPat plpat
             val ty = evalTy' ty
@@ -459,7 +465,7 @@ local
                 (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
       : renameEnv * V.env * I.icdecl list =
       case pdecl of
-        P.PDVAL (scopedTvars, valbinds, recbinds, loc) =>
+        P.DECVAL (scopedTvars, valbinds, recbinds, loc) =>
         let
           (* VAL part *)
           val (tvarEnv, scopedTvars) =
@@ -526,9 +532,18 @@ local
         in
           (renameEnv, returnEnv, valdecls @ recdecls)
         end
-      | P.PDDECFUN (scopedTvars, fundeclList, loc) =>
+      | P.DECFUN (scopedTvars, fundeclList, loc) =>
         let
           val (tvarEnv, guard) = Ty.evalScopedTvars tvarEnv env scopedTvars
+          val fundeclList =
+              map (fn (vid, tys, frules, loc) =>
+                      {fdecl =
+                       (foldl (fn ((ty, loc), z) => P.PATTYPED (z, ty, loc))
+                              (P.PATID (nil, vid, #2 vid))
+                              tys,
+                        frules),
+                       loc = loc})
+                  fundeclList
           val declList = 
               map
                 (fn {fdecl=(x,y), loc} => {fdecl=(generateFunVar path x,y), loc=loc})
@@ -565,17 +580,17 @@ local
         in
           (renameEnv, returnEnv, [I.ICDECFUN{guard=guard, funbinds=fundeclList, loc=loc}])
         end
-      | P.PDVALPOLYREC (symbolTyPlexpLocList, loc) =>
+      | P.DECPOLYREC (symbolTyPlexpLocList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    (fn (symbol, ty, exp, loc) => symbol)
+                    (fn (symbol, ty, exp, loc) => toSymbol symbol)
                     symbolTyPlexpLocList
                     (fn s => E.DuplicateVarInRecDecl("110",s))
           fun generateFunVar symbol = 
               {longsymbol=SymbolWithLoc.prefixPath' (path, symbol), id=VarID.generate()}
           val recList =
               map 
-                (fn (symbol, ty, exp, loc) => (generateFunVar symbol, symbol, ty, exp, loc))
+                (fn (symbol, ty, exp, loc) => (generateFunVar (toSymbol symbol), toSymbol symbol, ty, exp, loc))
                 symbolTyPlexpLocList
           val returnEnv =
               foldl
@@ -590,7 +605,7 @@ local
                 (fn (varInfo, symbol, ty, body, loc) =>
                     {
                      varInfo = varInfo,
-                     ty = Ty.evalTyWithFlex tvarEnv env ty,
+                     ty = Ty.evalPolyTy tvarEnv env ty,
                      body = evalPlexp tvarEnv evalEnv body
                     }
                 )
@@ -598,18 +613,19 @@ local
         in
           (renameEnv, returnEnv, [I.ICVALPOLYREC (recbindList, loc)])
         end
-      | P.PDTYPE (typbindList, loc) =>
+      | P.DECTYPE (typbindList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    (fn (tvarList, symbol, ty, loc) => symbol)
+                    (fn (tvarList, symbol, ty, loc) => toSymbol symbol)
                     typbindList
                     (fn s => E.DuplicateTypName("120", s))
           val (returnEnv, renameEnv:renameEnv) =
               foldl
                 (fn ((tvarList, symbol, ty, defRange), (returnEnv, renameEnv)) =>
                     let
+                      val symbol = toSymbol symbol
                       val _ = EU.checkSymbolDuplication
-                                (fn (isEq, symbol) => toSymbol symbol)
+                                toSymbol
                                 tvarList
                                 (fn s => E.DuplicateTypParms("130",s))
 
@@ -650,13 +666,17 @@ local
           (renameEnv, returnEnv, nil)
         end
 
-      | P.PDDATATYPE (datadeclList, withty, loc) =>
+      | P.DECDATATYPE (datadeclList, withty, loc) =>
         let
           val (returnEnv, icdecls) = Ty.evalDatatype env (datadeclList, withty, loc)
         in
           (renameEnv, returnEnv, icdecls)
         end
-      | P.PDREPLICATEDAT (symbol, longsymbol, loc) =>
+      | P.DECDATATYPEREP (symbol, longsymbol, loc) =>
+        let
+          val symbol = toSymbol symbol
+          val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+        in
         (case (VP.findTstr (env, longsymbol)) handle e => raise e of
            NONE => (EU.enqueueError
                       (SymbolWithLoc.longsymbolToLoc longsymbol,
@@ -704,7 +724,8 @@ local
              (renameEnv, returnEnv, nil)
            end
         )
-      | P.PDABSTYPE (datadeclList, withty, pdeclList, loc) =>
+        end
+      | P.DECABSTYPE (datadeclList, withty, pdeclList, loc) =>
         let
           fun abstractTfun tfun tfvSubst =
               case tfun of
@@ -766,10 +787,10 @@ local
           (renameEnv, returnEnv, icdeclList)
         end
 
-      | P.PDEXD (plexbindList, loc) =>
+      | P.DECEXCEPTION (plexbindList, loc) =>
         let
-          fun getSymbol (P.PLEXBINDDEF (symbol, _,_)) = symbol
-            | getSymbol (P.PLEXBINDREP (symbol, _,_)) = symbol
+          fun getSymbol (P.EXBIND (symbol, _,_)) = toSymbol symbol
+            | getSymbol (P.EXBINDREP (symbol, _,_)) = toSymbol symbol
           val _ = EU.checkSymbolDuplication
                     getSymbol
                     plexbindList
@@ -782,8 +803,9 @@ local
               foldl
                 (fn (plexbind, (exEnv, exdeclList)) =>
                     case plexbind of
-                      P.PLEXBINDDEF (symbol, tyOption, loc) =>
+                      P.EXBIND (symbol, tyOption, loc) =>
                       let
+                        val symbol = toSymbol symbol
                         val ty =
                             case tyOption of
                               NONE => BT.exnITy
@@ -808,7 +830,11 @@ local
                          exdeclList@[{exnInfo=exnInfo,loc=loc}]
                         )
                       end
-                    | P.PLEXBINDREP (symbol, longsymbol, loc) =>
+                    | P.EXBINDREP (symbol, longsymbol, loc) =>
+                      let
+                        val symbol = toSymbol symbol
+                        val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+                      in
                       (case VP.findId(env, longsymbol) of
                          SOME(sym, I.IDEXN exnInfo) =>
                          (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXNREP (exnInfo # {defRange = loc})),
@@ -842,13 +868,14 @@ local
                           (exEnv, exdeclList)
                          )
                       )
+                      end
                 )
                 (V.emptyEnv, nil)
                 plexbindList
         in
           (renameEnv, exEnv, [I.ICEXND (exdeclList, loc)])
         end
-      | P.PDLOCALDEC (pdeclList1, pdeclList2, loc) =>
+      | P.DECLOCAL (pdeclList1, pdeclList2, loc) =>
         let
           val (renameEnv, env1, icdeclList1) = evalPdeclList (renameEnv:renameEnv) path tvarEnv env pdeclList1
           val evalEnv = VP.envWithEnv (env, env1)
@@ -857,11 +884,14 @@ local
         in
           (renameEnv, env2, icdeclList1@icdeclList2)
         end
-      | P.PDOPEN (longsymbolList, loc) =>
+      | P.DECOPEN (longsymbolList, loc) =>
         let
           val (returnEnv, renameEnv) =
               foldl
                 (fn (longsymbol, (returnEnv, renameEnv)) =>
+                    let
+                      val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+                    in
                     case VP.findStr(env, longsymbol) of
                       SOME strEntry =>
                       let
@@ -879,16 +909,13 @@ local
                          (SymbolWithLoc.longsymbolToLoc longsymbol,
                           E.StrNotFound("180", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                        (returnEnv, renameEnv))
+                    end
                 )
                 (V.emptyEnv, renameEnv)
                 longsymbolList
         in
           (renameEnv, returnEnv, nil)
         end
-      | P.PDINFIXDEC _ => (renameEnv, V.emptyEnv, nil)
-      | P.PDINFIXRDEC _ => (renameEnv, V.emptyEnv, nil)
-      | P.PDNONFIXDEC _ => (renameEnv, V.emptyEnv, nil)
-      | P.PDEMPTY => (renameEnv, V.emptyEnv, nil)
 
   and evalPdeclList (renameEnv:renameEnv) (path:SymbolWithLoc.symbol list) (tvarEnv:Ty.tvarEnv) (env:V.env) pdeclList
       : renameEnv * V.env * I.icdecl list =
@@ -920,10 +947,11 @@ local
         fun evalTyWithoutFlex' ty = Ty.evalTy tvarEnv env ty
       in
         case plexp of
-          P.PLCONSTANT constant => I.ICCONSTANT constant
-        | P.PLSIZEOF (ty, loc) => I.ICSIZEOF (evalTy' ty, loc)
-        | P.PLVAR refLongsymbol =>
+          P.EXPCONST constant => I.ICCONSTANT constant
+        | P.EXPSIZEOF (ty, loc) => I.ICSIZEOF (evalTyWithoutFlex' ty, loc)
+        | P.EXPID refLongsymbol =>
           let
+            val refLongsymbol = SymbolWithLoc.fromAbsyn refLongsymbol
             val idstatus = 
                 case VP.findId (env, refLongsymbol) of
                   SOME (sym, idstatus) => idstatus
@@ -1011,11 +1039,11 @@ local
             | I.IDSPECEXN _ => raise bug "SPEC id status"
             | I.IDSPECCON _ => raise bug "SPEC id status"
           end
-        | P.PLTYPED (plexp, ty, loc) =>
+        | P.EXPTYPED (plexp, ty, loc) =>
           I.ICTYPED (evalExp plexp, evalTy' ty, loc)
-        | P.PLAPPM (plexp, plexpList, loc) =>
-          I.ICAPPM (evalExp plexp, map evalExp plexpList, loc)
-        | P.PLLET (pdeclList, plexp, loc) =>
+        | P.EXPAPP (plexp, plexp2, loc) =>
+          I.ICAPPM (evalExp plexp, [evalExp plexp2], loc)
+        | P.EXPLET (pdeclList, plexp, loc) =>
           let
             val (renameEnv, newEnv, icdeclList) =
                 evalPdeclList (renameEnv:renameEnv) nilPath tvarEnv env pdeclList
@@ -1025,38 +1053,38 @@ local
                      evalPlexp tvarEnv evalEnv plexp,
                      loc)
           end
-        | P.PLRECORD (expfieldList, loc) =>
+        | P.EXPRECORD (expfieldList, loc) =>
           let
             val _ = EU.checkRecordLabelDuplication
-                      (fn (name, _) => name)
+                      (fn ((name, _), _, _) => name)
                        expfieldList
                       loc
                       (fn s => E.DuplicateRecordLabelInExp("192",s))
-            val expfieldList = map (fn (l, exp)=>(l,evalExp exp)) expfieldList
+            val expfieldList = map (fn ((l, _), exp, _)=>(l,evalExp exp)) expfieldList
           in
             I.ICRECORD (expfieldList, loc)
           end
-        | P.PLRECORD_UPDATE (plexp, expfieldList, loc) =>
+        | P.EXPRECORD_UPDATE (plexp, expfieldList, loc) =>
           let
             val icexp = evalExp plexp
             val _ = EU.checkRecordLabelDuplication
-                      (fn (name, _) => name)
+                      (fn ((name, _), _, _) => name)
                       expfieldList
                       loc
                       (fn s => E.DuplicateRecordLabelInUpdate("194",s))
-            val expfieldList = map (fn (l, exp)=>(l,evalExp exp)) expfieldList
+            val expfieldList = map (fn ((l, _), exp, _)=>(l,evalExp exp)) expfieldList
           in
             I.ICRECORD_UPDATE (icexp, expfieldList, loc)
           end
-        | P.PLRECORD_UPDATE2 (plexp, plexp2, loc) =>
+        | P.EXPUPDATE (plexp, plexp2, loc) =>
           let
             val icexp = evalExp plexp
             val icexp2 = evalExp plexp2
           in
             I.ICRECORD_UPDATE2 (icexp, icexp2, loc)
           end
-        | P.PLRAISE (plexp, loc) => I.ICRAISE (evalExp plexp, loc)
-        | P.PLHANDLE (plexp, plpatPlexpList, loc) =>
+        | P.EXPRAISE (plexp, loc) => I.ICRAISE (evalExp plexp, loc)
+        | P.EXPHANDLE (plexp, plpatPlexpList, loc) =>
           I.ICHANDLE
             (
              evalExp plexp,
@@ -1074,58 +1102,59 @@ local
                plpatPlexpList,
              loc
             )
-        | P.PLFNM (ruleList, loc) =>
-          I.ICFNM(map (evalRule VP.BIND_PAT_FN tvarEnv {bodyEnv=env,argEnv=env} loc) ruleList, loc)
-        | P.PLCASEM (plexpList, ruleList, caseKind, loc) =>
+        | P.EXPFN (ruleList, loc) =>
+          I.ICFNM(map (evalRule1 VP.BIND_PAT_FN tvarEnv {bodyEnv=env,argEnv=env} loc) ruleList, loc)
+        | P.EXPCASE (plexp, ruleList, loc) =>
           I.ICCASEM
             (
-             map evalExp plexpList,
-             map (evalRule VP.BIND_PAT_CASE tvarEnv {bodyEnv=env,argEnv=env} loc) ruleList,
-             caseKind,
+             [evalExp plexp],
+             map (evalRule1 VP.BIND_PAT_CASE tvarEnv {bodyEnv=env,argEnv=env} loc) ruleList,
+             IDCalc.MATCH,
              loc
             )
-        | P.PLDYNAMIC (plexp, ty, loc) =>
+        | P.EXPDYNAMIC_AS (plexp, ty, loc) =>
           I.ICDYNAMIC (evalPlexp tvarEnv env plexp, evalTyWithoutFlex' ty, loc)
-        | P.PLDYNAMICIS (plexp, ty, loc) =>
+        | P.EXPDYNAMIC_OF (plexp, ty, loc) =>
           I.ICDYNAMICIS (evalPlexp tvarEnv env plexp, evalTyWithoutFlex' ty, loc)
-        | P.PLDYNAMICNULL (ty, loc) =>
+        | P.EXPDYNAMICNULL (ty, loc) =>
           I.ICDYNAMICNULL (evalTyWithoutFlex' ty, loc)
-        | P.PLDYNAMICTOP (ty, loc) =>
+        | P.EXPDYNAMICTOP (ty, loc) =>
           I.ICDYNAMICTOP (evalTyWithoutFlex' ty, loc)
-        | P.PLDYNAMICVIEW (plexp, ty, loc) =>
+        | P.EXPDYNAMICVIEW (plexp, ty, loc) =>
           I.ICDYNAMICVIEW (evalPlexp tvarEnv env plexp, evalTyWithoutFlex' ty, loc)
-        | P.PLDYNAMICCASE (plexp, ruleList, loc) =>
+        | P.EXPDYNAMICCASE (plexp, ruleList, loc) =>
           I.ICDYNAMICCASE
             (
              evalExp plexp,
              map (evalDynRule VP.BIND_PAT_CASE tvarEnv env loc) ruleList,
              loc
             )
-        | P.PLRECORD_SELECTOR (label, loc) => 
+        | P.EXPSELECT ((label, _), loc) =>
           I.ICRECORD_SELECTOR (label, loc)
-        | P.PLSELECT (string,plexp,loc) => I.ICSELECT(string,evalExp plexp,loc)
-        | P.PLSEQ (plexpList, loc) => I.ICSEQ (map evalExp plexpList, loc)
-        | P.PLFFIIMPORT (plexp, ffiTy, loc) =>
-          let
-            val ffiTy = Ty.evalFfity tvarEnv env ffiTy
-          in
-            I.ICFFIIMPORT(evalFfiFun tvarEnv env plexp, ffiTy, loc)
-          end
-        | P.PLSQLSCHEMA {tyFnExp, ty, loc} =>
+        | P.EXPSEQ (plexpList, loc) => I.ICSEQ (map evalExp plexpList, loc)
+        | P.EXPIMPORT_EXP (plexp, ffiTy, loc) =>
+          I.ICFFIIMPORT (I.ICFFIFUN (evalPlexp tvarEnv env plexp),
+                         Ty.evalFfity tvarEnv env ffiTy,
+                         loc)
+        | P.EXPIMPORT_NAME (name, ffiTy, loc) =>
+          I.ICFFIIMPORT (I.ICFFIEXTERN name,
+                         Ty.evalFfity tvarEnv env ffiTy,
+                         loc)
+        | P.EXPSQLSCHEMA (tyFnExp, ty, loc) =>
           I.ICSQLSCHEMA
             {tyFnExp = evalPlexp tvarEnv env tyFnExp,
-             ty = evalTy' ty,
+             ty = evalTyWithoutFlex' ty,
              loc = loc}
-        | P.PLJOIN (bool, plexp1, plexp2, loc) =>
-          I.ICJOIN(bool, evalExp plexp1, evalExp plexp2, loc)
-        | P.PLREIFYTY (ty, loc) => 
-          I.ICREIFYTY (evalTy' ty, loc)
+        | P.EXPJOIN (P.JOIN, plexp1, plexp2, loc) =>
+          I.ICJOIN(true, evalExp plexp1, evalExp plexp2, loc)
+        | P.EXPJOIN (P.EXTEND, plexp1, plexp2, loc) =>
+          I.ICJOIN(false, evalExp plexp1, evalExp plexp2, loc)
+        | P.EXPREIFYTY (ty, loc) =>
+          I.ICREIFYTY (evalTyWithoutFlex' ty, loc)
       end
 
-  and evalFfiFun tvarEnv env ffiFun =
-      case ffiFun of
-        P.PLFFIFUN exp => I.ICFFIFUN (evalPlexp tvarEnv env exp)
-      | P.PLFFIEXTERN s => I.ICFFIEXTERN s
+  and evalRule1 cnx tvarEnv arg loc (pat, exp, defRange) =
+      evalRule cnx tvarEnv arg loc ([pat], exp, defRange)
 
   and evalRule (cnx:VP.category)
                (tvarEnv:Ty.tvarEnv) {bodyEnv:V.env, argEnv:V.env} loc
@@ -1155,18 +1184,19 @@ local
   fun evalPlstrdec (renameEnv:renameEnv) (topEnv:V.topEnv) path plstrdec 
       : renameEnv * V.env * I.icdecl list =
       case plstrdec of
-        P.PLCOREDEC pdecl =>
+        P.STRDEC pdecl =>
         evalPdecl (renameEnv:renameEnv) path Ty.emptyTvarEnv (#Env topEnv) pdecl
-      | P.PLSTRUCTBIND (symbolPlstrexpLocList, loc) =>
+      | P.STRUCTURE (symbolPlstrexpLocList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    #1
+                    (fn (symbol, _, _) => toSymbol symbol)
                     symbolPlstrexpLocList
                     (fn s => E.DuplicateStrName("420",s))
         in
           foldl
             (fn ((symbol, plstrexp, loc), (renameEnv, returnEnv, icdeclList)) =>
                 let
+                  val symbol = toSymbol symbol
                   val (renameEnv, strEntry, icdeclList1) = 
                       evalPlstrexp renameEnv topEnv (path@[symbol]) plstrexp
                   val returnEnv = VP.rebindStr VP.BIND_STR (returnEnv, symbol, strEntry)
@@ -1177,7 +1207,7 @@ local
             (renameEnv, V.emptyEnv, nil)
             symbolPlstrexpLocList
         end
-      | P.PLSTRUCTLOCAL (plstrdecList1, plstrdecList2, loc) =>
+      | P.STRLOCAL (plstrdecList1, plstrdecList2, loc) =>
         let
           fun evalList topEnv plstrdecList =
               foldl
@@ -1205,7 +1235,7 @@ local
       : renameEnv * V.strEntry * I.icdecl list =
       case plstrexp of
         (* struct ... end *)
-        P.PLSTREXPBASIC (plstrdecList, loc) =>
+        P.STRBASIC (plstrdecList, loc) =>
         let
           val strKind = V.STRENV (StructureID.generate())
           val (renameEnv, returnEnv, icdeclList) =
@@ -1228,7 +1258,10 @@ local
           (renameEnv, {env=returnEnv, strKind=strKind, definedSymbol=path,
                        loc = loc}, icdeclList)
         end
-      | P.PLSTRID longsymbol =>
+      | P.STRID longsymbol =>
+        let
+          val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+        in
         (case VP.findStr(env,longsymbol) of
            SOME strEntry =>
            let
@@ -1253,7 +1286,8 @@ local
              )
            end
         )
-      | P.PLSTRTRANCONSTRAINT (plstrexp, plsigexp, loc1) =>
+        end
+      | P.STRCONSTRAINT (plstrexp, P.TRANSPARENT, plsigexp, loc1) =>
         (
         let
           val (renameEnv, {env=strEnv,strKind=strKind, definedSymbol,loc=loc2}, icdeclList1) = 
@@ -1289,7 +1323,7 @@ local
                  strKind=V.STRENV(StructureID.generate())}, nil)
         )
 
-      | P.PLSTROPAQCONSTRAINT (plstrexp, plsigexp, loc1) =>
+      | P.STRCONSTRAINT (plstrexp, P.OPAQUE, plsigexp, loc1) =>
         (
         let
            val (renameEnv, {env=strEnv, strKind=_, loc=loc2, definedSymbol}, icdeclList1) = 
@@ -1319,17 +1353,29 @@ local
                 nil)
         )
 
-      | P.PLFUNCTORAPP (symbol, longsymbol, loc) =>
+      | P.STRAPP (symbol, P.STRID longsymbol, loc) =>
         let
           val (renameEnv, {env, icdecls, funId, argId}) = 
-              applyFunctor renameEnv topEnv (path, symbol, longsymbol, loc)
+              applyFunctor renameEnv topEnv (path, toSymbol symbol, longsymbol, loc)
           val structureId = StructureID.generate()
           val strKind = V.FUNAPP {id=structureId, funId=funId, argId=argId}
         in
           (renameEnv, {env=env, strKind=strKind, definedSymbol = path, loc=loc}, icdecls)
         end
 
-      | P.PLSTRUCTLET (plstrdecList, plstrexp, loc) =>
+      | P.STRAPP (symbol, strexp, loc) =>
+        let
+          val tmp = (Symbol.generate NONE, #2 symbol)
+        in
+          evalPlstrexp
+            renameEnv topEnv path
+            (P.STRLET
+               ([P.STRUCTURE ([(tmp, strexp, loc)], loc)],
+                P.STRAPP (symbol, P.STRID (nil, tmp, #2 tmp), loc),
+                loc))
+        end
+
+      | P.STRLET (plstrdecList, plstrexp, loc) =>
         let
           val (renameEnv, returnEnv1, icdeclList1) =
               foldl
@@ -1573,7 +1619,7 @@ U.printTfun tfun;
               val argSigEnv = #2 (Sig.refreshSpecEnv argSigEnv)
                            handle e => raise e
               val (renameEnv, {env=argStrEnv,strKind,...},_) =
-                  evalPlstrexp renameEnv topEnv nilPath (P.PLSTRID argPath)
+                  evalPlstrexp renameEnv topEnv nilPath (P.STRID argPath)
                   handle e => raise e
               val argId = case strKind of
                             V.STRENV id => id
@@ -1584,7 +1630,7 @@ U.printTfun tfun;
             in
               (SC.sigCheck
                  {mode = SC.Trans,
-                  strPath = SymbolWithLoc.toSymbolList argPath,
+                  strPath = SymbolWithLoc.toSymbolList (SymbolWithLoc.fromAbsyn argPath),
                   strEnv = argStrEnv,
                   specEnv = argSigEnv,
                   loc = loc
@@ -2013,11 +2059,8 @@ CHECKME: bug 119
 
   fun evalFunctor renameEnv {topEnv, version} {pltopdec, pitopdec} =
       let
-        val {name=nameSymbol,
-             argStrName= argStrNameSymbol, 
-             argSig,
-             body, 
-             loc=defLoc} = pltopdec
+        val (nameSymbol, argStrNameSymbol, argSig, body, defLoc) = pltopdec
+        val argStrNameSymbol = toSymbol argStrNameSymbol
         val startTypid = TypID.generate()
         val 
         {
@@ -2046,12 +2089,9 @@ val _ = map (fn x=> (U.printDecl x; U.print "\n")) bodyDecls
         val (bindDecls, returnEnv) =
             case pitopdec of
               NONE => (nil, returnEnv)
-            | SOME 
-                {functorSymbol,
-                 param={strSymbol, sigexp=specArgSig},
-                 strexp=specBodyStr,
-                 loc=specLoc} => 
+            | SOME (functorSymbol, strSymbol, specArgSig, specBodyStr, specLoc) =>
               let
+                val strSymbol = toSymbol strSymbol
                 val topArgEnv = VP.singletonStr VP.FUNCTOR_ARG (strSymbol, argStrEntry)
                 val evalEnv = VP.topEnvWithEnv (topEnv, topArgEnv)
               in
@@ -2146,6 +2186,7 @@ val _ = U.print "\n"
                | _ => functorExp1
               )
 
+        val nameSymbol = toSymbol nameSymbol
         val functorExpVar = {longsymbol= SymbolWithLoc.prefixPath' ([{symbol = FunctorUtils.FUNCTORPREFIX, loc = Loc.noloc}], nameSymbol),
                              id=VarID.generate()}
         val functorExpVarExp = I.ICVAR functorExpVar
@@ -2185,14 +2226,14 @@ val _ = U.print "\n"
 
   fun evalPltopdec (renameEnv:renameEnv) {topEnv, version} pltopdec =
       case pltopdec of
-        PI.TOPDECSTR plstrdec =>
+        PI1.TOPDECSTR plstrdec =>
         let
           val (renameEnv, env, icdeclList) = 
               evalPlstrdec (renameEnv:renameEnv) topEnv nilPath plstrdec
         in
           (renameEnv, VP.topEnvWithEnv(V.emptyTopEnv, env), icdeclList)
         end
-      | PI.TOPDECSIG (symbolPlsigexpList, loc) =>
+      | PI1.TOPDECSIG (symbolPlsigexpList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
                     #1
@@ -2212,10 +2253,10 @@ val _ = U.print "\n"
         in
           (renameEnv, VP.topEnvWithSigE(V.emptyTopEnv, sigE), nil)
         end
-      | PI.TOPDECFUN (functordeclList,loc) =>
+      | PI1.TOPDECFUN (functordeclList,loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    (fn {pltopdec=x, pitopdec} => #name x)
+                    (fn {pltopdec=x, pitopdec} => toSymbol (#1 x))
                     functordeclList (fn s => E.DuplicateFunctor("470",s))
         in
           foldl
@@ -2942,7 +2983,7 @@ val _ = U.print "*** after checkPitopdecList\n"
       let
         val _ = EU.initializeErrorQueue()
         val topdecsInclude =
-            map PI.TOPDECSIG topdecsInclude
+            map (fn (binds, loc) => PI1.TOPDECSIG (map (fn (n,e,l) => (toSymbol n,e,l)) binds, loc)) topdecsInclude
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
         val _ = (* for error checking *)
             InterfaceID.Map.foldl

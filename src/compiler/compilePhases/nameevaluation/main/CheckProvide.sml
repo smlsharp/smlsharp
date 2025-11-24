@@ -165,10 +165,11 @@ local
 
   fun checkDatbind
         path evalEnv env
-        (name, defTstr, defRealTstr, defRealTfun, {tyvars, symbol=tycon, conbind, loc}, varE) 
+        (name, defTstr, defRealTstr, defRealTfun, (tyvars, tycon, conbind, loc), varE)
     =
     (* datatype 'a foo = FOO of 'a | BAR  *)
     let
+      val tycon = toSymbol tycon
       val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
     in
       let
@@ -205,8 +206,9 @@ local
               )
         val (nameTyPairList, conSpec) =
             foldr
-              (fn ({symbol=vid, ty, loc}, (nameTyPairList, conSpec)) =>
+              (fn ((vid, ty, loc), (nameTyPairList, conSpec)) =>
                   let
+                    val vid = toSymbol vid
                     val ty =
                         Option.map 
                           (Ty.evalTy tvarEnv evalEnv)
@@ -273,9 +275,10 @@ local
       let
         val nameTstrTfunDatbindList =
             foldr
-              (fn (datbind as {tyvars, symbol=tycon, conbind, loc},
+              (fn (datbind as (tyvars, tycon, conbind, loc),
                    nameTstrTfunDatbindList) =>
                   let
+                    val tycon = toSymbol tycon
                     val defTstr = 
                         case VP.checkProvideTstr(env, tycon) of
                           NONE => (EU.enqueueError
@@ -344,8 +347,14 @@ local
 *)
       case pidec of
         (* val name ... *)
-        PI.PIVAL {scopedTvars, symbol=name, body, loc} =>
+        PI.DECVAL (scopedTvars, body) =>
         let
+          val (name, loc) =
+              case body of
+                PI.VAL_EXTERN (vid, _, loc) => (toSymbol vid, loc)
+              | PI.VAL_ALIAS (vid, _, loc) => (toSymbol vid, loc)
+              | PI.VAL_BUILTIN (vid, _, _, loc) => (toSymbol vid, loc)
+              | PI.VAL_OVERLOAD (vid, _, loc) => (toSymbol vid, loc)
           val internalLongsymbol = path @@ name
           (* for declaration and error message *)
           val (tvarEnv, scopedTvars) =
@@ -353,10 +362,10 @@ local
         in
           case body of
             (* val name : ty *)
-            PI.VAL_EXTERN {ty} =>
+            PI.VAL_EXTERN (_, ty, loc) =>
             let
                val externLongsymbol = internalLongsymbol
-               val bodyTy = Ty.evalTy tvarEnv evalEnv ty handle e => raise e
+               val bodyTy = Ty.evalPolyTy tvarEnv evalEnv ty handle e => raise e
                val ty = case scopedTvars of
                           nil => bodyTy
                         | _ => I.TYPOLY(scopedTvars, bodyTy)
@@ -544,7 +553,10 @@ local
              end (* val name : ty *)
 
           | (* val name = aliasPath *)
-            PI.VALALIAS_EXTERN aliasPath =>
+            PI.VAL_ALIAS (_, aliasPath, _) =>
+            let
+              val aliasPath = SymbolWithLoc.fromAbsyn aliasPath
+            in
             (case VP.checkProvideId(env, name) of
                NONE =>
                (EU.enqueueError
@@ -680,14 +692,15 @@ local
                   (loc, E.ProvideVarIDExpected("CP-230", {longsymbol = SymbolWithLoc.toLongsymbol internalLongsymbol}));
                 raiseFail 25)
             ) (* val symbol = symbol *)
+            end
           | (* val symbol = _builtin symbol : ty *)
-            PI.VAL_BUILTIN {builtinSymbol, ty} =>
+            PI.VAL_BUILTIN (_, builtinSymbol, ty, _) =>
             (case BuiltinPrimitive.findPrimitive
-                    (Symbol.toString (#symbol builtinSymbol)) of
+                    (Symbol.toString (#1 builtinSymbol)) of
                NONE =>
                (EU.enqueueError
-                  (#loc builtinSymbol,
-                   E.PrimitiveNotFound ("EI-080", {symbol = #symbol builtinSymbol}));
+                  (Loc.LOC (#2 builtinSymbol),
+                   E.PrimitiveNotFound ("EI-080", {symbol = #1 builtinSymbol}));
                 raiseFail 26)
              | SOME prim =>
                (exnSet,
@@ -696,15 +709,18 @@ local
                    I.IDBUILTINVAR
                      {primitive = prim,
                       defRange = loc,
-                      ty = Ty.evalTy tvarEnv evalEnv ty}),
+                      ty = Ty.evalPolyTy tvarEnv evalEnv ty}),
                 {exportDecls=nil, bindDecls=nil}))
           | (* val symbol = case tyvar of ... *)
-            PI.VAL_OVERLOAD overloadCase =>
+            PI.VAL_OVERLOAD (_, overloadCase, _) =>
             let
               (* check only *)
               fun checkOverloadInstance (PI.INST_OVERLOAD overloadCase) =
                   ignore (checkOverloadCase overloadCase)
-                | checkOverloadInstance (PI.INST_LONGVID {longsymbol}) =
+                | checkOverloadInstance (PI.INST_LONGVID longsymbol) =
+                  let
+                    val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+                  in
                   case VP.checkProvideAliasId(name, evalEnv, longsymbol) of
                     SOME (I.IDEXVAR _) => ()
                   | SOME (I.IDBUILTINVAR _) => ()
@@ -722,10 +738,11 @@ local
                         E.ProvideUndefinedID
                           ("CP-130", {longsymbol = SymbolWithLoc.toLongsymbol longsymbol}));
                      raiseFail 28)
-              and checkOverloadMatch {instTy, instance} =
+                  end
+              and checkOverloadMatch (instTy, instance, _) =
                   {instTy = Ty.evalTy tvarEnv evalEnv instTy,
                    instance = checkOverloadInstance instance}
-              and checkOverloadCase {tyvar, expTy, matches, loc} =
+              and checkOverloadCase (tyvar, expTy, matches, loc) =
                   {tvar = Ty.evalTvar tvarEnv tyvar,
                    expTy = Ty.evalTy tvarEnv evalEnv expTy,
                    matches = (map checkOverloadMatch matches; nil),
@@ -752,11 +769,12 @@ local
         end (* val name ... *)
 
       | (* type 'a foo = ty  *)
-        PI.PITYPE {tyvars, symbol=name, ty, loc} =>
+        PI.DECTYPBIND (tyvars, name, ty, loc) =>
         let
+          val name = toSymbol name
           val internalLongsymbol = path @@ name
           val _ = EU.checkSymbolDuplication
-                    (fn (isEq, symbol) => toSymbol symbol)
+                    toSymbol
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-240",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
@@ -801,14 +819,15 @@ local
         end (* type 'a foo = ty  *)
 
       | (* type 'a foo (= runtimeTy )  *)
-        PI.PIOPAQUE_TYPE {eq, tyvars, symbol=name, runtimeTy, loc} =>
+        PI.DECTYPDESC (eq, (tyvars, name, runtimeTy, loc)) =>
         let
+          val name = toSymbol name
 (*
 val _ = U.print "*** PI.PIOPAQUE_TYPE in checkPidec\n"
 *)
           val internalLongsymbol = path @@ name
           val _ = EU.checkSymbolDuplication
-                    (fn (isEq, symbol) => toSymbol symbol)
+                    toSymbol
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-270",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
@@ -891,12 +910,14 @@ val _ = U.print "\n"
         end (* type 'a foo (= runtimeTy )  *)
 
       | (* datatype foo = _builtin foo *)
-        PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} =>
+        PI.DECTYPEBUILTIN (symbol, builtinSymbol, loc) =>
         raise bug "PITYPEBUILTIN in provideSpec"
 
       | (* datatype foo = datatype bar *)
-        PI.PITYPEREP {symbol=tycon, longsymbol=origTycon, loc} =>
+        PI.DECDATATYPEREP (tycon, origTycon, loc) =>
          let
+           val tycon = toSymbol tycon
+           val origTycon = SymbolWithLoc.fromAbsyn origTycon
            val internalPath = path @@ tycon
            val specTstr =
                case VP.checkProvideAliasTstr(evalEnv, origTycon) of
@@ -950,8 +971,9 @@ val _ = U.print "\n"
          end (* datatype foo = datatype bar *)
 
       | (* exception name [of ty] *)
-        PI.PIEXCEPTION {symbol=name, ty=tyOpt, loc} => 
+        PI.DECEXCEPTION (PI.EXBIND (name, tyOpt, loc)) =>
         let
+          val name = toSymbol name
           val longsymbol = path @@ name
           val tySpec =
               case tyOpt of 
@@ -1029,9 +1051,11 @@ val _ = U.print "\n"
         end (* exception name [of ty] *)
 
       | (* exception foo = barPath *)
-        PI.PIEXCEPTIONREP {symbol=name, longsymbol=origPath, loc} =>
+        PI.DECEXCEPTION (PI.EXBINDREP (name, origPath, loc)) =>
         (
         let
+          val name = toSymbol name
+          val origPath = SymbolWithLoc.fromAbsyn origPath
           val refIdstatus = 
               case VP.checkProvideAliasId (name, evalEnv, origPath) of
                 NONE =>
@@ -1164,13 +1188,16 @@ val _ = U.print "\n"
         ) (* exception foo = barPath *)
 
       | (* datatype foo = ... *)
-        PI.PIDATATYPE {datbind, withty, loc} =>
+        PI.DECDATATYPE (datbind, withty, loc) =>
         (exnSet,
          checkDatbindList path evalEnv env datbind,
          {exportDecls=nil, bindDecls=nil}
         )
       | (* structure S = struct ... end *)
-        PI.PISTRUCTURE {symbol=strSymbol, strexp=PI.PISTRUCT {decs,loc=strLoc}, loc} =>
+        PI.DECSTRUCTURE (strSymbol, PI.STRBASIC (decs, strLoc), loc) =>
+        let
+          val strSymbol = toSymbol strSymbol
+        in
         (case VP.checkProvideStr(env, strSymbol) of
            SOME (strEntry as {env, ...}) => 
            let
@@ -1186,10 +1213,14 @@ val _ = U.print "\n"
               (loc, E.ProvideUndefinedStr("CP-570", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
             raiseFail 59)
         )
+        end
 
       | (* structure S = Spath *)
-        PI.PISTRUCTURE {symbol=strSymbol, 
-                        strexp=PI.PISTRUCTREP {longsymbol=strPath,loc=strLoc}, loc} =>
+        PI.DECSTRUCTURE (strSymbol, PI.STRID (strPath as (_, _, strLoc)), loc) =>
+        let
+          val strSymbol = toSymbol strSymbol
+          val strPath = SymbolWithLoc.fromAbsyn strPath
+        in
         (case VP.checkProvideStr(env, strSymbol) of
              SOME {env = env1, strKind,...} =>
              let
@@ -1238,14 +1269,15 @@ val _ = U.print "\n"
                 (loc, E.ProvideUndefinedStr("CP-620", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
               raiseFail 64)
           )  (* structure S = Spath *)
+        end
 
       | (* structure A = F(B) *)
-        PI.PISTRUCTURE {symbol=strSymbol, 
-                        strexp=PI.PIFUNCTORAPP
-                                 {functorSymbol,
-                                  argument, 
-                                  loc=argLoc}, 
-                        loc} =>
+        PI.DECSTRUCTURE (strSymbol, PI.STRAPP (functorSymbol, argument, argLoc), loc) =>
+        let
+          val strSymbol = toSymbol strSymbol
+          val functorSymbol = toSymbol functorSymbol
+          val argument = SymbolWithLoc.fromAbsyn argument
+        in
         (case VP.checkProvideStr(env, strSymbol) of
            SOME (strEntry as {env=strEnv, strKind,...}) => 
            (case strKind of
@@ -1310,6 +1342,7 @@ val _ = U.print "\n"
               (loc, E.ProvideUndefinedStr("CP-680", {longsymbol=SymbolWithLoc.toLongsymbol (path@@strSymbol)}));
             raiseFail 71)
         )
+        end
 (*
   ) 
 *)
@@ -1345,20 +1378,17 @@ val _ = U.print "\n"
         (evalTopEnv as {Env=evalEnv, FunE=evalFunE, SigE=evalSigE})
         (topEnv as {Env, FunE, SigE}, pitopDec) =
       case pitopDec of
-        PI.PIDEC pidec =>
+        PI.TOPDEC pidec =>
         let
           val (exnSet, env, decls) =
               checkPidec exnSet nilPath evalTopEnv (Env, pidec)
         in
           (exnSet, VP.topEnvWithEnv(V.emptyTopEnv, env), decls)
         end
-      | PI.PIFUNDEC (piFunbind as
-                    {functorSymbol,
-                     param={strSymbol, sigexp=specArgSig},
-                     strexp=specBodyStr,
-                     loc})
-        =>
+      | PI.TOPFUNCTOR (piFunbind as (functorSymbol, strSymbol, specArgSig, specBodyStr, loc)) =>
         let
+          val functorSymbol = toSymbol functorSymbol
+          val strSymbol = toSymbol strSymbol
           val funEEntry
                 as {id, loc, version, argSigEnv, argStrEntry, argStrName, polyArgTys,
                     dummyIdfunArgTy, typidSet, exnIdSet, bodyEnv, bodyVarExp}
@@ -1514,9 +1544,9 @@ val _ = U.print "\n"
 in
   fun checkProvideFunctorBody
         {topEnv:V.topEnv, evalEnv:V.topEnv, argSigEnv:V.env, 
-         specArgSig:PL.plsigexp, defLoc:Loc.loc,
-         functorSymbol:SymbolWithLoc.symbol, returnEnv:V.env,
-         specBodyStr:PI.pistrexp, specLoc:Loc.loc} =
+         specArgSig:PL.sigexp, defLoc:Loc.loc,
+         functorSymbol:PatternCalc.funid, returnEnv:V.env,
+         specBodyStr:PI.strexp, specLoc:Loc.loc} =
       let
         val {env = specArgSigEnv,...} = Sig.evalPlsig topEnv specArgSig
         val _ = if FU.eqSize(specArgSigEnv, argSigEnv) 
@@ -1528,10 +1558,11 @@ in
                    EU.enqueueError
                      (defLoc,
                       E.ProvideFunparamMismatch("CP-710",
-                                                {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol functorSymbol)}));
+                                                {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.symbolToLongsymbol (toSymbol functorSymbol))}));
                    raiseFail 77
                   )
-        val pidec = PI.PISTRUCTURE {symbol=functorSymbol, strexp=specBodyStr, loc=specLoc}
+        val pidec = PI.DECSTRUCTURE (functorSymbol, specBodyStr, specLoc)
+        val functorSymbol = toSymbol functorSymbol
         val strKind = V.STRENV (StructureID.generate())
 (*
         val strEntry = {env=returnEnv, strKind=strKind, loc=Loc.noloc}
@@ -1557,7 +1588,7 @@ in
    *)
   fun checkPitopdecList
         (evalTopEnv: NameEvalEnv.topEnv)
-        (topEnv:NameEvalEnv.topEnv, pitopdecList:PatternCalcInterface.pitopdec list) 
+        (topEnv:NameEvalEnv.topEnv, pitopdecList:PatternCalcInterface.topdec list)
        : {exportDecls:IDCalc.icdecl list, bindDecls:IDCalc.icdecl list} =
       let
         val (exnSet, returnTopEnv, icdecls) =

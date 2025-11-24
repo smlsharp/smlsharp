@@ -7,7 +7,7 @@ _require "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/control/main/Control.smi"
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
@@ -117,7 +117,7 @@ struct
          loc : Loc.loc}
         -> exp
   val TPCASEM
-      : {caseKind : PatternCalc.caseKind,
+      : {caseKind : IDCalc.caseKind,
          expList : exp list,
          ruleList : {args : pat list, body : exp} list,
          loc : Loc.loc}

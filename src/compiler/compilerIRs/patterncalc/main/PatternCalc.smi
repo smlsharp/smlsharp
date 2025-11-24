@@ -1,0 +1,228 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../absyn/main/Absyn.smi"
+_require "../../absyn/main/AbsynTy.smi"
+_require local "../../absyn/main/AbsynSQL.smi"
+_require local "../../absyn/main/AbsynFormatter.smi"
+_require local "../../absyn/main/AbsynTyFormatter.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+
+structure PatternCalc =
+struct
+  type loc = Loc.loc
+
+  type vid = Absyn.vid
+  type longvid = Absyn.longvid
+  type tycon = Absyn.tycon
+  type longtycon = Absyn.longtycon
+  type strid = Absyn.strid
+  type longstrid = Absyn.longstrid
+  type sigid = Absyn.sigid
+  type funid = Absyn.funid
+  type lab = Absyn.lab
+  type tyvar = AbsynTy.id
+  datatype constant = datatype Absyn.constant
+  datatype sigop = datatype Absyn.sigop
+  type ffi_attr = FFIAttributes.attributes
+
+  type kind_prop = {reify : bool, boxed : bool, unboxed : bool, eq : bool}
+
+  val emptyKindProp : kind_prop
+
+  datatype 't ty =
+      TYVAR of tyvar
+    | TYRECORD of 't tyrow list * loc
+    | TYCON of 't ty list * longtycon * loc
+    | TYFUN of 't ty * 't ty * loc
+    | TY of 't
+
+  withtype 't tyrow = lab * 't ty * loc
+
+  datatype mono =
+      TYMONO of mono ty
+
+  datatype 't record_kind =
+      UNIV
+    | REC of 't tyrow list
+
+  type 't kind = kind_prop * 't record_kind * loc
+
+  type 't kinded_tyvar = tyvar * 't kind * loc
+
+  type kinded_tyvarseq = mono kinded_tyvar list * loc
+
+  datatype poly =
+      TYPOLY of kinded_tyvarseq * poly ty * loc
+
+  datatype annot =
+      TYWILD of loc
+    | TYVAR_FREE of annot kinded_tyvar
+    | TYFLEXRECORD of annot tyrow list * loc
+
+  type mono_ty = mono ty
+  type poly_ty = poly ty
+  type annot_ty = annot ty
+  type mono_kind = mono kind
+  type annot_kind = annot kind
+
+  datatype ffi_ty =
+      FFITYVAR of tyvar
+    | FFITYRECORD of ffi_tyrow list * loc
+    | FFITYCON of ffi_ty list * longtycon * loc
+    | FFITYFUN of ffi_attr option * ffi_arg * ffi_ret * loc
+
+  withtype ffi_tyrow = lab * ffi_ty * loc
+  and ffi_arg = ffi_ty list * ffi_ty list option
+  and ffi_ret = ffi_ty list
+
+  datatype pat =
+      PATWILD of loc
+    | PATCONST of constant * loc
+    | PATID of longvid
+    | PATRECORD of patrow list * bool * loc
+    | PATCON of longvid * pat * loc
+    | PATTYPED of pat * annot ty * loc
+    | PATAS of vid * annot ty option * pat * loc
+
+  withtype patrow = lab * pat * loc
+
+  datatype exbind =
+      EXBIND of vid * mono ty option * loc
+    | EXBINDREP of vid * longvid * loc
+
+  type typbind = tyvar list * tycon * mono ty * loc
+
+  type conbind = vid * mono ty option * loc
+
+  type datbind = tyvar list * tycon * conbind list * loc
+
+  datatype join_extend = JOIN | EXTEND
+
+  datatype exp =
+      EXPCONST of constant * loc
+    | EXPID of longvid
+    | EXPRECORD of exprow list * loc
+    | EXPSELECT of lab * loc
+    | EXPSEQ of exp list * loc
+    | EXPLET of dec list * exp * loc
+    | EXPAPP of exp * exp * loc
+    | EXPTYPED of exp * annot ty * loc
+    | EXPHANDLE of exp * mrule list * loc
+    | EXPRAISE of exp * loc
+    | EXPCASE of exp * mrule list * loc
+    | EXPFN of mrule list * loc
+    | EXPSIZEOF of mono ty * loc
+    | EXPRECORD_UPDATE of exp * exprow list * loc
+    | EXPIMPORT_NAME of string * ffi_ty * loc
+    | EXPIMPORT_EXP of exp * ffi_ty * loc
+    | EXPSQLSCHEMA of exp * mono ty * loc
+    | EXPJOIN of join_extend * exp * exp * loc
+    | EXPUPDATE of exp * exp * loc
+    | EXPDYNAMIC_AS of exp * mono ty * loc
+    | EXPDYNAMIC_OF of exp * mono ty * loc
+    | EXPDYNAMICVIEW of exp * mono ty * loc
+    | EXPDYNAMICNULL of mono ty * loc
+    | EXPDYNAMICTOP of mono ty * loc
+    | EXPDYNAMICCASE of exp * dynamic_mrule list * loc
+    | EXPREIFYTY of mono ty * loc
+
+  and dec =
+      DECVAL of kinded_tyvarseq * valbind list * valbind list * loc
+    | DECFUN of kinded_tyvarseq * fvalbind list * loc
+    | DECTYPE of typbind list * loc
+    | DECDATATYPE of datbind list * typbind list * loc
+    | DECDATATYPEREP of tycon * longtycon * loc
+    | DECABSTYPE of datbind list * typbind list * dec list * loc
+    | DECEXCEPTION of exbind list * loc
+    | DECLOCAL of dec list * dec list * loc
+    | DECOPEN of longstrid list * loc
+    | DECPOLYREC of pvalbind list * loc
+
+  withtype mrule = pat * exp * loc
+  and dynamic_mrule = kinded_tyvarseq * pat * exp * loc
+  and exprow = lab * exp * loc
+  and valbind = pat * exp * loc
+  and fvalbind = vid * (annot ty * loc) list * (pat list * exp * loc) list * loc
+  and pvalbind = vid * poly ty * exp * loc
+
+  type frule = pat list * exp * loc
+
+  datatype spec =
+      SPECVAL of valdesc list * loc
+    | SPECTYPE of bool * typdesc list * loc
+    | SPECDATATYPE of datdesc list * loc
+    | SPECDATATYPEREP of tycon * longtycon * loc
+    | SPECEXCEPTION of exdesc list * loc
+    | SPECSTRUCTURE of strdesc list * loc
+    | SPECINCLUDE of sigexp * loc
+    | SPECSHARINGTYPE of spec list * longtycon list * loc
+    | SPECSHARING of spec list * longstrid list * loc
+
+  and sigexp =
+      SIGBASIC of spec list * loc
+    | SIGID of sigid
+    | SIGWHERE of sigexp * wheretype * loc
+
+  withtype valdesc = vid * poly ty * loc
+  and typdesc = tyvar list * tycon * loc
+  and datdesc = datbind
+  and exdesc = vid * mono ty option * loc
+  and strdesc = strid * sigexp * loc
+  and wheretype = tyvar list * longtycon * mono ty * loc
+
+  datatype strexp =
+      STRBASIC of strdec list * loc
+    | STRID of longstrid
+    | STRCONSTRAINT of strexp * sigop * sigexp * loc
+    | STRAPP of funid * strexp * loc
+    | STRLET of strdec list * strexp * loc
+
+  and strdec =
+      STRDEC of dec
+    | STRUCTURE of strbind list * loc
+    | STRLOCAL of strdec list * strdec list * loc
+
+  withtype strbind = strid * strexp * loc
+
+  type sigbind = sigid * sigexp * loc
+
+  type funbind = funid * strid * sigexp * strexp * loc
+
+  type sigdec = sigbind list * loc
+
+  datatype topdec =
+      TOPSTRDEC of strdec
+    | TOPSIGNATURE of sigdec
+    | TOPFUNCTOR of funbind list * loc
+
+  val patLoc : pat -> loc
+  val sigexpLoc : sigexp -> loc
+
+  val absynTyvarseq : tyvar list -> Absyn.tyvarseq option
+  val absynKindedTyvarseq : kinded_tyvarseq -> Absyn.kinded_tyvarseq option
+  val absynMonoTy : mono ty -> Absyn.ty
+  val absynPolyTy : poly ty -> Absyn.ty
+  val absynAnnotTy : annot ty -> Absyn.ty
+  val absynDatbind : datbind -> Absyn.datbind
+  val absynWithty : typbind list -> Absyn.withty option
+  val absynTypbind : typbind -> Absyn.typbind
+  val absynExbind : exbind -> Absyn.exbind
+  val absynSigexp : sigexp -> Absyn.sigexp
+  val absynSigdec : sigdec -> Absyn.sigdec
+  val absynTopdec : topdec -> Absyn.topdec
+
+  val format_mono_ty : mono ty -> SMLFormat.format
+  val format_poly_ty : poly ty -> SMLFormat.format
+  val format_annot_ty : annot ty -> SMLFormat.format
+  val format_mono_kind : mono kind -> SMLFormat.format
+  val format_annot_kind : annot kind -> SMLFormat.format
+  val format_ffi_ty : ffi_ty -> SMLFormat.format
+  val format_pat : pat -> SMLFormat.format
+  val format_sigexp : sigexp -> SMLFormat.format
+  val format_strdec : strdec -> SMLFormat.format
+  val format_strexp : strexp -> SMLFormat.format
+  val format_funbind : SMLFormat.format -> funbind -> SMLFormat.format
+  val format_topdec : topdec -> SMLFormat.format
+end

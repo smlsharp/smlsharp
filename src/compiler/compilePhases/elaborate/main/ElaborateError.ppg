@@ -235,4 +235,11 @@ struct
    *)
   FreeTyNotAllowed
 
+  and
+  (*%
+   * @format(name)
+   * "unknown" +d "kind" +d "name:" +d name
+   *)
+  InvalidKindName of Symbol.symbol
+
 end

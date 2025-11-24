@@ -10,6 +10,7 @@ struct
 
   structure A = Absyn
   structure P = PatternCalc
+  datatype loc = datatype Loc.loc
 
   structure Name =
   struct
@@ -17,30 +18,33 @@ struct
     val fun_ForeachData = (["ForeachData"], "ForeachData")
   end
 
-  fun Pat x (_:P.loc) = x : P.plpat
+  fun Pat pat (_ : A.loc) : P.pat = pat
 
-  fun Exp x (_:P.loc) = x : P.plexp
+  fun Exp exp (_ : A.loc) : P.exp = exp
 
-  fun Loc (loc:P.loc) x = fn (_:P.loc) => x loc
+  fun Loc (loc : A.loc) x = fn (_ : A.loc) => x loc
 
-  fun PatVar (sym, loc) (_:P.loc) =
-      P.PLPATID
-        (SymbolWithLoc.symbolToLongsymbol {symbol = sym, loc = Loc.LOC loc})
+  fun PatVar vid (_ : A.loc) =
+      P.PATID (nil, vid, #2 vid)
 
   fun PatRecord fields loc =
-      P.PLPATRECORD (false, map (fn (l, pat) => (l, pat loc)) fields, loc)
+      P.PATRECORD
+        (map (fn (l, pat) => (l, pat loc, LOC loc)) fields, false, LOC loc)
 
-  fun PatTuple pats =
-      PatRecord (RecordLabel.tupleList pats)
+  fun PatTuple pats loc =
+      PatRecord (map (fn (l, p) => ((l, loc), p)) (RecordLabel.tupleList pats))
+                loc
 
   fun Fn (pat, exp) loc =
-      P.PLFNM ([([pat loc], exp loc, loc)], loc)
+      P.EXPFN ([(pat loc, exp loc, LOC loc)], LOC loc)
 
   fun App exp1 exp2 loc =
-      P.PLAPPM (exp1 loc, [exp2 loc], loc)
+      P.EXPAPP (exp1 loc, exp2 loc, LOC loc)
 
-  fun ExVar name loc =
-      P.PLVAR (SymbolWithLoc.mkLongsymbol name loc)
+  fun ExVar (names, name) loc =
+      P.EXPID (map (fn s => (Symbol.intern s, loc)) names,
+               (Symbol.intern name, loc),
+               loc)
 
   fun Fun_FoeachArray e1 e2 e3 =
       App (App (App (ExVar Name.fun_ForeachArray) e1) e2) e3
@@ -67,7 +71,7 @@ struct
         val iterator = Fn (pat, Exp (elabExp iterate))
         val pred = Fn (pat, Exp (elabExp pred))
       in
-        Fun_FoeachArray data iterator pred (Loc.LOC loc)
+        Fun_FoeachArray data iterator pred loc
       end
 
   fun elaborateForeachData {elabExp, elabPat}
@@ -92,7 +96,7 @@ struct
         val iterator = Fn (pat, Exp (elabExp iterate))
         val pred = Fn (pat, Exp (elabExp pred))
       in
-        Fun_ForeachData whereParam data iterator pred (Loc.LOC loc)
+        Fun_ForeachData whereParam data iterator pred loc
       end
 
 end

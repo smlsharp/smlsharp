@@ -7,7 +7,7 @@
 structure EvalSig  :
 sig
   val refreshSpecEnv : NameEvalEnv.env -> Subst.tfvSubst * NameEvalEnv.env
-  val evalPlsig : NameEvalEnv.topEnv -> PatternCalc.plsigexp -> NameEvalEnv.sigEntry
+  val evalPlsig : NameEvalEnv.topEnv -> PatternCalc.sigexp -> NameEvalEnv.sigEntry
 end
 =
 struct
@@ -374,12 +374,13 @@ local
   fun evalSig (topEnv:V.topEnv) path plsigexp : V.sigEntry =
     let
       val sigEntry = 
-          {env = V.emptyEnv, loc = P.getLocSigexp plsigexp, sigId = SignatureID.generate()}
+          {env = V.emptyEnv, loc = P.sigexpLoc plsigexp, sigId = SignatureID.generate()}
     in
       case plsigexp of
-        P.PLSIGEXPBASIC (plspec, loc) => sigEntry # {env = evalPlspec topEnv path plspec}
-      | P.PLSIGID symbol =>
+        P.SIGBASIC (plspec, loc) => sigEntry # {env = evalPlspec topEnv path plspec}
+      | P.SIGID symbol =>
         let
+          val symbol = toSymbol symbol
           val (sigEnv, sym) = 
               case VP.findSigETopEnv(topEnv, symbol) of
                 NONE => (EU.enqueueError
@@ -392,20 +393,21 @@ local
         in
           sigEntry # {env = sigEnv}
         end
-      | P.PLSIGWHERE (plsigexp, typbind, loc) =>
+      | P.SIGWHERE (plsigexp, typbind, loc) =>
         let
           val {env = specEnv, ...} = evalSig topEnv path plsigexp
           val freeTfvs = 
               TF.tfvsEnv TF.sigTfvKind nil (specEnv, TfvMap.empty)
-          fun setRealizer ((tyvarList, longsymbol, ty), returnEnv) =
+          fun setRealizer ((tyvarList, longsymbol, ty, _), returnEnv) =
               let
+                val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
                 exception FindID 
                 fun lookupId env path =
                     case VP.findId(env, path) of
                       SOME (sym, idstatus) => idstatus
                     | NONE => raise FindID
                 val _ = EU.checkSymbolDuplication
-                          (fn (isEq, symbol) => toSymbol symbol)
+                          toSymbol
                           tyvarList
                           (fn s => E.DuplicateTypParms("Sig-070",s))
                 val (tvarEnv, tvarList) =
@@ -413,7 +415,7 @@ local
                 val realizeePath = SymbolWithLoc.pathOf longsymbol
                 val realizerPath =
                       case ty of
-                        A.TYCON (tyList, (strids, _, _), loc) =>
+                        P.TYCON (tyList, (strids, _, _), loc) =>
                         map toSymbol strids
                       | _ => nil
                   val ty = Ty.evalTy tvarEnv (#Env topEnv) ty
@@ -673,44 +675,44 @@ local
                 Rigid =>
                 (EU.enqueueError
                    (loc, 
-                    E.ImproperSigwhere("Sig-080",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                    E.ImproperSigwhere("Sig-080",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Type =>
                 (EU.enqueueError
                    (loc,
                     E.TypeErrorInSigwhere
-                      ("Sig-090",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                      ("Sig-090",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Type1 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere
-                          ("Sig-100", {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                          ("Sig-100", {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Type2 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-110",
-                                              {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                                              {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Type3 =>
                 (EU.enqueueError
                    (loc,E.TypeErrorInSigwhere("Sig-120",
-                                              {longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                                              {longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Eq =>
                 (EU.enqueueError
                    (loc, E.EqtypeInSigwhere
-                           ("Sig-130",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                           ("Sig-130",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
               | Arity =>
                 (EU.enqueueError
                    (loc, E.ArityErrorInSigwhere
                            ("Sig-140",
-                            {longsymbolList=[SymbolWithLoc.toLongsymbol longsymbol]}));
+                            {longsymbolList=[SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)]}));
                  specEnv)
               | Undef =>
                 (EU.enqueueError
                    (loc, E.TypUndefinedInSigwhere
-                           ("Sig-150",{longsymbol=SymbolWithLoc.toLongsymbol longsymbol}));
+                           ("Sig-150",{longsymbol=SymbolWithLoc.toLongsymbol (SymbolWithLoc.fromAbsyn longsymbol)}));
                  specEnv)
             val specEnv = setRealizer (typbind, specEnv)
         in
@@ -720,26 +722,22 @@ local
   and evalPlspec1 (topEnv as {Env=env, FunE, SigE}) path plspec : V.env =
       case plspec of
         (* val x : ty and y : ty ... *)
-        P.PLSPECVAL valdescs =>
+        P.SPECVAL (valdescs, _) =>
         (
           EU.checkSymbolDuplication
-            (fn (_, symbol, _, _) => symbol)
+            (fn (symbol, _, _) => toSymbol symbol)
             valdescs
             (fn s => E.DuplicateVarInSpec("Sig-055", s));
           Ty.checkReservedName
             Ty.reservedNameSet
-            (fn (_, symbol, _, _) => symbol)
+            (fn (symbol, _, _) => toSymbol symbol)
             valdescs;
           foldl
-            (fn ((scopedTvars, symbol, ty, loc), specEnv) =>
+            (fn ((symbol, ty, loc), specEnv) =>
                 let
-                  val (tvarEnv, kindedTyars) =
-                      Ty.evalScopedTvars Ty.emptyTvarEnv env scopedTvars
-                  val ty = Ty.evalTy tvarEnv env ty
-                  val ty =
-                      case kindedTyars of
-                        nil => ty
-                      | _ => I.TYPOLY(kindedTyars,ty)
+                  val symbol = toSymbol symbol
+                  val tvarEnv = Ty.emptyTvarEnv
+                  val ty = Ty.evalPolyTy tvarEnv env ty
                 in
                   VP.rebindId VP.BIND_SIG
                     (specEnv,
@@ -750,19 +748,20 @@ local
             valdescs
         )
 
-      | P.PLSPECTYPE {tydecls=tvarListStringList, eq, loc} =>
+      | P.SPECTYPE (eq, tvarListStringList, loc) =>
       (* type 'a foo and ...*)
         let
           val _ = EU.checkSymbolDuplication
-                    (fn (tvarList, symbol) => symbol)
+                    (fn (tvarList, symbol, _) => toSymbol symbol)
                     tvarListStringList
                     (fn s => E.DuplicateTypInSpec("Sig-055", s))
           val specEnv =
            foldl
-             (fn ((tvarList, symbol), specEnv) =>
+             (fn ((tvarList, symbol, _), specEnv) =>
                let
+                 val symbol = toSymbol symbol
                  val _ = EU.checkSymbolDuplication
-                           (fn (isEq, symbol) => toSymbol symbol)
+                           toSymbol
                            tvarList
                            (fn s => E.DuplicateTypParms("Sig-160",s))
                  val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
@@ -790,57 +789,33 @@ local
           specEnv
         end
 
-      (* type 'a foo = 'a * 'a *)
-      | P.PLSPECTYPEEQUATION ((tvarList, symbol, ty), loc) =>
-        let
-          val longsymbol = SymbolWithLoc.symbolToLongsymbol symbol
-          val _ = EU.checkSymbolDuplication
-                    (fn (isEq, symbol) => toSymbol symbol)
-                    tvarList
-                    (fn s => E.DuplicateTypParms("Sig-170",s))
-          val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
-          val ty = Ty.evalTy tvarEnv env ty
-          val admitsEq = N.admitEq tvarList ty
-          val formals = tvarList
-          val tfun =
-              case N.tyForm formals ty of
-                N.TYNAME tfun => tfun
-              | N.TYTERM ty =>
-                I.TFUN_DEF
-                  {longsymbol=longsymbol,
-                   admitsEq=admitsEq,formals=formals,realizerTy=ty}
-        in
-          VP.rebindTstr VP.BIND_SIG
-            (V.emptyEnv, symbol, V.TSTR {tfun = tfun, defRange = loc})
-        end
-
-      | P.PLSPECDATATYPE (datadeclList, loc) =>
+      | P.SPECDATATYPE (datadeclList, loc) =>
       (* datatype 'a foo = A of ... *)
         let
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, ...} => symbol)
+                    (fn (_, symbol, _, _) => toSymbol symbol)
                     datadeclList
                     (fn s => E.DuplicateTypInDty("Sig-180",s))
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, ...} => symbol)
+                    (fn (symbol, _, _) => toSymbol symbol)
                     (foldl
-                       (fn ({conbind,...}, allCons) =>
+                       (fn ((_, _, conbind, _), allCons) =>
                            allCons@conbind)
                        nil
                        datadeclList)
                     (fn s => E.DuplicateConNameInDty("Sig-190",s))
           val _ = Ty.checkReservedName
                     Ty.reservedConNameSet
-                    (fn {symbol, ...} => symbol)
-                    (List.concat (map #conbind datadeclList))
+                    (fn (symbol, _, _) => toSymbol symbol)
+                    (List.concat (map #3 datadeclList))
           val (specEnv, datadeclListRev) =
               foldl
-                (fn ({tyvars=tvarList,symbol,
-                      conbind=conbinds, loc = defRange},
+                (fn ((tvarList, symbol, conbinds, defRange),
                      (specEnv, datadeclListRev)) =>
                     let
+                      val symbol = toSymbol symbol
                       val _ = EU.checkSymbolDuplication
-                                (fn (isEq, symbol) => toSymbol symbol)
+                                toSymbol
                                 tvarList
                                 (fn s => E.DuplicateTypParms("Sig-200", s))
                       val (tvarEnv, tvarList)=
@@ -889,9 +864,10 @@ local
                     let
                       val (conVarE, conSpec) =
                           foldl
-                            (fn ({symbol, ty=tyOption, loc}, 
+                            (fn ((symbol, tyOption, loc),
                                  (conVarE, conSpec)) =>
                               let
+                                val symbol = toSymbol symbol
                                 val tyOption =
                                     case tyOption of
                                       NONE => NONE
@@ -975,7 +951,11 @@ local
         end
 
       (* datatype foo = datatype bar *)
-      | P.PLSPECREPLIC (symbol, longsymbol, loc) =>
+      | P.SPECDATATYPEREP (symbol, longsymbol, loc) =>
+        let
+          val symbol = toSymbol symbol
+          val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
+        in
         (case VP.findTstr (env, longsymbol) of
            NONE =>
            (EU.enqueueError(loc,E.DtyUndefinedInSpec
@@ -999,22 +979,24 @@ local
               end
            )
         )
+        end
 
       (* exception foo of 'a ... *)
-      | P.PLSPECEXCEPTION (symbolTyOptionList, loc) =>
+      | P.SPECEXCEPTION (symbolTyOptionList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    #1
+                    (fn (symbol, _, _) => toSymbol symbol)
                     symbolTyOptionList
                     (fn symbol =>  E.DuplicateConInSpec("054",symbol))
           val _ = Ty.checkReservedName
                     Ty.reservedConNameSet
-                    #1
+                    (fn (symbol, _, _) => toSymbol symbol)
                     symbolTyOptionList
           val specEnv =
               foldl
                 (fn ((symbol, tyOption, loc), specEnv) =>
                     let
+                      val symbol = toSymbol symbol
                       val ty =
                           case tyOption of
                             NONE => BT.exnITy
@@ -1034,16 +1016,17 @@ local
         end
 
       (* structure A : sig and ... *)
-      | P.PLSPECSTRUCT (symbolPlsigexpList, loc) =>
+      | P.SPECSTRUCTURE (symbolPlsigexpList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
-                    #1
+                    (fn (symbol, _, _) => toSymbol symbol)
                     symbolPlsigexpList
                     (fn s => E.DuplicateStrInSpec("Sig-070",s))
           val specEnv =
            foldl
              (fn ((symbol, sigexp, defLoc), specEnv) =>
                let
+                 val symbol = toSymbol symbol
                  val {env = strSpecEnv,...} = evalSig topEnv (path@[symbol]) sigexp
                  val sigId = SignatureID.generate()
                  val specEnv =
@@ -1064,7 +1047,7 @@ local
         end
 
       (* include A *)
-      | P.PLSPECINCLUDE (plsigexp, loc) =>
+      | P.SPECINCLUDE (plsigexp, loc) =>
         let
           val {env = specEnv,...} = evalSig topEnv path plsigexp
           val specEnv = #2 (refreshSpecEnv path specEnv)
@@ -1076,8 +1059,9 @@ local
         end
 
       (* <spec> sharing type path1 = path2 = path3 ... *)
-      | P.PLSPECSHARE (plspec, longsymbolList, loc) =>
+      | P.SPECSHARINGTYPE (plspec, longsymbolList, loc) =>
        let
+         val longsymbolList = map SymbolWithLoc.fromAbsyn longsymbolList
           val specEnv = evalPlspec topEnv path plspec
           val _ = processShare (specEnv, [longsymbolList], loc)
           val specEnv = N.reduceEnv specEnv
@@ -1086,7 +1070,7 @@ local
        end
 
       (* spec sharing path1 = b ... *)
-      | P.PLSPECSHARESTR (plspec, longsymbolList, loc) =>
+      | P.SPECSHARING (plspec, longsymbolList, loc) =>
         let
           fun addToListEnv (pathEnv, key, x) =
               Longsymbol.Map.unionWith
@@ -1120,6 +1104,7 @@ local
               foldl
                 (fn (longsymbol, pathEnv) =>
                   let
+                    val longsymbol = SymbolWithLoc.fromAbsyn longsymbol
                     val envEntry = VP.findStr(specEnv, longsymbol)
                   in
                     case envEntry

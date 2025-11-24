@@ -1164,7 +1164,7 @@ in
             foldr
             (fn (x, y) => IC.ICFNM([{args=[x], body=y}], loc))
             (IC.ICCASEM
-               (newVarExps, ruleList, PatternCalc.MATCH, loc))
+               (newVarExps, ruleList, IDCalc.MATCH, loc))
             newVarPats
           end
       in
@@ -1783,7 +1783,7 @@ in
                       (
                        [icexp],
                        [{args=[icpat], body=IC.ICRECORD(nil, icpatLoc)}],
-                       PatternCalc.BIND,
+                       IDCalc.BIND,
                        loc
                        )
                     val (ty, tpexp) =
@@ -1801,7 +1801,7 @@ in
                         (
                          [icexp],
                          [{args=[icpat], body=IC.ICVAR x}],
-                         PatternCalc.BIND,
+                         IDCalc.BIND,
                          loc
                          )
                       val (ty, tpexp) =
@@ -1831,7 +1831,7 @@ in
                       (
                        [icexp],
                        [{args=[icpat], body=IC.ICRECORD (resTuple, icpatLoc)}],
-                       PatternCalc.BIND,
+                       IDCalc.BIND,
                        loc
                        )
                     val (tupleTy, tpexp) =
@@ -3227,7 +3227,7 @@ in
                   expTyList=[domTy],
                   ruleList=tppatTpexpList,
                   ruleBodyTy=ranTy,
-                  caseKind= PatternCalc.HANDLE,
+                  caseKind= IDCalc.HANDLE,
                   loc=loc
                  },
                resultTy=ranTy,
@@ -3288,7 +3288,7 @@ in
                           (
                            map (fn var => IC.ICVAR var) varList,
                            argsBodyList,
-                           PatternCalc.MATCH,
+                           IDCalc.MATCH,
                            loc
                           ),
                         loc
@@ -3309,7 +3309,7 @@ in
                       (
                        map (fn var => IC.ICVAR var) varList,
                        argsBodyList,
-                       PatternCalc.MATCH,
+                       IDCalc.MATCH,
                        loc
                       ),
                     loc)
@@ -5408,7 +5408,7 @@ in
                      (IC.ICCASEM
                         (map (fn (v, _) => IC.ICVAR v) patList,
                          [{args = map #2 patList, body = body}],
-                         PatternCalc.MATCH,
+                         IDCalc.MATCH,
                          loc))
                      patList)
                  ]

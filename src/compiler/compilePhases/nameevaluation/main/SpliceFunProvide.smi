@@ -1,17 +1,18 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlnj-lib/Util/lib-base.smi"
-(* _require local "../../../data/symbols/main/Loc.smi" *)
+_require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/SymbolWithLoc.smi"
 (* _require local "../../../libs/env/main/SEnv.smi" *)
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require local "./NameEvalError.ppg.smi"
 
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi"
 
 structure SpliceProvicdeFundecl =
 struct
-  val spliceProvideFundecl : PatternCalcInterface.compile_unit -> PatternCalcInterface.compile_unit_spliced
+  val spliceProvideFundecl : PatternCalcInterface.compile_unit -> PatternCalcInterface1.compile_unit_spliced
 end

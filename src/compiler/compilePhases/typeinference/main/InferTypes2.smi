@@ -22,7 +22,7 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/builtin/main/ConstantTypes.smi"
 (* _require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi" *)
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
-_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"

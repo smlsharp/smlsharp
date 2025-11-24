@@ -19,10 +19,10 @@ _require local "./TfunVars.smi"
 _require local "./NameEvalEnvPrims.smi"
 
 _require "./Subst.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require "./NameEvalEnv.ppg.smi"
 structure EvalSig =
 struct
   val refreshSpecEnv : NameEvalEnv.env -> Subst.tfvSubst * NameEvalEnv.env
-  val evalPlsig : NameEvalEnv.topEnv -> PatternCalc.plsigexp -> NameEvalEnv.sigEntry
+  val evalPlsig : NameEvalEnv.topEnv -> PatternCalc.sigexp -> NameEvalEnv.sigEntry
 end

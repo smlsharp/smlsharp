@@ -1,0 +1,77 @@
+(**
+ * Elaborated interface
+ *
+ * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
+ *
+ * 2012-10-13 ohori:
+   Changed string id and longids to symbols and long symbols
+ *)
+structure PatternCalcInterface1 =
+struct
+
+  type loc = Loc.loc
+
+  (*% @formatter(SymbolWithLoc.symbol) SymbolWithLoc.format_symbol*)
+  type symbol = SymbolWithLoc.symbol
+
+  (*%
+   * @formatter(PatternCalc.strdec) PatternCalc.format_strdec
+   * @formatter(PatternCalc.sigexp) PatternCalc.format_sigexp
+   * @formatter(PatternCalc.strexp) PatternCalc.format_strexp
+   * @formatter(PatternCalc.funbind) PatternCalc.format_funbind
+   * @formatter(PatternCalcInterface.funbind) PatternCalcInterface.format_funbind
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(declist) TermFormat.formatDeclList
+   *)
+  datatype topdec
+    = (*%
+       * @format(plstrdec)
+       *   "TOPDECSTR(" plstrdec ")"
+      *)
+      TOPDECSTR of PatternCalc.strdec
+    | (*%
+       * @format(sigbind sigbinds * loc) "TOPDECSIG"
+      *)
+      TOPDECSIG of (symbol * PatternCalc.sigexp * loc) list * loc
+    | (*%
+       * @format(decfun decfuns * loc)
+       *  "TOPDECFUN:" \n
+       *  decfuns:declist(decfun:decfun)(+1 ",", +d)
+       *
+       * @format:decfun({pltopdec:pltop, pitopdec:funbind funbindOpt})
+       *  "pltopdec" \n
+       *   pltop()() \n
+       *  "pitopdec" \n
+       *   funbindOpt(funbind()())(,) \n
+      *)
+       TOPDECFUN of
+         {pltopdec: PatternCalc.funbind,
+          pitopdec: PatternCalcInterface.funbind option} list * loc
+
+  (*%
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(declist) TermFormat.formatDeclList
+   * @formatter(PatternCalcInterface.interface)
+   * PatternCalcInterface.format_interface
+   *)
+  type compile_unit_spliced
+    = (*%
+       * @format({interface:interface,
+       *          topdecsInclude:inctopdec inctopdecs,
+       *          topdecsSource:srctopdec srctopdecs})
+       * "interface" \n
+       * interface
+       * \n
+       * "topdecsInclude" \n
+         inctopdecs:declist(inctopdec)(+1, +1)
+       * "topdecsSource" \n
+         srctopdecs:declist(srctopdec)(+1, +1)
+      *)
+      {
+        interface : (Loc.pos * Loc.pos) PatternCalcInterface.interface,
+        topdecsInclude : topdec list,
+        topdecsSource : topdec list
+      }
+
+end

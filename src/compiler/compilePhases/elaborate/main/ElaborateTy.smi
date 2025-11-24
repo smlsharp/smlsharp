@@ -1,12 +1,13 @@
 _require local "../../../../basis.smi"
 _require local "../../../libs/util/main/CompileUtils.smi"
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynUtils.smi"
 _require local "./ElaborateError.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 
 structure ElaborateTy =
 struct
@@ -32,8 +33,12 @@ struct
   val appendTyvarseq
       : Absyn.kinded_tyvarseq option * Absyn.kinded_tyvar list
         -> Absyn.kinded_tyvarseq option
-  val elabMonoTy : Absyn.ty -> PatternCalc.ty
-  val elabRank1Ty : Absyn.ty -> PatternCalc.ty
-  val elabMonoTyAnnot : Absyn.ty -> PatternCalc.ty
-  val elabUserTyvars : Absyn.kinded_tyvarseq option -> PatternCalc.scopedTvars
+  val tupleRows
+      : ('a -> Absyn.loc) -> 'a list -> (Absyn.lab * 'a * Absyn.loc) list
+  val elabKindedTyvarseq
+      : Absyn.kinded_tyvarseq option -> PatternCalc.kinded_tyvarseq
+  val elabMonoTy : Absyn.ty -> PatternCalc.mono_ty
+  val elabPolyTy : Absyn.ty -> PatternCalc.poly_ty
+  val elabAnnotTy : Absyn.ty -> PatternCalc.annot_ty
+  val makePolyTy : Absyn.ty -> Absyn.ty
 end

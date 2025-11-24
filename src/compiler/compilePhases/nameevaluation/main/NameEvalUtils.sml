@@ -270,21 +270,21 @@ in
       else ()
   fun printPlstrDecl dec =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (PatternCalc.format_plstrdec dec) ^ "\n")
+        print (Bug.prettyPrint (PatternCalc.format_strdec dec) ^ "\n")
       else ()
   fun printPlstrexp strexp =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (PatternCalc.format_plstrexp strexp) ^ "\n")
+        print (Bug.prettyPrint (PatternCalc.format_strexp strexp) ^ "\n")
       else ()
   fun printPlsigexp sigexp =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (PatternCalc.format_plsigexp sigexp) ^ "\n")
+        print (Bug.prettyPrint (PatternCalc.format_sigexp sigexp) ^ "\n")
       else ()
   fun printPitopdec dec =
       if !Bug.debugPrint then 
         print
           (Bug.prettyPrint
-             (PatternCalcInterface.format_pitopdec dec) ^ "\n")
+             (PatternCalcInterface.format_topdec dec) ^ "\n")
       else ()
   fun printCompileUnit compileUnit =
       if !Bug.debugPrint then 
@@ -296,7 +296,7 @@ in
       if !Bug.debugPrint then 
         print
           (Bug.prettyPrint
-             (PatternCalcInterface.format_compile_unit_spliced 
+             (PatternCalcInterface1.format_compile_unit_spliced
                 compileUnitSpliced) ^ "\n")
       else ()
 
@@ -304,19 +304,19 @@ in
       if !Bug.debugPrint then 
         print
           (Bug.prettyPrint
-             (PatternCalc.format_pltopdec dec) ^ "\n")
+             (PatternCalc.format_topdec dec) ^ "\n")
       else ()
   fun printPidec dec =
       if !Bug.debugPrint then 
         print
           (Bug.prettyPrint
-             (PatternCalcInterface.format_pidec dec) ^ "\n")
+             (PatternCalcInterface.format_dec dec) ^ "\n")
       else ()
   fun printPiinterfacedec dec =
       if !Bug.debugPrint then 
         print
           (Bug.prettyPrint
-             (PatternCalcInterface.format_interfaceDec dec) ^ "\n")
+             (PatternCalcInterface.format_interface_dec dec) ^ "\n")
       else ()
   fun printCastEnv {tvarEnv, tfunEnv, conIdEnv} =
       if !Bug.debugPrint then 

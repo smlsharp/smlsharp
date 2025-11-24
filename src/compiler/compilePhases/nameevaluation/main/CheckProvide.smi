@@ -21,8 +21,8 @@ _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/Longsymbol.smi"
 _require "../../../data/symbols/main/SymbolWithLoc.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require local "../../../compilePhases/analyzefiles/main/Analyzers.smi"
 _require "./NameEvalEnv.ppg.smi"
@@ -33,15 +33,15 @@ struct
       {topEnv:NameEvalEnv.topEnv, 
        evalEnv:NameEvalEnv.topEnv, 
        argSigEnv:NameEvalEnv.env, 
-       specArgSig:PatternCalc.plsigexp, 
-       functorSymbol:SymbolWithLoc.symbol,
+       specArgSig:PatternCalc.sigexp, 
+       functorSymbol:PatternCalc.funid,
        returnEnv:NameEvalEnv.env, 
-       specBodyStr:PatternCalcInterface.pistrexp, 
+       specBodyStr:PatternCalcInterface.strexp, 
        defLoc:Loc.loc,
        specLoc:Loc.loc}
       -> IDCalc.icdecl list * NameEvalEnv.env
   val checkPitopdecList :
       NameEvalEnv.topEnv
-      -> (NameEvalEnv.topEnv * PatternCalcInterface.pitopdec list)
+      -> (NameEvalEnv.topEnv * PatternCalcInterface.topdec list)
       -> {exportDecls:IDCalc.icdecl list, bindDecls:IDCalc.icdecl list}
 end
