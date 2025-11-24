@@ -1940,6 +1940,10 @@ val tests = TestList [
                (_, [(_,_,T.TyConListMismatch _),
                     (_,_,T.TyConListMismatch _)]) => ()),
 
+  Test
+    ("390_typeinf",
+     fn () => ignore (compile ["regression/390_typeinf.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end

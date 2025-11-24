@@ -5459,6 +5459,9 @@ in
                     let
                       val (icexpTy, tpexp) =
                           typeinfExp lambdaDepth inf newContext icexp
+                      val (icexpTy, _, constraints, tpexp) =
+                          TCU.freshInst (icexpTy, tpexp)
+                      val _ = addConstraints constraints
                       val tyEquations = map (fn x => (ty, x)) (icexpTy::tyList)
                       val _ =
                           U.unify tyEquations
