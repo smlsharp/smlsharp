@@ -57,7 +57,6 @@ struct
     | FRULE of Absyn.frule
     | VALRECBIND of Absyn.valrecbind
     | FVALBIND of Absyn.fvalbind
-    | PVALBIND of Absyn.pvalbind
     | VALDESC of Absyn.valdesc
     | TYPDESC of Absyn.typdesc
     | CONDESC of Absyn.condesc

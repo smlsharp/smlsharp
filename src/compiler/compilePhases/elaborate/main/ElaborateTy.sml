@@ -308,10 +308,11 @@ struct
       {TYWILD = wildTyNotAllowed,
        TYFLEXRECORD = flexRecordTyNotAllowed,
        TYVAR_FREE = freeTyNotAllowed,
-       TYPOLY = polyTyNotAllowed}
+       TYPOLY = polyTyNotAllowed,
+       mustBeMono = polyTyNotAllowed}
 
   fun mustBeMono env =
-      env # {TYPOLY = polyTyNotAllowed}
+      env # {TYPOLY = #mustBeMono env}
 
   fun elabTy env ty =
       case ty of
@@ -373,10 +374,25 @@ struct
       {TYWILD = elabWild,
        TYVAR_FREE = elabTyvarFree,
        TYFLEXRECORD = elabFlexRecord,
-       TYPOLY = polyTyNotAllowed}
+       TYPOLY = polyTyNotAllowed,
+       mustBeMono = polyTyNotAllowed}
 
   fun elabAnnotTy ty =
       elabTy (annotEnv ()) ty
+
+  fun isPolyTy ty =
+      let
+        exception Poly and Ng
+        fun poly _ = raise Poly
+        fun ng _ = raise Ng
+        val env = {TYWILD = ng,
+                   TYVAR_FREE = ng,
+                   TYFLEXRECORD = ng,
+                   TYPOLY = poly,
+                   mustBeMono = ng}
+      in
+        (elabTy env ty; false) handle Poly => true | Ng => false
+      end
 
   fun elabKindedTyvarseq NONE = (nil, Loc.NOLOC)
     | elabKindedTyvarseq (SOME (tyvars, loc)) =

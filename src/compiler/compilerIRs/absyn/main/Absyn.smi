@@ -145,7 +145,6 @@ struct
     | DECINFIXR of string option * vid list * loc
     | DECNONFIX of vid list * loc
     | DECDO of exp * loc
-    | DECPOLYREC of (vid * ty * exp * loc) list * loc
 
   type sqlexp = (exp, pat, ty) AbsynSQL.top
 
@@ -160,8 +159,6 @@ struct
   type valrecbind = pat * exp * loc
 
   type fvalbind = frule list * loc
-
-  type pvalbind = vid * ty * exp * loc
 
   type valdesc = vid * ty * loc
 

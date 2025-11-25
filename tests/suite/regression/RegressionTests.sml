@@ -1944,6 +1944,10 @@ val tests = TestList [
     ("390_typeinf",
      fn () => ignore (compile ["regression/390_typeinf.sml"])),
 
+  Test
+    ("391_polyrec",
+     fn () => ignore (compile ["regression/391_polyrec.sml"])),
+
   TestList nil (* placeholder *)
 ]
 end

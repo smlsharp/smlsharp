@@ -90,7 +90,6 @@ struct
         | T.U_DYNAMICNULL => Tokens.U_DYNAMICNULL (pos1, pos2)
         | T.U_DYNAMICVIEW => Tokens.U_DYNAMICVIEW (pos1, pos2)
         | T.U_DYNAMICVOID => Tokens.U_DYNAMICVOID (pos1, pos2)
-        | T.U_POLYREC => Tokens.U_POLYREC (pos1, pos2)
         | T.U_REIFYTY => Tokens.U_REIFYTY (pos1, pos2)
         | T.U_REQUIRE => Tokens.U_REQUIRE (pos1, pos2)
         | T.U_SIZEOF => Tokens.U_SIZEOF (pos1, pos2)

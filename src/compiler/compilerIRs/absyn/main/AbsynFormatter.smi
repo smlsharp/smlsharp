@@ -38,7 +38,6 @@ struct
       : SMLFormat.format * SMLFormat.format
         -> Absyn.fvalbind
         -> SMLFormat.format
-  val format_pvalbind : SMLFormat.format -> Absyn.pvalbind -> SMLFormat.format
   val format_valdesc : SMLFormat.format -> Absyn.valdesc -> SMLFormat.format
   val format_typdesc : SMLFormat.format -> Absyn.typdesc -> SMLFormat.format
   val format_condesc : Absyn.condesc -> SMLFormat.format

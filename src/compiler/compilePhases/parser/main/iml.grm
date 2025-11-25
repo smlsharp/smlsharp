@@ -120,7 +120,6 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | U_DYNAMICNULL
   | U_DYNAMICVIEW
   | U_DYNAMICVOID
-  | U_POLYREC
   | U_REIFYTY
   | U_REQUIRE
   | U_SIZEOF
@@ -300,8 +299,6 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | valbind_1 of A.valrecbind
   | valrecbind of A.valrecbind list
   | valbind of A.valbind list
-  | pvalbind_1 of A.pvalbind
-  | pvalbind of A.pvalbind list
   | frule of A.frule
   | fvalbind_1 of A.fvalbind
   | fvalbind of A.fvalbind list
@@ -1433,8 +1430,6 @@ dec
         | VAL REC kinded_tyvarseq valrecbind
           (A.DECVALREC
              (SOME kinded_tyvarseq, valrecbind, (VALleft, valrecbindright)))
-        | VAL U_POLYREC pvalbind
-          (A.DECPOLYREC (pvalbind, (VALleft, pvalbindright)))
         | FUN fvalbind
           (A.DECFUN (NONE, fvalbind, (FUNleft, fvalbindright)))
         | FUN kinded_tyvarseq fvalbind
@@ -1591,16 +1586,6 @@ valbind
           (A.VALBIND valbind_1 :: valbind)
         | REC valbind
           ([A.VALREC (valbind, (RECleft, valbindright))])
-
-pvalbind_1
-        : id_noEQ COLON ty EQ expOrSQL
-          ((id_noEQ, ty, expOrSQL, (id_noEQleft, expOrSQLright)))
-
-pvalbind
-        : pvalbind_1
-          ([pvalbind_1])
-        | pvalbind_1 AND pvalbind
-          (pvalbind_1 :: pvalbind)
 
 frule
         : apppat EQ expOrSQL

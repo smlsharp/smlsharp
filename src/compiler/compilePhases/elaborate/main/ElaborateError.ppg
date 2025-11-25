@@ -200,14 +200,6 @@ struct
 
   and
   (*%
-   * @format(tvar)
-   * "user" +d "type" +d "variable" +d "implicitly" +d "scoped" +d "at"
-   * +d "val" +d "_polyrec:" +d tvar
-   *)
-  UserTyvarImplicitlyBoundAtPolyRec of AbsynTy.tyvar
-
-  and
-  (*%
    * @format
    * "polymorphic" +d "type" +d "is" +d "not" +d "allowed" +d "here"
    *)

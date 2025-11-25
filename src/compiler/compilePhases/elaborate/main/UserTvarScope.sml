@@ -317,7 +317,6 @@ struct
         A.DECVAL _ => empty (* guard point *)
       | A.DECVALREC _ => empty (* guard point *)
       | A.DECFUN _ => empty (* guard point *)
-      | A.DECPOLYREC _ => empty (* guard point *)
       | A.DECTYPE (typbinds, loc) => ftvList ftvTypbind typbinds
       | A.DECDATATYPE (datbinds, withty, loc) =>
         union (ftvList ftvDatbind datbinds, ftvOpt ftvWithty withty)
@@ -351,9 +350,6 @@ struct
 
   and ftvFvalbind ((frules, loc) : A.fvalbind) =
       ftvList ftvFrule frules
-
-  and ftvPvalbind ((vid, ty, exp, loc) : A.pvalbind) =
-      union (ftvTy ty, ftvExp exp)
 
   fun decideScope ftvFn env (tyvarseq, items, loc) =
       let
@@ -734,20 +730,6 @@ struct
         in
           A.DECFUN (tyvarseq, map (decideFvalbind env) fvalbinds, loc)
         end
-      | A.DECPOLYREC (pvalbinds, loc) =>
-        let
-          val (env, tyvarseq) =
-              decideScope ftvPvalbind env (NONE, pvalbinds, loc)
-        in
-          case tyvarseq of
-            NONE => ()
-          | SOME (tyvars, _) =>
-            app (fn (tv, _, loc) =>
-                    UserErrorUtils.enqueueError
-                      (LOC loc, E.UserTyvarImplicitlyBoundAtPolyRec tv))
-                tyvars;
-          A.DECPOLYREC (map (decidePvalbind env) pvalbinds, loc)
-        end
       | A.DECTYPE _ => dec
       | A.DECDATATYPE _ => dec
       | A.DECDATATYPEREP _ => dec
@@ -782,9 +764,6 @@ struct
 
   and decideFvalbind env (frules, loc) : A.fvalbind =
       (map (decideFrule env) frules, loc)
-
-  and decidePvalbind env (vid, ty, exp, loc) : A.pvalbind =
-      (vid, ty, decideExp env exp, loc)
 
   fun decideStrexp strexp =
       case strexp of

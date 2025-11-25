@@ -59,7 +59,6 @@ struct
     | FRULE of Absyn.frule
     | VALRECBIND of Absyn.valrecbind
     | FVALBIND of Absyn.fvalbind
-    | PVALBIND of Absyn.pvalbind
     | VALDESC of Absyn.valdesc
     | TYPDESC of Absyn.typdesc
     | CONDESC of Absyn.condesc
@@ -251,7 +250,6 @@ struct
       | DEC (A.DECINFIXR _) => "DEC:DECINFIXR"
       | DEC (A.DECNONFIX _) => "DEC:DECNONFIX"
       | DEC (A.DECDO _) => "DEC:DECDO"
-      | DEC (A.DECPOLYREC _) => "DEC:DECPOLYREC"
       | EXPROW (A.EXPROW _) => "EXPROW:EXPROW"
       | EXPROW (A.EXPROWVAR _) => "EXPROW:EXPROWVAR"
       | LET_BODY _ => "LET_BODY"
@@ -260,7 +258,6 @@ struct
       | FRULE _ => "FRULE"
       | VALRECBIND _ => "VALRECBIND"
       | FVALBIND _ => "FVALBIND"
-      | PVALBIND _ => "PVALBIND"
       | VALDESC _ => "VALDESC"
       | TYPDESC _ => "TYPDESC"
       | CONDESC _ => "CONDESC"
@@ -562,7 +559,6 @@ struct
       | DEC (A.DECINFIXR (_, _, loc)) => loc
       | DEC (A.DECNONFIX (_, loc)) => loc
       | DEC (A.DECDO (_, loc)) => loc
-      | DEC (A.DECPOLYREC (_, loc)) => loc
       | EXPROW (A.EXPROW (_, _, loc)) => loc
       | EXPROW (A.EXPROWVAR (_, _, loc)) => loc
       | LET_BODY (_, loc) => loc
@@ -571,7 +567,6 @@ struct
       | FRULE (_, _, _, loc) => loc
       | VALRECBIND (_, _, loc) => loc
       | FVALBIND (_, loc) => loc
-      | PVALBIND (_, _, _, loc) => loc
       | VALDESC (_, _, loc) => loc
       | TYPDESC (_, _, loc) => loc
       | CONDESC (_, _, loc) => loc
@@ -905,7 +900,6 @@ struct
       | DEC (A.DECINFIXR (prec, ids, loc)) => map VID ids
       | DEC (A.DECNONFIX (ids, loc)) => map VID ids
       | DEC (A.DECDO (exp, loc)) => [EXP exp]
-      | DEC (A.DECPOLYREC (pvalbinds, loc)) => map PVALBIND pvalbinds
       | EXPROW (A.EXPROW (lab, exp, loc)) => [LAB lab, EXP exp]
       | EXPROW (A.EXPROWVAR (vid, NONE, loc)) => [VID vid]
       | EXPROW (A.EXPROWVAR (vid, SOME ty, loc)) => [VID vid, TY ty]
@@ -918,7 +912,6 @@ struct
       | FRULE (pat, SOME ty, exp, loc) => [PAT pat, TY ty, EXP exp]
       | VALRECBIND (pat, exp, loc) => [PAT pat, EXP exp]
       | FVALBIND (frules, loc) => map FRULE frules
-      | PVALBIND (vid, ty, exp, loc) => [VID vid, TY ty, EXP exp]
       | VALDESC (vid, ty, loc) => [VID vid, TY ty]
       | TYPDESC (NONE, tycon, loc) => [TYCON tycon]
       | TYPDESC (SOME tyvarseq, tycon, loc) => [TYVARSEQ tyvarseq, TYCON tycon]

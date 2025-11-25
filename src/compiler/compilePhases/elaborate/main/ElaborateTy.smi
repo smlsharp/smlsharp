@@ -40,5 +40,6 @@ struct
   val elabMonoTy : Absyn.ty -> PatternCalc.mono_ty
   val elabPolyTy : Absyn.ty -> PatternCalc.poly_ty
   val elabAnnotTy : Absyn.ty -> PatternCalc.annot_ty
+  val isPolyTy : Absyn.ty -> bool
   val makePolyTy : Absyn.ty -> Absyn.ty
 end

@@ -413,11 +413,25 @@ struct
        | _ => enqueueError (loc, E.NotFnBoundInValRec);
        (elabPat pat, elabExp exp, LOC loc))
 
-  and elabPvalbind ((vid, ty, exp, loc) : A.pvalbind) =
-      (case exp of
-         A.EXPFN _ => ()
-       | _ => enqueueError (loc, E.NotFnBoundInValRec);
-       (vid, ElaborateTy.elabPolyTy ty, elabExp exp, LOC loc))
+  and elabPvalbind (vid, ty, exp, loc) =
+      (vid, ElaborateTy.elabPolyTy ty, elabExp exp, LOC loc)
+
+  and elabPvalbinds (NONE, NIL, recbinds as _ ::> _) =
+      let
+        val recbinds = Snoc.toList recbinds
+        val pvalbinds =
+            List.mapPartial
+              (fn (A.PATTYPED (A.PATID (_, (nil, v, _), _), ty, _), exp, loc) =>
+                  SOME (v, ty, exp, loc)
+                | _ => NONE)
+              recbinds
+      in
+        if length recbinds = length pvalbinds
+           andalso List.exists (ElaborateTy.isPolyTy o #2) pvalbinds
+        then SOME (map elabPvalbind pvalbinds)
+        else NONE
+      end
+    | elabPvalbinds _ = NONE
 
   and elabFvalbind ((frules, loc) : A.fvalbind) =
       let
@@ -457,18 +471,20 @@ struct
         let
           val (valbinds, recbinds) = classifyValbinds valbinds
         in
-          [P.DECVAL (ElaborateTy.elabKindedTyvarseq tyvarseq,
-                     map elabValbind (Snoc.toList valbinds),
-                     map elabRecbind (Snoc.toList recbinds),
-                     LOC loc)]
+          case elabPvalbinds (tyvarseq, valbinds, recbinds) of
+            SOME pvalbinds =>
+            [P.DECPOLYREC (pvalbinds, LOC loc)]
+          | NONE =>
+            [P.DECVAL (ElaborateTy.elabKindedTyvarseq tyvarseq,
+                       map elabValbind (Snoc.toList valbinds),
+                       map elabRecbind (Snoc.toList recbinds),
+                       LOC loc)]
         end
-      | A.DECVALREC (tyvarseq, valrecbinds, loc) =>
+      | A.DECVALREC (arg as (tyvarseq, valrecbinds, loc)) =>
         [P.DECVAL (ElaborateTy.elabKindedTyvarseq tyvarseq,
                    nil,
                    map elabValbind valrecbinds,
                    LOC loc)]
-      | A.DECPOLYREC (pvalbinds, loc) =>
-        [P.DECPOLYREC (map elabPvalbind pvalbinds, LOC loc)]
       | A.DECFUN (tyvs, fvalbinds, loc) =>
         [P.DECFUN (ElaborateTy.elabKindedTyvarseq tyvs,
                    map elabFvalbind fvalbinds,

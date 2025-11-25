@@ -112,7 +112,6 @@ val U_SQL:  pos * pos -> token
 val U_SIZEOF:  pos * pos -> token
 val U_REQUIRE:  pos * pos -> token
 val U_REIFYTY:  pos * pos -> token
-val U_POLYREC:  pos * pos -> token
 val U_DYNAMICVOID:  pos * pos -> token
 val U_DYNAMICVIEW:  pos * pos -> token
 val U_DYNAMICNULL:  pos * pos -> token

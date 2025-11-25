@@ -88,7 +88,6 @@ struct
     | U_DYNAMICNULL
     | U_DYNAMICVIEW
     | U_DYNAMICVOID
-    | U_POLYREC
     | U_REIFYTY
     | U_REQUIRE
     | U_SIZEOF

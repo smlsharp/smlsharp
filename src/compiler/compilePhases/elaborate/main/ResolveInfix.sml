@@ -606,8 +606,6 @@ struct
         (makeEnv F.NONFIX vids, dec)
       | A.DECDO (exp, loc) =>
         (emptyEnv, A.DECDO (resolveExp env exp, loc))
-      | A.DECPOLYREC (pvalbinds, loc) =>
-        (emptyEnv, A.DECPOLYREC (map (resolvePvalbind env) pvalbinds, loc))
 
   and resolveDecs env decs =
       resolveList resolveDec env decs
@@ -629,9 +627,6 @@ struct
 
   and resolveFvalbind env (frules, loc) : A.fvalbind =
       (map (resolveFrule env) frules, loc)
-
-  and resolvePvalbind env (vid, ty, exp, loc) : A.pvalbind =
-      (vid, ty, resolveExp env exp, loc)
 
   and resolveStrexp env strexp =
       case strexp of

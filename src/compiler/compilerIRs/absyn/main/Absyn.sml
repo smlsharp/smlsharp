@@ -698,18 +698,6 @@ struct
        * !N0{ "do" +1 exp }
        *)
       DECDO of exp * loc
-    | (*%
-       * @format(pvalbind pvalbinds * loc)
-       * !N0{
-       *   "val" +d
-       *   pvalbinds:decs(pvalbind)(
-       *     "_polyrec" +d,
-       *     +1,
-       *     "and" +d
-       *   )
-       * }
-       *)
-      DECPOLYREC of pvalbind list * loc
 
   withtype sqlexp =
       (*%
@@ -760,13 +748,6 @@ struct
        * !N0{ head1 frules:decs(frule:frule)(head2, +1 "|" +d,) }
        *)
       (pat * ty option * exp * loc) list * loc
-
-  and (*% @params(head) *) pvalbind =
-      (*%
-       * @format(vid * ty * exp * loc)
-       * !N0{ !N0{ head vid +1 ":" +d ty } +d "=" +1 exp }
-       *)
-      vid * ty * exp * loc
 
   type let_body = exp list * loc
 

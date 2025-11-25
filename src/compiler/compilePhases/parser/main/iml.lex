@@ -239,7 +239,6 @@ real="~"?{digit}+({frac}{exp}|{frac}|{exp});
 <INITIAL>"_dynamicnull" => ((T.U_DYNAMICNULL, loc yytext yypos arg));
 <INITIAL>"_dynamicview" => ((T.U_DYNAMICVIEW, loc yytext yypos arg));
 <INITIAL>"_dynamicvoid" => ((T.U_DYNAMICVOID, loc yytext yypos arg));
-<INITIAL>"_polyrec" => ((T.U_POLYREC, loc yytext yypos arg));
 <INITIAL>"_reifyTy" => ((T.U_REIFYTY, loc yytext yypos arg));
 <INITIAL>"_require" => ((T.U_REQUIRE, loc yytext yypos arg));
 <INITIAL>"_sizeof" => ((T.U_SIZEOF, loc yytext yypos arg));

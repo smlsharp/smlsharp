@@ -460,7 +460,7 @@ struct
       | DECOPEN (strids, _) =>
         A.DECOPEN (strids, loc)
       | DECPOLYREC (pvalbinds, _) =>
-        A.DECPOLYREC (map absynPvalbind pvalbinds, loc)
+        A.DECVALREC (NONE, map absynPvalbind pvalbinds, loc)
 
   and absynValbind (pat, exp, _) =
       A.VALBIND (absynPat pat, absynExp exp, loc)
@@ -481,7 +481,9 @@ struct
       end
 
   and absynPvalbind (vid, ty, exp, _) =
-      (vid, absynPolyTy ty, absynExp exp, loc)
+      (A.PATTYPED (A.PATID (false, (nil, vid, loc), loc), absynPolyTy ty, loc),
+       absynExp exp,
+       loc)
 
   fun absynValdesc (vid, ty, _) =
       (vid, absynPolyTy ty, loc)

@@ -127,7 +127,6 @@ struct
       | A.DECINFIXR (_, _, loc) => loc
       | A.DECNONFIX (_, loc) => loc
       | A.DECDO (_, loc) => loc
-      | A.DECPOLYREC (_, loc) => loc
 
   fun strexpLoc strexp =
       case strexp of
