@@ -22,7 +22,7 @@ struct
   structure VectorSlice = Word8VectorSlice
 end
 
-_use "./Slice_common.sml"
+;_use "./Slice_common.sml"
 
 structure Word8ArraySlice =
 struct

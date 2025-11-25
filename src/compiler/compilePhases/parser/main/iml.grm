@@ -87,6 +87,7 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | SEMICOLON
   | PERIODS
   | UNDERBAR
+  | UNDERBAR_
   | BAR
   | EQ
   | DARROW
@@ -106,33 +107,9 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
     (* special symbols *)
   | ASTERISK
   | PERIOD
-    (* SML# extensions *)
-  | U_ATTRIBUTE
-  | U_BUILTIN
-  | U_FOREACH
-  | U_IMPORT
-  | U_INTERFACE
-  | U_JOIN
-  | U_EXTEND
-  | U_UPDATE
-  | U_DYNAMIC
-  | U_DYNAMICCASE
-  | U_DYNAMICNULL
-  | U_DYNAMICVIEW
-  | U_DYNAMICVOID
-  | U_REIFYTY
-  | U_REQUIRE
-  | U_SIZEOF
-  | U_SQL
-  | U_SQLEVAL
-  | U_SQLEXEC
-  | U_SQLSERVER
-  | U_USE
     (* identifiers *)
   | ALNUMID of string
   | EQTYVAR of string
-  | FREE_TYVAR of string
-  | FREE_EQTYVAR of string
   | SYMBOLID of string
   | TYVAR of string
     (* scon *)
@@ -145,55 +122,73 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | STRING of string
   | WORD of string
   | WORDX of string
-   (* metacommands *)
-  | USE
+   (* SML# keywords *)
+  | ATTRIBUTE__ of string
+  | DYNAMIC of string
+  | DYNAMICCASE of string
+  | DYNAMICNULL of string
+  | DYNAMICVIEW of string
+  | DYNAMICVOID of string
+  | EXTEND of string
+  | FOREACH of string
+  | IMPORT of string
+  | INTERFACE of string
+  | REIFYTY of string
+  | SIZEOF of string
+  | SQL of string
+  | SQLSERVER of string
+  | USE of string
+  | USE_META of string
    (* SQL keywords *)
-  | ALL
-  | ASC
-  | BEGIN
-  | BY
-  | COMMIT
-  | CROSS
-  | DEFAULT
-  | DELETE
-  | DESC
-  | DISTINCT
-  | EXISTS
-  | FALSE
-  | FETCH
-  | FIRST
-  | FROM
-  | GROUP
-  | HAVING
-  | INNER
-  | INSERT
-  | INTO
-  | IS
-  | JOIN
-  | LIMIT
-  | NATURAL
-  | NEXT
-  | NOT
-  | NULL
-  | OFFSET
-  | ON
-  | ONLY
-  | OR
-  | ORDER
-  | ROLLBACK
-  | ROW
-  | ROWS
-  | SELECT
-  | SET
-  | TRUE
-  | UNKNOWN
-  | UPDATE
-  | VALUES
+  | ALL of string
+  | ASC of string
+  | BEGIN of string
+  | BY of string
+  | COMMIT of string
+  | CROSS of string
+  | DEFAULT of string
+  | DELETE of string
+  | DESC of string
+  | DISTINCT of string
+  | EXISTS of string
+  | FALSE of string
+  | FETCH of string
+  | FIRST of string
+  | FROM of string
+  | GROUP of string
+  | HAVING of string
+  | INNER of string
+  | INSERT of string
+  | INTO of string
+  | IS of string
+  | JOIN of string
+  | LIMIT of string
+  | NATURAL of string
+  | NEXT of string
+  | NOT of string
+  | NULL of string
+  | OFFSET of string
+  | ON of string
+  | ONLY of string
+  | OR of string
+  | ORDER of string
+  | ROLLBACK of string
+  | ROW of string
+  | ROWS of string
+  | SELECT of string
+  | SET of string
+  | TRUE of string
+  | UNKNOWN of string
+  | UPDATE of string
+  | VALUES of string
 
 %nonterm
     start of A.absyn
   | int of string
   | constant of A.constant
+  | keyword_smlsharp of A.id
+  | keyword_sql of A.id
+  | alphabetic_id_noSQL of A.id
   | alphabetic_id of A.id
   | id_noEQSTAR of A.id
   | id_noEQ of A.id
@@ -317,8 +312,8 @@ fun OP_PATID (id, pos1, loc as (_, pos3)) =
   | tyrow_1 of A.tyrow
   | tyrow of A.tyrow list
   | tyrow_flex of A.tyrow list * bool
+  | atty_noUNDERBAR of A.ty
   | atty of A.ty
-  | appty of A.ty
   | tyseq of A.tyseq option
   | tys_comma of A.ty list
   | tytuple of A.ty list
@@ -448,91 +443,133 @@ constant
         | CHAR
           (A.CHAR (String.sub (CHAR, 0)))
 
-alphabetic_id
+keyword_smlsharp
+        : ATTRIBUTE__
+          (Symbol.intern ATTRIBUTE__, (ATTRIBUTE__left, ATTRIBUTE__right))
+        | DYNAMIC
+          (Symbol.intern DYNAMIC, (DYNAMICleft, DYNAMICright))
+        | DYNAMICCASE
+          (Symbol.intern DYNAMICCASE, (DYNAMICCASEleft, DYNAMICCASEright))
+        | DYNAMICNULL
+          (Symbol.intern DYNAMICNULL, (DYNAMICNULLleft, DYNAMICNULLright))
+        | DYNAMICVIEW
+          (Symbol.intern DYNAMICVIEW, (DYNAMICVIEWleft, DYNAMICVIEWright))
+        | DYNAMICVOID
+          (Symbol.intern DYNAMICVOID, (DYNAMICVOIDleft, DYNAMICVOIDright))
+        | EXTEND
+          (Symbol.intern EXTEND, (EXTENDleft, EXTENDright))
+        | FOREACH
+          (Symbol.intern FOREACH, (FOREACHleft, FOREACHright))
+        | IMPORT
+          (Symbol.intern IMPORT, (IMPORTleft, IMPORTright))
+        | INTERFACE
+          (Symbol.intern INTERFACE, (INTERFACEleft, INTERFACEright))
+        | REIFYTY
+          (Symbol.intern REIFYTY, (REIFYTYleft, REIFYTYright))
+        | SIZEOF
+          (Symbol.intern SIZEOF, (SIZEOFleft, SIZEOFright))
+        | SQL
+          (Symbol.intern SQL, (SQLleft, SQLright))
+        | SQLSERVER
+          (Symbol.intern SQLSERVER, (SQLSERVERleft, SQLSERVERright))
+        | USE
+          (Symbol.intern USE, (USEleft, USEright))
+
+keyword_sql
+        : ALL
+          (Symbol.intern ALL, (ALLleft, ALLright))
+        | ASC
+          (Symbol.intern ASC, (ASCleft, ASCright))
+        | BEGIN
+          (Symbol.intern BEGIN, (BEGINleft, BEGINright))
+        | BY
+          (Symbol.intern BY, (BYleft, BYright))
+        | COMMIT
+          (Symbol.intern COMMIT, (COMMITleft, COMMITright))
+        | CROSS
+          (Symbol.intern CROSS, (CROSSleft, CROSSright))
+        | DEFAULT
+          (Symbol.intern DEFAULT, (DEFAULTleft, DEFAULTright))
+        | DELETE
+          (Symbol.intern DELETE, (DELETEleft, DELETEright))
+        | DESC
+          (Symbol.intern DESC, (DESCleft, DESCright))
+        | DISTINCT
+          (Symbol.intern DISTINCT, (DISTINCTleft, DISTINCTright))
+        | EXISTS
+          (Symbol.intern EXISTS, (EXISTSleft, EXISTSright))
+        | FALSE
+          (Symbol.intern FALSE, (FALSEleft, FALSEright))
+        | FETCH
+          (Symbol.intern FETCH, (FETCHleft, FETCHright))
+        | FIRST
+          (Symbol.intern FIRST, (FIRSTleft, FIRSTright))
+        | FROM
+          (Symbol.intern FROM, (FROMleft, FROMright))
+        | GROUP
+          (Symbol.intern GROUP, (GROUPleft, GROUPright))
+        | HAVING
+          (Symbol.intern HAVING, (HAVINGleft, HAVINGright))
+        | INNER
+          (Symbol.intern INNER, (INNERleft, INNERright))
+        | INSERT
+          (Symbol.intern INSERT, (INSERTleft, INSERTright))
+        | INTO
+          (Symbol.intern INTO, (INTOleft, INTOright))
+        | IS
+          (Symbol.intern IS, (ISleft, ISright))
+        | JOIN
+          (Symbol.intern JOIN, (JOINleft, JOINright))
+        | LIMIT
+          (Symbol.intern LIMIT, (LIMITleft, LIMITright))
+        | NATURAL
+          (Symbol.intern NATURAL, (NATURALleft, NATURALright))
+        | NEXT
+          (Symbol.intern NEXT, (NEXTleft, NEXTright))
+        | NOT
+          (Symbol.intern NOT, (NOTleft, NOTright))
+        | NULL
+          (Symbol.intern NULL, (NULLleft, NULLright))
+        | OFFSET
+          (Symbol.intern OFFSET, (OFFSETleft, OFFSETright))
+        | ON
+          (Symbol.intern ON, (ONleft, ONright))
+        | ONLY
+          (Symbol.intern ONLY, (ONLYleft, ONLYright))
+        | OR
+          (Symbol.intern OR, (ORleft, ORright))
+        | ORDER
+          (Symbol.intern ORDER, (ORDERleft, ORDERright))
+        | ROLLBACK
+          (Symbol.intern ROLLBACK, (ROLLBACKleft, ROLLBACKright))
+        | ROW
+          (Symbol.intern ROW, (ROWleft, ROWright))
+        | ROWS
+          (Symbol.intern ROWS, (ROWSleft, ROWSright))
+        | SELECT
+          (Symbol.intern SELECT, (SELECTleft, SELECTright))
+        | SET
+          (Symbol.intern SET, (SETleft, SETright))
+        | TRUE
+          (Symbol.intern TRUE, (TRUEleft, TRUEright))
+        | UNKNOWN
+          (Symbol.intern UNKNOWN, (UNKNOWNleft, UNKNOWNright))
+        | UPDATE
+          (Symbol.intern UPDATE, (UPDATEleft, UPDATEright))
+        | VALUES
+          (Symbol.intern VALUES, (VALUESleft, VALUESright))
+
+alphabetic_id_noSQL
         : ALNUMID
           (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
-        | ALL
-          (Symbol.intern "all", (ALLleft, ALLright))
-        | ASC
-          (Symbol.intern "asc", (ASCleft, ASCright))
-        | BEGIN
-          (Symbol.intern "begin", (BEGINleft, BEGINright))
-        | BY
-          (Symbol.intern "by", (BYleft, BYright))
-        | COMMIT
-          (Symbol.intern "commit", (COMMITleft, COMMITright))
-        | CROSS
-          (Symbol.intern "cross", (CROSSleft, CROSSright))
-        | DEFAULT
-          (Symbol.intern "default", (DEFAULTleft, DEFAULTright))
-        | DELETE
-          (Symbol.intern "delete", (DELETEleft, DELETEright))
-        | DESC
-          (Symbol.intern "desc", (DESCleft, DESCright))
-        | DISTINCT
-          (Symbol.intern "distinct", (DISTINCTleft, DISTINCTright))
-        | EXISTS
-          (Symbol.intern "exists", (EXISTSleft, EXISTSright))
-        | FALSE
-          (Symbol.intern "false", (FALSEleft, FALSEright))
-        | FETCH
-          (Symbol.intern "fetch", (FETCHleft, FETCHright))
-        | FIRST
-          (Symbol.intern "first", (FIRSTleft, FIRSTright))
-        | FROM
-          (Symbol.intern "from", (FROMleft, FROMright))
-        | GROUP
-          (Symbol.intern "group", (GROUPleft, GROUPright))
-        | HAVING
-          (Symbol.intern "having", (HAVINGleft, HAVINGright))
-        | INNER
-          (Symbol.intern "inner", (INNERleft, INNERright))
-        | INSERT
-          (Symbol.intern "insert", (INSERTleft, INSERTright))
-        | INTO
-          (Symbol.intern "into", (INTOleft, INTOright))
-        | IS
-          (Symbol.intern "is", (ISleft, ISright))
-        | JOIN
-          (Symbol.intern "join", (JOINleft, JOINright))
-        | LIMIT
-          (Symbol.intern "limit", (LIMITleft, LIMITright))
-        | NATURAL
-          (Symbol.intern "natural", (NATURALleft, NATURALright))
-        | NEXT
-          (Symbol.intern "next", (NEXTleft, NEXTright))
-        | NOT
-          (Symbol.intern "not", (NOTleft, NOTright))
-        | NULL
-          (Symbol.intern "null", (NULLleft, NULLright))
-        | OFFSET
-          (Symbol.intern "offset", (OFFSETleft, OFFSETright))
-        | ON
-          (Symbol.intern "on", (ONleft, ONright))
-        | ONLY
-          (Symbol.intern "only", (ONLYleft, ONLYright))
-        | OR
-          (Symbol.intern "or", (ORleft, ORright))
-        | ORDER
-          (Symbol.intern "order", (ORDERleft, ORDERright))
-        | ROLLBACK
-          (Symbol.intern "rollback", (ROLLBACKleft, ROLLBACKright))
-        | ROW
-          (Symbol.intern "row", (ROWleft, ROWright))
-        | ROWS
-          (Symbol.intern "rows", (ROWSleft, ROWSright))
-        | SELECT
-          (Symbol.intern "select", (SELECTleft, SELECTright))
-        | SET
-          (Symbol.intern "set", (SETleft, SETright))
-        | TRUE
-          (Symbol.intern "true", (TRUEleft, TRUEright))
-        | UNKNOWN
-          (Symbol.intern "unknown", (UNKNOWNleft, UNKNOWNright))
-        | UPDATE
-          (Symbol.intern "update", (UPDATEleft, UPDATEright))
-        | VALUES
-          (Symbol.intern "values", (VALUESleft, VALUESright))
+        | keyword_smlsharp
+          (keyword_smlsharp)
+
+alphabetic_id
+        : alphabetic_id_noSQL
+          (alphabetic_id_noSQL)
+        | keyword_sql
+          (keyword_sql)
 
 id_noEQSTAR
         : alphabetic_id
@@ -559,8 +596,8 @@ id
           (Symbol.intern "=", (EQleft, EQright))
 
 id_noEQSQL
-        : ALNUMID
-          (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
+        : alphabetic_id_noSQL
+          (alphabetic_id_noSQL)
         | SYMBOLID
           (Symbol.intern SYMBOLID, (SYMBOLIDleft, SYMBOLIDright))
         | ASTERISK
@@ -627,16 +664,16 @@ longstrids
 atexp_noID
         : constant
           (A.EXPCONST (constant, (constantleft, constantright)))
-        | U_JOIN LPAREN exp COMMA exp RPAREN
-          (A.EXPJOIN (exp1, exp2, (U_JOINleft, RPARENright)))
-        | U_EXTEND LPAREN exp COMMA exp RPAREN
-          (A.EXPEXTEND (exp1, exp2, (U_EXTENDleft, RPARENright)))
-        | U_UPDATE LPAREN exp COMMA exp RPAREN
-          (A.EXPUPDATE1 (exp1, exp2, (U_UPDATEleft, RPARENright)))
+        | UNDERBAR_ JOIN LPAREN exp COMMA exp RPAREN
+          (A.EXPJOIN (exp1, exp2, (UNDERBAR_left, RPARENright)))
+        | UNDERBAR_ EXTEND LPAREN exp COMMA exp RPAREN
+          (A.EXPEXTEND (exp1, exp2, (UNDERBAR_left, RPARENright)))
+        | UNDERBAR_ UPDATE LPAREN exp COMMA exp RPAREN
+          (A.EXPUPDATE1 (exp1, exp2, (UNDERBAR_left, RPARENright)))
         | OP longid
           (A.EXPID (true, longid, (OPleft, longidright)))
-        | U_SIZEOF LPAREN ty RPAREN
-          (A.EXPSIZEOF (ty, (U_SIZEOFleft, RPARENright)))
+        | UNDERBAR_ SIZEOF LPAREN ty RPAREN
+          (A.EXPSIZEOF (ty, (UNDERBAR_left, RPARENright)))
         | LBRACE exprow RBRACE
           (A.EXPRECORD (Snoc.toList exprow, (LBRACEleft, RBRACEright)))
         | LBRACE RBRACE
@@ -661,10 +698,10 @@ atexp_noID
               (Snoc.toList exps_semicolon,
                (exps_semicolonleft, exps_semicolonright)),
               (LETleft, ENDright)))
-        | U_REIFYTY LPAREN ty RPAREN
-          (A.EXPREIFYTY (ty, (U_REIFYTYleft, RPARENright)))
-        | U_SQL sqlparen
-          (A.EXPSQL (S.SQL (sqlparen, (U_SQLleft, sqlparenright))))
+        | UNDERBAR_ REIFYTY LPAREN ty RPAREN
+          (A.EXPREIFYTY (ty, (UNDERBAR_left, RPARENright)))
+        | UNDERBAR_ SQL sqlparen
+          (A.EXPSQL (S.SQL (sqlparen, (UNDERBAR_left, sqlparenright))))
         | LPAREN exps_comma RPAREN
           (A.EXPTUPLE (Snoc.toList exps_comma, (LPARENleft, RPARENright)))
         | LPAREN expOrSQL SEMICOLON exps_semicolon RPAREN
@@ -673,12 +710,12 @@ atexp_noID
               (LPARENleft, RPARENright)))
         | LPAREN expOrSQL RPAREN
           (A.EXPPAREN (expOrSQL, (LPARENleft, RPARENright)))
-        | U_FOREACH id IN exp WHERE exp WITH pat DO exp WHILE exp END
+        | UNDERBAR_ FOREACH id IN exp WHERE exp WITH pat DO exp WHILE exp END
           (A.EXPFOREACH_DATA
-             (id, exp1, exp2, pat1, exp3, exp4, (U_FOREACHleft, ENDright)))
-        | U_FOREACH id IN exp WITH pat DO exp WHILE exp END
+             (id, exp1, exp2, pat1, exp3, exp4, (UNDERBAR_left, ENDright)))
+        | UNDERBAR_ FOREACH id IN exp WITH pat DO exp WHILE exp END
           (A.EXPFOREACH_ARRAY
-             (id, exp1, pat, exp2, exp3, (U_FOREACHleft, ENDright)))
+             (id, exp1, pat, exp2, exp3, (UNDERBAR_left, ENDright)))
 
 atexp
         : atexp_noID
@@ -743,29 +780,29 @@ colonexp
           (appexp)
         | colonexp COLON ty
           (A.EXPTYPED (colonexp, ty, (colonexpleft, tyright)))
-        | colonexp COLON U_IMPORT ffity
+        | colonexp COLON UNDERBAR_ IMPORT ffity
           (A.EXPIMPORT_EXP (colonexp, ffity, (colonexpleft, ffityright)))
-        | U_IMPORT STRING COLON ffity
+        | UNDERBAR_ IMPORT STRING COLON ffity
           (A.EXPIMPORT_NAME
              ((STRING, (STRINGleft, STRINGright)),
               ffity,
-              (U_IMPORTleft, ffityright)))
-        | U_SQLSERVER COLON ty
-          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (U_SQLSERVERleft, tyright))))
-        | U_SQLSERVER appexp COLON ty
+              (UNDERBAR_left, ffityright)))
+        | UNDERBAR_ SQLSERVER COLON ty
+          (A.EXPSQL (AbsynSQL.SQLSERVER (NONE, ty, (UNDERBAR_left, tyright))))
+        | UNDERBAR_ SQLSERVER appexp COLON ty
           (A.EXPSQL
              (AbsynSQL.SQLSERVER
-                (SOME appexp, ty, (U_SQLSERVERleft, tyright))))
-        | U_DYNAMIC exp AS ty
-          (A.EXPDYNAMIC_AS (exp, ty, (U_DYNAMICleft, tyright)))
-        | U_DYNAMIC exp OF ty
-          (A.EXPDYNAMIC_OF (exp, ty, (U_DYNAMICleft, tyright)))
-        | U_DYNAMICVIEW exp AS ty
-          (A.EXPDYNAMICVIEW (exp, ty, (U_DYNAMICVIEWleft, tyright)))
-        | U_DYNAMICNULL AS ty
-          (A.EXPDYNAMICNULL (ty, (U_DYNAMICNULLleft, tyright)))
-        | U_DYNAMICVOID AS ty
-          (A.EXPDYNAMICTOP (ty, (U_DYNAMICVOIDleft, tyright)))
+                (SOME appexp, ty, (UNDERBAR_left, tyright))))
+        | UNDERBAR_ DYNAMIC exp AS ty
+          (A.EXPDYNAMIC_AS (exp, ty, (UNDERBAR_left, tyright)))
+        | UNDERBAR_ DYNAMIC exp OF ty
+          (A.EXPDYNAMIC_OF (exp, ty, (UNDERBAR_left, tyright)))
+        | UNDERBAR_ DYNAMICVIEW exp AS ty
+          (A.EXPDYNAMICVIEW (exp, ty, (UNDERBAR_left, tyright)))
+        | UNDERBAR_ DYNAMICNULL AS ty
+          (A.EXPDYNAMICNULL (ty, (UNDERBAR_left, tyright)))
+        | UNDERBAR_ DYNAMICVOID AS ty
+          (A.EXPDYNAMICTOP (ty, (UNDERBAR_left, tyright)))
 
 conjexp
         : colonexp
@@ -790,8 +827,8 @@ miscexp
           (A.EXPCASE (exp, match, (CASEleft, matchright)))
         | FN match
           (A.EXPFN (match, (FNleft, matchright)))
-        | U_DYNAMICCASE exp OF dynmatch
-          (A.EXPDYNAMICCASE (exp, dynmatch, (U_DYNAMICCASEleft, dynmatchright)))
+        | UNDERBAR_ DYNAMICCASE exp OF dynmatch
+          (A.EXPDYNAMICCASE (exp, dynmatch, (UNDERBAR_left, dynmatchright)))
 
 exp
         : disjexp
@@ -842,33 +879,34 @@ exist_quant
 (*************************** sql ********************************)
 
 sql
-        : U_SQL sqlpat DARROW sql_opt sqlcon
+        : UNDERBAR_ SQL sqlpat DARROW sql_opt sqlcon
           (A.EXPSQL
              (S.SQLFN
                 (sqlpat,
                  S.CON (sql_opt, sqlcon, (sql_optleft, sqlconright)),
-                 (U_SQLleft, sqlconright))))
-        | U_SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
+                 (UNDERBAR_left, sqlconright))))
+        | UNDERBAR_ SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
           (A.EXPSQL
              (S.SQLFN
                 (sqlpat,
                  S.SEQ
                    ([S.STEP_EMBED (expOrSQL, (PERIODSleft, RPARENright))],
                     (PERIODSleft, RPARENright)),
-                 (U_SQLleft, RPARENright))))
-        | U_SQL sqlpat DARROW sqlparen
-          (A.EXPSQL (S.SQLFN (sqlpat, sqlparen, (U_SQLleft, sqlparenright))))
-        | U_SQL sqlcon
+                 (UNDERBAR_left, RPARENright))))
+        | UNDERBAR_ SQL sqlpat DARROW sqlparen
+          (A.EXPSQL
+             (S.SQLFN (sqlpat, sqlparen, (UNDERBAR_left, sqlparenright))))
+        | UNDERBAR_ SQL sqlcon
           (A.EXPSQL
              (S.SQL
                 (S.CON (false, sqlcon, (sqlconleft, sqlconright)),
-                 (U_SQLleft, sqlconright))))
-        | U_SQL sqlkwexp
+                 (UNDERBAR_left, sqlconright))))
+        | UNDERBAR_ SQL sqlkwexp
           (A.EXPSQL
              (S.SQL
                 (S.EXP
                    (S.KWEXP (false, sqlkwexp, (sqlkwexpleft, sqlkwexpright))),
-                 (U_SQLleft, sqlkwexpright))))
+                 (UNDERBAR_left, sqlkwexpright))))
         | FN pat DARROW sql
           (A.EXPFN ([(pat, sql, (patleft, sqlright))], (FNleft, sqlright)))
 
@@ -905,7 +943,7 @@ sqlsteps
 sql_opt
         : (* none *)
           (false)
-        | U_SQL
+        | UNDERBAR_ SQL
           (true)
 
 sqlcon
@@ -1548,12 +1586,10 @@ tyvar
           (true, (Symbol.intern EQTYVAR, (EQTYVARleft, EQTYVARright)))
 
 free_tyvar
-        : FREE_TYVAR
-          (false,
-           (Symbol.intern FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
-        | FREE_EQTYVAR
-          (true,
-           (Symbol.intern FREE_EQTYVAR, (FREE_EQTYVARleft, FREE_EQTYVARright)))
+        : UNDERBAR_ TYVAR
+          (false, (Symbol.intern TYVAR, (UNDERBAR_left, TYVARright)))
+        | UNDERBAR_ EQTYVAR
+          (true, (Symbol.intern EQTYVAR, (UNDERBAR_left, EQTYVARright)))
 
 tyvarseq
         : tyvar
@@ -1613,6 +1649,8 @@ fvalbind
 atpat_noID_noPAREN
         : UNDERBAR
           (A.PATWILD (UNDERBARleft, UNDERBARright))
+        | UNDERBAR_
+          (A.PATWILD (UNDERBAR_left, UNDERBAR_right))
         | constant
           (A.PATCONST (constant, (constantleft, constantright)))
         | longid_noID
@@ -1756,7 +1794,7 @@ tyrow_flex
         | PERIODS (* not in the definition *)
           (nil, true)
 
-atty
+atty_noUNDERBAR
         : UNDERBAR
           (A.TYWILD (UNDERBARleft, UNDERBARright))
         | tyvar
@@ -1774,16 +1812,19 @@ atty
              ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
               ty,
               (LBRACKETleft, RBRACKETright)))
-
-appty
-        : atty
-          (atty)
         | tyseq longtycon_noEQ
           (A.TYCON (tyseq, longtycon_noEQ, (tyseqleft, longtycon_noEQright)))
 
+atty
+        : atty_noUNDERBAR
+          (atty_noUNDERBAR)
+        | UNDERBAR_
+          (A.TYWILD (UNDERBAR_left, UNDERBAR_right))
+
 tyseq
-        : appty
-          (SOME ([appty], (apptyleft, apptyright)))
+        : atty_noUNDERBAR
+          (SOME ([atty_noUNDERBAR],
+                 (atty_noUNDERBARleft, atty_noUNDERBARright)))
         | LPAREN tys_comma RPAREN
           (SOME (tys_comma, (LPARENleft, RPARENright)))
         | (* none *)
@@ -1796,14 +1837,14 @@ tys_comma
           (ty :: tys_comma)
 
 tytuple
-        : appty ASTERISK tytuple
-          (appty :: tytuple)
-        | appty ASTERISK appty
-          ([appty1, appty2])
+        : atty ASTERISK tytuple
+          (atty :: tytuple)
+        | atty ASTERISK atty
+          ([atty1, atty2])
 
 tuplety
-        : appty
-          (appty)
+        : atty
+          (atty)
         | tytuple
           (A.TYTUPLE (tytuple, (tytupleleft, tytupleright)))
 
@@ -1965,8 +2006,8 @@ ffiattrs
           (alphabetic_id :: ffiattrs)
 
 ffiattr
-        : U_ATTRIBUTE LPAREN LPAREN ffiattrs RPAREN RPAREN
-          (ffiattrs, (U_ATTRIBUTEleft, RPAREN2right))
+        : UNDERBAR_ UNDERBAR_ ATTRIBUTE__ LPAREN LPAREN ffiattrs RPAREN RPAREN
+          (ffiattrs, (UNDERBAR_1left, RPAREN2right))
 
 ffity
         : ffiatty
@@ -2307,27 +2348,28 @@ topdec
           (A.TOPFUNCTOR (funbind, (FUNCTORleft, funbindright)))
 
 topuse
-        : USE STRING
+        : USE_META STRING
           (A.USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-                  (USEleft, STRINGright)))
-        | U_USE STRING
+                  (USE_METAleft, STRINGright)))
+        | UNDERBAR_ USE STRING
           (A.U_USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-                    (U_USEleft, STRINGright)))
+                    (UNDERBAR_left, STRINGright)))
+        | UNDERBAR_ USE_META STRING
+          (A.U_USE ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
+                    (UNDERBAR_left, STRINGright)))
 
 tops
         : topdecs
           ([A.TOPDEC (topdecs, (topdecsleft, topdecsright))])
         | topuse
           ([topuse])
-        | topdecs topuse tops
-          (A.TOPDEC (topdecs, (topdecsleft, topdecsright)) :: topuse :: tops)
         | topuse tops
           (topuse :: tops)
 
 interface
-        : U_INTERFACE STRING
+        : UNDERBAR_ INTERFACE STRING
           ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-           (U_INTERFACEleft, STRINGright))
+           (UNDERBAR_left, STRINGright))
 
 compile_unit
         : interface

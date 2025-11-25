@@ -21,7 +21,7 @@ struct
   structure VectorSlice = struct fun base x = x end
 end
 
-_use "./Slice_common.sml"
+;_use "./Slice_common.sml"
 
 structure Word8VectorSlice =
 struct

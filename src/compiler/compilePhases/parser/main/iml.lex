@@ -205,7 +205,12 @@ real="~"?{digit}+({frac}{exp}|{frac}|{exp});
 <INITIAL>":" => ((T.COLON, loc yytext yypos arg));
 <INITIAL>";" => ((T.SEMICOLON, loc yytext yypos arg));
 <INITIAL>"..." => ((T.PERIODS, loc yytext yypos arg));
-<INITIAL>"_" => ((T.UNDERBAR, loc yytext yypos arg));
+<INITIAL>"_"{ws} => ((T.UNDERBAR, loc "_" yypos arg));
+<INITIAL>"_"{eol} => ((T.UNDERBAR, loc "_" yypos arg)
+                      before newline (yypos + size yytext) "" arg);
+<INITIAL>"_(*" => ((T.UNDERBAR, loc "_" yypos arg)
+                   before (startComment (yypos + 1) arg; YYBEGIN COMM));
+<INITIAL>"_" => ((T.UNDERBAR_, loc yytext yypos arg));
 <INITIAL>"|" => ((T.BAR, loc yytext yypos arg));
 <INITIAL>"=" => ((T.EQ, loc yytext yypos arg));
 <INITIAL>"=>" => ((T.DARROW, loc yytext yypos arg));
@@ -226,30 +231,6 @@ real="~"?{digit}+({frac}{exp}|{frac}|{exp});
 <INITIAL>"*" => ((T.ASTERISK, loc yytext yypos arg));
 <INITIAL>"." => ((T.PERIOD, loc yytext yypos arg));
 
-<INITIAL>"__attribute__" => ((T.U_ATTRIBUTE, loc yytext yypos arg));
-<INITIAL>"_builtin" => ((T.U_BUILTIN, loc yytext yypos arg));
-<INITIAL>"_foreach" => ((T.U_FOREACH, loc yytext yypos arg));
-<INITIAL>"_import" => ((T.U_IMPORT, loc yytext yypos arg));
-<INITIAL>"_interface" => ((T.U_INTERFACE, loc yytext yypos arg));
-<INITIAL>"_join" => ((T.U_JOIN, loc yytext yypos arg));
-<INITIAL>"_extend" => ((T.U_EXTEND, loc yytext yypos arg));
-<INITIAL>"_update" => ((T.U_UPDATE, loc yytext yypos arg));
-<INITIAL>"_dynamic" => ((T.U_DYNAMIC, loc yytext yypos arg));
-<INITIAL>"_dynamiccase" => ((T.U_DYNAMICCASE, loc yytext yypos arg));
-<INITIAL>"_dynamicnull" => ((T.U_DYNAMICNULL, loc yytext yypos arg));
-<INITIAL>"_dynamicview" => ((T.U_DYNAMICVIEW, loc yytext yypos arg));
-<INITIAL>"_dynamicvoid" => ((T.U_DYNAMICVOID, loc yytext yypos arg));
-<INITIAL>"_reifyTy" => ((T.U_REIFYTY, loc yytext yypos arg));
-<INITIAL>"_require" => ((T.U_REQUIRE, loc yytext yypos arg));
-<INITIAL>"_sizeof" => ((T.U_SIZEOF, loc yytext yypos arg));
-<INITIAL>"_sql" => ((T.U_SQL, loc yytext yypos arg));
-<INITIAL>"_sqleval" => ((T.U_SQLEVAL, loc yytext yypos arg));
-<INITIAL>"_sqlexec" => ((T.U_SQLEXEC, loc yytext yypos arg));
-<INITIAL>"_sqlserver" => ((T.U_SQLSERVER, loc yytext yypos arg));
-<INITIAL>"_use" => ((T.U_USE, loc yytext yypos arg));
-
-<INITIAL>"_"{eqtyvar} => ((T.FREE_EQTYVAR yytext, loc yytext yypos arg));
-<INITIAL>"_"{tyvar} => ((T.FREE_TYVAR yytext, loc yytext yypos arg));
 <INITIAL>{eqtyvar} => ((T.EQTYVAR yytext, loc yytext yypos arg));
 <INITIAL>{tyvar} => ((T.TYVAR yytext, loc yytext yypos arg));
 <INITIAL>{alnumid} => (checkUtf8 yytext yypos arg;

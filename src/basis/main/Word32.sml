@@ -24,7 +24,7 @@ struct
       : __attribute__((unsafe,pure,fast)) IntInf.int -> word
 end
 
-_use "./Word_common.sml"
+;_use "./Word_common.sml"
 
 structure Word32 = Word_common
 structure Word = Word32

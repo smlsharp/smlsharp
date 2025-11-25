@@ -19,7 +19,7 @@ struct
   fun toInt32 x = x : int
 end
 
-_use "Int_common.sml"
+;_use "Int_common.sml"
 
 structure Int32 = Int_common
 structure Position = Int32

@@ -55,6 +55,7 @@ struct
     | SEMICOLON
     | PERIODS
     | UNDERBAR
+    | UNDERBAR_
     | BAR
     | EQ
     | DARROW
@@ -74,33 +75,9 @@ struct
       (* special symbols *)
     | ASTERISK
     | PERIOD
-      (* SML# extensions *)
-    | U_ATTRIBUTE
-    | U_BUILTIN
-    | U_FOREACH
-    | U_IMPORT
-    | U_INTERFACE
-    | U_JOIN
-    | U_EXTEND
-    | U_UPDATE
-    | U_DYNAMIC
-    | U_DYNAMICCASE
-    | U_DYNAMICNULL
-    | U_DYNAMICVIEW
-    | U_DYNAMICVOID
-    | U_REIFYTY
-    | U_REQUIRE
-    | U_SIZEOF
-    | U_SQL
-    | U_SQLEVAL
-    | U_SQLEXEC
-    | U_SQLSERVER
-    | U_USE
       (* identifiers *)
     | ALNUMID of string
     | EQTYVAR of string
-    | FREE_TYVAR of string
-    | FREE_EQTYVAR of string
     | SYMBOLID of string
     | TYVAR of string
       (* scon *)

@@ -22,6 +22,6 @@ struct
   structure VectorSlice = VectorSlice
 end
 
-_use "./Slice_common.sml"
+;_use "./Slice_common.sml"
 
 structure ArraySlice = Slice_common

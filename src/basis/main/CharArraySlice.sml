@@ -27,7 +27,7 @@ struct
   structure VectorSlice = CharVectorSlice
 end
 
-_use "./Slice_common.sml"
+;_use "./Slice_common.sml"
 
 structure CharArraySlice =
 struct

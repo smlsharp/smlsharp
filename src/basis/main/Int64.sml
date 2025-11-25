@@ -26,6 +26,6 @@ struct
       else SMLSharp_Builtin.Word64.toInt64X (Word64_fromLarge x)
 end
 
-_use "Int_common.sml"
+;_use "Int_common.sml"
 
 structure Int64 = Int_common

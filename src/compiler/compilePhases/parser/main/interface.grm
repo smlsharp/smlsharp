@@ -91,6 +91,7 @@ structure I = AbsynInterface
   | SEMICOLON
   | PERIODS
   | UNDERBAR
+  | UNDERBAR_
   | BAR
   | EQ
   | DARROW
@@ -110,32 +111,8 @@ structure I = AbsynInterface
     (* special symbols *)
   | ASTERISK
   | PERIOD
-    (* SML# extensions *)
-  | U_ATTRIBUTE
-  | U_BUILTIN
-  | U_FOREACH
-  | U_IMPORT
-  | U_INTERFACE
-  | U_JOIN
-  | U_EXTEND
-  | U_UPDATE
-  | U_DYNAMIC
-  | U_DYNAMICCASE
-  | U_DYNAMICNULL
-  | U_DYNAMICVIEW
-  | U_DYNAMICVOID
-  | U_REIFYTY
-  | U_REQUIRE
-  | U_SIZEOF
-  | U_SQL
-  | U_SQLEVAL
-  | U_SQLEXEC
-  | U_SQLSERVER
-  | U_USE
     (* identifiers *)
   | EQTYVAR of string
-  | FREE_TYVAR of string
-  | FREE_EQTYVAR of string
   | ALNUMID of string
   | SYMBOLID of string
   | TYVAR of string
@@ -149,6 +126,10 @@ structure I = AbsynInterface
   | STRING of string
   | WORD of string
   | WORDX of string
+    (* SML# extensions *)
+  | REQUIRE of string
+  | BUILTIN of string
+  | USE of string
 
 %nonterm
     (* the interface language *)
@@ -207,8 +188,8 @@ structure I = AbsynInterface
   | tyrow_1 of A.tyrow
   | tyrow of A.tyrow list
   | tyrow_flex of A.tyrow list * bool
+  | atty_noUNDERBAR of A.ty
   | atty of A.ty
-  | appty of A.ty
   | tyseq of A.tyseq option
   | tys_comma of A.ty list
   | tytuple of A.ty list
@@ -287,7 +268,7 @@ ivalbind
         | id EQ longid
           (* 2012-1-4 ohori: variable alias in interface added *)
           (I.VAL_ALIAS (id, longid, (idleft, longidright)))
-        | id EQ U_BUILTIN VAL id COLON ty
+        | id EQ UNDERBAR_ BUILTIN VAL id COLON ty
           (I.VAL_BUILTIN (id1, id2, ty, (id1left, tyright)))
         | id EQ ioverloadCase
           (I.VAL_OVERLOAD (id, ioverloadCase, (idleft, ioverloadCaseright)))
@@ -344,7 +325,7 @@ idec
               (DATATYPEleft, typbindright)))
         | DATATYPE id_noEQSTAR EQ DATATYPE longid
           (I.DECDATATYPEREP (id_noEQSTAR, longid, (DATATYPEleft, longidright)))
-        | DATATYPE id_noEQSTAR EQ U_BUILTIN DATATYPE id_noSTAR
+        | DATATYPE id_noEQSTAR EQ UNDERBAR_ BUILTIN DATATYPE id_noSTAR
           (I.DECTYPEBUILTIN
              (id_noEQSTAR, id_noSTAR, (DATATYPEleft, id_noSTARright)))
         | EXCEPTION exbind
@@ -417,30 +398,30 @@ irequireopts
           (alphabetic_id :: irequireopts)
 
 irequire
-        : U_REQUIRE STRING
+        : UNDERBAR_ REQUIRE STRING
           (I.REQUIRE
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               nil,
-              (U_REQUIREleft, STRINGright)))
-        | U_REQUIRE STRING irequireopts
+              (UNDERBAR_left, STRINGright)))
+        | UNDERBAR_ REQUIRE STRING irequireopts
           (I.REQUIRE
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               irequireopts,
-              (U_REQUIREleft, irequireoptsright)))
-        | U_REQUIRE LOCAL STRING
+              (UNDERBAR_left, irequireoptsright)))
+        | UNDERBAR_ REQUIRE LOCAL STRING
           (I.REQUIRE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               nil,
-              (U_REQUIREleft, STRINGright)))
-        | U_REQUIRE LOCAL STRING irequireopts
+              (UNDERBAR_left, STRINGright)))
+        | UNDERBAR_ REQUIRE LOCAL STRING irequireopts
           (I.REQUIRE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
               irequireopts,
-              (U_REQUIREleft, irequireoptsright)))
-        | U_USE LOCAL STRING
+              (UNDERBAR_left, irequireoptsright)))
+        | UNDERBAR_ USE LOCAL STRING
           (I.USE_LOCAL
              ((RequirePath.fromString STRING, (STRINGleft, STRINGright)),
-              (U_USEleft, STRINGright)))
+              (UNDERBAR_left, STRINGright)))
 
 irequires
         : irequire
@@ -526,7 +507,13 @@ int
 alphabetic_id
         : ALNUMID
           (Symbol.intern ALNUMID, (ALNUMIDleft, ALNUMIDright))
-          (* difference: sql keywords *)
+        (* difference: keywords *)
+        | BUILTIN
+          (Symbol.intern BUILTIN, (BUILTINleft, BUILTINright))
+        | REQUIRE
+          (Symbol.intern REQUIRE, (REQUIREleft, REQUIREright))
+        | USE
+          (Symbol.intern USE, (USEleft, USEright))
 
 id_noEQSTAR
         : alphabetic_id
@@ -680,12 +667,10 @@ tyvar
           (true, (Symbol.intern EQTYVAR, (EQTYVARleft, EQTYVARright)))
 
 free_tyvar
-        : FREE_TYVAR
-          (false,
-           (Symbol.intern FREE_TYVAR, (FREE_TYVARleft, FREE_TYVARright)))
-        | FREE_EQTYVAR
-          (true,
-           (Symbol.intern FREE_EQTYVAR, (FREE_EQTYVARleft, FREE_EQTYVARright)))
+        : UNDERBAR_ TYVAR
+          (false, (Symbol.intern TYVAR, (UNDERBAR_left, TYVARright)))
+        | UNDERBAR_ EQTYVAR
+          (true, (Symbol.intern EQTYVAR, (UNDERBAR_left, EQTYVARright)))
 
 tyvarseq
         : tyvar
@@ -719,7 +704,7 @@ tyrow_flex
         | PERIODS (* not in the definition *)
           (nil, true)
 
-atty
+atty_noUNDERBAR
         : UNDERBAR
           (A.TYWILD (UNDERBARleft, UNDERBARright))
         | tyvar
@@ -737,16 +722,19 @@ atty
              ((kinded_tyvars, (kinded_tyvarsleft, kinded_tyvarsright)),
               ty,
               (LBRACKETleft, RBRACKETright)))
-
-appty
-        : atty
-          (atty)
         | tyseq longtycon_noEQ
           (A.TYCON (tyseq, longtycon_noEQ, (tyseqleft, longtycon_noEQright)))
 
+atty
+        : atty_noUNDERBAR
+          (atty_noUNDERBAR)
+        | UNDERBAR_
+          (A.TYWILD (UNDERBAR_left, UNDERBAR_right))
+
 tyseq
-        : appty
-          (SOME ([appty], (apptyleft, apptyright)))
+        : atty_noUNDERBAR
+          (SOME ([atty_noUNDERBAR],
+                 (atty_noUNDERBARleft, atty_noUNDERBARright)))
         | LPAREN tys_comma RPAREN
           (SOME (tys_comma, (LPARENleft, RPARENright)))
         | (* none *)
@@ -759,14 +747,14 @@ tys_comma
           (ty :: tys_comma)
 
 tytuple
-        : appty ASTERISK tytuple
-          (appty :: tytuple)
-        | appty ASTERISK appty
-          ([appty1, appty2])
+        : atty ASTERISK tytuple
+          (atty :: tytuple)
+        | atty ASTERISK atty
+          ([atty1, atty2])
 
 tuplety
-        : appty
-          (appty)
+        : atty
+          (atty)
         | tytuple
           (A.TYTUPLE (tytuple, (tytupleleft, tytupleright)))
 

@@ -15,6 +15,6 @@ struct
   fun fromLarge x = fromInt32 (IntInf.toInt x)
 end
 
-_use "Int_common.sml"
+;_use "Int_common.sml"
 
 structure Int8 = Int_common

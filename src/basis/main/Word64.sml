@@ -28,7 +28,7 @@ struct
       : __attribute__((pure,fast)) IntInf.int -> word
 end
 
-_use "./Word_common.sml"
+;_use "./Word_common.sml"
 
 structure Word64 = Word_common
 structure LargeWord = Word64

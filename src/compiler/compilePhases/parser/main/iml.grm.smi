@@ -47,144 +47,137 @@ struct
   struct
     type pos = Parser.pos
     type token = Parser.token
-val VALUES:  pos * pos -> token
-val UPDATE:  pos * pos -> token
-val UNKNOWN:  pos * pos -> token
-val TRUE:  pos * pos -> token
-val SET:  pos * pos -> token
-val SELECT:  pos * pos -> token
-val ROWS:  pos * pos -> token
-val ROW:  pos * pos -> token
-val ROLLBACK:  pos * pos -> token
-val ORDER:  pos * pos -> token
-val OR:  pos * pos -> token
-val ONLY:  pos * pos -> token
-val ON:  pos * pos -> token
-val OFFSET:  pos * pos -> token
-val NULL:  pos * pos -> token
-val NOT:  pos * pos -> token
-val NEXT:  pos * pos -> token
-val NATURAL:  pos * pos -> token
-val LIMIT:  pos * pos -> token
-val JOIN:  pos * pos -> token
-val IS:  pos * pos -> token
-val INTO:  pos * pos -> token
-val INSERT:  pos * pos -> token
-val INNER:  pos * pos -> token
-val HAVING:  pos * pos -> token
-val GROUP:  pos * pos -> token
-val FROM:  pos * pos -> token
-val FIRST:  pos * pos -> token
-val FETCH:  pos * pos -> token
-val FALSE:  pos * pos -> token
-val EXISTS:  pos * pos -> token
-val DISTINCT:  pos * pos -> token
-val DESC:  pos * pos -> token
-val DELETE:  pos * pos -> token
-val DEFAULT:  pos * pos -> token
-val CROSS:  pos * pos -> token
-val COMMIT:  pos * pos -> token
-val BY:  pos * pos -> token
-val BEGIN:  pos * pos -> token
-val ASC:  pos * pos -> token
-val ALL:  pos * pos -> token
-val USE:  pos * pos -> token
-val WORDX: (string) *  pos * pos -> token
-val WORD: (string) *  pos * pos -> token
-val STRING: (string) *  pos * pos -> token
-val REAL: (string) *  pos * pos -> token
-val INTLAB: (string) *  pos * pos -> token
-val INTX: (string) *  pos * pos -> token
-val INT: (string) *  pos * pos -> token
-val HASH_STRING: (string) *  pos * pos -> token
-val CHAR: (string) *  pos * pos -> token
-val TYVAR: (string) *  pos * pos -> token
-val SYMBOLID: (string) *  pos * pos -> token
-val FREE_EQTYVAR: (string) *  pos * pos -> token
-val FREE_TYVAR: (string) *  pos * pos -> token
-val EQTYVAR: (string) *  pos * pos -> token
-val ALNUMID: (string) *  pos * pos -> token
-val U_USE:  pos * pos -> token
-val U_SQLSERVER:  pos * pos -> token
-val U_SQLEXEC:  pos * pos -> token
-val U_SQLEVAL:  pos * pos -> token
-val U_SQL:  pos * pos -> token
-val U_SIZEOF:  pos * pos -> token
-val U_REQUIRE:  pos * pos -> token
-val U_REIFYTY:  pos * pos -> token
-val U_DYNAMICVOID:  pos * pos -> token
-val U_DYNAMICVIEW:  pos * pos -> token
-val U_DYNAMICNULL:  pos * pos -> token
-val U_DYNAMICCASE:  pos * pos -> token
-val U_DYNAMIC:  pos * pos -> token
-val U_UPDATE:  pos * pos -> token
-val U_EXTEND:  pos * pos -> token
-val U_JOIN:  pos * pos -> token
-val U_INTERFACE:  pos * pos -> token
-val U_IMPORT:  pos * pos -> token
-val U_FOREACH:  pos * pos -> token
-val U_BUILTIN:  pos * pos -> token
-val U_ATTRIBUTE:  pos * pos -> token
-val PERIOD:  pos * pos -> token
-val ASTERISK:  pos * pos -> token
-val OPAQUE:  pos * pos -> token
-val WHERE:  pos * pos -> token
-val STRUCTURE:  pos * pos -> token
-val STRUCT:  pos * pos -> token
-val SIGNATURE:  pos * pos -> token
-val SIG:  pos * pos -> token
-val SHARING:  pos * pos -> token
-val INCLUDE:  pos * pos -> token
-val FUNCTOR:  pos * pos -> token
-val EQTYPE:  pos * pos -> token
-val HASH:  pos * pos -> token
-val ARROW:  pos * pos -> token
-val DARROW:  pos * pos -> token
-val EQ:  pos * pos -> token
-val BAR:  pos * pos -> token
-val UNDERBAR:  pos * pos -> token
-val PERIODS:  pos * pos -> token
-val SEMICOLON:  pos * pos -> token
-val COLON:  pos * pos -> token
-val COMMA:  pos * pos -> token
-val RBRACE:  pos * pos -> token
-val LBRACE:  pos * pos -> token
-val RBRACKET:  pos * pos -> token
-val LBRACKET:  pos * pos -> token
-val RPAREN:  pos * pos -> token
-val LPAREN:  pos * pos -> token
-val WHILE:  pos * pos -> token
-val WITHTYPE:  pos * pos -> token
-val WITH:  pos * pos -> token
-val VAL:  pos * pos -> token
-val TYPE:  pos * pos -> token
-val THEN:  pos * pos -> token
-val REC:  pos * pos -> token
-val RAISE:  pos * pos -> token
-val ORELSE:  pos * pos -> token
-val OPEN:  pos * pos -> token
-val OP:  pos * pos -> token
-val OF:  pos * pos -> token
-val NONFIX:  pos * pos -> token
-val LOCAL:  pos * pos -> token
-val LET:  pos * pos -> token
-val INFIXR:  pos * pos -> token
-val INFIX:  pos * pos -> token
-val IN:  pos * pos -> token
-val IF:  pos * pos -> token
-val HANDLE:  pos * pos -> token
-val FUN:  pos * pos -> token
-val FN:  pos * pos -> token
-val EXCEPTION:  pos * pos -> token
-val END:  pos * pos -> token
-val ELSE:  pos * pos -> token
-val DO:  pos * pos -> token
-val DATATYPE:  pos * pos -> token
-val CASE:  pos * pos -> token
-val AS:  pos * pos -> token
-val ANDALSO:  pos * pos -> token
-val AND:  pos * pos -> token
-val ABSTYPE:  pos * pos -> token
-val EOF:  pos * pos -> token
+    val VALUES: (string) *  pos * pos -> token
+    val UPDATE: (string) *  pos * pos -> token
+    val UNKNOWN: (string) *  pos * pos -> token
+    val TRUE: (string) *  pos * pos -> token
+    val SET: (string) *  pos * pos -> token
+    val SELECT: (string) *  pos * pos -> token
+    val ROWS: (string) *  pos * pos -> token
+    val ROW: (string) *  pos * pos -> token
+    val ROLLBACK: (string) *  pos * pos -> token
+    val ORDER: (string) *  pos * pos -> token
+    val OR: (string) *  pos * pos -> token
+    val ONLY: (string) *  pos * pos -> token
+    val ON: (string) *  pos * pos -> token
+    val OFFSET: (string) *  pos * pos -> token
+    val NULL: (string) *  pos * pos -> token
+    val NOT: (string) *  pos * pos -> token
+    val NEXT: (string) *  pos * pos -> token
+    val NATURAL: (string) *  pos * pos -> token
+    val LIMIT: (string) *  pos * pos -> token
+    val JOIN: (string) *  pos * pos -> token
+    val IS: (string) *  pos * pos -> token
+    val INTO: (string) *  pos * pos -> token
+    val INSERT: (string) *  pos * pos -> token
+    val INNER: (string) *  pos * pos -> token
+    val HAVING: (string) *  pos * pos -> token
+    val GROUP: (string) *  pos * pos -> token
+    val FROM: (string) *  pos * pos -> token
+    val FIRST: (string) *  pos * pos -> token
+    val FETCH: (string) *  pos * pos -> token
+    val FALSE: (string) *  pos * pos -> token
+    val EXISTS: (string) *  pos * pos -> token
+    val DISTINCT: (string) *  pos * pos -> token
+    val DESC: (string) *  pos * pos -> token
+    val DELETE: (string) *  pos * pos -> token
+    val DEFAULT: (string) *  pos * pos -> token
+    val CROSS: (string) *  pos * pos -> token
+    val COMMIT: (string) *  pos * pos -> token
+    val BY: (string) *  pos * pos -> token
+    val BEGIN: (string) *  pos * pos -> token
+    val ASC: (string) *  pos * pos -> token
+    val ALL: (string) *  pos * pos -> token
+    val USE_META: (string) *  pos * pos -> token
+    val USE: (string) *  pos * pos -> token
+    val SQLSERVER: (string) *  pos * pos -> token
+    val SQL: (string) *  pos * pos -> token
+    val SIZEOF: (string) *  pos * pos -> token
+    val REIFYTY: (string) *  pos * pos -> token
+    val INTERFACE: (string) *  pos * pos -> token
+    val IMPORT: (string) *  pos * pos -> token
+    val FOREACH: (string) *  pos * pos -> token
+    val EXTEND: (string) *  pos * pos -> token
+    val DYNAMICVOID: (string) *  pos * pos -> token
+    val DYNAMICVIEW: (string) *  pos * pos -> token
+    val DYNAMICNULL: (string) *  pos * pos -> token
+    val DYNAMICCASE: (string) *  pos * pos -> token
+    val DYNAMIC: (string) *  pos * pos -> token
+    val ATTRIBUTE__: (string) *  pos * pos -> token
+    val WORDX: (string) *  pos * pos -> token
+    val WORD: (string) *  pos * pos -> token
+    val STRING: (string) *  pos * pos -> token
+    val REAL: (string) *  pos * pos -> token
+    val INTLAB: (string) *  pos * pos -> token
+    val INTX: (string) *  pos * pos -> token
+    val INT: (string) *  pos * pos -> token
+    val HASH_STRING: (string) *  pos * pos -> token
+    val CHAR: (string) *  pos * pos -> token
+    val TYVAR: (string) *  pos * pos -> token
+    val SYMBOLID: (string) *  pos * pos -> token
+    val EQTYVAR: (string) *  pos * pos -> token
+    val ALNUMID: (string) *  pos * pos -> token
+    val PERIOD:  pos * pos -> token
+    val ASTERISK:  pos * pos -> token
+    val OPAQUE:  pos * pos -> token
+    val WHERE:  pos * pos -> token
+    val STRUCTURE:  pos * pos -> token
+    val STRUCT:  pos * pos -> token
+    val SIGNATURE:  pos * pos -> token
+    val SIG:  pos * pos -> token
+    val SHARING:  pos * pos -> token
+    val INCLUDE:  pos * pos -> token
+    val FUNCTOR:  pos * pos -> token
+    val EQTYPE:  pos * pos -> token
+    val HASH:  pos * pos -> token
+    val ARROW:  pos * pos -> token
+    val DARROW:  pos * pos -> token
+    val EQ:  pos * pos -> token
+    val BAR:  pos * pos -> token
+    val UNDERBAR_:  pos * pos -> token
+    val UNDERBAR:  pos * pos -> token
+    val PERIODS:  pos * pos -> token
+    val SEMICOLON:  pos * pos -> token
+    val COLON:  pos * pos -> token
+    val COMMA:  pos * pos -> token
+    val RBRACE:  pos * pos -> token
+    val LBRACE:  pos * pos -> token
+    val RBRACKET:  pos * pos -> token
+    val LBRACKET:  pos * pos -> token
+    val RPAREN:  pos * pos -> token
+    val LPAREN:  pos * pos -> token
+    val WHILE:  pos * pos -> token
+    val WITHTYPE:  pos * pos -> token
+    val WITH:  pos * pos -> token
+    val VAL:  pos * pos -> token
+    val TYPE:  pos * pos -> token
+    val THEN:  pos * pos -> token
+    val REC:  pos * pos -> token
+    val RAISE:  pos * pos -> token
+    val ORELSE:  pos * pos -> token
+    val OPEN:  pos * pos -> token
+    val OP:  pos * pos -> token
+    val OF:  pos * pos -> token
+    val NONFIX:  pos * pos -> token
+    val LOCAL:  pos * pos -> token
+    val LET:  pos * pos -> token
+    val INFIXR:  pos * pos -> token
+    val INFIX:  pos * pos -> token
+    val IN:  pos * pos -> token
+    val IF:  pos * pos -> token
+    val HANDLE:  pos * pos -> token
+    val FUN:  pos * pos -> token
+    val FN:  pos * pos -> token
+    val EXCEPTION:  pos * pos -> token
+    val END:  pos * pos -> token
+    val ELSE:  pos * pos -> token
+    val DO:  pos * pos -> token
+    val DATATYPE:  pos * pos -> token
+    val CASE:  pos * pos -> token
+    val AS:  pos * pos -> token
+    val ANDALSO:  pos * pos -> token
+    val AND:  pos * pos -> token
+    val ABSTYPE:  pos * pos -> token
+    val EOF:  pos * pos -> token
   end
 end

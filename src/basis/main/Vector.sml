@@ -21,7 +21,7 @@ struct
   val vectorLength = SMLSharp_Builtin.Vector.length
 end
 
-_use "./Array_common.sml"
+;_use "./Array_common.sml"
 
 structure Vector =
 struct

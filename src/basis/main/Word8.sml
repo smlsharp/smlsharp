@@ -25,6 +25,6 @@ struct
   fun fromLargeInt x = fromWord32X (fromLargeInt32 x)
 end
 
-_use "./Word_common.sml"
+;_use "./Word_common.sml"
 
 structure Word8 = Word_common
