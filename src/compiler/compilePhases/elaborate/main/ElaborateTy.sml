@@ -252,6 +252,45 @@ struct
         else map (reduceTyDatbind tyfuns) datbinds
       end
 
+  fun checkCyclicKind nil = ()
+    | checkCyclicKind (tyvars : A.kinded_tyvar list) =
+      let
+        val tyvarsMap =
+            foldl
+              (fn ((_, NONE, _), z) => z
+                | (((_, (symbol, _)), SOME kind, _), z) =>
+                  Symbol.Map.insertWith union (z, symbol, ftvKind kind))
+              Symbol.Map.empty
+              tyvars
+        val tyvarsMap =
+            Symbol.Map.map
+              (fn ftv => intersect (ftv, tyvarsMap))
+              tyvarsMap
+        val tyvarsMap =
+            foldl
+              (fn (_, tyvarsMap) =>
+                  Symbol.Map.map
+                    (fn ftv =>
+                        unionList
+                          (ftv :: List.mapPartial
+                                    (fn k => Symbol.Map.find (tyvarsMap, k))
+                                    (Symbol.Map.listKeys ftv)))
+                    tyvarsMap)
+              tyvarsMap
+              tyvars
+      in
+        app
+          (fn ((_, (symbol, _)), _, _) =>
+              case Symbol.Map.find (tyvarsMap, symbol) of
+                NONE => ()
+              | SOME ftv =>
+                case Symbol.Map.find (ftv, symbol) of
+                  NONE => ()
+                | SOME (_, (_, loc)) =>
+                  enqueueError (loc, E.CyclicUserTyvarKind symbol))
+          tyvars
+      end
+
   fun appendTyvarseq (NONE, nil) = NONE
     | appendTyvarseq (SOME (tyvars, loc), tyvars2) =
       SOME (tyvars @ tyvars2, loc)
@@ -339,9 +378,10 @@ struct
       elabTy monoEnv ty
 
   fun elabPoly ((tyvars, loc1), ty, loc) =
-      P.TY (P.TYPOLY ((map (elabKindedTyvar monoEnv) tyvars, LOC loc1),
-                      elabPolyTy ty,
-                      LOC loc))
+      (checkCyclicKind tyvars;
+       P.TY (P.TYPOLY ((map (elabKindedTyvar monoEnv) tyvars, LOC loc1),
+                       elabPolyTy ty,
+                       LOC loc)))
 
   and elabPolyTy ty =
       elabTy (monoEnv # {TYPOLY = elabPoly}) ty
@@ -381,7 +421,8 @@ struct
 
   fun elabKindedTyvarseq NONE = (nil, Loc.NOLOC)
     | elabKindedTyvarseq (SOME (tyvars, loc)) =
-      (map (elabKindedTyvar monoEnv) tyvars, Loc.LOC loc)
+      (checkCyclicKind tyvars;
+       (map (elabKindedTyvar monoEnv) tyvars, Loc.LOC loc))
 
   fun makePolyTy ty =
       case toKindedTyvars (ftvTy ty) of

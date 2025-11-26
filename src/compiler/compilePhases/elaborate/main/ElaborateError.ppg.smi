@@ -34,4 +34,5 @@ structure ElaborateError =
     exception WildTyNotAllowed
     exception FreeTyNotAllowed
     exception InvalidKindName of Symbol.symbol
+    exception CyclicUserTyvarKind of Symbol.symbol
   end

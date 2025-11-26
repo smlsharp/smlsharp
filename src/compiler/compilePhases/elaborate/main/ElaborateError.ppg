@@ -234,4 +234,11 @@ struct
    *)
   InvalidKindName of Symbol.symbol
 
+  and
+  (*%
+     @format(name)
+     "cyclic" +d "reference" +d "of" +d "type" +d "variable:" +d name
+   *)
+  CyclicUserTyvarKind of Symbol.symbol
+
 end
