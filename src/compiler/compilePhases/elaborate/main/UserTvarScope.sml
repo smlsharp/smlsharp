@@ -12,19 +12,16 @@ struct
   datatype loc = datatype Loc.loc
 
   type env = ElaborateTy.ftv
-  val tyvarseqToSet = ElaborateTy.tyvarseqToSet
-  val kindedTyvarseqToSet = ElaborateTy.kindedTyvarseqToSet
+  val empty = ElaborateTy.empty
   val singleton = ElaborateTy.singleton
   val union = ElaborateTy.union
   val unionList = ElaborateTy.unionList
   val intersect = ElaborateTy.intersect
   val setMinus = ElaborateTy.setMinus
+  val tyvarseqToSet = ElaborateTy.tyvarseqToSet
+  val kindedTyvarseqToSet = ElaborateTy.kindedTyvarseqToSet
   val ftvKindedTyvarseq = ElaborateTy.ftvKindedTyvarseq
   val ftvTy = ElaborateTy.ftvTy
-  val ftvTypbind = ElaborateTy.ftvTypbind
-  val ftvDatbind = ElaborateTy.ftvDatbind
-
-  val empty = Symbol.Map.empty
 
   fun ftvOpt ftvFn NONE = empty
     | ftvOpt ftvFn (SOME item) = ftvFn item
@@ -72,6 +69,15 @@ struct
         A.PATROW (lab, pat, loc) => ftvPat pat
       | A.PATROWVAR (vid, ty, pat, loc) =>
         union (ftvOpt ftvTy ty, ftvOpt ftvPat pat)
+
+  fun ftvTypbind (tyvarseq, _, ty, _) =
+      setMinus (ftvTy ty, tyvarseqToSet tyvarseq)
+
+  fun ftvConbind (_, ty, _) =
+      ftvOpt ftvTy ty
+
+  fun ftvDatbind (tyvarseq, _, conbinds, _) =
+      setMinus (ftvList ftvConbind conbinds, tyvarseqToSet tyvarseq)
 
   fun ftvWithty ((typbinds, loc) : A.withty) =
       ftvList ftvTypbind typbinds
@@ -356,7 +362,7 @@ struct
         val explicitlyScoped = kindedTyvarseqToSet tyvarseq
         val _ =
             Symbol.Map.app
-              (fn (tv as (_, (_, loc)), _) =>
+              (fn tv as (_, (_, loc)) =>
                   UserErrorUtils.enqueueError
                     (LOC loc, E.UserTvarScopedAtOuterDecl tv))
               (intersect (explicitlyScoped, env))

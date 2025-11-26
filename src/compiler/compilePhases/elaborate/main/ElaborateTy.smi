@@ -11,7 +11,8 @@ _require "../../../compilerIRs/patterncalc/main/PatternCalc.smi"
 
 structure ElaborateTy =
 struct
-  type ftv = (Absyn.tyvar * Absyn.tyvar list) Symbol.Map.map
+  type ftv = Absyn.tyvar Symbol.Map.map
+  val empty : ftv
   val singleton : Absyn.tyvar -> ftv
   val union : ftv * ftv -> ftv
   val unionList : ftv list -> ftv
@@ -22,10 +23,6 @@ struct
   val toKindedTyvars : ftv -> Absyn.kinded_tyvar list
   val ftvKindedTyvarseq : Absyn.kinded_tyvarseq option -> ftv
   val ftvTy : Absyn.ty -> ftv
-  val ftvTypbind : Absyn.typbind -> ftv
-  val ftvDatbind : Absyn.datbind -> ftv
-  val ftvDatdesc : Absyn.datdesc -> ftv
-  val ftvWheretype : Absyn.wheretype -> ftv
   val substTy : (Absyn.loc -> Absyn.ty) Symbol.Map.map -> Absyn.ty -> Absyn.ty
   val reduceTy : Absyn.typbind Symbol.Map.map -> Absyn.ty -> Absyn.ty
   val reduceDatbind

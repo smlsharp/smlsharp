@@ -12,7 +12,7 @@ struct
   datatype loc = datatype Loc.loc
   fun enqueueError (loc, exn) = UserErrorUtils.enqueueError (Loc.LOC loc, exn)
 
-  type ftv = (Absyn.tyvar * Absyn.tyvar list) Symbol.Map.map
+  type ftv = Absyn.tyvar Symbol.Map.map
 
   fun seq NONE = nil
     | seq (SOME (items, _)) = items
@@ -20,17 +20,15 @@ struct
   val empty = Symbol.Map.empty
 
   fun singleton (tyvar as (_, (symbol, _)) : A.tyvar) =
-      Symbol.Map.singleton (symbol, (tyvar, nil))
+      Symbol.Map.singleton (symbol, tyvar)
 
   fun union (set1, set2) : ftv =
-      Symbol.Map.unionWith
-        (fn ((tv1, tvs1), (tv2, tvs2)) => (tv1, tvs1 @ tv2 :: tvs2))
-        (set1, set2)
+      Symbol.Map.unionWith #1 (set1, set2)
 
   fun unionList sets =
       foldl union Symbol.Map.empty sets
 
-  fun intersect (set1, set2 : ftv) =
+  fun intersect (set1, set2) =
       Symbol.Map.mergeWith
         (fn (NONE, _) => NONE
           | (_, NONE) => NONE
@@ -47,7 +45,7 @@ struct
   fun tyvarsToSet tyvars =
       foldl
         (fn (tyvar as (_, (symbol, _)) : A.tyvar, set) =>
-            Symbol.Map.insert (set, symbol, (tyvar, nil)))
+            Symbol.Map.insert (set, symbol, tyvar))
         Symbol.Map.empty
         tyvars
 
@@ -61,7 +59,7 @@ struct
       tyvarsToSet (map #1 (seq tyvarseq))
 
   fun toKindedTyvars (ftv : ftv) : A.kinded_tyvar list =
-      map (fn (tv as (_, (_, loc)), _) => (tv, NONE, loc))
+      map (fn tv as (_, (_, loc)) => (tv, NONE, loc))
           (Symbol.Map.listItems ftv)
 
   fun ftvTyrow ((_, ty, _) : A.tyrow) =
@@ -92,19 +90,6 @@ struct
   fun ftvKindedTyvarseq NONE = Symbol.Map.empty
     | ftvKindedTyvarseq (SOME (tyvars, _)) =
       unionList (map ftvKindedTyvar tyvars)
-
-  fun ftvTypbind (tyvarseq, _, ty, _ : A.loc) =
-      setMinus (ftvTy ty, tyvarseqToSet tyvarseq)
-
-  fun ftvConbind (_, NONE, _) = Symbol.Map.empty
-    | ftvConbind (_, SOME ty, _) = ftvTy ty
-
-  fun ftvDatbind (tyvarseq, _, conbinds, _) =
-      setMinus (unionList (map ftvConbind conbinds), tyvarseqToSet tyvarseq)
-
-  val ftvWheretype = ftvTypbind
-
-  val ftvDatdesc = ftvDatbind
 
   fun ftvSubst subst loc =
       Symbol.Map.foldl
