@@ -10,7 +10,7 @@ _require local "./iml.lex.smi"
 _require local "./ParserError.ppg.smi"
 
 _require "../../../compilerIRs/absyn/main/Token.smi"
-_require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynInterface.smi"
 
 structure InterfaceParser =
 struct

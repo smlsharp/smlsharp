@@ -10444,8 +10444,8 @@ src/compiler/compilerIRs/absyn/main/ConstFormat.o: \
  src/compiler/libs/util/main/StringEscape.smi \
  src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
  $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o: \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml \
+src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.o: \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.sml \
  src/basis/main/General.smi \
  src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi \
@@ -10546,9 +10546,247 @@ src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilerIRs/absyn/main/AbsynInterface.o: \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilerIRs/absyn/main/AbsynFormatter.o: \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/digest/main/SHA3.o: \
  src/compiler/libs/digest/main/SHA3.sml \
@@ -11456,7 +11694,13 @@ src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.o: \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/data/types/main/DummyTyID.smi \
  src/compiler/data/types/main/ExistTyID.smi \
@@ -11580,458 +11824,6 @@ src/compiler/extensions/usererror/main/UserErrorUtils.o: \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.o: \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
- $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.o: \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
- $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.o: \
- src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
- src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.smi \
- $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynFormatter.o: \
- src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/compilerIRs/absyn/main/RequirePath.smi \
- src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
- src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
- $(SMLSHARP_DEP)
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.o: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.sml \
  src/basis/main/General.smi \
@@ -12146,8 +11938,9 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalc.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  $(SMLSHARP_DEP)
@@ -12265,6 +12058,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -12405,6 +12200,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -15673,127 +15470,8 @@ src/compiler/compilePhases/nameevaluation/main/NormalizeTy.o: \
  src/compiler/compilerIRs/idcalc/main/IDCalcUtils.smi \
  src/compiler/compilePhases/nameevaluation/main/NormalizeTy.smi \
  $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.o: \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.sml \
- src/basis/main/General.smi \
- src/basis/main/StringCvt.smi \
- src/basis/main/IEEEReal.smi \
- src/basis/main/Real64.smi \
- src/basis/main/IntInf.smi \
- src/basis/main/Time.smi \
- src/basis/main/Int8.smi \
- src/basis/main/Int16.smi \
- src/basis/main/Int32.smi \
- src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8ArraySlice.smi \
- src/basis/main/Substring.smi \
- src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi \
- src/basis/main/Word8Array.smi \
- src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/SMLSharp_OSProcess.smi \
- src/basis/main/SMLSharp_Runtime.smi \
- src/smlnj/Basis/OS/os-path-fn.smi \
- src/smlnj/Basis/Unix/os-path.smi \
- src/basis/main/OS.smi \
- src/smlnj/Basis/IO/prim-io-bin.smi \
- src/smlnj/Basis/IO/bin-io.smi \
- src/basis/main/Bool.smi \
- src/basis/main/Byte.smi \
- src/basis/main/CharArray.smi \
- src/basis/main/CharVectorSlice.smi \
- src/basis/main/CharArraySlice.smi \
- src/basis/main/SMLSharp_ScanChar.smi \
- src/basis/main/Char.smi \
- src/basis/main/CharVector.smi \
- src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi \
- src/basis/main/List.smi \
- src/basis/main/ListPair.smi \
- src/basis/main/Option.smi \
- src/basis/main/Real32.smi \
- src/basis/main/Int64.smi \
- src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi \
- src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi \
- src/basis/main/Timer.smi \
- src/basis/main/Vector.smi \
- src/basis/main/Word8.smi \
- src/basis/main/Word16.smi \
- src/basis/main/Word32.smi \
- src/basis/main/Word64.smi \
- src/basis/main/toplevel.smi \
- src/basis/main/ARRAY.sig \
- src/basis/main/ARRAY_SLICE.sig \
- src/basis/main/STREAM_IO.sig \
- src/basis/main/IMPERATIVE_IO.sig \
- src/basis/main/BIN_IO.sig \
- src/basis/main/BOOL.sig \
- src/basis/main/BYTE.sig \
- src/basis/main/CHAR.sig \
- src/basis/main/COMMAND_LINE.sig \
- src/basis/main/DATE.sig \
- src/basis/main/GENERAL.sig \
- src/basis/main/IEEE_REAL.sig \
- src/basis/main/INTEGER.sig \
- src/basis/main/INT_INF.sig \
- src/basis/main/IO.sig \
- src/basis/main/LIST.sig \
- src/basis/main/LIST_PAIR.sig \
- src/basis/main/MATH.sig \
- src/basis/main/MONO_ARRAY.sig \
- src/basis/main/MONO_ARRAY_SLICE.sig \
- src/basis/main/MONO_VECTOR.sig \
- src/basis/main/MONO_VECTOR_SLICE.sig \
- src/basis/main/OPTION.sig \
- src/basis/main/OS_FILE_SYS.sig \
- src/basis/main/OS_IO.sig \
- src/basis/main/OS_PATH.sig \
- src/basis/main/OS_PROCESS.sig \
- src/basis/main/OS.sig \
- src/basis/main/PRIM_IO.sig \
- src/basis/main/REAL.sig \
- src/basis/main/STRING.sig \
- src/basis/main/STRING_CVT.sig \
- src/basis/main/SUBSTRING.sig \
- src/basis/main/TEXT_STREAM_IO.sig \
- src/basis/main/TEXT_IO.sig \
- src/basis/main/TEXT.sig \
- src/basis/main/TIME.sig \
- src/basis/main/TIMER.sig \
- src/basis/main/VECTOR.sig \
- src/basis/main/VECTOR_SLICE.sig \
- src/basis/main/WORD.sig \
- src/basis.smi \
- src/smlformat/formatlib/main/FormatExpression.smi \
- src/smlformat/formatlib/main/PrinterParameter.smi \
- src/smlformat/formatlib/main/BasicFormatters.smi \
- src/smlformat/formatlib/main/SMLFormat.smi \
- src/smlformat-lib.smi \
- src/compiler/libs/toolchain/main/Filename.smi \
- src/compiler/compilerIRs/absyn/main/RequirePath.smi \
- src/smlnj-lib/Util/binary-map-fn.smi \
- src/smlnj-lib/Util/binary-set-fn.smi \
- src/compiler/data/symbols/main/Symbol.smi \
- src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/data/symbols/main/Loc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
- src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
- src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- $(SMLSHARP_DEP)
-src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.sml \
+src/compiler/compilerIRs/absyn/main/InterfaceLoaded.o: \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.sml \
  src/basis/main/General.smi \
  src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi \
@@ -15906,13 +15584,11 @@ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
  src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
- src/compiler/compilerIRs/absyn/main/AbsynFormatterUtils.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.o: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.sml \
@@ -16027,11 +15703,14 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -16156,11 +15835,14 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  $(SMLSHARP_DEP)
@@ -16300,11 +15982,14 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
  $(SMLSHARP_DEP)
 src/compiler/data/name/main/NameMangle.o: \
@@ -16647,7 +16332,13 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.o: \
@@ -17321,6 +17012,8 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/libs/env/main/SOrd.smi \
@@ -17478,8 +17171,11 @@ src/compiler/extensions/reflection/main/ReifyTopEnv.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
@@ -17628,6 +17324,129 @@ src/compiler/extensions/reflection/main/TopEnvUtils.ppg.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/extensions/reflection/main/TopEnvUtils.ppg.smi \
  $(SMLSHARP_DEP)
+src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.o: \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
+ $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/compiler/compilePhases/parser/main/interface.grm.sml \
  src/basis/main/General.smi \
@@ -17748,7 +17567,7 @@ src/compiler/compilePhases/parser/main/interface.grm.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilePhases/parser/main/interface.grm.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/parser/main/InterfaceParser.o: \
@@ -17867,7 +17686,7 @@ src/compiler/compilePhases/parser/main/InterfaceParser.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilePhases/parser/main/interface.grm.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/iml.lex.smi \
@@ -17988,7 +17807,7 @@ src/compiler/compilePhases/loadfile/main/InterfaceHash.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilePhases/loadfile/main/InterfaceHash.smi \
@@ -18228,12 +18047,15 @@ src/compiler/compilePhases/loadfile/main/LoadFile.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilePhases/parser/main/InterfaceParser.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/compilePhases/loadfile/main/InterfaceHash.smi \
  src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilePhases/loadfile/main/LoadFile.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o: \
@@ -18345,7 +18167,14 @@ src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.o: \
  src/compiler/data/symbols/main/Loc.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
- src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.smi \
+ src/compiler/compilerIRs/absyn/main/RequirePath.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
+ src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/util/main/CompileUtils.o: \
@@ -18678,6 +18507,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateTy.o: \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateTy.smi \
@@ -18910,6 +18741,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateSQL.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
@@ -19030,6 +18863,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateForeach.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateForeach.smi \
@@ -19149,6 +18984,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateCore.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/extensions/debug/main/Bug.smi \
@@ -19299,6 +19136,8 @@ src/compiler/compilePhases/elaborate/main/ElaborateModule.o: \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
  src/compiler/compilerIRs/absyn/main/AbsynUtils.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
@@ -19429,9 +19268,12 @@ src/compiler/compilePhases/elaborate/main/ElaborateInterface.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -19561,6 +19403,8 @@ src/compiler/compilePhases/elaborate/main/UserTvarScope.o: \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateError.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/elaborate/main/ElaborateTy.smi \
@@ -19812,11 +19656,14 @@ src/compiler/compilePhases/elaborate/main/Elaborator.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/libs/ids/main/LocalID.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/extensions/debug/main/Bug.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -20311,13 +20158,16 @@ src/compiler/compilePhases/nameevaluation/main/EvalTy.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/data/control/main/PrintControl.smi \
  src/compiler/data/control/main/Control.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
@@ -20462,8 +20312,11 @@ src/compiler/compilePhases/nameevaluation/main/Subst.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
@@ -20603,8 +20456,11 @@ src/compiler/compilePhases/nameevaluation/main/EvalSig.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
@@ -20757,9 +20613,12 @@ src/compiler/compilePhases/nameevaluation/main/FunctorUtils.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
  src/compiler/data/control/main/PrintControl.smi \
@@ -20907,8 +20766,11 @@ src/compiler/compilePhases/nameevaluation/main/SigCheck.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
@@ -21169,7 +21031,7 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalInterface.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
@@ -21190,11 +21052,14 @@ src/compiler/compilePhases/nameevaluation/main/NameEvalInterface.o: \
  src/compiler/data/builtin/main/BuiltinTypes.smi \
  src/compiler/extensions/usererror/main/UserError.ppg.smi \
  src/compiler/extensions/usererror/main/UserErrorUtils.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
  src/compiler/compilePhases/nameevaluation/main/FunctorUtils.smi \
@@ -21328,7 +21193,7 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/data/symbols/main/Longsymbol.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/SymbolWithLoc.smi \
@@ -21351,8 +21216,11 @@ src/compiler/compilePhases/nameevaluation/main/CheckProvide.o: \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/TfunVars.smi \
  src/compiler/compilePhases/nameevaluation/main/Subst.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalSig.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/EvalTy.smi \
  src/compiler/compilePhases/nameevaluation/main/FunctorUtils.smi \
@@ -21487,6 +21355,8 @@ src/compiler/compilePhases/nameevaluation/main/SpliceFunProvide.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/libs/ids/main/LocalID.smi \
@@ -21504,7 +21374,8 @@ src/compiler/compilePhases/nameevaluation/main/SpliceFunProvide.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/SpliceFunProvide.smi \
@@ -21643,8 +21514,11 @@ src/compiler/compilePhases/nameevaluation/main/NameEval.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/CheckProvide.smi \
@@ -23766,8 +23640,11 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
@@ -24467,6 +24344,8 @@ src/compiler/compilePhases/typeinference/main/InferTypes2.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
@@ -27623,6 +27502,8 @@ src/compiler/compilePhases/fficompilation/main/FFICompilation.o: \
  src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/data/name/main/CodeLabel.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
@@ -34179,8 +34060,11 @@ src/compiler/compilePhases/toplevel/main/TopData.ppg.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -34467,9 +34351,11 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/AbsynFormatter.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -34981,8 +34867,11 @@ src/compiler/compilePhases/main/main/MiniMain.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -44438,8 +44327,11 @@ src/compiler/compilePhases/main/main/Interactive.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -44593,8 +44485,11 @@ src/compiler/compilePhases/main/main/RunLoop.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -45887,8 +45782,11 @@ src/compiler/compilePhases/analyzefiles/main/PrintUtils.o: \
  src/compiler/compilerIRs/absyn/main/RequirePath.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalUtils.smi \
@@ -46198,8 +46096,11 @@ src/compiler/compilePhases/analyzefiles/main/SetupFiles.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -46386,8 +46287,11 @@ src/compiler/compilePhases/analyzefiles/main/AnalyzeFiles.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -46547,8 +46451,11 @@ src/compiler/compilePhases/main/main/Main.o: \
  src/compiler/compilePhases/parser/main/Parser.smi \
  src/compiler/compilePhases/main/main/GetOptLong.smi \
  src/compiler/libs/toolchain/main/LLVMUtils.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -46873,8 +46780,11 @@ src/compiler/smlsharp.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -47099,7 +47009,7 @@ src/compiler/compilerIRs/absyn/main/AbsynNode.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilerIRs/absyn/main/AbsynNode.smi \
  $(SMLSHARP_DEP)
 src/compiler/compilerIRs/absyn/main/TransposeAbsyn.o: \
@@ -47216,7 +47126,7 @@ src/compiler/compilerIRs/absyn/main/TransposeAbsyn.o: \
  src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
  src/compiler/compilerIRs/absyn/main/AbsynSQL.smi \
  src/compiler/compilerIRs/absyn/main/Absyn.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
  src/compiler/compilerIRs/absyn/main/AbsynNode.smi \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilerIRs/absyn/main/TransposeAbsyn.smi \
@@ -47987,8 +47897,11 @@ tests/driver/Compiler.o: \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
  src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -48472,8 +48385,11 @@ tests/suite/compiler_test/CompilerTest.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -48792,8 +48708,11 @@ tests/suite/regression/RegressionTests.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -49122,8 +49041,11 @@ tests/suite/compiler/TestInteractivePrinter.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -49440,8 +49362,11 @@ tests/suite/example/ExampleTests.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -49758,8 +49683,11 @@ tests/suite/document/DocumentTests.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -50085,8 +50013,11 @@ tests/suite/loadfile/LoadFileTests.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -58408,8 +58339,11 @@ tests/driver/dotest.o: \
  src/compiler/compilerIRs/absyn/main/Token.smi \
  src/compiler/compilePhases/parser/main/SMLSharpParser.smi \
  src/compiler/compilePhases/parser/main/Parser.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterface.smi \
+ src/compiler/compilerIRs/absyn/main/ConstFormat.smi \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceLoaded.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.smi \
  src/compiler/compilerIRs/absyn/main/Fixity.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalc.smi \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.smi \
@@ -58531,6 +58465,10 @@ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.sml: \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg \
  $(SMLFORMAT_DEP)
 	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.sml $(srcdir)/src/compiler/data/runtimetypes/main/RuntimeTypes.ppg
+src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.sml: \
+ src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg \
+ $(SMLFORMAT_DEP)
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg.sml $(srcdir)/src/compiler/compilerIRs/printcalc/main/PrintCalc.ppg
 src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.sml: \
  src/compiler/compilerIRs/absyn/main/InterfaceName.ppg \
  $(SMLFORMAT_DEP)
@@ -58567,14 +58505,6 @@ src/compiler/compilePhases/parser/main/ParserError.ppg.sml: \
  src/compiler/compilePhases/parser/main/ParserError.ppg \
  $(SMLFORMAT_DEP)
 	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=src/compiler/compilePhases/parser/main/ParserError.ppg.sml $(srcdir)/src/compiler/compilePhases/parser/main/ParserError.ppg
-src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.sml: \
- src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg \
- $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.sml $(srcdir)/src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg
-src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.sml: \
- src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg \
- $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg.sml $(srcdir)/src/compiler/compilerIRs/absyn/main/AbsynInterfaceLoaded.ppg
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg.sml: \
  src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface1.ppg \
  $(SMLFORMAT_DEP)

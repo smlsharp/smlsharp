@@ -237,9 +237,10 @@ struct
 
         val interface : 'a P.interface =
             {interfaceDecs = pinterfaceDecs,
-             requiredIds = requiredIds,
-             locallyRequiredIds = locallyRequiredIds,
-             provideTopdecs = provideTopdecs,
+             provide =
+               {requiredIds = requiredIds,
+                locallyRequiredIds = locallyRequiredIds,
+                provideTopdecs = provideTopdecs},
              topdecsInclude = topdecsInclude}
         val requireFixEnv =
             foldl

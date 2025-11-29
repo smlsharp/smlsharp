@@ -1,0 +1,1256 @@
+(* -*- sml -*- *)
+(**
+ * intermediate representation for printing
+ * @copyright (C) 2025 SML# Development Team.
+ * @author Katsuhiro Ueno
+ *)
+(*
+ * 9 apply #
+ * 8 * (tuplety)
+ * 7 -> (funty)
+ * 6 : as of not(SQL)
+ * 5 andalso and(SQL)
+ * 4 orelse or(SQL)
+ * 3 handle raise if while case fn join(SQL)
+ * 2 =>
+ *)
+structure PrintCalc =
+struct
+
+  local
+    open SMLFormat.FormatExpression
+
+    datatype insert_paren = FOUND | NOT_FOUND | EDIT of SMLFormat.format
+    val r = SOME {cut = false, direction = Right, strength = 0}
+
+    fun insertParen depth outer exp =
+        case Snoc.fromList exp of
+          h ::> Guard (a as SOME {cut, strength, direction = Right}, exp) =>
+          if cut andalso strength = 2 andalso depth > 0
+          then FOUND
+          else if not cut andalso strength < outer
+          then NOT_FOUND
+          else (case (insertParen (depth + 1) strength exp, cut) of
+                  (NOT_FOUND, _) => NOT_FOUND
+                | (FOUND, true) => FOUND
+                | (FOUND, false) => EDIT (Snoc.toList (h ::> Guard (r, exp)))
+                | (EDIT exp, _) => EDIT (Snoc.toList (h ::> Guard (a, exp))))
+        | _ => NOT_FOUND
+
+    fun insertParenTop exp =
+        case insertParen 0 0 exp of
+          NOT_FOUND => exp
+        | FOUND => exp
+        | EDIT exp => exp
+  in
+    fun iftrue (x, y) true = x
+      | iftrue (x, y) false = y
+
+    fun ifsome (x, y) (SOME _) = x
+      | ifsome (x, y) NONE = y
+
+    fun ifcons (x, y) (_ :: _) = x
+      | ifcons (x, y) nil = y
+
+    fun ifcons2 (x, y) (_ :: _ :: _) = x
+      | ifcons2 (x, y) _ = y
+
+    fun ifsingle (x, y) [_] = x
+      | ifsingle (x, y) _ = y
+
+    fun decs formatter (first, sep, next) nil = nil
+      | decs formatter (first, sep, next) [x] = formatter first x
+      | decs formatter (first, sep, next) (h :: t) =
+        Sequence (formatter first h)
+        :: map (fn i => Sequence (Sequence sep :: formatter next i)) t
+
+    fun decs2 formatter (first1, first2, sep, next1, next2) items =
+        decs formatter ((first1, first2), sep, (next1, next2)) items
+
+    fun embed x = x
+
+    fun format_decList format comma nil = nil
+      | format_decList format comma [dec] = format dec
+      | format_decList format comma (dec :: decs) =
+        Sequence (format dec)
+        :: map (fn dec =>
+                   case format dec of
+                     [e as Term (1, ";")] => e
+                   | _ => Sequence [Sequence comma, Sequence (format dec)])
+               decs
+
+    fun format_match format comma mrules =
+        case Snoc.fromList mrules of
+          NIL => nil
+        | mrules ::> mrule =>
+          Snoc.foldr
+            (fn (mrule, z) =>
+                Sequence (insertParenTop (format mrule)) :: Sequence comma :: z)
+            (format mrule)
+            mrules
+  end
+
+  (*%
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
+   * @formatter(ifcons) ifcons
+   * @formatter(ifcons2) ifcons2
+   * @formatter(ifsingle) ifsingle
+   * @formatter(decs) decs
+   * @formatter(decs2) decs2
+   * @formatter(decList) format_decList
+   * @formatter(match) format_match
+   * @formatter(intinf_int) ConstFormat.format_intInf_dec_ML
+   * @formatter(intinf_word) ConstFormat.format_intInf_word_ML
+   * @formatter(string_ML) ConstFormat.format_string_ML
+   * @formatter(char_ML) ConstFormat.format_char_ML
+   * @formatter(Symbol.symbol) Symbol.format_symbol
+   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(SMLFormat.format) embed
+   * @formatter(RequirePath.path) RequirePath.format_path
+   *)
+  datatype (*% @params(head) *) bind =
+      (*%
+       * @format(vid * ty tyOpt)
+       * !N0{ head vid tyOpt:ifsome()(+d "of" 2[+1],) tyOpt(ty) }
+       *)
+      CONBIND of exp * exp option
+    | (*%
+       * @format(tyvar tyvars * tycon * ty)
+       * !N0{
+       *   !N0{
+       *     head
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,)
+       *     tycon
+       *     +d "="
+       *   }
+       *   +1
+       *   ty
+       * }
+       *)
+      TYPBIND of exp list * exp * exp
+    | (*%
+       * @format(tyvar tyvars * tycon * conbind conbinds)
+       * !N0{
+       *   !N0{
+       *     head
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,)
+       *     tycon
+       *     +d "="
+       *   }
+       *   conbinds:ifcons()(2[+1],)
+       *   conbinds(conbind()())(+1 "|" +d)
+       * }
+       *)
+      DATBIND of exp list * exp * bind list
+    | (*%
+       * @format(pat * exp)
+       * !N0{ !N0{ head pat +d "=" } +1 exp }
+       *)
+      VALBIND of exp * exp
+    | (*%
+       * @format(valbind valbinds)
+       * valbinds:decs(valbind)(head "rec" +d, +1 "and" +d,)
+       *)
+      VALREC of bind list
+    | (*%
+       * @format(pat * ty tyOpt * exp)
+       * !N0{
+       *   !N0{
+       *     head
+       *     pat
+       *     tyOpt:ifsome()(+1 ":" +d tyOpt(ty),)
+       *     +d "="
+       *   }
+       *   +1
+       *   exp
+       * }
+       *)
+      FRULE of exp * exp option * exp
+    | (*%
+       * @format(vid * ty)
+       * !N0{ !N0{ head vid } +1 ":" +d ty }
+       *)
+      VALDESC of exp * exp
+    | (*%
+       * @format(tyvar tyvars * tycon)
+       * !N0{
+       *   head
+       *   tyvars:ifcons2()("(",)
+       *   !N0{ tyvars(tyvar)("," +1) }
+       *   tyvars:ifcons2()(")",)
+       *   tyvars:ifcons()(+1,)
+       *   tycon
+       * }
+       *)
+      TYPDESC of exp list * exp
+    | (*%
+       * @format(tyvar tyvars * tycon * impl)
+       * !N0{
+       *   !N0{
+       *     head
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,)
+       *     tycon
+       *   }
+       *   +1
+       *   "(" !N0{ "=" +d impl } ")"
+       * }
+       *)
+      ITYPDESC of exp list * exp * exp
+    | (*%
+       * @format(strid * sigcon sigconOpt * strexp)
+       * !N0{
+       *   !N0{
+       *     sigconOpt:ifsome()(
+       *       sigconOpt(sigcon()(head strid)),
+       *       head strid
+       *     )
+       *   }
+       *   +d "=" +1
+       *   strexp
+       * }
+       *)
+      STRBIND of exp * sigconstraint option * exp
+    | (*%
+       * @format(lhs * sigcon sigconOpt * strexp)
+       * !N0{
+       *   sigconOpt:ifsome()(sigconOpt(sigcon()(lhs)), lhs)
+       *   +d "=" +1
+       *   strexp
+       * }
+       * @format:lhs(funid * funparam)
+       * !N0{ head funid "(" 2[1] !N0{ funparam } 1 ")" }
+       * @format:funparam(param params)
+       * !N0{ params:decList(param)(+1) }
+       *)
+      FUNBIND of (exp * exp list) * sigconstraint option * exp
+
+  and (*% @params(head1, head2) *) fvalbind =
+      (*%
+       * @format(frule frules)
+       * !N0{ head1 frules:decs(frule)(head2, +1 "|" +d,) }
+       *)
+      FVALBIND of bind list
+
+  and (*% @params(head) *) sigconstraint =
+      (*%
+       * @format(sigexp)
+       * L6{ head +d ":" +1 sigexp }
+       *)
+      TRANSPARENT of exp
+    | (*%
+       * @format(sigexp)
+       * L6{ head +d ":>" +1 sigexp }
+       *)
+      OPAQUE of exp
+
+  and exp =
+      (*%
+       * @format
+       *)
+      EMPTY
+    | (*%
+       * @format
+       * ";"
+       *)
+      SEMICOLON
+    | (*%
+       * @format(fmt)
+       * fmt
+       *)
+      FORMAT of SMLFormat.format
+    | (*%
+       * @format(exp)
+       * !N0{ exp }
+       *)
+      N0 of exp
+    | (*%
+       * @format(exp exps)
+       * exps(exp)(d)
+       *)
+      CONCAT of exp list
+    | (*%
+       * @format(word words)
+       * words(word)(+d)
+       *)
+      KEYWORD of string list
+    | (*%
+       * @format(symbol)
+       * symbol
+       *)
+      ID of Symbol.symbol
+    | (*%
+       * @format(strid strids * id)
+       * strids(strid)(".") strids:ifcons()(".",) id
+       *)
+      LONGID of exp list * exp
+    | (*%
+       * @format(label)
+       * label
+       *)
+      LABEL of RecordLabel.label
+    | (*%
+       * @format(op1 * longvid)
+       * !N0{
+       *   op1:iftrue()("op" +1,)
+       *   longvid
+       * }
+       *)
+      OPID of bool * exp
+    | (*%
+       * @format(ty tys * longtycon)
+       * L9{
+       *   tys:ifcons2()("(",)
+       *   !N0{ tys(ty)("," +1) }
+       *   tys:ifcons2()(")",)
+       *   tys:ifcons()(2[+1],)
+       *   longtycon
+       * }
+       *)
+      TYCON of exp list * exp
+    | (*%
+       * @format(ty tys)
+       * N8{ tys(ty)(+1 "*" +d) }
+       *)
+      TYTUPLE of exp list
+    | (*%
+       * @format(ty1 * ty2)
+       * R7{ ty1 +1 "->" +d ty2 }
+       *)
+      TYFUN of exp * exp
+    | (*%
+       * @format(exp)
+       * "(" !N0{ exp } ")"
+       *)
+      PAREN of exp
+    | (*%
+       * @format(tyvar tyvars * ty)
+       * "[" !N0{ !N0{ tyvars(tyvar)("," +1) } "." +1 ty } "]"
+       *)
+      TYPOLY of exp list * exp
+    | (*%
+       * @format(id)
+       * !N0{ "#" id }
+       *)
+      KIND_ID of exp
+    | (*%
+       * @format(row rows)
+       * "#{" 2[1] rows(row)("," 2[+1]) 1 "}"
+       *)
+      KIND_RECORD of exp list
+    | (*%
+       * @format(tyvar * kind kinds)
+       * !N0{ tyvar kinds:ifcons()(d,) kinds(kind)(d) }
+       *)
+      TYVAR of exp * exp list
+    | (*%
+       * @format(tyvar)
+       * !N0{ "_" tyvar }
+       *)
+      TYVAR_FREE of exp
+    | (*%
+       * @format(lab * ty)
+       * !N0{ lab +1 ":" +d ty }
+       *)
+      TYROW of exp * exp
+    | (*%
+       * @format(attr attrs)
+       * !N0{
+       *   attrs:ifcons()("__attribute__(" 2[1],)
+       *   attrs(attr)("," 2[+1])
+       *   attrs:ifcons()(1 ")",)
+       * }
+       *)
+      FFI_ATTR of exp list
+    | (*%
+       * @format(attr attrOpt * arg * ret)
+       * R7{ attrOpt(attr) attrOpt:ifsome()(+1,) arg +1 "->" +d ret }
+       *)
+      FFITYFUN of exp option * exp * exp
+    | (*%
+       * @format(arg args * varg vargs vargOpt)
+       * args:ifsingle()(vargOpt:ifsome()("(",), "(")
+       * !N0{
+       *   args(arg)("," +1)
+       *   vargOpt:ifsome()(
+       *     args:ifcons()("," +1,)
+       *     "...(" 2[1]
+       *     !N0{ vargOpt(vargs(varg)("," 2[+1])) }
+       *     1 ")",
+       *   )
+       * }
+       * args:ifsingle()(vargOpt:ifsome()(")",), ")")
+       *)
+      FFI_ARG of exp list * exp list option
+    | (*%
+       * @format(ty tys)
+       * tys:ifsingle()(,"(")
+       * !N0{ tys(ty)("," +1) }
+       * tys:ifsingle()(,")")
+       *)
+      FFI_RET of exp list
+    | (*%
+       * @format(n)
+       * n:intinf_int
+       *)
+      INT of IntInf.int
+    | (*%
+       * @format(n)
+       * n:intinf_word
+       *)
+      WORD of IntInf.int
+    | (*%
+       * @format(s)
+       * s:string_ML
+       *)
+      STRING of string
+    | (*%
+       * @format(s)
+       * s
+       *)
+      REAL of string
+    | (*%
+       * @format(c)
+       * c:char_ML
+       *)
+      CHAR of char
+    | (*%
+       * @format
+       * "_"
+       *)
+      PATWILD
+    | (*%
+       * @format(pat1 * pat2)
+       * R6{ pat1 +1 "as" +d pat2 }
+       *)
+      PATAS of exp * exp
+    | (*%
+       * @format(typbind typbinds)
+       * !N0{ typbinds:decs(typbind)("withtype" +d, +1, "and" +d) }
+       *)
+      WITHTYPE of bind list
+    | (*%
+       * @format(lab)
+       * !N0{ "#" lab }
+       *)
+      EXPSELECT of exp
+    | (*%
+       * @format(row rows * flex)
+       * "{" !N0{ rows(row)("," +1) flex:iftrue()("," +1 "...",) } "}"
+       *)
+      EXPRECORD of exp list * bool
+    | (*%
+       * @format(exp exps)
+       * "(" !N0{ exps(exp)("," +1) } ")"
+       *)
+      EXPTUPLE of exp list
+    | (*%
+       * @format(exp exps)
+       * "[" !N0{ exps(exp)("," +1) } "]"
+       *)
+      EXPLIST of exp list
+    | (*%
+       * @format(exp exps)
+       * "(" !N0{ exps(exp)(";" +1) } ")"
+       *)
+      EXPSEQ of exp list
+    | (*%
+       * @format(dec decs * exp exps)
+       * !N0{
+       *   "let"
+       *   decs:ifcons()(2[+1],)
+       *   decs:decList(dec)(2[+1])
+       *   +1 "in"
+       *   exps:ifcons()(2[+1],)
+       *   exps(exp)(";" 2[+1])
+       *   +1 "end"
+       * }
+       *)
+      EXPLET of exp list * exp list
+    | (*%
+       * @format(exp1 * exp2)
+       * L9{ exp1 2[+1] exp2 }
+       *)
+      EXPAPP of exp * exp
+    | (*%
+       * @format(exp1 * vid * exp2)
+       * N9{ exp1 2[+1] vid 2[+2] exp2 }
+       *)
+      EXPINFIX of exp * exp * exp
+    | (*%
+       * @format(exp * ty)
+       * L6{ exp +1 ":" +d ty }
+       *)
+      EXPTYPED of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * L5{ exp1 +1 "andalso" +2 exp2 }
+       *)
+      EXPANDALSO of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * L4{ exp1 +1 "orelse" +2 exp2 }
+       *)
+      EXPORELSE of exp * exp
+    | (*%
+       * @format(exp * mrule mrules)
+       * R3{
+       *   exp +1
+       *   !R3{
+       *     "handle"
+       *     mrules:ifcons()(2[+1],)
+       *     mrules(mrule)(+1 "|" +d)
+       *   }
+       * }
+       *)
+      EXPHANDLE of exp * exp list
+    | (*%
+       * @format(exp)
+       * R3{ "raise" 2[+1] exp }
+       *)
+      EXPRAISE of exp
+    | (*%
+       * @format(exp1 * exp2 * exp3)
+       * R3{
+       *   !N0{ "if" 2[+1] exp1 }
+       *   +1
+       *   !N0{ "then" 2[+1] exp2 }
+       *   +1
+       *   !R3{ "else" 2[+1] exp3 }
+       * }
+       *)
+      EXPIF of exp * exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * R3{ !N0{ "while" 2[+1] exp1 } +1 !R3{ "do" 2[+1] exp2 } }
+       *)
+      EXPWHILE of exp * exp
+    | (*%
+       * @format(exp * mrule mrules)
+       * R3{
+       *   !N0{ "case" 2[+1] exp +1 "of" }
+       *   mrules:ifcons()(2[+1],)
+       *   mrules:match(mrule)(+1 "|" +d)
+       * }
+       *)
+      EXPCASE of exp * exp list
+    | (*%
+       * @format(mrule mrules)
+       * R3{ "f" !N0{ "n" +d mrules:match(mrule)(+1 "|" +d) } }
+       *)
+      EXPFN of exp list
+    | (*%
+       * @format(ty)
+       * !N0{ "_sizeof(" 2[1] ty 1 ")" }
+       *)
+      EXPSIZEOF of exp
+    | (*%
+       * @format(exp * row rows)
+       * L9{ exp +1 "#" +d "{" 2[1] !N0{ rows(row)("," +1) } 1 "}" }
+       *)
+      EXPRECORD_UPDATE of exp * exp list
+    | (*%
+       * @format(exp * row rows)
+       * L9{ exp +1 "#" +d "(" 2[1] !N0{ rows(row)("," +1) } 1 ")" }
+       *)
+      EXPTUPLE_UPDATE of exp * exp list
+    | (*%
+       * @format(name * ty)
+       * L6{ "_import" +d name +1 ":" +d ty }
+       *)
+      EXPIMPORT_NAME of exp * exp
+    | (*%
+       * @format(exp * ty)
+       * L6{ exp +1 ":" +d "_import" +d ty }
+       *)
+      EXPIMPORT_EXP of exp * exp
+    | (*%
+       * @format(vid * exp1 * exp2 * pat * exp3 * exp4)
+       * !N0{
+       *   "_foreach" vid
+       *   +1 "in" +d exp1
+       *   +1 "where" +d exp2
+       *   +1 "with" +d pat
+       *   +1 "do" +d exp3
+       *   +1 "while" +d exp4
+       *   +1 "end"
+       * }
+       *)
+      EXPFOREACH_DATA of exp * exp * exp * exp * exp * exp
+    | (*%
+       * @format(vid * exp1 * pat * exp2 * exp3)
+       * !N0{
+       *   "_foreach" vid
+       *   +1 "in" +d exp1
+       *   +1 "with" +d pat
+       *   +1 "do" +d exp2
+       *   +1 "while" +d exp3
+       *   +1 "end"
+       * }
+       *)
+      EXPFOREACH_ARRAY of exp * exp * exp * exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * !N0{ "_join(" 2[1] exp1 "," +1 exp2 1 ")" }
+       *)
+      EXPJOIN of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * !N0{ "_extend(" 2[1] exp1 "," +1 exp2 1 ")" }
+       *)
+      EXPEXTEND of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * !N0{ "_update(" 2[1] exp1 "," +1 exp2 1 ")" }
+       *)
+      EXPUPDATE1 of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * L9{ exp1 +1 "#" +d "{" 2[1] !N0{ exp2 } 1 "}" }
+       *)
+      EXPUPDATE2 of exp * exp
+    | (*%
+       * @format(exp * ty)
+       * L6{ "_dynamic" 2[+1] exp +1 !N0{ "as" 2[+1] ty } }
+       *)
+      EXPDYNAMIC_AS of exp * exp
+    | (*%
+       * @format(exp * ty)
+       * L6{ "_dynamic" 2[+1] exp +1 !N0{ "of" 2[+1] ty } }
+       *)
+      EXPDYNAMIC_OF of exp * exp
+    | (*%
+       * @format(exp * ty)
+       * L6{ "_dynamicview" 2[+1] exp +1 !N0{ "of" 2[+1] ty } }
+       *)
+      EXPDYNAMICVIEW of exp * exp
+    | (*%
+       * @format(ty)
+       * L6{ "_dynamicnull" 2[+1] !N0{ "as" 2[+1] ty } }
+       *)
+      EXPDYNAMICNULL of exp
+    | (*%
+       * @format(ty)
+       * L6{ "_dynamictop" 2[+1] !N0{ "as" 2[+1] ty } }
+       *)
+      EXPDYNAMICTOP of exp
+    | (*%
+       * @format(exp * mrule mrules)
+       * R3{
+       *   !N0{ "_dynamiccase" 2[+1] exp +1 "of" }
+       *   2[+1]
+       *   mrules:match(mrule)(+1 "|" +d)
+       * }
+       *)
+      EXPDYNAMICCASE of exp * exp list
+    | (*%
+       * @format(ty)
+       * !N0{ "_reifyTy(" 2[1] ty 1 ")" }
+       *)
+      EXPREIFYTY of exp
+    | (*%
+       * @format(lab * exp)
+       * !N0{ lab +d "=" 2[+1] exp }
+       *)
+      EXPROW of exp * exp
+    | (*%
+       * @format(tyvar tyvars * valbind valbinds)
+       * !N0{
+       *   "va"
+       *   valbinds:decs(valbind)(
+       *     "l" +d
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,),
+       *     +1 "an",
+       *     "d" +d
+       *   )
+       * }
+       *)
+      DECVAL of exp list * bind list
+    | (*%
+       * @format(tyvar tyvars * valbind valbinds)
+       * !N0{
+       *   "val" +d
+       *   valbinds:decs(valbind)(
+       *     "rec" +d
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,),
+       *     +1 "and" +d,
+       *   )
+       * }
+       *)
+      DECVALREC of exp list * bind list
+    | (*%
+       * @format(tyvar tyvars * fvalbind fvalbinds)
+       * !N0{
+       *   "fu"
+       *   fvalbinds:decs2(fvalbind)(
+       *     "n" +d,
+       *     tyvars:ifcons2()("(",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons2()(")",)
+       *     tyvars:ifcons()(+1,),
+       *     +1 "an",
+       *     "d" +d,
+       *   )
+       * }
+       *)
+      DECFUN of exp list * fvalbind list
+    | (*%
+       * @format(typbind typbinds)
+       * !N0{ "ty" typbinds:decs(typbind)("pe" +d, +1 "an", "d" +d) }
+       *)
+      DECTYPE of bind list
+    | (*%
+       * @format(datbind datbinds * withty withtyOpt)
+       * !N0{
+       *   datbinds:decs(datbind)("datatype" +d, +1, "and" +d)
+       *   withtyOpt:ifsome()(+1,)
+       *   withtyOpt(withty)
+       * }
+       *)
+      DECDATATYPE of bind list * exp option
+    | (*%
+       * @format(tycon * longtycon)
+       * !N0{ "datatype" +d tycon +d "=" +1 "datatype" +d longtycon }
+       *)
+      DECDATATYPEREP of exp * exp
+    | (*%
+       * @format(datbind datbinds * withty withtyOpt * withdec withdecs)
+       * !N0{
+       *   datbinds:decs(datbind)("abstype" +d, +1, "and" +d)
+       *   withtyOpt:ifsome()(+1,)
+       *   withtyOpt(withty)
+       *   +1 "with"
+       *   withdecs:ifcons()(2[+1],)
+       *   withdecs(withdec)(2[+1])
+       *   +1 "end"
+       * }
+       *)
+      DECABSTYPE of bind list * exp option * exp list
+    | (*%
+       * @format(exbind exbinds)
+       * !N0{ "ex" exbinds:decs(exbind)("ception" +d, +1 "an", "d" +d) }
+       *)
+      DECEXCEPTION of bind list
+    | (*%
+       * @format(dec1 decs1 * dec2 decs2)
+       * !N0{
+       *   "local"
+       *   decs1:ifcons()(2[+1],)
+       *   decs1:decList(dec1)(2[+1])
+       *   +1 "in"
+       *   decs2:ifcons()(2[+1],)
+       *   decs2:decList(dec2)(2[+1])
+       *   +1 "end"
+       * }
+       *)
+      DECLOCAL of exp list * exp list
+    | (*%
+       * @format(longstrid longstrids)
+       * !N0{
+       *   "open"
+       *   longstrids:ifcons()(2[+1],)
+       *   !N0{ longstrids(longstrid)(+1) }
+       * }
+       *)
+      DECOPEN of exp list
+    | (*%
+       * @format(prec precOpt * vid vids)
+       * !N0{
+       *   "infix"
+       *   precOpt:ifsome()(+d precOpt(prec),)
+       *   vids:ifcons()(2[+1],)
+       *   !N0{ vids(vid)(+1) }
+       * }
+       *)
+      DECINFIX of exp option * exp list
+    | (*%
+       * @format(prec precOpt * vid vids)
+       * !N0{
+       *   "infixr"
+       *   precOpt:ifsome()(+d precOpt(prec),)
+       *   vids:ifcons()(2[+1],)
+       *   !N0{ vids(vid)(+1) }
+       * }
+       *)
+      DECINFIXR of exp option * exp list
+    | (*%
+       * @format(vid vids)
+       * !N0{
+       *   "nonfix"
+       *   vids:ifcons()(2[+1],)
+       *   !N0{ vids(vid)(+1) }
+       * }
+       *)
+      DECNONFIX of exp list
+    | (*%
+       * @format(exp)
+       * !N0{ "do" +1 exp }
+       *)
+      DECDO of exp
+    | (*%
+       * @format(pat * exp)
+       * !R2{ pat +d "=>" +1 exp }
+       *)
+      MRULE of exp * exp
+    | (*%
+       * @format(tyvar tyvars * pat * exp)
+       * !R2{
+       *   !N0{
+       *     tyvars:ifcons()("{",)
+       *     !N0{ tyvars(tyvar)("," +1) }
+       *     tyvars:ifcons()("}",)
+       *     tyvars:ifcons()(+1,)
+       *     pat
+       *   }
+       *   +d "=>" +1
+       *   exp
+       * }
+       *)
+      DYNAMIC_MRULE of exp list * exp * exp
+    | (*%
+       * @format(typdesc typdescs)
+       * !N0{ "eq" typdescs:decs(typdesc)("type" +d, +1 "an", "d" +d) }
+       *)
+      SPECEQTYPE of bind list
+    | (*%
+       * @format(sigid sigids)
+       * !N0{ "include" 2[+1] !N0{ sigids(sigid)(+1) } }
+       *)
+      SPECINCLUDE of exp list
+    | (*%
+       * @format(spec specs * longtycon longtycons)
+       * !N0{
+       *   specs:decList(spec)(+1)
+       *   specs:ifcons()(+1,)
+       *   !N0{
+       *     "sharing" +d "type" 2[+1]
+       *     !N0{ longtycons(longtycon)(+1 "=" +d) }
+       *   }
+       * }
+       *)
+      SPECSHARINGTYPE of exp list * exp list
+    | (*%
+       * @format(spec specs * longstrid longstrids)
+       * !N0{
+       *   specs:decList(spec)(+1)
+       *   specs:ifcons()(+1,)
+       *   !N0{
+       *     "sharing" 2[+1]
+       *     !N0{ longstrids(longstrid)(+1 "=" +d) }
+       *   }
+       * }
+       *)
+      SPECSHARING of exp list * exp list
+    | (*%
+       * @format(spec specs)
+       * !N0{
+       *    "sig"
+       *    specs:ifcons()(2[+1],)
+       *    specs:decList(spec)(2[+1])
+       *    +1 "end"
+       * }
+       *)
+      SIGBASIC of exp list
+    | (*%
+       * @format(sigexp * typbind typbinds)
+       * !N0{
+       *   sigexp
+       *   +1
+       *   "wh"
+       *   typbinds:decs(typbind)(
+       *     "ere" +d "type" +d,
+       *     +1 "an",
+       *     "d" +d "type" +d
+       *   )
+       * }
+       *)
+      SIGWHERE of exp * bind list
+    | (*%
+       * @format(strdec strdecs)
+       * !N0{
+       *   "struct"
+       *   strdecs:ifcons()(2[+1],)
+       *   strdecs:decList(strdec)(2[+1])
+       *   +1 "end"
+       * }
+       *)
+      STRBASIC of exp list
+    | (*%
+       * @format(strexp * sigcon)
+       * sigcon()(strexp)
+       *)
+      STRCONSTRAINT of exp * sigconstraint
+    | (*%
+       * @format(funid * strdec strdecs)
+       * !N0{ funid "(" 2[1] !N0{ strdecs:decList(strdec)(+1) } 1 ")" }
+       *)
+      STRAPP of exp * exp list
+    | (*%
+       * @format(strbind strbinds)
+       * !N0{ strbinds:decs(strbind)("structure" +d, +1, "and" +d) }
+       *)
+      STRUCTURE of bind list
+    | (*%
+       * @format(sigbind sigbinds)
+       * !N0{ sigbinds:decs(sigbind)("signature" +d, +1, "and" +d) }
+       *)
+      SIGNATURE of bind list
+    | (*%
+       * @format(funbind funbinds)
+       * !N0{ funbinds:decs(funbind)("functor" +d, +1, "and" +d) }
+       *)
+      FUNCTOR of bind list
+    | (*%
+       * @format(path)
+       * "\"" path "\""
+       *)
+      REQUIRE_PATH of RequirePath.path
+    | (*%
+       * @format(path)
+       * !N0{ "use" 2[+1] path }
+       *)
+      USE of exp
+    | (*%
+       * @format(path)
+       * !N0{ "_use" 2[+1] path }
+       *)
+      U_USE of exp
+    | (*%
+       * @format(path)
+       * !N0{ "_interface" 2[+1] path }
+       *)
+      INTERFACE of exp
+    | (*%
+       * @format(topdec topdecs)
+       * !N0{ topdecs:decList(topdec)(+1) }
+       *)
+      TOPDECS of exp list
+    | (*%
+       * @format(vid * lab)
+       * !N0{ "#" vid "." lab }
+       *)
+      SQL_TABLE of exp * exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "null" }
+       *)
+      SQL_IS_NULL of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "not" +d "null" }
+       *)
+      SQL_IS_NOT_NULL of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "true" }
+       *)
+      SQL_IS_TRUE of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "not" +d "true" }
+       *)
+      SQL_IS_NOT_TRUE of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "false" }
+       *)
+      SQL_IS_FALSE of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "not" +d "false" }
+       *)
+      SQL_IS_NOT_FALSE of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "unknown" }
+       *)
+      SQL_IS_UNKNOWN of exp
+    | (*%
+       * @format(exp)
+       * L9{ exp +1 "is" +d "not" +d "unknown" }
+       *)
+      SQL_IS_NOT_UNKNOWN of exp
+    | (*%
+       * @format(exp)
+       * L6{ "not" +1 exp }
+       *)
+      SQL_NOT of exp
+    | (*%
+       * @format(exp1 * exp2)
+       * L5{ exp1 +1 "and" +d exp2 }
+       *)
+      SQL_AND of exp * exp
+    | (*%
+       * @format(exp1 * exp2)
+       * L4{ exp1 +1 "or" +d exp2 }
+       *)
+      SQL_OR of exp * exp
+    | (*%
+       * @format(exp)
+       * !N0{ "(..." 2[1] exp 1 ")" }
+       *)
+      SQL_EMBED of exp
+    | (*%
+       * @format(lab)
+       * "#." lab
+       *)
+      SQL_COLUMN1 of exp
+    | (*%
+       * @format(lab1 * lab2)
+       * "#" lab1 "." lab2
+       *)
+      SQL_COLUMN2 of exp * exp
+    | (*%
+       * @format(sql * exp)
+       * !N0{ sql:iftrue()("_sql" +1,) exp }
+       *)
+      SQLPREFIX of bool * exp
+    | (*%
+       * @format(vid * exp)
+       * L9{ "(" vid ")" 2[1] exp }
+       *)
+      SQL_CAST of exp * exp
+    | (*%
+       * @format(query)
+       * !N0{ "exists(" 2[1] query 1 ")" }
+       *)
+      SQL_EXISTS of exp
+    | (*%
+       * @format(table * lab)
+       * L6{ table +1 "as" +d lab }
+       *)
+      SQL_TABLE_AS of exp * exp
+    | (*%
+       * @format(table1 * inner * table2 * exp3)
+       * L3{
+       *   table1
+       *   +1
+       *   !N0{ inner:iftrue()("inner" +d,) "join" +1 table2 }
+       *   +1
+       *   !N0{ "on" +d exp3 }
+       * }
+       *)
+      SQL_TABLE_INNER_JOIN of exp * bool * exp * exp
+    | (*%
+       * @format(table1 * table2)
+       * L3{
+       *   table1
+       *   +1
+       *   !N0{ "cross" +d "join" +1 table2 }
+       * }
+       *)
+      SQL_TABLE_CROSS_JOIN of exp * exp
+    | (*%
+       * @format(table1 * table2)
+       * L3{
+       *   table1
+       *   +1
+       *   !N0{ "natural" +d "join" +1 table2 }
+       * }
+       *)
+      SQL_TABLE_NATURAL_JOIN of exp * exp
+    | (*%
+       * @format(table tables)
+       * !N0{ "from" 2[+1] tables(table)("," 2[+1]) }
+       *)
+      SQL_FROM of exp list
+    | (*%
+       * @format(clause * exp)
+       * !N0{ clause d "...(" 2[1] exp 1 ")" }
+       *)
+      SQL_CLAUSE_EMBED of exp * exp
+    | (*%
+       * @format(clause * subclause subclauseOpt)
+       * !N0{ clause subclauseOpt:ifsome()(+1,) subclauseOpt(subclause) }
+       *)
+      SQL_SUBCLAUSE of exp * exp option
+    | (*%
+       * @format(exp)
+       * !N0{ "where" 2[+1] exp }
+       *)
+      SQL_WHERE of exp
+    | (*%
+       * @format(key keys)
+       * !N0{ "order" +d "by" 2[+1] keys(key)("," 2[+1]) }
+       *)
+      SQL_ORDERBY of exp list
+    | (*%
+       * @format(distinct distinctOpt * row rows)
+       * !N0{
+       *   "select"
+       *   distinctOpt:ifsome()(+d,)
+       *   distinctOpt(distinct)
+       *   rows:ifcons()(2[+1],)
+       *   rows(row)("," 2[+1])
+       * }
+       *)
+      SQL_SELECT of exp option * exp list
+    | (*%
+       * @format(select * from * clause clauses)
+       * !N0{ select +1 from clauses:ifcons()(+1,) clauses(clause)(+1) }
+       *)
+      SQL_QUERY of exp * exp * exp list
+    | (*%
+       * @format(exp * asc ascOpt)
+       * !N0{ exp ascOpt:ifsome()(+1,) ascOpt(asc) }
+       *)
+      SQL_ORDER_KEY of exp * exp option
+    | (*%
+       * @format(exp * lab labOpt)
+       * !N0{ exp labOpt:ifsome()(+1 "as" +d labOpt(lab),) }
+       *)
+      SQL_SELECT_ROW of exp * exp option
+    | (*%
+       * @format(exp exps)
+       * !N0{ "group" +d "by" 2[+1] exps(exp)("," 2[+1]) }
+       *)
+      SQL_GROUPBY of exp list
+    | (*%
+       * @format(exp)
+       * !N0{ "having" 2[+1] exp }
+       *)
+      SQL_HAVING of exp
+    | (*%
+       * @format(exp expOpt)
+       * !N0{ "limit" expOpt:ifsome()(2[+1] expOpt(exp), +d "all") }
+       *)
+      SQL_LIMIT of exp option
+    | (*%
+       * @format(exp)
+       * !N0{ "offset" 2[+1] exp }
+       *)
+      SQL_LIMIT_OFFSET of exp
+    | (*%
+       * @format(exp * rows)
+       * !N0{ "offset" 2[+1] exp 2[+1] rows }
+       *)
+      SQL_OFFSET of exp * exp
+    | (*%
+       * @format(first * exp expOpt * rows)
+       * !N0{
+       *   "fetch"
+       *   +d first
+       *   expOpt:ifsome()(2[+1] expOpt(exp) 2[+1], +d)
+       *   rows
+       *   +d "only"
+       * }
+       *)
+      SQL_FETCH of exp * exp option * exp
+    | (*%
+       * @format(row rows)
+       * !N0{ "values" 2[+1] rows(row)("," 2[+1]) }
+       *)
+      SQL_VALUES of exp list
+    | (*%
+       * @format(row rows)
+       * !N0{ "set" 2[+1] rows(row)("," 2[+1]) }
+       *)
+      SQL_SET of exp list
+    | (*%
+       * @format(table * labels * values)
+       * !N0{
+       *   !N0{ "insert" +d "into" 2[+1] table 2[+1] labels }
+       *   +1
+       *   values
+       * }
+       *)
+      SQL_INSERT_LABELED of exp * exp * exp
+    | (*%
+       * @format(table * query)
+       * !N0{
+       *   !N0{ "insert" +d "into" 2[+1] table }
+       *   +1
+       *   query
+       * }
+       *)
+      SQL_INSERT_NOLABEL of exp * exp
+    | (*%
+       * @format(table * set * whr whrOpt)
+       * !N0{
+       *   !N0{ "update" 2[+1] table }
+       *   +1
+       *   set
+       *   whrOpt:ifsome()(+1,)
+       *   whrOpt(whr)
+       * }
+       *)
+      SQL_UPDATE of exp * exp * exp option
+    | (*%
+       * @format(table * whr whrOpt)
+       * !N0{
+       *   !N0{ "delete" +d "from" 2[+1] table }
+       *   whrOpt:ifsome()(+1,)
+       *   whrOpt(whr)
+       * }
+       *)
+      SQL_DELETE of exp * exp option
+    | (*%
+       * @format(exp)
+       * !N0{ "...(" 2[1] exp 1 ")" }
+       *)
+      SQL_STEP_EMBED of exp
+    | (*%
+       * @format(exp expOpt * ty)
+       * L6{
+       *   "_sqlserver"
+       *   expOpt:ifsome()(2[+1],)
+       *   expOpt(exp)
+       *   2[+1] ":" +d ty
+       * }
+       *)
+      SQLSERVER of exp option * exp
+    | (*%
+       * @format(pat * body)
+       * R3{ "_sql" +d !R2{ pat +d "=>" +1 body } }
+       *)
+      SQLFN of exp * exp
+    | (*%
+       * @format(tyvar * ty)
+       * !N0{ tyvar +1 "in" +d ty }
+       *)
+      OVERLOAD_IN of exp * exp
+    | (*%
+       * @format(name * ty)
+       * !N0{ "_builtin" +d "val" +d name +1 ":" +d ty }
+       *)
+      BUILTIN_VAL of exp * exp
+    | (*%
+       * @format(name)
+       * !N0{ "_builtin" +d "datatype" +d name }
+       *)
+      BUILTIN_DATATYPE of exp
+    | (*%
+       * @format(path * prop props)
+       * !N0{ "_require" 2[+1] path !N0{ props:ifcons()(+1,) props(prop)(+1) } }
+       *)
+      REQUIRE of exp * exp list
+    | (*%
+       * @format(path * prop props)
+       * !N0{
+       *   "_require" +d "local" 2[+1] path
+       *   !N0{ props:ifcons()(+1,) props(prop)(+1) }
+       * }
+       *)
+      REQUIRE_LOCAL of exp * exp list
+    | (*%
+       * @format(path)
+       * !N0{ "_use" +d "local" 2[+1] path }
+       *)
+      USE_LOCAL of exp
+
+end

@@ -43,11 +43,11 @@ struct
   datatype mono =
       TYMONO of mono ty
 
-  datatype 't record_kind =
+  datatype 't tvkind =
       UNIV
     | REC of 't tyrow list
 
-  type 't kind = kind_prop * 't record_kind * loc
+  type 't kind = kind_prop * 't tvkind * loc
 
   type 't kinded_tyvar = tyvar * 't kind * loc
 
@@ -212,393 +212,374 @@ struct
       | SIGID (_, loc) => Loc.LOC loc
       | SIGWHERE (_, _, loc) => loc
 
-  (* revert to absyn for printing *)
-
   structure F = FFIAttributes
-  structure A = Absyn
+  structure P = PrintCalc
+  structure A = AbsynFormatter
 
-  val dummyPos = {source = Loc.INTERACTIVE, pos = Loc.EOF}
-  val loc = (dummyPos, dummyPos)
+  fun printKindProp {reify, boxed, unboxed, eq} =
+      (if reify then [P.KIND_ID (P.KEYWORD ["reify"])] else nil)
+      @ (if boxed then [P.KIND_ID (P.KEYWORD ["boxed"])] else nil)
+      @ (if unboxed then [P.KIND_ID (P.KEYWORD ["unboxed"])] else nil)
+      @ (if eq then [P.KIND_ID (P.KEYWORD ["eq"])] else nil)
 
-  fun absynKindProp {reify, boxed, unboxed, eq} =
-      (if reify then [(Symbol.intern "reify", loc)] else nil)
-      @ (if boxed then [(Symbol.intern "boxed", loc)] else nil)
-      @ (if unboxed then [(Symbol.intern "unboxed", loc)] else nil)
-      @ (if eq then [(Symbol.intern "eq", loc)] else nil)
+  fun printFfiAttr {isPure, fast, unsafe, causeGC, callingConvention} =
+      P.FFI_ATTR
+        ((if isPure then [P.KEYWORD ["pure"]] else nil)
+         @ (if fast then [P.KEYWORD ["fast"]] else nil)
+         @ (if unsafe then [P.KEYWORD ["unsafe"]] else nil)
+         @ (if causeGC then [P.KEYWORD ["causeGC"]] else nil)
+         @ (case callingConvention of
+              NONE => nil
+            | SOME F.FFI_CDECL => [P.KEYWORD ["cdecl"]]
+            | SOME F.FFI_STDCALL => [P.KEYWORD ["stdcall"]]
+            | SOME F.FFI_FASTCC => [P.KEYWORD ["fastcc"]]))
 
-  fun absynFfiAttr {isPure, fast, unsafe, causeGC, callingConvention} =
-      ((if isPure then [(Symbol.intern "pure", loc)] else nil)
-       @ (if fast then [(Symbol.intern "fast", loc)] else nil)
-       @ (if unsafe then [(Symbol.intern "unsafe", loc)] else nil)
-       @ (if causeGC then [(Symbol.intern "causeGC", loc)] else nil)
-       @ (case callingConvention of
-            NONE => nil
-          | SOME F.FFI_CDECL => [(Symbol.intern "cdecl", loc)]
-          | SOME F.FFI_STDCALL => [(Symbol.intern "stdcall", loc)]
-          | SOME F.FFI_FASTCC => [(Symbol.intern "fastcc", loc)]),
-       loc)
+  fun printTyvar tyvar =
+      A.printId tyvar
 
-  fun absynTy ext ty =
+  fun printTy ext ty =
       case ty of
         TYVAR tyvar =>
-        A.TYVAR (false, tyvar)
+        printTyvar tyvar
       | TYRECORD (rows, _) =>
-        A.TYRECORD (map (absynTyrow ext) rows, false, loc)
+        P.EXPRECORD (map (printTyrow ext) rows, false)
       | TYCON (tys, tycon, _) =>
-        A.TYCON (absynTyseq ext tys, tycon, loc)
+        P.TYCON (map (printTy ext) tys, A.printLongtycon tycon)
       | TYFUN (ty1, ty2, _) =>
-        A.TYFUN (absynTy ext ty1, absynTy ext ty2, loc)
+        P.TYFUN (printTy ext ty1, printTy ext ty2)
       | TY t => ext t
 
-  and absynTyrow ext (lab, ty, _) =
-      (lab, absynTy ext ty, loc)
+  and printTyrow ext (lab, ty, _) =
+      P.TYROW (A.printLab lab, printTy ext ty)
 
-  and absynTyseq ext nil = NONE
-    | absynTyseq ext tys = SOME (map (absynTy ext) tys, loc)
+  fun printMono (TYMONO ty) =
+      printTy printMono ty
 
-  fun absynMono (TYMONO ty) =
-      absynTy absynMono ty
+  fun printMonoTy ty =
+      printTy printMono ty
 
-  fun absynMonoTy ty =
-      absynTy absynMono ty
+  fun printTvkind ext tvkind =
+      case tvkind of
+        UNIV => nil
+      | REC rows => [P.KIND_RECORD (map (printTyrow ext) rows)]
 
-  fun absynKind ext (prop, reckind, _) =
-      case reckind of
-        REC rows =>
-        SOME (A.REC (absynKindProp prop, map (absynTyrow ext) rows, loc))
-      | UNIV =>
-        case absynKindProp prop of
-          nil => NONE
-        | props => SOME (A.UNIV (props, loc))
+  fun printKind ext (prop, tvkind, _) =
+      printKindProp prop @ printTvkind ext tvkind
 
-  fun absynKindedTyvar ext (tyvar, kind, _) =
-      ((false, tyvar), absynKind ext kind, loc)
+  fun printKindedTyvar ext (tyvar, kind, _) =
+      P.TYVAR (printTyvar tyvar, printKind ext kind)
 
-  fun absynKindedTyvarseq (nil, _) = NONE
-    | absynKindedTyvarseq (tyvars, _) =
-      SOME (map (absynKindedTyvar absynMono) tyvars, loc)
+  fun printKindedTyvarseq (nil, _) = nil
+    | printKindedTyvarseq (tyvars, _) = map (printKindedTyvar printMono) tyvars
 
-  fun absynPoly (TYPOLY ((tyvars, _), ty, _)) =
-      A.TYPOLY ((map (absynKindedTyvar absynMono) tyvars, loc),
-                absynTy absynPoly ty,
-                loc)
+  fun printPoly (TYPOLY ((tyvars, _), ty, _)) =
+      P.TYPOLY (map (printKindedTyvar printMono) tyvars,
+                printTy printPoly ty)
 
-  fun absynPolyTy ty =
-      absynTy absynPoly ty
+  fun printPolyTy ty =
+      printTy printPoly ty
 
-  fun absynAnnot annot =
+  fun printAnnot annot =
       case annot of
         TYWILD _ =>
-        A.TYWILD loc
+        P.PATWILD
       | TYVAR_FREE tyvar =>
-        A.TYVAR_FREE (absynKindedTyvar absynAnnot tyvar)
+        P.TYVAR_FREE (printKindedTyvar printAnnot tyvar)
       | TYFLEXRECORD (rows, _) =>
-        A.TYRECORD (map (absynTyrow absynAnnot) rows, true, loc)
+        P.EXPRECORD (map (printTyrow printAnnot) rows, true)
 
-  fun absynAnnotTy ty =
-      absynTy absynAnnot ty
+  fun printAnnotTy ty =
+      printTy printAnnot ty
 
-  fun absynFfiTy ty =
+  fun printFfiTy ty =
       case ty of
         FFITYVAR tyvar =>
-        A.FFITYVAR (false, tyvar)
+        printTyvar tyvar
       | FFITYRECORD (rows, _) =>
-        A.FFITYRECORD (map absynFfiTyrow rows, loc)
+        P.EXPRECORD (map printFfiTyrow rows, false)
       | FFITYCON (tys, tycon, _) =>
-        A.FFITYCON (absynFfiTyseq tys, tycon, loc)
+        P.TYCON (map printFfiTy tys, A.printLongtycon tycon)
       | FFITYFUN (attr, (argTys, varTys), retTys, _) =>
-        A.FFITYFUN
-          (Option.map absynFfiAttr attr,
-           (map absynFfiTy argTys, Option.map (map absynFfiTy) varTys, loc),
-           (map absynFfiTy retTys, loc),
-           loc)
+        P.FFITYFUN
+          (Option.map printFfiAttr attr,
+           P.FFI_ARG
+             (map printFfiTy argTys, Option.map (map printFfiTy) varTys),
+           P.FFI_RET (map printFfiTy retTys))
 
-  and absynFfiTyrow (lab, ty, _) =
-      (lab, absynFfiTy ty, loc)
+  and printFfiTyrow (lab, ty, _) =
+      P.TYROW (A.printLab lab, printFfiTy ty)
 
-  and absynFfiTyseq nil = NONE
-    | absynFfiTyseq tys = SOME (map absynFfiTy tys, loc)
-
-  fun absynPat pat =
+  fun printPat pat =
       case pat of
         PATWILD _ =>
-        A.PATWILD loc
+        P.PATWILD
       | PATCONST (const, _) =>
-        A.PATCONST (const, loc)
+        A.printConstant const
       | PATID vid =>
-        A.PATID (false, vid, loc)
+        A.printLongvid vid
       | PATRECORD (rows, flex, _) =>
-        A.PATRECORD (map absynPatrow rows, flex, loc)
+        P.EXPRECORD (map printPatrow rows, flex)
       | PATCON (vid, pat, _) =>
-        A.PATAPP (A.PATID (false, vid, loc), absynPat pat, loc)
+        P.EXPAPP (A.printLongvid vid, printPat pat)
       | PATTYPED (pat, ty, _) =>
-        A.PATTYPED (absynPat pat, absynAnnotTy ty, loc)
-      | PATAS (vid, ty, pat, _) =>
-        A.PATAS ((false, vid, loc),
-                 Option.map absynAnnotTy ty,
-                 absynPat pat,
-                 loc)
+        P.EXPTYPED (printPat pat, printAnnotTy ty)
+      | PATAS (vid, NONE, pat, _) =>
+        P.PATAS (A.printVid vid, printPat pat)
+      | PATAS (vid, SOME ty, pat, _) =>
+        P.PATAS (P.EXPTYPED (A.printVid vid, printAnnotTy ty), printPat pat)
 
-  and absynPatrow (lab, pat, _) =
-      A.PATROW (lab, absynPat pat, loc)
+  and printPatrow (lab, pat, _) =
+      P.EXPROW (A.printLab lab, printPat pat)
 
-  fun absynExbind exbind =
+  fun printExbind exbind =
       case exbind of
         EXBIND (vid, ty, _) =>
-        A.EXBIND ((false, vid, loc), Option.map absynMonoTy ty, loc)
+        P.CONBIND (A.printVid vid, Option.map printMonoTy ty)
       | EXBINDREP (vid, longvid, _) =>
-        A.EXBINDREP ((false, vid, loc), (false, longvid, loc), loc)
+        P.VALBIND (A.printVid vid, A.printLongvid longvid)
 
-  fun absynTyvarseq nil = NONE
-    | absynTyvarseq tyvars = SOME (map (fn t => (false, t)) tyvars, loc)
+  fun printTypbind (tyvarseq, tycon, ty, _) =
+      P.TYPBIND (map printTyvar tyvarseq, A.printTycon tycon, printMonoTy ty)
 
-  fun absynTypbind (tyvars, tycon, ty, _) =
-      (absynTyvarseq tyvars, tycon, absynMonoTy ty, loc)
+  fun printWithty nil = NONE
+    | printWithty typbind = SOME (P.WITHTYPE (map printTypbind typbind))
 
-  fun absynWithty nil = NONE
-    | absynWithty typbind = SOME (map absynTypbind typbind, loc)
+  fun printConbind (vid, ty, _) =
+      P.CONBIND (A.printVid vid, Option.map printMonoTy ty)
 
-  fun absynConbind (vid, ty, _) =
-      ((false, vid, loc), Option.map absynMonoTy ty, loc)
+  fun printDatbind (tyvarseq, tycon, conbinds, _) =
+      P.DATBIND (map printTyvar tyvarseq,
+                 A.printTycon tycon,
+                 map printConbind conbinds)
 
-  fun absynDatbind (tyvars, tycon, conbinds, _) =
-      (absynTyvarseq tyvars, tycon, map absynConbind conbinds, loc)
-
-  fun absynExp exp =
+  fun printExp exp =
       case exp of
         EXPCONST (const, _) =>
-        A.EXPCONST (const, loc)
+        A.printConstant const
       | EXPID vid =>
-        A.EXPID (false, vid, loc)
+        A.printLongvid vid
       | EXPRECORD (rows, _) =>
-        A.EXPRECORD (map absynExprow rows, loc)
+        P.EXPRECORD (map printExprow rows, false)
       | EXPSELECT (lab, _) =>
-        A.EXPSELECT (lab, loc)
+        P.EXPSELECT (A.printLab lab)
       | EXPLET (decs, exp, _) =>
-        A.EXPLET (map absynDec decs, ([absynExp exp], loc), loc)
+        P.EXPLET (map printDec decs, [printExp exp])
       | EXPAPP (exp1, exp2, _) =>
-        A.EXPAPP (absynExp exp1, absynExp exp2, loc)
+        P.EXPAPP (printExp exp1, printExp exp2)
       | EXPTYPED (exp, ty, _) =>
-        A.EXPTYPED (absynExp exp, absynAnnotTy ty, loc)
+        P.EXPTYPED (printExp exp, printAnnotTy ty)
       | EXPHANDLE (exp, mrules, _) =>
-        A.EXPHANDLE (absynExp exp, map absynMrule mrules, loc)
+        P.EXPHANDLE (printExp exp, map printMrule mrules)
       | EXPRAISE (exp, _) =>
-        A.EXPRAISE (absynExp exp, loc)
+        P.EXPRAISE (printExp exp)
       | EXPCASE (exp, mrules, _) =>
-        A.EXPCASE (absynExp exp, map absynMrule mrules, loc)
+        P.EXPCASE (printExp exp, map printMrule mrules)
       | EXPFN (mrules, _) =>
-        A.EXPFN (map absynMrule mrules, loc)
+        P.EXPFN (map printMrule mrules)
       | EXPSIZEOF (ty, _) =>
-        A.EXPSIZEOF (absynMonoTy ty, loc)
+        P.EXPSIZEOF (printMonoTy ty)
       | EXPRECORD_UPDATE (exp, rows, _) =>
-        A.EXPRECORD_UPDATE (absynExp exp, map absynExprow rows, loc)
+        P.EXPRECORD_UPDATE (printExp exp, map printExprow rows)
       | EXPIMPORT_NAME (name, ty, _) =>
-        A.EXPIMPORT_NAME ((name, loc), absynFfiTy ty, loc)
+        P.EXPIMPORT_NAME (P.STRING name, printFfiTy ty)
       | EXPIMPORT_EXP (exp, ty, _) =>
-        A.EXPIMPORT_EXP (absynExp exp, absynFfiTy ty, loc)
+        P.EXPIMPORT_EXP (printExp exp, printFfiTy ty)
       | EXPSQLSCHEMA (exp, ty, _) =>
-        A.EXPAPP (absynExp exp,
-                  A.EXPSQL (AbsynSQL.SQLSERVER (NONE, absynMonoTy ty, loc)),
-                  loc)
+        P.EXPAPP
+          (P.EXPAPP (P.KEYWORD ["EXPSQLSCHEMA"], printExp exp), printMonoTy ty)
       | EXPJOIN (JOIN, exp1, exp2, _) =>
-        A.EXPJOIN (absynExp exp1, absynExp exp2, loc)
+        P.EXPJOIN (printExp exp1, printExp exp2)
       | EXPJOIN (EXTEND, exp1, exp2, _) =>
-        A.EXPEXTEND (absynExp exp1, absynExp exp2, loc)
+        P.EXPEXTEND (printExp exp1, printExp exp2)
       | EXPUPDATE (exp1, exp2, _) =>
-        A.EXPUPDATE1 (absynExp exp1, absynExp exp2, loc)
+        P.EXPUPDATE1 (printExp exp1, printExp exp2)
       | EXPDYNAMIC_AS (exp, ty, _) =>
-        A.EXPDYNAMIC_AS (absynExp exp, absynMonoTy ty, loc)
+        P.EXPDYNAMIC_AS (printExp exp, printMonoTy ty)
       | EXPDYNAMIC_OF (exp, ty, _) =>
-        A.EXPDYNAMIC_OF (absynExp exp, absynMonoTy ty, loc)
+        P.EXPDYNAMIC_OF (printExp exp, printMonoTy ty)
       | EXPDYNAMICVIEW (exp, ty, _) =>
-        A.EXPDYNAMICVIEW (absynExp exp, absynMonoTy ty, loc)
+        P.EXPDYNAMICVIEW (printExp exp, printMonoTy ty)
       | EXPDYNAMICNULL (ty, _) =>
-        A.EXPDYNAMICNULL (absynMonoTy ty, loc)
+        P.EXPDYNAMICNULL (printMonoTy ty)
       | EXPDYNAMICTOP (ty, _) =>
-        A.EXPDYNAMICTOP (absynMonoTy ty, loc)
+        P.EXPDYNAMICTOP (printMonoTy ty)
       | EXPDYNAMICCASE (exp, mrules, _) =>
-        A.EXPDYNAMICCASE (absynExp exp, map absynDynamicMrule mrules, loc)
+        P.EXPDYNAMICCASE (printExp exp, map printDynamicMrule mrules)
       | EXPREIFYTY (ty, _) =>
-        A.EXPREIFYTY (absynMonoTy ty, loc)
+        P.EXPREIFYTY (printMonoTy ty)
 
-  and absynExprow (lab, exp, _) =
-      A.EXPROW (lab, absynExp exp, loc)
+  and printExprow (lab, exp, _) =
+      P.EXPROW (A.printLab lab, printExp exp)
 
-  and absynMrule (pat, exp, _) =
-      (absynPat pat, absynExp exp, loc)
+  and printMrule (pat, exp, _) =
+      P.MRULE (printPat pat, printExp exp)
 
-  and absynDynamicMrule (tyvars, pat, exp, _) =
-      (absynKindedTyvarseq tyvars, absynPat pat, absynExp exp, loc)
+  and printDynamicMrule (tyvars, pat, exp, _) =
+      P.DYNAMIC_MRULE (printKindedTyvarseq tyvars, printPat pat, printExp exp)
 
-  and absynDec dec =
+  and printDec dec =
       case dec of
         DECVAL (tyvarseq, valbinds, recbinds, _) =>
-        A.DECVAL (absynKindedTyvarseq tyvarseq,
-                  map absynValbind valbinds
+        P.DECVAL (printKindedTyvarseq tyvarseq,
+                  map printValbind valbinds
                   @ (case recbinds of
                        nil => nil
-                     | _ :: _ => [A.VALREC (map absynValbind recbinds, loc)]),
-                  loc)
+                     | _ :: _ => [P.VALREC (map printValbind recbinds)]))
       | DECFUN (tyvarseq, fvalbinds, _) =>
-        A.DECFUN (absynKindedTyvarseq tyvarseq,
-                  map absynFvalbind fvalbinds, loc)
+        P.DECFUN (printKindedTyvarseq tyvarseq,
+                  map printFvalbind fvalbinds)
       | DECTYPE (typbinds, _) =>
-        A.DECTYPE (map absynTypbind typbinds, loc)
+        P.DECTYPE (map printTypbind typbinds)
       | DECDATATYPE (datbinds, typbinds, _) =>
-        A.DECDATATYPE (map absynDatbind datbinds, absynWithty typbinds, loc)
+        P.DECDATATYPE (map printDatbind datbinds, printWithty typbinds)
       | DECDATATYPEREP (tycon, longtycon, _) =>
-        A.DECDATATYPEREP (tycon, longtycon, loc)
+        P.DECDATATYPEREP (A.printTycon tycon, A.printLongtycon longtycon)
       | DECABSTYPE (datbinds, typbinds, decs, _) =>
-        A.DECABSTYPE (map absynDatbind datbinds,
-                      absynWithty typbinds,
-                      map absynDec decs,
-                      loc)
+        P.DECABSTYPE (map printDatbind datbinds,
+                      printWithty typbinds,
+                      map printDec decs)
       | DECEXCEPTION (exbinds, _) =>
-        A.DECEXCEPTION (map absynExbind exbinds, loc)
+        P.DECEXCEPTION (map printExbind exbinds)
       | DECLOCAL (decs1, decs2, _) =>
-        A.DECLOCAL (map absynDec decs1, map absynDec decs2, loc)
+        P.DECLOCAL (map printDec decs1, map printDec decs2)
       | DECOPEN (strids, _) =>
-        A.DECOPEN (strids, loc)
+        P.DECOPEN (map A.printLongstrid strids)
       | DECPOLYREC (pvalbinds, _) =>
-        A.DECVALREC (NONE, map absynPvalbind pvalbinds, loc)
+        P.DECVALREC (nil, map printPvalbind pvalbinds)
 
-  and absynValbind (pat, exp, _) =
-      A.VALBIND (absynPat pat, absynExp exp, loc)
+  and printValbind (pat, exp, _) =
+      P.VALBIND (printPat pat, printExp exp)
 
-  and absynFrule pat (pats, exp, _) : A.frule =
-      (foldl (fn (pat, z) => A.PATAPP (z, absynPat pat, loc)) pat pats,
-       NONE,
-       absynExp exp,
-       loc)
+  and printFrule pat (pats, exp, _) =
+      P.FRULE
+        (foldl (fn (pat, z) => P.EXPAPP (z, printPat pat)) pat pats,
+         NONE,
+         printExp exp)
 
-  and absynFvalbind (vid, tys, frules, _) =
+  and printFvalbind (vid, tys, frules, _) =
       let
-        val id = foldl (fn ((ty, _), z) => A.PATTYPED (z, absynAnnotTy ty, loc))
-                       (A.PATID (false, (nil, vid, loc), loc))
+        val id = foldl (fn ((ty, _), z) => P.EXPTYPED (z, printAnnotTy ty))
+                       (A.printVid vid)
                        tys
       in
-        (map (absynFrule id) frules, loc)
+        P.FVALBIND (map (printFrule id) frules)
       end
 
-  and absynPvalbind (vid, ty, exp, _) =
-      (A.PATTYPED (A.PATID (false, (nil, vid, loc), loc), absynPolyTy ty, loc),
-       absynExp exp,
-       loc)
+  and printPvalbind (vid, ty, exp, _) =
+      P.VALBIND (P.EXPTYPED (A.printVid vid, printPolyTy ty), printExp exp)
 
-  fun absynValdesc (vid, ty, _) =
-      (vid, absynPolyTy ty, loc)
+  fun printValdesc (vid, ty, _) =
+      P.VALDESC (A.printVid vid, printPolyTy ty)
 
-  fun absynTypdesc (tyvars, tycon, _) =
-      (absynTyvarseq tyvars, tycon, loc)
+  fun printTypdesc (tyvars, tycon, _) =
+      P.TYPDESC (map printTyvar tyvars, A.printTycon tycon)
 
-  fun absynCondesc (vid, ty, _) =
-      (vid, Option.map absynMonoTy ty, loc)
+  fun printCondesc (vid, ty, _) =
+      P.CONBIND (A.printVid vid, Option.map printMonoTy ty)
 
-  fun absynDatdesc (tyvars, tycon, condescs, _) =
-      (absynTyvarseq tyvars, tycon, map absynCondesc condescs, loc)
+  fun printDatdesc (tyvars, tycon, condescs, _) =
+      P.DATBIND (map printTyvar tyvars,
+                 A.printTycon tycon,
+                 map printCondesc condescs)
 
-  fun absynSpec spec =
+  fun printSpec spec =
       case spec of
         SPECVAL (valdescs, _) =>
-        A.SPECVAL (map absynValdesc valdescs, loc)
+        P.DECVAL (nil, map printValdesc valdescs)
       | SPECTYPE (false, typdescs, _) =>
-        A.SPECTYPE (map absynTypdesc typdescs, loc)
+        P.DECTYPE (map printTypdesc typdescs)
       | SPECTYPE (true, typdescs, _) =>
-        A.SPECEQTYPE (map absynTypdesc typdescs, loc)
+        P.SPECEQTYPE (map printTypdesc typdescs)
       | SPECDATATYPE (datdescs, _) =>
-        A.SPECDATATYPE (map absynDatdesc datdescs, loc)
+        P.DECDATATYPE (map printDatdesc datdescs, NONE)
       | SPECDATATYPEREP (tycon, longtycon, _) =>
-        A.SPECDATATYPEREP (tycon, longtycon, loc)
+        P.DECDATATYPEREP (A.printTycon tycon, A.printLongtycon longtycon)
       | SPECEXCEPTION (exdescs, _) =>
-        A.SPECEXCEPTION (map absynCondesc exdescs, loc)
+        P.DECEXCEPTION (map printCondesc exdescs)
       | SPECSTRUCTURE (strdescs, _) =>
-        A.SPECSTRUCTURE (map absynStrdesc strdescs, loc)
+        P.STRUCTURE (map printStrdesc strdescs)
       | SPECINCLUDE (sigexp, _) =>
-        A.SPECINCLUDE (absynSigexp sigexp, loc)
+        P.SPECINCLUDE [printSigexp sigexp]
       | SPECSHARINGTYPE (specs, tycons, _) =>
-        A.SPECSHARINGTYPE (map absynSpec specs, tycons, loc)
+        P.SPECSHARINGTYPE (map printSpec specs, map A.printLongtycon tycons)
       | SPECSHARING (specs, strids, _) =>
-        A.SPECSHARING (map absynSpec specs, strids, loc)
+        P.SPECSHARING (map printSpec specs, map A.printLongstrid strids)
 
-  and absynSigexp sigexp =
+  and printSigexp sigexp =
       case sigexp of
         SIGBASIC (specs, _) =>
-        A.SIGBASIC (map absynSpec specs, loc)
+        P.SIGBASIC (map printSpec specs)
       | SIGID sigid =>
-        A.SIGID sigid
+        A.printSigid sigid
       | SIGWHERE (sigexp, wheretype, _) =>
-        A.SIGWHERE (absynSigexp sigexp, [absynWheretype wheretype], loc)
+        P.SIGWHERE (printSigexp sigexp, [printWheretype wheretype])
 
-  and absynStrdesc (strid, sigexp, _) =
-      (strid, absynSigexp sigexp, loc)
+  and printStrdesc (strid, sigexp, _) =
+      P.VALDESC (A.printStrid strid, printSigexp sigexp)
 
-  and absynWheretype (tyvars, tycon, ty, _) =
-      (absynTyvarseq tyvars, tycon, absynMonoTy ty, loc)
+  and printWheretype (tyvars, tycon, ty, _) =
+      P.TYPBIND (map printTyvar tyvars, A.printLongtycon tycon, printMonoTy ty)
 
-  fun absynStrexp strexp =
+  fun printStrexp strexp =
       case strexp of
         STRBASIC (strdecs, _) =>
-        A.STRBASIC (map absynStrdec strdecs, loc)
+        P.STRBASIC (map printStrdec strdecs)
       | STRID strid =>
-        A.STRID strid
-      | STRCONSTRAINT (strexp, sigop, sigexp, _) =>
-        A.STRCONSTRAINT
-          (absynStrexp strexp, (sigop, absynSigexp sigexp, loc), loc)
+        A.printLongstrid strid
+      | STRCONSTRAINT (strexp, Absyn.TRANSPARENT, sigexp, _) =>
+        P.STRCONSTRAINT (printStrexp strexp, P.TRANSPARENT (printSigexp sigexp))
+      | STRCONSTRAINT (strexp, Absyn.OPAQUE, sigexp, _) =>
+        P.STRCONSTRAINT (printStrexp strexp, P.OPAQUE (printSigexp sigexp))
       | STRAPP (funid, strexp, _) =>
-        A.STRAPP (funid, SOME (A.FUNARG (absynStrexp strexp)), loc)
+        P.STRAPP (A.printFunid funid, [printStrexp strexp])
       | STRLET (strdecs, strexp, _) =>
-        A.STRLET (map absynStrdec strdecs, absynStrexp strexp, loc)
+        P.EXPLET (map printStrdec strdecs, [printStrexp strexp])
 
-  and absynStrdec strdec =
+  and printStrdec strdec =
       case strdec of
         STRDEC dec =>
-        A.STRDEC (absynDec dec)
+        printDec dec
       | STRUCTURE (strbinds, _) =>
-        A.STRUCTURE (map absynStrbind strbinds, loc)
+        P.STRUCTURE (map printStrbind strbinds)
       | STRLOCAL (strdecs1, strdecs2, _) =>
-        A.STRLOCAL (map absynStrdec strdecs1, map absynStrdec strdecs2, loc)
+        P.DECLOCAL (map printStrdec strdecs1, map printStrdec strdecs2)
 
-  and absynStrbind (strid, strexp, _) : A.strbind =
-      (strid, NONE, absynStrexp strexp, loc)
+  and printStrbind (strid, strexp, _) =
+      P.STRBIND (A.printStrid strid, NONE, printStrexp strexp)
 
-  fun absynSigbind (sigid, sigexp, _) =
-      (sigid, absynSigexp sigexp, loc)
+  fun printSigbind (sigid, sigexp, _) =
+      P.VALBIND (A.printSigid sigid, printSigexp sigexp)
 
-  fun absynFunbind (funid, strid, sigexp, strexp, _) =
-      (funid,
-       SOME (A.FUNPARAM (strid, absynSigexp sigexp, loc)),
-       NONE,
-       absynStrexp strexp,
-       loc)
+  fun printFunbind (funid, strid, sigexp, strexp, _) =
+      P.FUNBIND
+        ((A.printFunid funid,
+          [P.STRCONSTRAINT
+             (A.printStrid strid, P.TRANSPARENT (printSigexp sigexp))]),
+         NONE,
+         printStrexp strexp)
 
-  fun absynSigdec (sigbinds, _) =
-      (map absynSigbind sigbinds, loc)
+  fun printSigdec (sigbinds, _) =
+      P.SIGNATURE (map printSigbind sigbinds)
 
-  fun absynTopdec topdec =
+  fun printTopdec topdec =
       case topdec of
         TOPSTRDEC strdec =>
-        A.TOPSTRDEC (absynStrdec strdec)
+        printStrdec strdec
       | TOPSIGNATURE sigdec =>
-        A.TOPSIGNATURE (absynSigdec sigdec)
+        printSigdec sigdec
       | TOPFUNCTOR (funbinds, _) =>
-        A.TOPFUNCTOR (map absynFunbind funbinds, loc)
+        P.FUNCTOR (map printFunbind funbinds)
 
-  fun format_mono_ty ty = AbsynTyFormatter.format_ty (absynMonoTy ty)
-  fun format_poly_ty ty = AbsynTyFormatter.format_ty (absynPolyTy ty)
-  fun format_annot_ty ty = AbsynTyFormatter.format_ty (absynAnnotTy ty)
-  fun format_kind ext kind =
-      case absynKind ext kind of
-        NONE => nil
-      | SOME kind => AbsynTyFormatter.format_kind kind
-  fun format_mono_kind kind = format_kind absynMono kind
-  fun format_annot_kind kind = format_kind absynAnnot kind
-  fun format_ffi_ty ty = AbsynTyFormatter.format_ffi_ty (absynFfiTy ty)
-  fun format_pat pat = AbsynFormatter.format_pat (absynPat pat)
-  fun format_sigexp sigexp = AbsynFormatter.format_sigexp (absynSigexp sigexp)
-  fun format_strdec strdec = AbsynFormatter.format_strdec (absynStrdec strdec)
-  fun format_strexp strexp = AbsynFormatter.format_strexp (absynStrexp strexp)
-  fun format_funbind head funbind =
-      AbsynFormatter.format_funbind head (absynFunbind funbind)
-  fun format_topdec topdec = AbsynFormatter.format_topdec (absynTopdec topdec)
+  fun format_pat x = PrintCalc.format_exp (printPat x)
+  fun format_ffi_ty x = PrintCalc.format_exp (printFfiTy x)
+  fun format_mono_kind x =
+      PrintCalc.format_exp (P.CONCAT (printKind printMono x))
+  fun format_annot_kind x =
+      PrintCalc.format_exp (P.CONCAT (printKind printAnnot x))
+  fun format_sigexp x = PrintCalc.format_exp (printSigexp x)
+  fun format_strexp x = PrintCalc.format_exp (printStrexp x)
+  fun format_strdec x = PrintCalc.format_exp (printStrdec x)
+  fun format_funbind x y = PrintCalc.format_bind x (printFunbind y)
+  fun format_topdec x = PrintCalc.format_exp (printTopdec x)
 
 end

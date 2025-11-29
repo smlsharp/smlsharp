@@ -1,7 +1,7 @@
 include "./compiler/compilerIRs/absyn/main/Token.smi"
 include "./compiler/compilerIRs/absyn/main/TokenUtils.smi"
 include "./compiler/compilerIRs/absyn/main/Absyn.smi"
-include "./compiler/compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+include "./compiler/compilerIRs/absyn/main/AbsynInterface.smi"
 include "./compiler/compilerIRs/absyn/main/AbsynSQL.smi"
 include "./compiler/compilerIRs/absyn/main/RequirePath.smi"
 include "./compiler/data/symbols/main/Loc.smi"

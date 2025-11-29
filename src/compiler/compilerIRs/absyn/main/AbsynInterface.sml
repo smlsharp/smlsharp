@@ -1,0 +1,108 @@
+(* -*- sml -*- *)
+(**
+ * syntax for the interface.
+ *
+ * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
+ * @author Atsushi Ohori
+ * @author Liu Bochao
+ *)
+structure AbsynInterface =
+struct
+
+  type loc = Absyn.loc
+  type id = AbsynTy.id
+  type vid = Absyn.vid
+  type longvid = Absyn.longvid
+  type tycon = Absyn.tycon
+  type longtycon = Absyn.longtycon
+  type tyvar = Absyn.tyvar
+  type tyvarseq = Absyn.tyvarseq
+  type kinded_tyvarseq = Absyn.kinded_tyvarseq
+  type ty = Absyn.ty
+  type strid = Absyn.strid
+  type sigid = Absyn.sigid
+  type funid = Absyn.funid
+  type longstrid = Absyn.longstrid
+  type require_path = Absyn.require_path
+  datatype exbind = datatype Absyn.exbind
+  datatype fun_param = datatype Absyn.fun_param
+
+  datatype opaque_impl =
+      IMPL_TY of longtycon
+    | IMPL_TUPLE of loc
+    | IMPL_RECORD of loc
+    | IMPL_FUNC of loc
+
+  datatype overload_instance =
+      INST_OVERLOAD of overload_case
+    | INST_LONGVID of longvid
+    | INST_PAREN of overload_instance * loc
+
+  withtype overload_mrule =
+      ty * overload_instance * loc
+
+  and overload_case =
+      tyvar * ty * (ty * overload_instance * loc) list * loc
+
+  datatype valbind =
+      VAL_EXTERN of vid * ty * loc
+    | VAL_ALIAS of vid * longvid * loc
+    | VAL_BUILTIN of vid * vid * ty * loc
+    | VAL_OVERLOAD of vid * overload_case * loc
+
+  type typdesc =
+      tyvarseq option * tycon * opaque_impl * loc
+
+  datatype typbind =
+      TYPBIND of Absyn.typbind
+    | TYPDESC of typdesc
+
+  datatype dec =
+      DECVAL of kinded_tyvarseq option * valbind * loc
+    | DECTYPE of typbind list * loc
+    | DECEQTYPE of typdesc list * loc
+    | DECDATATYPE of Absyn.datbind list * Absyn.withty option * loc
+    | DECDATATYPEREP of tycon * longtycon * loc
+    | DECTYPEBUILTIN of tycon * tycon * loc
+    | DECEXCEPTION of exbind list * loc
+    | DECSTRUCTURE of strbind * loc
+    | DECSEMICOLON of loc
+
+  and strexp =
+      STRBASIC of dec list * loc
+    | STRID of longstrid
+    | STRAPP of funid * longstrid * loc
+
+  withtype strbind =
+      strid * strexp * loc
+
+  type funbind =
+      funid * fun_param option * strexp * loc
+
+  datatype topdec =
+      TOPDEC of dec
+    | TOPFUNCTOR of funbind * loc
+    | TOPINFIX of string option * vid list * loc
+    | TOPINFIXR of string option * vid list * loc
+    | TOPNONFIX of vid list * loc
+
+  datatype require =
+      REQUIRE of require_path * id list * loc
+    | REQUIRE_LOCAL of require_path * id list * loc
+    | USE_LOCAL of require_path * loc
+    | REQSEMICOLON of loc
+
+  datatype include_dec =
+      INCLUDE of require_path * loc
+    | INCSEMICOLON of loc
+
+  datatype sigdec =
+      SIGNATURE of Absyn.sigbind list * loc
+    | SIGSEMICOLON of loc
+
+  datatype top =
+      INTERFACE of require list * topdec list * loc
+    | INCLUDES of include_dec list * sigdec list * loc
+
+end

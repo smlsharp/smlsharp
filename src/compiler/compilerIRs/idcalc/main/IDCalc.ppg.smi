@@ -14,7 +14,7 @@ _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 (* _require local "../../../compilerIRs/absyn/main/AbsynTy.smi" *)
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../data/types/main/TvarMap.smi"
 _require "../../../data/types/main/Types.ppg.smi"

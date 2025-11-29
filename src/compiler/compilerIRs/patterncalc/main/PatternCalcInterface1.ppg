@@ -17,7 +17,6 @@ struct
 
   (*%
    * @formatter(PatternCalc.strdec) PatternCalc.format_strdec
-   * @formatter(PatternCalc.sigexp) PatternCalc.format_sigexp
    * @formatter(PatternCalc.strexp) PatternCalc.format_strexp
    * @formatter(PatternCalc.funbind) PatternCalc.format_funbind
    * @formatter(PatternCalcInterface.funbind) PatternCalcInterface.format_funbind

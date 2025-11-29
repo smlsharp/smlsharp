@@ -10,7 +10,7 @@ _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
 
 structure TypedCalc =
   struct

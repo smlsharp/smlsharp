@@ -1,66 +1,153 @@
-_require local "../../../../basis.smi"
+_require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "./RequirePath.smi"
-_require "./ConstFormat.smi"
+_require "../../printcalc/main/PrintCalc.ppg.smi"
 _require "./Absyn.smi"
-_require local "./AbsynTyFormatter.smi"
-_require local "./AbsynConstFormatter.smi"
-_require local "./AbsynSQLFormatter.smi"
-_require local "./AbsynFormatterUtils.smi"
+_require "./AbsynSQL.smi"
+_require "./AbsynInterface.smi"
 
 structure AbsynFormatter =
 struct
+  val printId : Absyn.id -> PrintCalc.exp
+  val printLongid : Absyn.longid -> PrintCalc.exp
+  val printVid = printId
+  val printLongvid = printLongid
+  val printTycon = printId
+  val printLongtycon = printLongid
+  val printLab : Absyn.lab -> PrintCalc.exp
+  val printTyvar : Absyn.tyvar -> PrintCalc.exp
+  val printTyvarseq : Absyn.tyvarseq option -> PrintCalc.exp list
+  val printOpLongvid : Absyn.op_longvid -> PrintCalc.exp
+  val printTy : Absyn.ty -> PrintCalc.exp
+  val printKind : Absyn.kind -> PrintCalc.exp list
+  val printKindedTyvar : Absyn.kinded_tyvar -> PrintCalc.exp
+  val printTyrow : Absyn.tyrow -> PrintCalc.exp
+  val printTyseq : Absyn.tyseq option -> PrintCalc.exp list
+  val printKindedTyvarseq : Absyn.kinded_tyvarseq option -> PrintCalc.exp list
+  val printFfiAttr : Absyn.ffi_attr -> PrintCalc.exp
+  val printFfiTy : Absyn.ffi_ty -> PrintCalc.exp
+  val printFfiTyrow : Absyn.ffi_tyrow -> PrintCalc.exp
+  val printFfiTyseq : Absyn.ffi_tyseq option -> PrintCalc.exp list
+  val printFfiArg : Absyn.ffi_arg -> PrintCalc.exp
+  val printFfiRet : Absyn.ffi_ret -> PrintCalc.exp
+  val printConstant : Absyn.constant -> PrintCalc.exp
+  val printStrid = printId
+  val printSigid = printId
+  val printFunid = printId
+  val printLongstrid = printLongid
+  val printOpVid : Absyn.op_vid -> PrintCalc.exp
+  val printExistQuant : Absyn.exist_quant option -> PrintCalc.exp list
+  val printPat : Absyn.pat -> PrintCalc.exp
+  val printPatrow : Absyn.patrow -> PrintCalc.exp
+  val printExbind : Absyn.exbind -> PrintCalc.bind
+  val printTypbind : Absyn.typbind -> PrintCalc.bind
+  val printConbind : Absyn.conbind -> PrintCalc.bind
+  val printDatbind : Absyn.datbind -> PrintCalc.bind
+  val printWithty : Absyn.withty -> PrintCalc.exp
+  val printSqlTableSelector : AbsynSQL.table_selector -> PrintCalc.exp
+  val printSqlAscDesc : AbsynSQL.asc_desc -> PrintCalc.exp
+  val printSqlDistinctAll : AbsynSQL.distinct_all -> PrintCalc.exp
+  val printSqlFirstNext : AbsynSQL.first_next -> PrintCalc.exp
+  val printSqlRowRows : AbsynSQL.row_rows -> PrintCalc.exp
+  val printSqlOp1 : PrintCalc.exp -> AbsynSQL.op1 -> PrintCalc.exp
+  val printSqlOp2
+      : PrintCalc.exp * PrintCalc.exp -> AbsynSQL.op2 -> PrintCalc.exp
+  val printSqlInsertLabels : AbsynSQL.insert_labels -> PrintCalc.exp
+  val printExp : Absyn.exp -> PrintCalc.exp
+  val printExprow : Absyn.exprow -> PrintCalc.exp
+  val printValbind : Absyn.valbind -> PrintCalc.bind
+  val printDec : Absyn.dec -> PrintCalc.exp
+  val printMrule : Absyn.mrule -> PrintCalc.exp
+  val printDynamicMrule : Absyn.dynamic_mrule -> PrintCalc.exp
+  val printFrule : Absyn.frule -> PrintCalc.bind
+  val printValrecbind : Absyn.valrecbind -> PrintCalc.bind
+  val printFvalbind : Absyn.fvalbind -> PrintCalc.fvalbind
+  val printSqlExp : Absyn.exp AbsynSQL.exp -> PrintCalc.exp
+  val printSqlKwexp : Absyn.exp AbsynSQL.kwexp -> PrintCalc.exp
+  val printSqlTable : Absyn.exp AbsynSQL.table -> PrintCalc.exp
+  val printSqlFrom : Absyn.exp AbsynSQL.from -> PrintCalc.exp
+  val printSqlWhr : Absyn.exp AbsynSQL.whr -> PrintCalc.exp
+  val printSqlGroupby : Absyn.exp AbsynSQL.groupby -> PrintCalc.exp
+  val printSqlOrderby : Absyn.exp AbsynSQL.orderby -> PrintCalc.exp
+  val printSqlLimit : Absyn.exp AbsynSQL.limit -> PrintCalc.exp
+  val printSqlOffset : Absyn.exp AbsynSQL.offset -> PrintCalc.exp
+  val printSqlSelect : Absyn.exp AbsynSQL.select -> PrintCalc.exp
+  val printSqlQuery : Absyn.exp AbsynSQL.query -> PrintCalc.exp
+  val printSqlOffsetOrLimit
+      : Absyn.exp AbsynSQL.offset_or_limit -> PrintCalc.exp
+  val printSqlOrderKey : Absyn.exp AbsynSQL.order_key -> PrintCalc.exp
+  val printSqlSelectRow : Absyn.exp AbsynSQL.select_row -> PrintCalc.exp
+  val printSqlGroupbyClause : Absyn.exp AbsynSQL.groupby_clause -> PrintCalc.exp
+  val printSqlHavingClause : Absyn.exp AbsynSQL.having_clause -> PrintCalc.exp
+  val printSqlLimitClause : Absyn.exp AbsynSQL.limit_clause -> PrintCalc.exp
+  val printSqlLimitOffsetClause
+      : Absyn.exp AbsynSQL.limit_offset_clause -> PrintCalc.exp
+  val printSqlOffsetClause : Absyn.exp AbsynSQL.offset_clause -> PrintCalc.exp
+  val printSqlFetchClause : Absyn.exp AbsynSQL.fetch_clause -> PrintCalc.exp
+  val printSqlInsertValue : Absyn.exp AbsynSQL.insert_value -> PrintCalc.exp
+  val printSqlInsertRow : Absyn.exp AbsynSQL.insert_row -> PrintCalc.exp
+  val printSqlInsertValues : Absyn.exp AbsynSQL.insert_values -> PrintCalc.exp
+  val printSqlSetRow : Absyn.exp AbsynSQL.set_row -> PrintCalc.exp
+  val printSqlSet : Absyn.exp AbsynSQL.set -> PrintCalc.exp
+  val printSqlCon : Absyn.exp AbsynSQL.con -> PrintCalc.exp
+  val printSqlStep : Absyn.exp AbsynSQL.step -> PrintCalc.exp
+  val printSqlBody : Absyn.exp AbsynSQL.body -> PrintCalc.exp
+  val printSqlTop
+      : (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.top -> PrintCalc.exp
+  val printValdesc : Absyn.valdesc -> PrintCalc.bind
+  val printTypdesc : Absyn.typdesc -> PrintCalc.bind
+  val printCondesc : Absyn.condesc -> PrintCalc.bind
+  val printDatdesc : Absyn.datdesc -> PrintCalc.bind
+  val printExdesc : Absyn.exdesc -> PrintCalc.bind
+  val printWheretype : Absyn.wheretype -> PrintCalc.bind
+  val printSpec : Absyn.spec -> PrintCalc.exp
+  val printSigexp : Absyn.sigexp -> PrintCalc.exp
+  val printStrdesc : Absyn.strdesc -> PrintCalc.bind
+  val printSigbind : Absyn.sigbind -> PrintCalc.bind
+  val printSigconstraint : Absyn.sigconstraint -> PrintCalc.sigconstraint
+  val printStrexp : Absyn.strexp -> PrintCalc.exp
+  val printStrdec : Absyn.strdec -> PrintCalc.exp
+  val printFunArg : Absyn.fun_arg -> PrintCalc.exp list
+  val printStrbind : Absyn.strbind -> PrintCalc.bind
+  val printFunParam : Absyn.fun_param -> PrintCalc.exp list
+  val printFunbind : Absyn.funbind -> PrintCalc.bind
+  val printSigdec : Absyn.sigdec -> PrintCalc.exp
+  val printTopdec : Absyn.topdec -> PrintCalc.exp
+  val printTop : Absyn.top -> PrintCalc.exp list
+  val printInterface : Absyn.interface -> PrintCalc.exp
+  val printCompileUnit : Absyn.compile_unit -> PrintCalc.exp list
+  val printAbsyn : Absyn.absyn -> PrintCalc.exp
+  val printOpaqueImpl : AbsynInterface.opaque_impl -> PrintCalc.exp
+  val printOverloadInstance : AbsynInterface.overload_instance -> PrintCalc.exp
+  val printOverloadMrule : AbsynInterface.overload_mrule -> PrintCalc.exp
+  val printOverloadCase : AbsynInterface.overload_case -> PrintCalc.exp
+  val printIvalbind : AbsynInterface.valbind -> PrintCalc.bind
+  val printItypdesc : AbsynInterface.typdesc -> PrintCalc.bind
+  val printItypbind : AbsynInterface.typbind -> PrintCalc.bind
+  val printIdec : AbsynInterface.dec -> PrintCalc.exp
+  val printIstrexp : AbsynInterface.strexp -> PrintCalc.exp
+  val printIstrbind : AbsynInterface.strbind -> PrintCalc.bind
+  val printIfunbind : AbsynInterface.funbind -> PrintCalc.bind
+  val printItopdec : AbsynInterface.topdec -> PrintCalc.exp
+  val printIrequire : AbsynInterface.require -> PrintCalc.exp
+  val printIncludeDec : AbsynInterface.include_dec -> PrintCalc.exp
+  val printIsigdec : AbsynInterface.sigdec -> PrintCalc.exp
+  val printItop : AbsynInterface.top -> PrintCalc.exp
 
-  val format_vid : Absyn.vid -> SMLFormat.format
-  val format_strid : Absyn.strid -> SMLFormat.format
-  val format_sigid : Absyn.sigid -> SMLFormat.format
-  val format_funid : Absyn.funid -> SMLFormat.format
-  val format_longstrid : Absyn.longstrid -> SMLFormat.format
-  val format_op_vid : Absyn.op_vid -> SMLFormat.format
-  val format_require_path : Absyn.require_path -> SMLFormat.format
-  val format_exist_quant : Absyn.exist_quant -> SMLFormat.format
-  val format_pat : Absyn.pat -> SMLFormat.format
-  val format_patrow : Absyn.patrow -> SMLFormat.format
-  val format_exbind : SMLFormat.format -> Absyn.exbind -> SMLFormat.format
-  val format_typbind : SMLFormat.format -> Absyn.typbind -> SMLFormat.format
-  val format_conbind : Absyn.conbind -> SMLFormat.format
-  val format_datbind : SMLFormat.format -> Absyn.datbind -> SMLFormat.format
-  val format_withty : Absyn.withty -> SMLFormat.format
-  val format_exp : Absyn.exp -> SMLFormat.format
-  val format_valbind : SMLFormat.format -> Absyn.valbind -> SMLFormat.format
-  val format_dec : Absyn.dec -> SMLFormat.format
-  val format_exprow : Absyn.exprow -> SMLFormat.format
-  val format_mrule : Absyn.mrule -> SMLFormat.format
-  val format_dynamic_mrule : Absyn.dynamic_mrule -> SMLFormat.format
-  val format_frule : SMLFormat.format -> Absyn.frule -> SMLFormat.format
-  val format_fvalbind
-      : SMLFormat.format * SMLFormat.format
-        -> Absyn.fvalbind
-        -> SMLFormat.format
-  val format_valdesc : SMLFormat.format -> Absyn.valdesc -> SMLFormat.format
-  val format_typdesc : SMLFormat.format -> Absyn.typdesc -> SMLFormat.format
-  val format_condesc : Absyn.condesc -> SMLFormat.format
-  val format_datdesc : SMLFormat.format -> Absyn.datdesc -> SMLFormat.format
-  val format_exdesc : SMLFormat.format -> Absyn.exdesc -> SMLFormat.format
-  val format_wheretype : SMLFormat.format -> Absyn.wheretype -> SMLFormat.format
-  val format_spec : Absyn.spec -> SMLFormat.format
-  val format_sigexp : Absyn.sigexp -> SMLFormat.format
-  val format_strdesc : SMLFormat.format -> Absyn.strdesc -> SMLFormat.format
-  val format_sigbind : SMLFormat.format -> Absyn.sigbind -> SMLFormat.format
-  val format_sigop : Absyn.sigop -> SMLFormat.format
-  val format_sigconstraint
-      : SMLFormat.format -> Absyn.sigconstraint -> SMLFormat.format
-  val format_strexp : Absyn.strexp -> SMLFormat.format
-  val format_strdec : Absyn.strdec -> SMLFormat.format
-  val format_fun_arg : Absyn.fun_arg -> SMLFormat.format
-  val format_strbind : SMLFormat.format -> Absyn.strbind -> SMLFormat.format
-  val format_fun_param : Absyn.fun_param -> SMLFormat.format
-  val format_funbind : SMLFormat.format -> Absyn.funbind -> SMLFormat.format
+  val format_tyvar : Absyn.tyvar -> SMLFormat.format
+  val format_ty : Absyn.ty -> SMLFormat.format
+  val format_constant : Absyn.constant -> SMLFormat.format
   val format_sigdec : Absyn.sigdec -> SMLFormat.format
   val format_topdec : Absyn.topdec -> SMLFormat.format
-  val format_top : Absyn.top -> SMLFormat.format
-  val format_interface : Absyn.interface -> SMLFormat.format
   val format_absyn : Absyn.absyn -> SMLFormat.format
+  val format_itopdec : AbsynInterface.topdec -> SMLFormat.format
 
+(*
+  val format_overload_instance : overload_instance -> SMLFormat.format
+  val format_overload_case : overload_case -> SMLFormat.format
+  val format_valbind : SMLFormat.format -> valbind -> SMLFormat.format
+  val format_dec : dec -> SMLFormat.format
+  val format_strexp : strexp -> SMLFormat.format
+  val format_funbind : SMLFormat.format -> funbind -> SMLFormat.format
+  val format_topdec : topdec -> SMLFormat.format
+*)
 end

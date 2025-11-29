@@ -1,7 +1,9 @@
 _require local "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../absyn/main/AbsynInterface.ppg.smi"
-_require local "../../absyn/main/AbsynInterfaceLoaded.ppg.smi"
+_require "../../absyn/main/AbsynInterface.smi"
+_require local "../../absyn/main/AbsynFormatter.smi"
+_require "../../absyn/main/InterfaceLoaded.smi"
+_require local "../../printcalc/main/PrintCalc.ppg.smi"
 _require "../../absyn/main/InterfaceName.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
@@ -70,34 +72,20 @@ struct
       TOPDEC of dec
     | TOPFUNCTOR of funbind
 
-  type interface_id = InterfaceID.id
-
-  type interface_dec =
-      {interfaceId: interface_id,
-       interfaceName: InterfaceName.interface_name,
-       requiredIds: {id: interface_id, loc: Loc.pos * Loc.pos} list,
-       provideTopdecs: topdec list}
-
+  type interface_dec = topdec InterfaceLoaded.interface_dec
   type 'loc interface =
-      {interfaceDecs : interface_dec list,
-       requiredIds : {id: interface_id, loc: 'loc} list,
-       locallyRequiredIds: {id: interface_id, loc: 'loc} list,
-       provideTopdecs : topdec list,
-       topdecsInclude : PatternCalc.sigdec list}
-
+      (topdec, PatternCalc.sigdec, 'loc) InterfaceLoaded.interface
   type compile_unit =
-      {interface : (Loc.pos * Loc.pos) interface,
-       topdecsSource : PatternCalc.topdec list}
-
+      (topdec, PatternCalc.sigdec, PatternCalc.topdec)
+        InterfaceLoaded.compile_unit
   type interface_unit =
-      {interfaceDecs : interface_dec list,
-       requiredIds : {id : interface_id, loc : unit} list,
-       topdecsInclude : PatternCalc.sigdec list}
+      (topdec, PatternCalc.sigdec) InterfaceLoaded.interface_unit
+
+  val emptyInterface : InterfaceLoaded.loc interface
 
   val topdecLoc : topdec -> loc
 
   val format_dec : dec -> SMLFormat.format
-  val format_strexp : strexp -> SMLFormat.format
   val format_funbind : SMLFormat.format -> funbind -> SMLFormat.format
   val format_topdec : topdec -> SMLFormat.format
   val format_interface_dec : interface_dec -> SMLFormat.format

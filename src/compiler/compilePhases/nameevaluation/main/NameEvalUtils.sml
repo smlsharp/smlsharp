@@ -69,7 +69,7 @@ in
       else ()
   fun printPITy ty =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (AbsynTyFormatter.format_ty ty))
+        print (Bug.prettyPrint (AbsynFormatter.format_ty ty))
       else ()
   fun printTstr tstr =
       if !Bug.debugPrint then 

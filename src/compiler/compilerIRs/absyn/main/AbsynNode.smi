@@ -2,7 +2,7 @@ _require "../../../../basis.smi"
 _require "./Absyn.smi"
 _require "./AbsynTy.smi"
 _require "./AbsynSQL.smi"
-_require "./AbsynInterface.ppg.smi"
+_require "./AbsynInterface.smi"
 
 structure AbsynNode =
 struct

@@ -2864,7 +2864,7 @@ val _ = U.print "compileUnitSpliced\n"
 val _ = U.printCompileUnitSpliced compileUnitSpliced
 val _ = U.print "\n"
 *)
-        val {interfaceDecs, requiredIds, locallyRequiredIds, provideTopdecs, ...} = interface
+        val {interfaceDecs, provide={requiredIds, locallyRequiredIds, provideTopdecs}, ...} = interface
 
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
 

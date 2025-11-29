@@ -1,0 +1,70 @@
+_require local "../../../../basis.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "./Absyn.smi"
+_require "../../printcalc/main/PrintCalc.ppg.smi"
+_require "./InterfaceName.ppg.smi"
+
+structure InterfaceLoaded =
+struct
+  type loc = Absyn.loc
+
+  type 'itopdec interface_dec =
+      {interfaceId: InterfaceID.id,
+       interfaceName: InterfaceName.interface_name,
+       requiredIds: {id: InterfaceID.id, loc: loc} list,
+       provideTopdecs: 'itopdec list}
+
+  type ('itopdec, 'sigdec, 'loc) interface =
+      {interfaceDecs : 'itopdec interface_dec list,
+       provide :
+         {requiredIds : {id : InterfaceID.id, loc : 'loc} list,
+          locallyRequiredIds : {id : InterfaceID.id, loc : 'loc} list,
+          provideTopdecs : 'itopdec list},
+       topdecsInclude: 'sigdec list}
+
+  type ('itopdec, 'sigdec, 'topdec) compile_unit =
+      {interface : ('itopdec, 'sigdec, loc) interface option,
+       topdecsSource : 'topdec list}
+
+  type ('itopdec, 'sigdec) interface_unit =
+      {interfaceDecs : 'itopdec interface_dec list,
+       requiredIds : {id : InterfaceID.id, loc : unit} list,
+       topdecsInclude : 'sigdec list}
+
+  val printInterfaceDec
+      : ['itopdec,
+         'printers#{printItopdec : 'itopdec -> PrintCalc.exp}.
+         'printers
+         -> 'itopdec interface_dec
+         -> PrintCalc.exp]
+
+  val printInterface
+      : ['itopdec,
+         'sigdec,
+         'loc,
+         'printers#{printItopdec : 'itopdec -> PrintCalc.exp,
+                    printSigdec : 'sigdec -> PrintCalc.exp}.
+         'printers
+         -> ('itopdec, 'sigdec, 'loc) interface
+         -> PrintCalc.exp]
+
+  val printCompileUnit
+      : ['itopdec,
+         'sigdec,
+         'topdec,
+         'printers#{printItopdec : 'itopdec -> PrintCalc.exp,
+                    printSigdec : 'sigdec -> PrintCalc.exp,
+                    printTopdec : 'topdec -> PrintCalc.exp}.
+         'printers
+         -> ('itopdec, 'sigdec, 'topdec) compile_unit
+         -> PrintCalc.exp]
+
+  val printInterfaceUnit
+      : ['itopdec,
+         'sigdec,
+         'printers#{printItopdec : 'itopdec -> PrintCalc.exp,
+                    printSigdec : 'sigdec -> PrintCalc.exp}.
+         'printers
+         -> ('itopdec, 'sigdec) interface_unit
+         -> PrintCalc.exp]
+end

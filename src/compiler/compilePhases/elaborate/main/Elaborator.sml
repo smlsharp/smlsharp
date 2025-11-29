@@ -21,23 +21,16 @@ struct
   fun extendFixEnv (env1, env2) : fix_env =
       Symbol.Map.unionWith #2 (env1, env2)
 
-  val emptyInterface =
-      {interfaceDecs = nil,
-       requiredIds = nil,
-       locallyRequiredIds = nil,
-       provideTopdecs = nil,
-       topdecsInclude = nil}
-
   fun elaborate fixEnv ({interface, topdecsSource} : A.compile_unit) =
       let
         val _ = EU.initializeErrorQueue ()
         val (interface, requireFixEnv, provideFixEnv) =
             case interface of
-              NONE => (emptyInterface, Symbol.Map.empty, Symbol.Map.empty)
+              NONE => (NONE, Symbol.Map.empty, Symbol.Map.empty)
             | SOME interface =>
               case ElaborateInterface.elaborate interface of
                 {interface, requireFixEnv, provideFixEnv} =>
-                (interface, requireFixEnv, provideFixEnv)
+                (SOME interface, requireFixEnv, provideFixEnv)
 
         val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
         val (topdecsSourceFixEnv, topdecsSource) =
@@ -79,7 +72,7 @@ struct
                topdecsInclude = topdecsInclude}
         val plunit =
             {interfaceDecs = #interfaceDecs interface,
-             requiredIds = #requiredIds interface,
+             requiredIds = #requiredIds (#provide interface),
              topdecsInclude = #topdecsInclude interface}
       in
         case EU.getErrors () of

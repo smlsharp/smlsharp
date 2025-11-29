@@ -1,0 +1,187 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../libs/list-utils/main/Snoc.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../compilerIRs/absyn/main/RequirePath.smi"
+_require "../../../compilerIRs/absyn/main/ConstFormat.smi"
+
+structure PrintCalc =
+struct
+  datatype bind =
+      CONBIND of exp * exp option
+    | TYPBIND of exp list * exp * exp
+    | DATBIND of exp list * exp * bind list
+    | VALBIND of exp * exp
+    | VALREC of bind list
+    | FRULE of exp * exp option * exp
+    | VALDESC of exp * exp
+    | TYPDESC of exp list * exp
+    | ITYPDESC of exp list * exp * exp
+    | STRBIND of exp * sigconstraint option * exp
+    | FUNBIND of (exp * exp list) * sigconstraint option * exp
+  and fvalbind =
+      FVALBIND of bind list
+  and sigconstraint =
+      TRANSPARENT of exp
+    | OPAQUE of exp
+  and exp =
+      EMPTY
+    | SEMICOLON
+    | FORMAT of SMLFormat.format
+    | N0 of exp
+    | CONCAT of exp list
+    | KEYWORD of string list
+    | ID of Symbol.symbol
+    | LONGID of exp list * exp
+    | LABEL of RecordLabel.label
+    | OPID of bool * exp
+    | TYCON of exp list * exp
+    | TYTUPLE of exp list
+    | TYFUN of exp * exp
+    | PAREN of exp
+    | TYPOLY of exp list * exp
+    | KIND_ID of exp
+    | KIND_RECORD of exp list
+    | TYVAR of exp * exp list
+    | TYVAR_FREE of exp
+    | TYROW of exp * exp
+    | FFI_ATTR of exp list
+    | FFITYFUN of exp option * exp * exp
+    | FFI_ARG of exp list * exp list option
+    | FFI_RET of exp list
+    | INT of IntInf.int
+    | WORD of IntInf.int
+    | STRING of string
+    | REAL of string
+    | CHAR of char
+    | PATWILD
+    | PATAS of exp * exp
+    | WITHTYPE of bind list
+    | EXPSELECT of exp
+    | EXPRECORD of exp list * bool
+    | EXPTUPLE of exp list
+    | EXPLIST of exp list
+    | EXPSEQ of exp list
+    | EXPLET of exp list * exp list
+    | EXPAPP of exp * exp
+    | EXPINFIX of exp * exp * exp
+    | EXPTYPED of exp * exp
+    | EXPANDALSO of exp * exp
+    | EXPORELSE of exp * exp
+    | EXPHANDLE of exp * exp list
+    | EXPRAISE of exp
+    | EXPIF of exp * exp * exp
+    | EXPWHILE of exp * exp
+    | EXPCASE of exp * exp list
+    | EXPFN of exp list
+    | EXPSIZEOF of exp
+    | EXPRECORD_UPDATE of exp * exp list
+    | EXPTUPLE_UPDATE of exp * exp list
+    | EXPIMPORT_NAME of exp * exp
+    | EXPIMPORT_EXP of exp * exp
+    | EXPFOREACH_DATA of exp * exp * exp * exp * exp * exp
+    | EXPFOREACH_ARRAY of exp * exp * exp * exp * exp
+    | EXPJOIN of exp * exp
+    | EXPEXTEND of exp * exp
+    | EXPUPDATE1 of exp * exp
+    | EXPUPDATE2 of exp * exp
+    | EXPDYNAMIC_AS of exp * exp
+    | EXPDYNAMIC_OF of exp * exp
+    | EXPDYNAMICVIEW of exp * exp
+    | EXPDYNAMICNULL of exp
+    | EXPDYNAMICTOP of exp
+    | EXPDYNAMICCASE of exp * exp list
+    | EXPREIFYTY of exp
+    | EXPROW of exp * exp
+    | DECVAL of exp list * bind list
+    | DECVALREC of exp list * bind list
+    | DECFUN of exp list * fvalbind list
+    | DECTYPE of bind list
+    | DECDATATYPE of bind list * exp option
+    | DECDATATYPEREP of exp * exp
+    | DECABSTYPE of bind list * exp option * exp list
+    | DECEXCEPTION of bind list
+    | DECLOCAL of exp list * exp list
+    | DECOPEN of exp list
+    | DECINFIX of exp option * exp list
+    | DECINFIXR of exp option * exp list
+    | DECNONFIX of exp list
+    | DECDO of exp
+    | MRULE of exp * exp
+    | DYNAMIC_MRULE of exp list * exp * exp
+    | SPECEQTYPE of bind list
+    | SPECINCLUDE of exp list
+    | SPECSHARINGTYPE of exp list * exp list
+    | SPECSHARING of exp list * exp list
+    | SIGBASIC of exp list
+    | SIGWHERE of exp * bind list
+    | STRBASIC of exp list
+    | STRCONSTRAINT of exp * sigconstraint
+    | STRAPP of exp * exp list
+    | STRUCTURE of bind list
+    | SIGNATURE of bind list
+    | FUNCTOR of bind list
+    | REQUIRE_PATH of RequirePath.path
+    | USE of exp
+    | U_USE of exp
+    | INTERFACE of exp
+    | TOPDECS of exp list
+    | SQL_TABLE of exp * exp
+    | SQL_IS_NULL of exp
+    | SQL_IS_NOT_NULL of exp
+    | SQL_IS_TRUE of exp
+    | SQL_IS_NOT_TRUE of exp
+    | SQL_IS_FALSE of exp
+    | SQL_IS_NOT_FALSE of exp
+    | SQL_IS_UNKNOWN of exp
+    | SQL_IS_NOT_UNKNOWN of exp
+    | SQL_NOT of exp
+    | SQL_AND of exp * exp
+    | SQL_OR of exp * exp
+    | SQL_EMBED of exp
+    | SQL_COLUMN1 of exp
+    | SQL_COLUMN2 of exp * exp
+    | SQLPREFIX of bool * exp
+    | SQL_CAST of exp * exp
+    | SQL_EXISTS of exp
+    | SQL_TABLE_AS of exp * exp
+    | SQL_TABLE_INNER_JOIN of exp * bool * exp * exp
+    | SQL_TABLE_CROSS_JOIN of exp * exp
+    | SQL_TABLE_NATURAL_JOIN of exp * exp
+    | SQL_FROM of exp list
+    | SQL_CLAUSE_EMBED of exp * exp
+    | SQL_SUBCLAUSE of exp * exp option
+    | SQL_WHERE of exp
+    | SQL_ORDERBY of exp list
+    | SQL_SELECT of exp option * exp list
+    | SQL_QUERY of exp * exp * exp list
+    | SQL_ORDER_KEY of exp * exp option
+    | SQL_SELECT_ROW of exp * exp option
+    | SQL_GROUPBY of exp list
+    | SQL_HAVING of exp
+    | SQL_LIMIT of exp option
+    | SQL_LIMIT_OFFSET of exp
+    | SQL_OFFSET of exp * exp
+    | SQL_FETCH of exp * exp option * exp
+    | SQL_VALUES of exp list
+    | SQL_SET of exp list
+    | SQL_INSERT_LABELED of exp * exp * exp
+    | SQL_INSERT_NOLABEL of exp * exp
+    | SQL_UPDATE of exp * exp * exp option
+    | SQL_DELETE of exp * exp option
+    | SQL_STEP_EMBED of exp
+    | SQLSERVER of exp option * exp
+    | SQLFN of exp * exp
+    | OVERLOAD_IN of exp * exp
+    | BUILTIN_VAL of exp * exp
+    | BUILTIN_DATATYPE of exp
+    | REQUIRE of exp * exp list
+    | REQUIRE_LOCAL of exp * exp list
+    | USE_LOCAL of exp
+
+  val format_bind : SMLFormat.format -> bind -> SMLFormat.format
+  val format_fvalbind
+      : SMLFormat.format * SMLFormat.format -> fvalbind -> SMLFormat.format
+  val format_exp : exp -> SMLFormat.format
+end

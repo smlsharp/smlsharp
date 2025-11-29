@@ -70,29 +70,21 @@ struct
       TOPDEC of dec
     | TOPFUNCTOR of funbind
 
-  type interface_id = InterfaceID.id
-
-  type interface_dec =
-      {interfaceId: interface_id,
-       interfaceName: InterfaceName.interface_name,
-       requiredIds: {id: interface_id, loc: Loc.pos * Loc.pos} list,
-       provideTopdecs: topdec list}
-
+  type interface_dec = topdec InterfaceLoaded.interface_dec
   type 'loc interface =
-      {interfaceDecs : interface_dec list,
-       requiredIds : {id: interface_id, loc: 'loc} list,
-       locallyRequiredIds: {id: interface_id, loc: 'loc} list,
-       provideTopdecs : topdec list,
-       topdecsInclude : PatternCalc.sigdec list}
-
+      (topdec, PatternCalc.sigdec, 'loc) InterfaceLoaded.interface
   type compile_unit =
-      {interface : (Loc.pos * Loc.pos) interface,
-       topdecsSource : PatternCalc.topdec list}
-
+      (topdec, PatternCalc.sigdec, PatternCalc.topdec)
+        InterfaceLoaded.compile_unit
   type interface_unit =
-      {interfaceDecs : interface_dec list,
-       requiredIds : {id : interface_id, loc : unit} list,
-       topdecsInclude : PatternCalc.sigdec list}
+      (topdec, PatternCalc.sigdec) InterfaceLoaded.interface_unit
+
+  val emptyInterface : InterfaceLoaded.loc interface =
+      {interfaceDecs = nil,
+       provide = {requiredIds = nil,
+                  locallyRequiredIds = nil,
+                  provideTopdecs = nil},
+       topdecsInclude = nil}
 
   fun valbindLoc valbind =
       case valbind of
@@ -118,133 +110,110 @@ struct
         TOPDEC dec => decLoc dec
       | TOPFUNCTOR (_, _, _, _, loc) => loc
 
-  (* revert to absyn for printing *)
+  structure P = PrintCalc
+  structure A = AbsynFormatter
 
-  structure A = AbsynInterface
-
-  val dummyPos = {source = Loc.INTERACTIVE, pos = Loc.EOF}
-  val loc = (dummyPos, dummyPos)
-
-  fun absynOverloadInst inst =
+  fun printOverloadInstance inst =
       case inst of
         INST_OVERLOAD ovcase =>
-        A.INST_OVERLOAD (absynOverloadCase ovcase)
+        printOverloadCase ovcase
       | INST_LONGVID vid =>
-        A.INST_LONGVID vid
+        A.printLongvid vid
 
-  and absynOverloadCase (tyvar, ty, mrules, _) =
-      ((false, tyvar),
-       PatternCalc.absynMonoTy ty,
-       map absynOverloadMrule mrules,
-       loc)
+  and printOverloadMrule (ty, inst, _) =
+      P.MRULE (PatternCalc.printMonoTy ty, printOverloadInstance inst)
 
-  and absynOverloadMrule (ty, inst, _) =
-      (PatternCalc.absynMonoTy ty, absynOverloadInst inst, loc)
+  and printOverloadCase (tyvar, ty, mrules, _) =
+      P.EXPCASE
+        (P.OVERLOAD_IN (PatternCalc.printTyvar tyvar,
+                        PatternCalc.printMonoTy ty),
+         map printOverloadMrule mrules)
 
-  fun absynValbind valbind =
+  fun printValbind valbind =
       case valbind of
         VAL_EXTERN (vid, ty, _) =>
-        A.VAL_EXTERN (vid, PatternCalc.absynPolyTy ty, loc)
+        P.VALDESC (A.printVid vid, PatternCalc.printPolyTy ty)
       | VAL_ALIAS (vid, longvid, _) =>
-        A.VAL_ALIAS (vid, longvid, loc)
+        P.VALBIND (A.printVid vid, A.printLongvid longvid)
       | VAL_BUILTIN (vid1, vid2, ty, _) =>
-        A.VAL_BUILTIN (vid1, vid2, PatternCalc.absynPolyTy ty, loc)
+        P.VALBIND (A.printVid vid1,
+                   P.BUILTIN_VAL (A.printVid vid2, PatternCalc.printPolyTy ty))
       | VAL_OVERLOAD (vid, ovcase, _) =>
-        A.VAL_OVERLOAD (vid, absynOverloadCase ovcase, loc)
+        P.VALBIND (A.printVid vid, printOverloadCase ovcase)
 
-  fun absynTypdesc (tyvars, tycon, impl, _) =
-      (PatternCalc.absynTyvarseq tyvars, tycon, impl, loc)
+  fun printTypdesc (tyvars, tycon, impl, _) =
+      P.ITYPDESC (map PatternCalc.printTyvar tyvars,
+                  A.printTycon tycon,
+                  A.printOpaqueImpl impl)
 
-  fun absynDec dec =
+  fun printDec dec =
       case dec of
         DECVAL (tyvarseq, valbind) =>
-        A.DECVAL (PatternCalc.absynKindedTyvarseq tyvarseq,
-                  absynValbind valbind,
-                  loc)
+        P.DECVAL (PatternCalc.printKindedTyvarseq tyvarseq,
+                  [printValbind valbind])
       | DECTYPBIND typbind =>
-        A.DECTYPE ([A.TYPBIND (PatternCalc.absynTypbind typbind)], loc)
+        P.DECTYPE [PatternCalc.printTypbind typbind]
       | DECTYPDESC (false, typdesc) =>
-        A.DECTYPE ([A.TYPDESC (absynTypdesc typdesc)], loc)
+        P.DECTYPE [printTypdesc typdesc]
       | DECTYPDESC (true, typdesc) =>
-        A.DECEQTYPE ([absynTypdesc typdesc], loc)
+        P.SPECEQTYPE [printTypdesc typdesc]
       | DECDATATYPE (datbinds, typbinds, _) =>
-        A.DECDATATYPE (map PatternCalc.absynDatbind datbinds,
-                       PatternCalc.absynWithty typbinds,
-                       loc)
+        P.DECDATATYPE (map PatternCalc.printDatbind datbinds,
+                       PatternCalc.printWithty typbinds)
       | DECDATATYPEREP (tycon, longtycon, _) =>
-        A.DECDATATYPEREP (tycon, longtycon, loc)
+        P.DECDATATYPEREP (A.printTycon tycon, A.printLongtycon longtycon)
       | DECTYPEBUILTIN (tycon1, tycon2, _) =>
-        A.DECTYPEBUILTIN (tycon1, tycon2, loc)
+        P.DECDATATYPEREP (A.printTycon tycon1,
+                          P.BUILTIN_DATATYPE (A.printTycon tycon2))
       | DECEXCEPTION exbind =>
-        A.DECEXCEPTION ([PatternCalc.absynExbind exbind], loc)
+        P.DECEXCEPTION [PatternCalc.printExbind exbind]
       | DECSTRUCTURE strbind =>
-        A.DECSTRUCTURE (absynStrbind strbind, loc)
+        P.STRUCTURE [printStrbind strbind]
 
-  and absynStrexp strexp =
+  and printStrexp strexp =
       case strexp of
         STRBASIC (decs, _) =>
-        A.STRBASIC (map absynDec decs, loc)
+        P.STRBASIC (map printDec decs)
       | STRID strid =>
-        A.STRID strid
+        A.printLongstrid strid
       | STRAPP (funid, strid, _) =>
-        A.STRAPP (funid, strid, loc)
+        P.STRAPP (A.printFunid funid, [A.printLongstrid strid])
 
-  and absynStrbind (strid, strexp, _) =
-      (strid, absynStrexp strexp, loc)
+  and printStrbind (strid, strexp, _) =
+      P.VALBIND (A.printStrid strid, printStrexp strexp)
 
-  fun absynFunbind (funid, strid, sigexp, strexp, _) =
-      (funid,
-       SOME (A.FUNPARAM (strid, PatternCalc.absynSigexp sigexp, loc)),
-       absynStrexp strexp,
-       loc)
+  fun printFunbind (funid, strid, sigexp, strexp, _) =
+      P.FUNBIND
+        ((A.printFunid funid,
+          [P.STRCONSTRAINT
+             (A.printStrid strid,
+              P.TRANSPARENT (PatternCalc.printSigexp sigexp))]),
+         NONE,
+         printStrexp strexp)
 
-  fun absynTopdec topdec =
+  fun printTopdec topdec =
       case topdec of
         TOPDEC dec =>
-        A.TOPDEC (absynDec dec)
+        printDec dec
       | TOPFUNCTOR funbind =>
-        A.TOPFUNCTOR (absynFunbind funbind, loc)
+        P.FUNCTOR [printFunbind funbind]
 
-  fun absynInterfaceDec {interfaceId, interfaceName, requiredIds,
-                         provideTopdecs} =
-      {interfaceId = interfaceId,
-       interfaceName = interfaceName,
-       requiredIds = requiredIds,
-       provideTopdecs = map absynTopdec provideTopdecs}
+  val printers =
+      {printItopdec = printTopdec,
+       printSigdec = PatternCalc.printSigdec,
+       printTopdec = PatternCalc.printTopdec}
 
-  fun absynInterface {interfaceDecs, requiredIds, locallyRequiredIds,
-                      provideTopdecs, topdecsInclude} =
-      {interfaceDecs = map absynInterfaceDec interfaceDecs,
-       provide =
-         {requiredIds = requiredIds,
-          locallyRequiredIds = locallyRequiredIds,
-          provideTopdecs = map absynTopdec provideTopdecs},
-       topdecsInclude = map PatternCalc.absynSigdec topdecsInclude}
+  fun printInterfaceDec x = InterfaceLoaded.printInterfaceDec printers x
+  fun printInterface x = InterfaceLoaded.printInterface printers x
+  fun printCompileUnit x = InterfaceLoaded.printCompileUnit printers x
+  fun printInterfaceUnit x = InterfaceLoaded.printInterfaceUnit printers x
 
-  fun absynCompileUnit {interface, topdecsSource} =
-      {interface = SOME (absynInterface interface),
-       topdecsSource = map PatternCalc.absynTopdec topdecsSource}
-
-  fun absynInterfaceUnit {interfaceDecs, requiredIds, topdecsInclude} =
-      {interfaceDecs = map absynInterfaceDec interfaceDecs,
-       requiredIds = requiredIds,
-       topdecsInclude = map PatternCalc.absynSigdec topdecsInclude}
-
-  fun format_dec dec =
-      AbsynInterface.format_dec (absynDec dec)
-  fun format_strexp strexp =
-      AbsynInterface.format_strexp (absynStrexp strexp)
-  fun format_funbind head funbind =
-      AbsynInterface.format_funbind head (absynFunbind funbind)
-  fun format_topdec topdec =
-      AbsynInterface.format_topdec (absynTopdec topdec)
-  fun format_interface_dec dec =
-      AbsynInterfaceLoaded.format_interface_dec (absynInterfaceDec dec)
-  fun format_interface interface =
-      AbsynInterfaceLoaded.format_interface {} (absynInterface interface)
-  fun format_compile_unit unit =
-      AbsynInterfaceLoaded.format_compile_unit (absynCompileUnit unit)
-  fun format_interface_unit unit =
-      AbsynInterfaceLoaded.format_interface_unit (absynInterfaceUnit unit)
+  fun format_dec x = PrintCalc.format_exp (printDec x)
+  fun format_funbind x y = PrintCalc.format_bind x (printFunbind y)
+  fun format_topdec x = PrintCalc.format_exp (printTopdec x)
+  fun format_interface_dec x = PrintCalc.format_exp (printInterfaceDec x)
+  fun format_interface x = PrintCalc.format_exp (printInterface x)
+  fun format_compile_unit x = PrintCalc.format_exp (printCompileUnit x)
+  fun format_interface_unit x = PrintCalc.format_exp (printInterfaceUnit x)
 
 end

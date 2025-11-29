@@ -111,7 +111,7 @@ struct
     | SQL_STEP of Absyn.exp AbsynSQL.step
     | SQL_BODY of Absyn.exp AbsynSQL.body
     | SQL_TOP of (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.top
-      (*% AbsynInterface *)
+      (* AbsynInterface *)
     | OPAQUE_IMPL of AbsynInterface.opaque_impl
     | OVERLOAD_INSTANCE of AbsynInterface.overload_instance
     | OVERLOAD_MRULE of AbsynInterface.overload_mrule

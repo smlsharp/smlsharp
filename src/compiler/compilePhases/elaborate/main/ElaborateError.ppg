@@ -9,7 +9,7 @@ struct
   (***************************************************************************)
 
   (*%
-   * @formatter(AbsynTy.tyvar) AbsynTyFormatter.format_tyvar
+   * @formatter(AbsynTy.tyvar) AbsynFormatter.format_tyvar
    * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   exception

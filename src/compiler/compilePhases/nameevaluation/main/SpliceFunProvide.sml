@@ -51,7 +51,8 @@ in
   fun spliceProvideFundecl ({interface, topdecsSource} : PI.compile_unit)
       : PI1.compile_unit_spliced =
       let
-        val {provideTopdecs, topdecsInclude, ...} = interface
+        val interface = getOpt (interface, PI.emptyInterface)
+        val {provide = {provideTopdecs, ...}, topdecsInclude, ...} = interface
         val fundeclEnv = filterFundecls provideTopdecs
         val (topdecsIncludeRev, fundeclEnv) =
             foldl

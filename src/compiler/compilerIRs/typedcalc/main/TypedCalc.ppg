@@ -112,10 +112,10 @@ structure TypedCalc = struct
       IDCalc.caseKind
 
   (*%
-    @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant
+    @formatter(AbsynConst.constant) AbsynFormatter.format_constant
    *)
   (*% @prefix formatWithType_
-    @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant
+    @formatter(AbsynConst.constant) AbsynFormatter.format_constant
    *)
   type constant
     = (*%

@@ -1,0 +1,21 @@
+_require "../../../../smlformat-lib.smi"
+_require "./Absyn.smi"
+_require "./AbsynInterface.smi"
+_require local "./AbsynFormatter.smi"
+_require "./InterfaceLoaded.smi"
+_require local "../../printcalc/main/PrintCalc.ppg.smi"
+
+structure AbsynInterfaceLoaded =
+struct
+  type loc = Absyn.loc
+  type itopdec = AbsynInterface.topdec
+  type sigdec = Absyn.sigdec
+  type topdec = Absyn.topdec
+  type interface_dec = itopdec InterfaceLoaded.interface_dec
+  type 'loc interface = (itopdec, sigdec, 'loc) InterfaceLoaded.interface
+  type compile_unit = (itopdec, sigdec, topdec) InterfaceLoaded.compile_unit
+  type interface_unit = (itopdec, sigdec) InterfaceLoaded.interface_unit
+
+  val format_compile_unit : compile_unit -> SMLFormat.format
+  val format_interface_unit : interface_unit -> SMLFormat.format
+end
